@@ -19,6 +19,7 @@ function love.load()
     base.w = 100
     base.h = 400
     base.hp = 1000
+    base.maxHp = 1000
     
     mortar = require("Mortar")
     mortar.x = 50
@@ -47,12 +48,11 @@ function love.load()
     Auto_Mortar3.bullet.flytime = 0.5 -- Set the explosion duration for Auto_Mortar3
     
     table.insert(Auto_Turrets, Auto_Mortar) -- Add Auto_Mortar to the Auto_Turrets table
-    table.insert(Auto_Turrets, Auto_Mortar2) -- Add Auto_Mortar2 to the Auto_Turrets table
-    table.insert(Auto_Turrets, Auto_Mortar3) -- Add Auto_Mortar3 to the Auto_Turrets table
+    --table.insert(Auto_Turrets, Auto_Mortar2) -- Add Auto_Mortar2 to the Auto_Turrets table
+    --table.insert(Auto_Turrets, Auto_Mortar3) -- Add Auto_Mortar3 to the Auto_Turrets table
 
     effects = {}
     enemies = {} -- Initialize an empty table for enemies
-    table.insert(enemies, Enemy:new(800, 300, 5, 100, 10, 10, base)) -- Add an enemy for testing
 end
 
 function love.mousepressed(x, y, button)
@@ -111,7 +111,7 @@ function love.keypressed(key)
 end
 
 function math.normalize(x,y) local l=(x*x+y*y)^.5 if l==0 then return 0,0,0 else return x/l,y/l,l end end
-local spawnRate = 0.2
+local spawnRate = 0.5
 local spawntimer = 1
 function spawner(dt)
     spawntimer = spawntimer - dt

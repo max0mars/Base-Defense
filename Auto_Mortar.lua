@@ -44,7 +44,7 @@ function Auto_Mortar:update(dt, enemies, effects)
         end
     end
     self.cooldown = self.cooldown - dt
-    if(self.cooldown < 0) then
+    if(self.cooldown < 0 and self.target) then
         self:fire(self.x, self.y, self.target.x, self.target.y) -- Ensure cooldown does not go negative
     end
     for i = #self.bullets, 1, -1 do
