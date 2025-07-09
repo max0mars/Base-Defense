@@ -67,7 +67,7 @@ end
 function Base:takeDamage(damage)
     self.hp = self.hp - damage
     -- Ensure HP doesn't go below 0
-    self.hp = math.max(0, self.hp)
+    --self.hp = math.max(0, self.hp)
 end
 
 function Base:keypressed(key)

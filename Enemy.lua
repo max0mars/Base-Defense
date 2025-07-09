@@ -20,6 +20,7 @@ function Enemy:new(x, y, r, hp, speed, damage, target)
     obj.color = {1, 1, 1}
     obj.shape = "circle" -- Default shape is circle
     obj.destroyed = false -- Initialize destroyed flag
+    obj.xp = 10
     return obj
 end
 

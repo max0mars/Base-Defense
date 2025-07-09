@@ -1,4 +1,4 @@
-explosions = require("explosions")
+explosions = require("Effects.explosions")
 local bullet = {
     z, r,
     targetX, targetY,
