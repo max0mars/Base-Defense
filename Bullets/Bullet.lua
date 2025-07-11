@@ -11,8 +11,9 @@ function Bullet:new(x, y, angle, game)
         radius = 4,
         dead = false,
         game = game,
+        pierce = 1,
         hitCache = {},
-        hitEffects = {} 
+        hitEffects = {}
     }
     setmetatable(b, self)
     return b
@@ -24,9 +25,8 @@ function Bullet:update(dt)
 
     -- Check collisions
     for _, enemy in ipairs(game.enemies) do
-        if self:collidesWith(enemy) then
+        if self:collidesWith(enemy) and not self.dead then
             self:onHit(enemy)
-            break
         end
     end
 end
@@ -39,19 +39,14 @@ function Bullet:collidesWith(enemy)
 end
 
 function Bullet:onHit(enemy)
-    if self.pierce then
-        self.pierce = self.pierce - 1
-        if self.pierce <= 0 then
-            self.dead = true
-        end
-    else
-        enemy:takeDamage(self.damage)
-        for _, effect in ipairs(self.hitEffects) do
-            effect(self, enemy)
-        end
+    self.pierce = self.pierce - 1
+    if self.pierce <= 0 then
         self.dead = true
     end
-    
+    enemy:takeDamage(self.damage)
+    for _, effect in ipairs(self.hitEffects) do
+        effect(self, enemy) 
+    end
 end
 
 function Bullet:draw()

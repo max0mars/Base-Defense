@@ -1,4 +1,3 @@
-scene_manager = require("scene_manager")
 local menu_scene = {}
 
 

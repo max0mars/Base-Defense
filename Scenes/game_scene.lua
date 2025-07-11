@@ -1,5 +1,5 @@
-scene_manager = require("scene_manager")
 local game_scene = {}
+
 local time_mul = 1
 require("explosions")
 local Auto_Mortar = require("Auto_Mortar")
