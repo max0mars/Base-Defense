@@ -1,3 +1,4 @@
 # Current Tasks
 
 [ ] Add table 'game' to store data and be passed to game objects
+[ ] Make all scenes inherit from scene.lua
