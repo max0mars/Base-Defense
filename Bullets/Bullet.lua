@@ -8,24 +8,32 @@ function Bullet:new(x, y, angle, game)
         angle = angle or 0,
         speed = 400,
         damage = 10,
-        radius = 4,
-        dead = false,
+        radius = 2,
+        color = {1, 1, 0}, -- Yellow color for bullets
+        destroyed = false,
         game = game,
         pierce = 1,
         hitCache = {},
-        hitEffects = {}
+        hitEffects = {},
+        lifespan = 5, -- Bullet lifespan in seconds
     }
     setmetatable(b, self)
     return b
 end
 
 function Bullet:update(dt)
+    if self.destroyed then return end
+    self.lifespan = self.lifespan - dt
+    if self.lifespan <= 0 then
+        self.destroyed = true
+        return
+    end
     self.x = self.x + math.cos(self.angle) * self.speed * dt
     self.y = self.y + math.sin(self.angle) * self.speed * dt
 
     -- Check collisions
-    for _, enemy in ipairs(game.enemies) do
-        if self:collidesWith(enemy) and not self.dead then
+    for _, enemy in ipairs(self.game.enemies) do
+        if self:collidesWith(enemy) and not enemy.destroyed then
             self:onHit(enemy)
         end
     end
@@ -41,7 +49,7 @@ end
 function Bullet:onHit(enemy)
     self.pierce = self.pierce - 1
     if self.pierce <= 0 then
-        self.dead = true
+        self.destroyed = true
     end
     enemy:takeDamage(self.damage)
     for _, effect in ipairs(self.hitEffects) do
@@ -50,5 +58,9 @@ function Bullet:onHit(enemy)
 end
 
 function Bullet:draw()
+    if self.destroyed then return end
+    love.graphics.setColor(self.color[1], self.color[2], self.color[3]) -- Yellow color for bullets
     love.graphics.circle("fill", self.x, self.y, self.radius)
 end
+
+return Bullet

@@ -1,5 +1,7 @@
 local menu_scene = {}
-
+menu_scene.__index = menu_scene
+local scene = require("Scenes.scene") -- Import the base scene class
+setmetatable(menu_scene, { __index = scene })
 
 function menu_scene:draw()
     love.graphics.setColor(1, 1, 1) -- Set color to white
@@ -9,7 +11,7 @@ end
 
 function menu_scene:keypressed(key)
     if key == "return" then
-        scene_manager.switch("game") -- Switch to the game scene when Enter is pressed
+        self.scene_manager.switch("game") -- Switch to the game scene when Enter is pressed
     end
 end
 

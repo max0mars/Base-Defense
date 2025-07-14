@@ -1,34 +1,34 @@
 local Enemy = {
-    x, y, r,
-    hp, maxhp,
-    speed,
-    target = nil, -- Target to follow
-    damage = 10,
-    destroyed = false, -- Flag to mark if the enemy is destroyed
+    -- x, y, radius,
+    -- hp, maxhp,
+    -- speed,
+    -- target = nil, -- Target to follow
+    -- damage = 10,
+    -- destroyed = false, -- Flag to mark if the enemy is destroyed
 }
 
-function Enemy:new(x, y, r, hp, speed, damage, target)
+function Enemy:new(x, y, target, config)
     local obj = setmetatable({}, { __index = self })
     obj.x = x
     obj.y = y
-    obj.r = r
-    obj.hp = hp or 100
-    obj.maxhp = hp or 100 -- Store the maximum health
-    obj.speed = speed or 5
-    obj.damage = damage or 10
+    obj.radius = config.radius
+    obj.hp = config.hp or 100
+    obj.maxhp = config.hp or 100 -- Store the maximum health
+    obj.speed = config.speed or 10
+    obj.damage = config.damage or 10
     obj.target = target
-    obj.color = {1, 1, 1}
+    obj.color = config.color or {1, 1, 1}
     obj.shape = "circle" -- Default shape is circle
     obj.destroyed = false -- Initialize destroyed flag
-    obj.xp = 10
+    obj.xp = config.xp or 10
     return obj
 end
 
-function Enemy:newAdvanced(x, y, r, shape, hp, speed, damage, target, color)
+function Enemy:newAdvanced(x, y, radius, shape, hp, speed, damage, target, color)
     local obj = setmetatable({}, { __index = self })
     obj.x = x
     obj.y = y
-    obj.r = r
+    obj.radius = radius
     if shape == "rectangle" then
         obj.shape = "rectangle"
     else
@@ -55,7 +55,7 @@ end
 
 function Enemy:update(dt)
     if self.target then
-        if(self.target:getX() >= (self.x - self.r - dt * self.speed)) then
+        if(self.target:getX() >= (self.x - self.radius - dt * self.speed)) then
             self.target:takeDamage(self.damage) -- Deal damage to the target
             self.destroyed = true -- Mark the enemy as destroyed
         end
@@ -67,9 +67,9 @@ end
 function Enemy:draw()
     love.graphics.setColor(self.color) -- Set the color for drawing
     if self.shape == "circle" then
-        love.graphics.circle("fill", self.x, self.y, self.r)
+        love.graphics.circle("fill", self.x, self.y, self.radius)
     elseif self.shape == "rectangle" then
-        love.graphics.rectangle("fill", self.x - self.r, self.y - self.r, self.r * 2, self.r * 2)
+        love.graphics.rectangle("fill", self.x - self.radius, self.y - self.radius, self.radius * 2, self.radius * 2)
     end
     if self.hp < self.maxhp then
         drawHealthBar(self.x, self.y, self.hp, self.maxhp)
