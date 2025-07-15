@@ -1,4 +1,6 @@
-Bullet = {}
+local object = require("Scripts.object")
+
+Bullet = setmetatable({}, object)
 Bullet.__index = Bullet
 
 function Bullet:new(x, y, angle, game)

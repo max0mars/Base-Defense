@@ -1,4 +1,6 @@
-hitbox = {}
+local object = require("Scripts.object")
+
+hitbox = setmetatable({}, object)
 hitbox.__index = hitbox
 
 require("Scripts.collision")

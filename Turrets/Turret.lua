@@ -1,4 +1,6 @@
-Turret = {}
+local object = require("Scripts.object")
+
+Turret = setmetatable({}, object)
 Turret.__index = Turret
 
 function Turret:new(config, game)

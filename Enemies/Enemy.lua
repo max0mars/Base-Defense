@@ -1,11 +1,7 @@
-local Enemy = {
-    -- x, y, radius,
-    -- hp, maxhp,
-    -- speed,
-    -- target = nil, -- Target to follow
-    -- damage = 10,
-    -- destroyed = false, -- Flag to mark if the enemy is destroyed
-}
+local object = require("Scripts.object")
+
+local Enemy = setmetatable({}, object)
+Enemy.__index = Enemy
 
 function Enemy:new(x, y, target, config)
     local obj = setmetatable({}, { __index = self })
