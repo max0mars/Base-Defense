@@ -1,0 +1,16 @@
+Documentation for consistently across files and programs. 
+Write something here when you make a design choice that 
+must be consistent to work
+
+Hitboxes:
+- hitbox x,y may be different than obj x and y.
+- use hitbox:getX / :getY / :getXY
+
+Stat names:
+
+Shapes:
+- Shapes (whether hitbox or entity) will all use 'size' to define size
+- DRAWING: x/y is ALWAYS centered
+- circle: size = radius
+- square: size = length = height
+- triangle: size = length of sides

@@ -81,10 +81,10 @@ function love.keypressed(key)
 end
 
 function math.normalize(x,y) local l=(x*x+y*y)^.5 if l==0 then return 0,0,0 else return x/l,y/l,l end end
-local spawnRate = 2
+local spawnRate = 0.2
 local spawntimer = 2
 local spawned = 0
-local spawnAmount = 10 -- Number of enemies to spawn per wave
+local spawnAmount = math.huge -- Number of enemies to spawn per wave
 
 function game_scene:spawner(dt)
     if spawned >= spawnAmount then
@@ -96,8 +96,8 @@ function game_scene:spawner(dt)
         local y = love.math.random(120, 480)
         local enemy1 = {
             radius = 5,
-            hp = 50,
-            speed = 15,
+            hp = 30,
+            speed = 5,
             damage = 10,
             color = {1, 0, 0}, -- Red color for enemies
             xp = 10
