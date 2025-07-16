@@ -1,5 +1,6 @@
 collision = {
     grid = {},
+    emptyGrid = {},
     cellSize = 32,
     width = 0,
     height = 0
@@ -26,12 +27,15 @@ end
 
 -- adds an object to the grid based on its hitbox location
 function collision:addToGrid(obj)
+    if obj.destroyed then
+        return -- Do not add destroyed objects to the grid
+    end
     local hitbox = obj:getHitbox()
     if not hitbox then
         return -- No hitbox to check
     end
     if hitbox:getX() < 0 or hitbox:getX() > self.width or hitbox:getY() < 0 or hitbox:getY() > self.height then
-        return
+        return -- don't check out of bounds collisions
     end
     local xCell = math.floor(hitbox:getX() / self.cellSize) + 1
     local yCell = math.floor(hitbox:getY() / self.cellSize) + 1
@@ -72,11 +76,11 @@ function collision:checkCollision(obj1, obj2)
     if not a or not b then return false end
     if a.type == "circle" and b.type == "circle" then
         return self:circleCircle(a, b)
-    elseif a.type == "square" and b.type == "square" then
+    elseif a.type == "rectangle" and b.type == "rectangle" then
         return self:rectRect(a, b)
-    elseif a.type == "circle" and b.type == "square" then
+    elseif a.type == "circle" and b.type == "rectangle" then
         return self:circleRect(a, b)
-    elseif a.type == "square" and b.type == "circle" then
+    elseif a.type == "rectangle" and b.type == "circle" then
         return self:circleRect(b, a)
     else
         error("Error with hitbox types: " .. a.type .. " and " .. b.type)
@@ -91,29 +95,29 @@ function collision:circleCircle(a, b)
     return distance < (a:getSize() + b:getSize()) * (a:getSize() + b:getSize()) -- Assuming size is radius for circles
 end
 
--- Square - Square Collision check
--- Assumes Squares are centered at their x, y with size as width/height
+-- Rectangle - Rectangle Collision check
+-- Assumes centered at their x, y
 function collision:rectRect(a, b)
-    local x1, y1, size1 = a:getX(), a:getY(), a:getSize()
-    local x2, y2, size2 = b:getX(), b:getY(), b:getSize()
-    return math.abs(x1 - x2) * 2 < (size1 + size2)
-    and math.abs(y1 - y2) * 2 < (size1 + size2)
+    local x1, y1, w1, h1 = a:getX(), a:getY(), a:getWidth(), a:getHeight()
+    local x2, y2, w2, h2 = b:getX(), b:getY(), b:getWidth(), b:getHeight()
+    return math.abs(x1 - x2) * 2 < (w1/2 + w2/2) and math.abs(y1 - y2) * 2 < (h1/2 + h2/2)
 end
 
--- Circle - Square Collision check
--- Assumes Square is centered at its x, y with size as width/height
+-- Circle - Rectangle Collision check
+-- Assumes centered at its x, y
 function collision:circleRect(circle, rect)
-    local circleX, circleY = circle:getX(), circle:getY()
-    local rectX, rectY, rectSize = rect:getX(), rect:getY(), rect:getSize()
-    local halfSize = rectSize / 2
+    local circleX, circleY, circleR = circle:getX(), circle:getY(), circle:getRadius()
+    local rectX, rectY, rectW, rectH = rect:getX(), rect:getY(), rect:getWidth(), rect:getHeight()
+    local halfW = rectW / 2
+    local halfH = rectH / 2
 
-    local closestX = math.max(rectX - halfSize, math.min(circleX, rectX + halfSize))
-    local closestY = math.max(rectY - halfSize, math.min(circleY, rectY + halfSize))
+    local closestX = math.max(rectX - halfW, math.min(circleX, rectX + halfW))
+    local closestY = math.max(rectY - halfH, math.min(circleY, rectY + halfH))
 
     local dx = closestX - circleX
     local dy = closestY - circleY
 
-    return (dx * dx + dy * dy) < (circle:getSize() * circle:getSize())
+    return (dx * dx + dy * dy) < (circleR * circleR)
 end
 
 return collision

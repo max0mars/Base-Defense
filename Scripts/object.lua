@@ -1,4 +1,6 @@
-object = {
+local hitbox = require("Scripts.hitbox") -- Import the hitbox module
+
+local object = {
     id_count = 0, -- Unique identifier for the object
 }
 object.__index = object
@@ -7,21 +9,33 @@ function object:new(config)
     local obj = {
         destroyed = false, -- Flag to indicate if the object is destroyed
         id = newID(),
-        hitbox = config.hitbox or nil, -- Placeholder for the hitbox, can be set later
         x = config.x or 0,
         y = config.y or 0,
-        size = config.size or 10, -- Default size is 10
-        shape = config.shape or "circle", -- Default shape is circle
+        size = config.size or 0, -- Default size is 0
+        w = config.w or 0, -- Width for rectangle
+        h = config.h or 0, -- Height for rectangle
+        shape = config.shape or nil, -- shape if needed
         color = config.color or {1, 1, 1, 1}, -- Default color is white
         game = config.game or nil, -- Reference to the game object if needed
         tag = config.tag or '', -- Tag for collision detection
     }
+    if config.hitbox then
+        local hitboxConfig = {
+            object = obj, -- Reference to the object this hitbox belongs to
+            type = config.hitbox.shape or "circle", -- Default to circle if not specified
+        }
+        obj.hitbox = hitbox:new(hitboxConfig) -- Create a hitbox if specified
+    end
     return setmetatable(obj, self)
 end
 
 function newID()
     object.id_count = object.id_count + 1
     return object.id_count
+end
+
+function object:died()
+    self:destroy() -- Call the destroy method to clean up
 end
 
 function object:destroy()
@@ -52,9 +66,8 @@ function object:draw()
     love.graphics.setColor(self.color) -- Set the color for drawing
     if self.shape == "circle" then
         love.graphics.circle("fill", self.x, self.y, self.size)
-    elseif self.shape == "square" then
-        local halfSize = self.size / 2
-        love.graphics.rectangle("fill", self.x - halfSize, self.y - halfSize, self.size, self.size)
+    elseif self.shape == "rectangle" then
+        love.graphics.rectangle("fill", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
     end
 end
 

@@ -1,8 +1,10 @@
 # Current Tasks
 
 Because of new collision, hitbox and inherit system
-[ ] Fix Bullet
-[ ] Fix Enemy
-[ ] Fix Turret
-[ ] Fix GameScene
-[ ] Fix Base
+[x] Fix Bullet
+[x] Fix Enemy
+[x] Fix Turret
+[x] Fix GameScene
+[x] Fix Base
+[x] Create Game Class
+[-] Create Building Class

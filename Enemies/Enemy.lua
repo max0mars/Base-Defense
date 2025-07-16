@@ -3,7 +3,9 @@ local Enemy = setmetatable({}, living_object)
 Enemy.__index = Enemy
 
 function Enemy:new(config)
-    local obj = setmetatable(living_object:new(config), { __index = self })
+    config.tag = "enemy" -- Set the tag for collision detection
+    local obj = living_object:new(config)
+    setmetatable(obj, { __index = self })
     obj.speed = config.speed or 10
     obj.damage = config.damage or 10
     obj.xp = config.xp or 10
@@ -11,6 +13,7 @@ function Enemy:new(config)
 end
 
 function Enemy:update(dt)
+    if self.destroyed then return end
     self.x = self.x - (self.speed * dt)
 end
 

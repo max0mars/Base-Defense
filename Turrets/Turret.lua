@@ -3,30 +3,19 @@ local object = require("Scripts.object")
 Turret = setmetatable({}, object)
 Turret.__index = Turret
 
-function Turret:new(config, game)
-    local t = {
-        -- Position relative to world
-        x = config.x or 50,
-        y = config.y or 300,
-
-        -- Local rotation for aiming
-        rotation = 0,
-        targetRotation = 0, -- Target rotation for smooth aiming
-        turnSpeed = config.turnSpeed or .3, -- Speed of turret rotation
-        mode = config.mode or "auto",  -- "auto" for auto-aim, "manual" for manual aiming
-        -- Firing properties
-        fireRate = config.fireRate or .05,
-        bulletType = require('Bullets.Bullet'),
-        cooldown = 0,
-
-        -- Upgrades: e.g. hit effects, damage bonus
-        hitEffects = {},
-        damage = config.damage or 2,
-        target = nil,  -- Target to auto aim at
-        game = game,
-        spread = config.spread or math.rad(3), -- Spread for bullets
-    }
-    setmetatable(t, self)
+function Turret:new(config)
+    local t = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
+    t.rotation = config.rotation or 0 -- Initial rotation of the turret
+    t.targetRotation = t.rotation -- Target rotation for smooth aiming
+    t.turnSpeed = config.turnSpeed or 0.3 -- Speed of turret rotation
+    t.mode = config.mode or "auto"  -- "auto" for auto-aim, "manual" for manual aiming
+    t.fireRate = config.fireRate or 0.05 -- Rate of fire in seconds
+    t.bulletType = config.bulletType or require('Bullets.Bullet')
+    t.cooldown = 0 -- Cooldown timer for firing
+    t.hitEffects = {} -- Table to store hit effects
+    t.damage = config.damage or 2 -- Damage dealt by the turret
+    t.target = nil  -- Target to auto aim at
+    t.spread = config.spread or 0 -- Spread for bullets
     return t
 end
 
@@ -38,7 +27,18 @@ end
 function Turret:fire()
     local offset = love.math.random() * self.spread * 2 - self.spread
     local x, y = self:getFirePoint()
-    local b = self.bulletType:new(x, y, self.rotation + offset, self.game)
+    config = {
+        x = x,
+        y = y,
+        angle = self.rotation + offset, -- Add spread to the angle
+        speed = 400, -- Speed of the bullet
+        damage = self.damage, -- Damage dealt by the bullet
+        pierce = 1, -- Number of enemies the bullet can pierce
+        hitEffects = self.hitEffects, -- Effects to apply on hit
+        lifespan = 5, -- Lifespan of the bullet
+        game = self.game -- Reference to the game object
+    }
+    local b = self.bulletType:new(config)
     b.damage = self.damage
 
     -- Add upgrades to bullet
@@ -46,8 +46,7 @@ function Turret:fire()
     for _, effect in ipairs(self.hitEffects) do
         table.insert(b.hitEffects, effect)
     end
-
-    table.insert(self.game.bullets, b)
+    self.game:addObject(b) -- Add the bullet to the game's object list
 end
 
 function Turret:update(dt)
@@ -86,24 +85,21 @@ function Turret:draw()
         self.x + math.cos(self.rotation) * 20,
         self.y + math.sin(self.rotation) * 20
     )
-    love.graphics.printf("Turret Rotation: ".. self.rotation, 50, 20, 100, "center")
-    love.graphics.printf("Target Rotation: ".. self.targetRotation, 50, 40, 100, "center")
-
 end
 
 function Turret:getTarget()
     if self.target and self.target.destroyed then
         self.target = nil -- Reset target if it is destroyed
     elseif self.target then
-        return 
+        return self.target -- Return the current target if it is still valid
     end-- If we already have a target, no need to search again
     local dist = math.huge -- Start with a very large distance
-    for _, enemy in ipairs(self.game.enemies) do
-        if enemy.x and enemy.y then
-            local newdist = (enemy.x - self.x)^2 + (enemy.y - self.y)^2 -- Calculate squared distance to avoid sqrt for performance
-            if(newdist < dist) then
+    for _, obj in ipairs(self.game.objects) do
+        if obj.tag == "enemy" and not obj.destroyed then
+            local newdist = (obj.x - self.x)^2 + (obj.y - self.y)^2 -- Calculate squared distance to avoid sqrt for performance
+            if newdist < dist then
                 dist = newdist -- Calculate distance to the enemy
-                self.target = enemy
+                self.target = obj
             end
         end
     end
@@ -193,11 +189,6 @@ function Turret:lookAtTarget(dt)
     elseif self.rotation < 0 then
         self.rotation = self.rotation + math.pi*2 -- Wrap around to keep rotation in range
     end
-end
-
-function vectorfromangle(rads, mag) -- creates a vector when given an angle and a length/magnitude
-    if (mag == nil) then mag = 1 end
-    return {math.sin(rads) * mag, math.cos(rads) * mag}
 end
 
 return Turret

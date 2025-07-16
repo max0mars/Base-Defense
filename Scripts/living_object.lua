@@ -4,7 +4,8 @@ local living_object = setmetatable({}, object)
 living_object.__index = living_object
 
 function living_object:new(config)
-    local obj = setmetatable(object:new(config), { __index = self })
+    local obj = object:new(config)
+    setmetatable(obj, { __index = self })
     obj.hp = config.hp or 100
     obj.maxhp = config.hp or 100 -- Store the maximum health
     return obj
@@ -53,3 +54,5 @@ function living_object:draw()
         self:drawHealthBar() -- Draw the health bar if hp is less than maxhp
     end
 end
+
+return living_object
