@@ -1,4 +1,8 @@
 # Current Tasks
 
-[ ] Add table 'game' to store data and be passed to game objects
-[ ] Make all scenes inherit from scene.lua
+Because of new collision, hitbox and inherit system
+[ ] Fix Bullet
+[ ] Fix Enemy
+[ ] Fix Turret
+[ ] Fix GameScene
+[ ] Fix Base

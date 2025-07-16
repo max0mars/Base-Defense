@@ -25,7 +25,6 @@ function Turret:new(config, game)
         target = nil,  -- Target to auto aim at
         game = game,
         spread = config.spread or math.rad(3), -- Spread for bullets
-        testval = 0, -- For debugging purposes
     }
     setmetatable(t, self)
     return t
@@ -64,8 +63,7 @@ function Turret:update(dt)
             end
         end
     else
-        -- Manual aiming mode, do nothing or implement manual controls
-        -- For example, you could use mouse position to aim
+        -- Manual aiming mode
         local mx, my = love.mouse.getPosition()
         self:lookAt(mx, my, dt)
         if love.mouse.isDown(1) and self.cooldown <= 0 then

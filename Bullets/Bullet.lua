@@ -32,21 +32,9 @@ function Bullet:update(dt)
     end
     self.x = self.x + math.cos(self.angle) * self.speed * dt
     self.y = self.y + math.sin(self.angle) * self.speed * dt
-
-    -- Check collisions
-    for _, enemy in ipairs(self.game.enemies) do
-        if self:collidesWith(enemy) and not enemy.destroyed then
-            self:onHit(enemy)
-        end
-    end
 end
 
-function Bullet:collidesWith(enemy)
-    local dx = self.x - enemy.x
-    local dy = self.y - enemy.y
-    local dist = math.sqrt(dx * dx + dy * dy)
-    return dist < (self.radius + enemy.radius)
-end
+
 
 function Bullet:onHit(enemy)
     self.pierce = self.pierce - 1
