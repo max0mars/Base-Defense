@@ -99,6 +99,53 @@ function collision:checkAllCollisions()
     end
 end
 
+function collision:checkCollisionsTagged(tag1, tag2)
+    for x = 1, #self.grid do
+        for y = 1, #self.grid[x] do
+            local cell = self.grid[x][y]
+            if #cell > 1 then
+                for i = 1, #cell do
+                    local obj1 = cell[i]
+                    for j = i + 1, #cell do
+                        local obj2 = cell[j]
+                        if obj1.tag == tag1 and obj2.tag == tag2 or obj1.tag == tag2 and obj2.tag == tag1 then
+                            if not obj1.destroyed and not obj2.destroyed and collision:checkCollision(obj1, obj2) then
+                                if obj1.onCollision then
+                                    obj1:onCollision(obj2)
+                                end
+                                if obj2.onCollision then
+                                    obj2:onCollision(obj1)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    for _, obj in ipairs(self.largeObjects) do
+        if not obj.destroyed then
+            for x = 1, #self.grid do
+                for y = 1, #self.grid[x] do
+                    local cell = self.grid[x][y]
+                    for _, other in ipairs(cell) do
+                        if obj.tag == tag1 and other.tag == tag2 or obj.tag == tag2 and other.tag == tag1 then
+                            if other ~= obj and not other.destroyed and collision:checkCollision(obj, other) then
+                                if obj.onCollision then
+                                    obj:onCollision(other)
+                                end
+                                if other.onCollision then
+                                    other:onCollision(obj)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- Handles checkings collisions between two objects
 -- Based on shapes of objects, it will call the appropriate collision function
 function collision:checkCollision(obj1, obj2)

@@ -17,6 +17,7 @@ function Turret:new(config)
     t.target = nil  -- Target to auto aim at
     t.spread = config.spread or 0 -- Spread for bullets
     t.bulletSpeed = config.bulletSpeed or 400
+    t.range = config.range or math.huge
     return t
 end
 
@@ -94,6 +95,7 @@ function Turret:draw()
         self.x + math.cos(self.rotation) * 20,
         self.y + math.sin(self.rotation) * 20
     )
+    love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
 end
 
 function Turret:getTarget()
@@ -102,7 +104,7 @@ function Turret:getTarget()
     elseif self.target then
         return self.target -- Return the current target if it is still valid
     end-- If we already have a target, no need to search again
-    local dist = math.huge -- Start with a very large distance
+    local dist = self.range^2 -- Use squared distance to avoid sqrt for performance
     for _, obj in ipairs(self.game.objects) do
         if obj.tag == "enemy" and not obj.destroyed then
             local newdist = (obj.x - self.x)^2 + (obj.y - self.y)^2 -- Calculate squared distance to avoid sqrt for performance

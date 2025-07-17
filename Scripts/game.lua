@@ -51,11 +51,11 @@ function game:load(saveData)
         y = 300,
         mode = 'poop',
         game = self,
-        turnSpeed = 10,
+        turnSpeed = 11,
         damage = 50,
         fireRate = 0.05,
         spread = 0.05,
-        bulletSpeed = 500
+        bulletSpeed = 250
     }
     self:addObject(Turret:new(config))
     self.ground = ground
@@ -93,7 +93,8 @@ function game:update(dt)
             end
         end
     end
-    collision:checkAllCollisions() -- Check for collisions between objects
+    --collision:checkAllCollisions() -- Check for collisions between objects
+    collision:checkCollisionsTagged("bullet", "enemy") -- Check collisions between bullets and enemies
     self:spawner(dt) -- Handle enemy spawning
     self:takeOutTheTrash() -- Clean up destroyed objects
 end

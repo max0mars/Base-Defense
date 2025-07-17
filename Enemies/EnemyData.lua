@@ -5,7 +5,7 @@ EnemyData.types = {
         speed = 25,
         damage = 10,
         xp = 5,
-        size = 5, -- Default size for basic enemies
+        size = 8, -- Default size for basic enemies
         shape = "circle", -- Default shape for basic enemies
         color = {1, 0, 0, 1}, -- Default color for basic enemies
         hitbox = {
@@ -17,7 +17,7 @@ EnemyData.types = {
     },
 }
 
-function EnemyData:new(game, type, x, y)
+function EnemyData:new(gameRef, type, x, y)
     -- Create a copy of the enemy config instead of using the shared table
     local baseConfig = self.types.basic
     local enemyConfig = {
@@ -35,7 +35,7 @@ function EnemyData:new(game, type, x, y)
         tag = baseConfig.tag,
         x = x,
         y = y,
-        game = game, -- Reference to the game object
+        game = gameRef, -- Reference to the game object
     }
     return Enemy:new(enemyConfig) -- Create a new Enemy instance with the final configuration
 end

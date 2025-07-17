@@ -11,9 +11,9 @@ function object:new(config)
         id = newID(),
         x = config.x or 0,
         y = config.y or 0,
-        size = config.size or 0, -- Default size is 0
-        w = config.w or 0, -- Width for rectangle
-        h = config.h or 0, -- Height for rectangle
+        size = config.size or nil, -- Default size is nil
+        w = config.w or nil, -- Width for rectangle
+        h = config.h or nil, -- Height for rectangle
         shape = config.shape or nil, -- shape if needed
         color = config.color or {1, 1, 1, 1}, -- Default color is white
         game = config.game or nil, -- Reference to the game object if needed
