@@ -18,6 +18,7 @@ function object:new(config)
         color = config.color or {1, 1, 1, 1}, -- Default color is white
         game = config.game or nil, -- Reference to the game object if needed
         tag = config.tag or '', -- Tag for collision detection
+        big = config.big or false, -- Flag to indicate if the object is big
     }
     if config.hitbox then
         local hitboxConfig = {
@@ -40,10 +41,6 @@ end
 
 function object:destroy()
     self.destroyed = true -- Mark the object as destroyed
-    if self.hitbox then
-        self.hitbox:destroy()
-        self.hitbox = nil
-    end
 end
 
 function object:getID()

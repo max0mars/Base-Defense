@@ -12,14 +12,21 @@ function living_object:new(config)
 end
 
 function living_object:drawHealthBar()
-    local width = self.size
-    local height = 4
-    if self.shape == "circle" then width = width * 2 end
-    
-    
+    local width
+    local height
+    local yOffset = 0
+    if self.shape == "circle" then
+        width = self.size * 2
+        height = self.size
+    else 
+        width = self.w
+        height = 10 -- Fixed height for rectangle health bar
+        yOffset = self.h / 2
+    end
+
     -- Position the health bar above the enemy
     local barX = self.x - width/2
-    local barY = self.y - 20  -- Adjust this offset as needed
+    local barY = self.y - 20 - yOffset -- Adjust this offset as needed
 
     -- Calculate health percentage
     local healthPercent = self.hp / self.maxhp

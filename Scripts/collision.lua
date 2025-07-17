@@ -1,12 +1,14 @@
 collision = {
     grid = {},
     emptyGrid = {},
+    largeObjects = {},
+    allObjects = {},
     cellSize = 32,
     width = 0,
     height = 0
 }
 
-function collision:setGrid(cellSize, width, height) --sets grid values
+function collision:setGrid(width, height, cellSize) --sets grid values
     self.width = width or 800
     self.height = height or 600
     self.cellSize = cellSize or 32
@@ -30,16 +32,24 @@ function collision:addToGrid(obj)
     if obj.destroyed then
         return -- Do not add destroyed objects to the grid
     end
+    
     local hitbox = obj:getHitbox()
     if not hitbox then
         return -- No hitbox to check
     end
-    if hitbox:getX() < 0 or hitbox:getX() > self.width or hitbox:getY() < 0 or hitbox:getY() > self.height then
+    table.insert(self.allObjects, obj)
+    if obj.big then
+        table.insert(self.largeObjects, obj) -- Store large objects separately
+        return -- Do not add large objects to the grid
+    end
+    local x = hitbox:getX()
+    local y = hitbox:getY()
+    if x < 0 or x > self.width or y < 0 or y > self.height then
         return -- don't check out of bounds collisions
     end
-    local xCell = math.floor(hitbox:getX() / self.cellSize) + 1
-    local yCell = math.floor(hitbox:getY() / self.cellSize) + 1
-    if self.grid[xCell] and self.grid[xCell][yCell] then
+    local xCell = math.floor(x / self.cellSize) + 1
+    local yCell = math.floor(y / self.cellSize) + 1
+    if xCell >= 1 and xCell <= #self.grid and yCell >= 1 and yCell <= #self.grid[xCell] then
         table.insert(self.grid[xCell][yCell], obj)
     end
 end
@@ -52,13 +62,34 @@ function collision:checkAllCollisions()
             local cell = self.grid[x][y]
             if #cell > 1 then
                 for i = 1, #cell do
+                    local obj1 = cell[i]
                     for j = i + 1, #cell do
-                        if collision:checkCollision(cell[i], cell[j]) then
-                            if cell[i].onCollision then
-                                cell[i]:onCollision(cell[j])
+                        local obj2 = cell[j]
+                        if not obj1.destroyed and not obj2.destroyed and collision:checkCollision(obj1, obj2) then
+                            if obj1.onCollision then
+                                obj1:onCollision(obj2)
                             end
-                            if cell[j].onCollision then
-                                cell[j]:onCollision(cell[i])
+                            if obj2.onCollision then
+                                obj2:onCollision(obj1)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    for _, obj in ipairs(self.largeObjects) do
+        if not obj.destroyed then
+            for x = 1, #self.grid do
+                for y = 1, #self.grid[x] do
+                    local cell = self.grid[x][y]
+                    for _, other in ipairs(cell) do
+                        if other ~= obj and not other.destroyed and collision:checkCollision(obj, other) then
+                            if obj.onCollision then
+                                obj:onCollision(other)
+                            end
+                            if other.onCollision then
+                                other:onCollision(obj)
                             end
                         end
                     end
@@ -82,6 +113,10 @@ function collision:checkCollision(obj1, obj2)
         return self:circleRect(a, b)
     elseif a.type == "rectangle" and b.type == "circle" then
         return self:circleRect(b, a)
+    elseif a.type == 'ray' and b.type == 'rectangle' then
+        return self:rayRect(a, b)
+    elseif a.type == 'ray' and b.type == 'circle' then
+        return self:rayCircle(a, b)
     else
         error("Error with hitbox types: " .. a.type .. " and " .. b.type)
     end
@@ -106,7 +141,7 @@ end
 -- Circle - Rectangle Collision check
 -- Assumes centered at its x, y
 function collision:circleRect(circle, rect)
-    local circleX, circleY, circleR = circle:getX(), circle:getY(), circle:getRadius()
+    local circleX, circleY, circleR = circle:getX(), circle:getY(), circle:getSize()
     local rectX, rectY, rectW, rectH = rect:getX(), rect:getY(), rect:getWidth(), rect:getHeight()
     local halfW = rectW / 2
     local halfH = rectH / 2
@@ -118,6 +153,84 @@ function collision:circleRect(circle, rect)
     local dy = closestY - circleY
 
     return (dx * dx + dy * dy) < (circleR * circleR)
+end
+
+function collision:rayCircle(a, b)
+    local x1, y1 = a.x1, a.y1
+    local x2, y2 = a.x2, a.y2
+    local cx, cy, r = b:getX(), b:getY(), b:getSize()
+
+    local dx = x2 - x1
+    local dy = y2 - y1
+
+    local fx = x1 - cx
+    local fy = y1 - cy
+
+    local a = dx*dx + dy*dy
+    local b = 2 * (fx*dx + fy*dy)
+    local c = fx*fx + fy*fy - r*r
+
+    local discriminant = b*b - 4*a*c
+    if discriminant < 0 then
+    return false
+    end
+
+    discriminant = math.sqrt(discriminant)
+
+    local t1 = (-b - discriminant) / (2*a)
+    local t2 = (-b + discriminant) / (2*a)
+
+    -- Check if it hits within the segment
+    if t1 >= 0 and t1 <= 1 then return true end
+    if t2 >= 0 and t2 <= 1 then return true end
+
+    return false
+end
+
+function collision:rayRect(a, b)
+    local x1, y1 = a.x1, a.y1
+    local x2, y2 = a.x2, a.y2
+    local rx, ry, rw, rh = b:getX(), b:getY(), b:getWidth(), b:getHeight()
+
+    local dx = x2 - x1
+    local dy = y2 - y1
+
+    local tmin = -math.huge
+    local tmax = math.huge
+
+    local function test(p, d, min, max)
+    if math.abs(d) < 0.0001 then
+        if p < min or p > max then return false, nil, nil end
+        return true, -math.huge, math.huge
+    else
+        local t1 = (min - p) / d
+        local t2 = (max - p) / d
+        if t1 > t2 then t1, t2 = t2, t1 end
+        return true, t1, t2
+    end
+    end
+
+    local hitX, t1x, t2x = test(x1, dx, rx - w/2, rx + w/2)
+    if not hitX then return false end
+
+    local hitY, t1y, t2y = test(y1, dy, ry - h/2, ry + h/2)
+    if not hitY then return false end
+
+    tmin = math.max(t1x, t1y)
+    tmax = math.min(t2x, t2y)
+
+    if tmax < 0 or tmin > tmax or tmin > 1 then return false end
+
+    return true
+end
+
+function collision:checkCollisionsRay(obj, ray, tag)
+    local collisions = {}
+    for _, other in ipairs(self.allObjects) do
+        if other.tag == tag and not other.destroyed and collision:checkCollision(ray, other) then
+            obj:onCollision(other) -- Call onCollision method if it exists
+        end
+    end
 end
 
 return collision

@@ -15,6 +15,11 @@ end
 function Enemy:update(dt)
     if self.destroyed then return end
     self.x = self.x - (self.speed * dt)
+    if self.x < 200 then self:destroy() end
+end
+
+function Enemy:getVelocity()
+    return -self.speed, 0 -- Enemies move left by default
 end
 
 function Enemy:onCollision(obj)

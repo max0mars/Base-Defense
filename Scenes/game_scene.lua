@@ -18,16 +18,28 @@ function game_scene:mousepressed(x, y, button)
 end
 
 function game_scene:update(dt)
+    if paused == 1 then
+        return -- Skip update if paused
+    end
     game:update(dt * time_mul) -- Update the game state with time multiplier
 end
 
 function game_scene:draw()
     game:draw()
+    if paused == 1 then
+        love.graphics.setColor(0, 0, 0, 0.5) -- Semi-transparent black for pause overlay
+        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        love.graphics.setColor(1, 1, 1) -- Reset color for text
+        love.graphics.printf("Game Paused", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
+        for _, obj in ipairs(game.objects) do
+            print(obj.tag, obj.x, obj.y) -- Debugging output for object positions
+        end
+    end
 end
 
 function game_scene:keypressed(key)
     if key == "p" then
-        time_mul = time_mul == 1 and 0 or 1 -- Toggle pause
+        paused = paused == 1 and 0 or 1 -- Toggle pause
     end
 end
 

@@ -6,6 +6,14 @@ local collision = require("Scripts.collision")
 local game = {}
 game.__index = game
 
+local ground = {
+    x = 0,
+    y = 100,
+    w = 800,
+    h = 400,
+    color = {love.math.colorFromBytes(30, 82, 12)}
+}
+
 function game:load(saveData)
     if saveData then
         self.objects = saveData.objects or {} -- Load existing game objects
@@ -25,13 +33,32 @@ function game:load(saveData)
             y = 300,
             w = 100,
             h = 400,
+            shape = "rectangle",
+            color = {love.math.colorFromBytes(69, 69, 69)},
+            hitbox = {shape = "rectangle"},
             hp = 1000,
-            maxHp = 1000
+            maxHp = 1000,
+            tag = "base",
+            game = self,
+            big = true,
         }
         self.base = Base:new(baseConfig)
     end
-    collision:setGrid(800, 600, 16) -- Set collision grid size
-    self:addObject(Turret:new({x = 50, y = 300, mode = 'auto', game = self}, self))
+    collision:setGrid(800, 600, 32) -- Set collision grid size
+    self:addObject(self.base) -- Add the base object to the game
+    local config = {
+        x = 50,
+        y = 300,
+        mode = 'poop',
+        game = self,
+        turnSpeed = 10,
+        damage = 50,
+        fireRate = 0.05,
+        spread = 0.05,
+        bulletSpeed = 500
+    }
+    self:addObject(Turret:new(config))
+    self.ground = ground
 end
 
 function game:addXP(amount)
@@ -57,9 +84,13 @@ end
 function game:update(dt)
     collision:resetGrid() -- Reset the collision grid for the new frame
     for _, obj in ipairs(self.objects) do
-        if not obj.destroyed and obj.update then
-            collision:addToGrid(obj) -- Add the object to the collision grid
-            obj:update(dt) -- Update each object if it has an update method
+        if not obj.destroyed then
+            if obj.update then
+                obj:update(dt) -- Update each object if it has an update method
+            end
+            if obj.hitbox then
+                collision:addToGrid(obj) -- Add the object to the collision grid
+            end
         end
     end
     collision:checkAllCollisions() -- Check for collisions between objects
@@ -67,17 +98,10 @@ function game:update(dt)
     self:takeOutTheTrash() -- Clean up destroyed objects
 end
 
-local ground = {
-    x = 0,
-    y = 100,
-    w = 800,
-    h = 400,
-    color = {love.math.colorFromBytes(30, 82, 12)}
-}
+
 
 function game:draw()
     ground:draw() -- Draw the ground
-    self.base:draw() -- Draw the base
     for _, obj in ipairs(self.objects) do
         if not obj.destroyed and obj.draw then
             obj:draw() -- Draw each object if it has a draw method
@@ -96,8 +120,8 @@ end
 
 
 -- eventually spawner will be moved to a separate file
-local spawnRate = 0.2
-local spawntimer = 2
+local spawnRate = 0.1
+local spawntimer = 0
 local spawned = 0
 local spawnAmount = math.huge -- Number of enemies to spawn per wave
 function game:spawner(dt)
@@ -106,7 +130,7 @@ function game:spawner(dt)
     end
     spawntimer = spawntimer - dt
     if spawntimer < 0 then -- Adjust the spawn rate as needed
-        self:addObject(EnemyData:new("basic", 800, math.random(110, 490))) -- Add a new enemy at random position
+        self:addObject(EnemyData:new(self, "basic", 800, math.random(110, 490))) -- Add a new enemy at random position
         spawntimer = spawnRate -- Reset the spawn timer
         spawned = spawned + 1
     end

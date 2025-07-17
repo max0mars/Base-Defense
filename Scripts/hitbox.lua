@@ -33,11 +33,11 @@ function hitbox:getSize()
     return self.object.size
 end
 
-function hitbox:getW()
+function hitbox:getWidth()
     return self.object.w
 end
 
-function hitbox:getH()
+function hitbox:getHeight()
     return self.object.h
 end
 

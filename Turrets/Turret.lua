@@ -7,15 +7,16 @@ function Turret:new(config)
     local t = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     t.rotation = config.rotation or 0 -- Initial rotation of the turret
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
-    t.turnSpeed = config.turnSpeed or 0.3 -- Speed of turret rotation
+    t.turnSpeed = config.turnSpeed or math.huge -- Speed of turret rotation
     t.mode = config.mode or "auto"  -- "auto" for auto-aim, "manual" for manual aiming
-    t.fireRate = config.fireRate or 0.05 -- Rate of fire in seconds
+    t.fireRate = config.fireRate or 0.2 -- Rate of fire in seconds
     t.bulletType = config.bulletType or require('Bullets.Bullet')
     t.cooldown = 0 -- Cooldown timer for firing
     t.hitEffects = {} -- Table to store hit effects
-    t.damage = config.damage or 2 -- Damage dealt by the turret
+    t.damage = config.damage or 10 -- Damage dealt by the turret
     t.target = nil  -- Target to auto aim at
     t.spread = config.spread or 0 -- Spread for bullets
+    t.bulletSpeed = config.bulletSpeed or 400
     return t
 end
 
@@ -31,12 +32,19 @@ function Turret:fire()
         x = x,
         y = y,
         angle = self.rotation + offset, -- Add spread to the angle
-        speed = 400, -- Speed of the bullet
+        speed = self.bulletSpeed, -- Speed of the bullet
         damage = self.damage, -- Damage dealt by the bullet
         pierce = 1, -- Number of enemies the bullet can pierce
         hitEffects = self.hitEffects, -- Effects to apply on hit
         lifespan = 5, -- Lifespan of the bullet
-        game = self.game -- Reference to the game object
+        game = self.game, -- Reference to the game object
+        color = {1, 1, 1, 1}, -- Default color for the bullet
+        size = 3, -- Size of the bullet
+        shape = "circle", -- Shape of the bullet
+        tag = "bullet", -- Tag for collision detection
+        hitbox = {
+            shape = "circle", -- Hitbox shape for the bullet
+        }
     }
     local b = self.bulletType:new(config)
     b.damage = self.damage
@@ -55,7 +63,8 @@ function Turret:update(dt)
     if self.mode == "auto" then
         self:getTarget()
         if self.target then
-            self:lookAtTarget(dt)
+            local x,y = self:getTargetLeadPosition()
+            self:lookAt(x, y, dt) -- Aim at the target's lead position
             if self.cooldown <= 0 then
                 self:fire()
                 self.cooldown = self.fireRate
@@ -124,9 +133,11 @@ function Turret:lookAt(x, y, dt)
 
 
     self.targetRotation = target_angle
-
+    if self.turnSpeed > 10 then
+        self.rotation = self.targetRotation
+        return
+    end
     local angle = target_angle - self.rotation
-    print(angle)
     local sign = 1
     if angle < 0 then -- convert the angle to a positive
         sign = -1
@@ -150,10 +161,52 @@ function Turret:lookAt(x, y, dt)
     end
 end
 
-function Turret:lookAtTarget(dt)
 
+
+function Turret:getTargetLeadPosition()
+
+    local x = self.x
+    local y = self.y
+    local targetx = self.target.x
+    local targety = self.target.y
+    local pSpeed = self.bulletSpeed
+    local targetvx = self.target:getVelocity() -- Assuming the target has a method to get its velocity
+    local targetvy = 0 -- Assuming enemies move horizontally
+
+    local dx = targetx - x
+    local dy = targety - y
+
+    local a = targetvx^2 + targetvy^2 - pSpeed^2
+    local b = 2 * (dx * targetvx + dy * targetvy)
+    local c = dx^2 + dy^2
+
+    local disc = b^2 - 4 * a * c
+    if disc < 0 or math.abs(a) < 0.0001 then
+        return targetx, targety -- No lead angle, just aim directly at the target
+    end
+
+    local sqrt_disc = math.sqrt(disc)
+    local t1 = (-b + sqrt_disc) / (2 * a)
+    local t2 = (-b - sqrt_disc) / (2 * a)
+
+    local t = math.min(t1, t2)
+    if t < 0 then
+        t = math.max(t1, t2) -- Use the positive time if available
+    end
+    if t < 0 then
+        return targetx, targety -- If no valid time, aim directly at the target
+    end
+
+    local lead_x = targetx + targetvx * t
+    local lead_y = targety + targetvy * t
+
+    return lead_x, lead_y -- Return the position to aim at
+end
+
+function Turret:lookAtTarget(dt)
     local dx = self.target.x - self.x
     local dy = self.target.y - self.y
+    
     local target_angle = math.atan(dy / dx)
     if dx < 0 then -- for quadrants 3,4
         target_angle = math.pi + target_angle
@@ -166,8 +219,12 @@ function Turret:lookAtTarget(dt)
 
     self.targetRotation = target_angle
 
+    if self.turnSpeed > 10 then
+        self.rotation = self.targetRotation
+        return
+    end
+
     local angle = self.targetRotation - self.rotation
-    print(angle)
     local sign = 1
     if angle < 0 then -- convert the angle to a positive
         sign = -1

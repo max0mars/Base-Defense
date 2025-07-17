@@ -1,4 +1,5 @@
 local object = require("Scripts.object")
+local collision = require("Scripts.collision")
 
 Bullet = setmetatable({}, object)
 Bullet.__index = Bullet
@@ -17,13 +18,27 @@ end
 
 function Bullet:update(dt)
     if self.destroyed then return end
+    if self.x > self.game.ground.x + self.game.ground.w or self.x < self.game.ground.x or self.y < self.game.ground.y or self.y > self.game.ground.y + self.game.ground.h then
+        self:died() -- bullet hit wall
+        return
+    end
     self.lifespan = self.lifespan - dt
     if self.lifespan <= 0 then
         self:died()
         return
     end
+    -- Store previous position
+    local oldX, oldY = self.x, self.y
+    
+    -- Calculate new position
     self.x = self.x + math.cos(self.angle) * self.speed * dt
     self.y = self.y + math.sin(self.angle) * self.speed * dt
+    if(self.speed > 500) then
+        local ray = {
+            getHitbox = function() return {type = 'ray', x1 = oldX, y1 = oldY, x2 = self.x, y2 = self.y} end
+        }
+        collision:checkCollisionsRay(self, ray)
+    end
 end
 
 function Bullet:onCollision(obj)
@@ -42,15 +57,6 @@ function Bullet:onHit(enemy)
     if self.pierce <= 0 then
         self:died()
     end
-end
-
-function Bullet:draw()
-    if self.destroyed then
-        print("Bullet is destroyed, not drawing.")
-        return 
-    end
-    love.graphics.setColor(self.color) -- Yellow color for bullets
-    love.graphics.circle("fill", self.x, self.y, self.size)
 end
 
 return Bullet
