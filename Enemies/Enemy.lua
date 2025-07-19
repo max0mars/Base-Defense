@@ -2,7 +2,25 @@ local living_object = require("Scripts.living_object")
 local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
 
+local Stats = {
+    speed = 25,
+    damage = 10,
+    xp = 5,
+    size = 8, -- Default size for basic enemies
+    shape = "circle", -- Default shape for basic enemies
+    color = {1, 0, 0, 1}, -- Default color for basic enemies
+    hitbox = {
+        shape = "circle",
+    },
+    hp = 100, -- Default health for basic enemies
+    maxHp = 100, -- Maximum health for basic enemies
+    tag = "enemy", -- Tag for collision detection
+}   
+
 function Enemy:new(config)
+    for key, value in pairs(Stats) do
+        config[key] = config[key] or value -- Use default values if not provided
+    end
     config.tag = "enemy" -- Set the tag for collision detection
     local obj = living_object:new(config)
     setmetatable(obj, { __index = self })
