@@ -6,7 +6,7 @@ local scene = require("Scenes.scene") -- Import the base scene class
 setmetatable(game_scene, { __index = scene })
 
 local time_mul = 1
-local game = require("Scripts.game") -- Import the game module
+local game = require("GameManager") -- Import the game module
 
 function game_scene:load()
     time_mul = 1 -- game starts frozen

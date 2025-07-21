@@ -1,4 +1,4 @@
-local hitbox = require("Scripts.hitbox") -- Import the hitbox module
+local hitbox = require("Physics.hitbox") -- Import the hitbox module
 
 local object = {
     id_count = 0, -- Unique identifier for the object
@@ -17,13 +17,17 @@ function object:new(config)
         shape = config.shape or nil, -- shape if needed
         color = config.color or {1, 1, 1, 1}, -- Default color is white
         game = config.game or nil, -- Reference to the game object if needed
-        tag = config.tag or '', -- Tag for collision detection
+        tag = config.tag or nil, -- Tag for collision detection
         big = config.big or false, -- Flag to indicate if the object is big
     }
     if config.hitbox then
+        if obj.shape ~= "circle" and obj.shape ~= "rectangle" then
+                -- If the shape is not a circle or rectangle, use a custom hitbox
+                error("Unsupported shape for hitbox: " .. tostring(obj.shape))
+            end
         local hitboxConfig = {
             object = obj, -- Reference to the object this hitbox belongs to
-            type = config.hitbox.shape or "circle", -- Default to circle if not specified
+            type = config.hitbox.shape or obj.shape, -- Default to circle if not specified
         }
         obj.hitbox = hitbox:new(hitboxConfig) -- Create a hitbox if specified
     end

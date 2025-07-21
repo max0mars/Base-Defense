@@ -1,5 +1,5 @@
-local object = require("Scripts.object")
-local collision = require("Scripts.collision")
+local object = require("Classes.object")
+local collision = require("Physics.collisionSystem")
 
 Bullet = setmetatable({}, object)
 Bullet.__index = Bullet

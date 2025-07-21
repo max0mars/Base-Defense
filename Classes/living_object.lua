@@ -1,4 +1,4 @@
-local object = require("Scripts.object")
+local object = require("Classes.object")
 
 local living_object = setmetatable({}, object)
 living_object.__index = living_object

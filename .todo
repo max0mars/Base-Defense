@@ -1,10 +1,4 @@
-# Current Tasks
+# TODO
 
-Because of new collision, hitbox and inherit system
-[x] Fix Bullet
-[x] Fix Enemy
-[x] Fix Turret
-[x] Fix GameScene
-[x] Fix Base
-[x] Create Game Class
-[-] Create Building Class
+[ ] Saving/Loading
+[ ] Create Wave Spawner Manager or something

@@ -1,7 +1,7 @@
 hitbox = {}
 hitbox.__index = hitbox
 
-local collision = require("Scripts.collision")
+local collision = require("Physics.collisionSystem")
 
 function hitbox:new(config)
     if not config.object then

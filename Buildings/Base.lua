@@ -1,6 +1,6 @@
 local Base = {
 }
-local living_object = require("Scripts.living_object") -- Import the living_object module
+local living_object = require("Classes.living_object") -- Import the living_object module
 setmetatable(Base, { __index = living_object }) -- Inherit from the object class
 
 function Base:new(config)

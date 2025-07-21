@@ -14,3 +14,7 @@ Shapes:
 - circle: size = radius
 - square: size = length = height
 - triangle: size = length of sides
+
+For Enemies, Player Units, etc.:
+Things that aren't initialized when creating new Object:
+- size, w, h, shape, game, tag, 

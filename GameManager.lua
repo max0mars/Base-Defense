@@ -1,7 +1,6 @@
-local EnemyData = require("Enemies.EnemyData")
 local Base = require("Buildings.Base")
-local Turret = require("Turrets.Turret")
-local collision = require("Scripts.collision")
+local Turret = require("Classes.Turret")
+local collision = require("Physics.collisionSystem")
 
 local game = {}
 game.__index = game
@@ -128,10 +127,10 @@ local spawnAmount = math.huge -- Number of enemies to spawn per wave
 function game:spawner(dt)
     if spawned >= spawnAmount then
         return -- Stop spawning if the wave is complete
-    end
+    end 
     spawntimer = spawntimer - dt
     if spawntimer < 0 then -- Adjust the spawn rate as needed
-        self:addObject(EnemyData:new(self, "basic", 800, math.random(110, 490))) -- Add a new enemy at random position
+        --self:addObject(EnemyData:new(self, "basic", 800, math.random(110, 490))) -- Add a new enemy at random position
         spawntimer = spawnRate -- Reset the spawn timer
         spawned = spawned + 1
     end
