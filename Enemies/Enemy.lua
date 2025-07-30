@@ -1,4 +1,4 @@
-local living_object = require("Scripts.living_object")
+local living_object = require("Classes.living_object")
 local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
 

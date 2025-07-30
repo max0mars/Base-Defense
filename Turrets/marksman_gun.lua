@@ -1,4 +1,4 @@
-local Turret = require("Classes.Turret")
+local Turret = require("Turrets.Turret")
 local marksman_gun = setmetatable({}, {__index = Turret})
 
 local baseConfig = {

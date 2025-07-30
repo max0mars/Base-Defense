@@ -1,4 +1,4 @@
-local parent = require("Classes.unit")
+local parent = require("Units.unit")
 
 local stoner = setmetatable({}, {__index = parent})
 stoner.__index = stoner
