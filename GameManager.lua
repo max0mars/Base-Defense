@@ -1,5 +1,5 @@
 local Base = require("Buildings.Base")
-local Turret = require("Classes.Turret")
+local Turret = require("Turrets.Turret")
 local collision = require("Physics.collisionSystem")
 
 local game = {}

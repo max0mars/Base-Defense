@@ -15,4 +15,5 @@ function unit:new(config)
     setmetatable(instance, {__index = self})
     return instance
 end
+S
 

@@ -1,0 +1,27 @@
+Defend a base against oncoming enemies
+place buildings on your base to defend
+
+earn cash for completing a Wave
+earn cash by defeating enemies to buy new upgrades
+
+upgrades can include:
+- stat upgrade (specific or global)
+- new effect (bullet does poison, etc.) (specific or global)
+- new building (place on base)
+    - shooty turret
+    - spawn unit turret
+    - passive turret (upgrade adjacent turrets, generate money, heal units, etc.)
+
+mini bosses every once in a while.
+after beating, new enemies are added to wave pool
+
+final boss to end the game -> maybe make option to go endless?
+
+units:
+either melee or ranged or hybrid
+building will spawn units at a certain rate up to a maximum population
+
+
+Current State:
+basic turret
+basic enemy

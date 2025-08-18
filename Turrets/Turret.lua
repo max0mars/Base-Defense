@@ -1,4 +1,5 @@
 local object = require("Classes.object")
+local bullet = require("Bullets.Bullet")
 
 Turret = setmetatable({}, object)
 Turret.__index = Turret
@@ -10,7 +11,7 @@ function Turret:new(config)
     t.turnSpeed = config.turnSpeed or math.huge -- Speed of turret rotation
     t.mode = config.mode or "auto"  -- "auto" for auto-aim, "manual" for manual aiming
     t.fireRate = config.fireRate or 0.2 -- Rate of fire in seconds
-    t.bulletType = config.bulletType or require('Classes.Bullet')
+    t.bulletType = config.bulletType or bullet
     t.cooldown = 0 -- Cooldown timer for firing
     t.hitEffects = {} -- Table to store hit effects
     t.damage = config.damage or 10 -- Damage dealt by the turret
@@ -90,11 +91,13 @@ function Turret:draw()
 
     -- Draw barrel
     love.graphics.setColor(1, 1, 1)
+    love.graphics.setLineWidth(3) -- Set barrel thickness
     love.graphics.line(
         self.x, self.y,
         self.x + math.cos(self.rotation) * 20,
         self.y + math.sin(self.rotation) * 20
     )
+    love.graphics.setLineWidth(1) -- Reset line width to default
     --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
 end
 

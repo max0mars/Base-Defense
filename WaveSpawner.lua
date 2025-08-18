@@ -1,0 +1,3 @@
+-- store each wave as a table of enemies with their locations
+-- spawn all enemies at once off screen
+-- make it so they are 'untargetable' until they enter the play area
