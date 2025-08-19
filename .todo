@@ -1,10 +1,17 @@
 # CURRENT TASKS
 
+
+[ ] fix object.lua class inheiritance (only include things EVERY object will use in object.lua)
+    - bullet
+    - living_object
+        - enemy
+        - base
+        - unit
 [ ] Create Unit Building
 [ ] Create wave manager
 
 # TODO
-
+*do later*
 ## PROGRAMING
 [ ] Create Wave Spawner Manager or something
 [ ] Create income system

@@ -12,17 +12,17 @@ upgrades can include:
     - spawn unit turret
     - passive turret (upgrade adjacent turrets, generate money, heal units, etc.)
 
-DESIGN CHOICE:
-- building placement is permanent
-- buildings are unlocked with upgrades, placement is made with gold, buildings can be sold and built multiple times
-- hybrid, some building have a max build limit, can't be removed, etc.
+BUIDLINGS:
+- chosing a building from upgrade gives you a supply of that building (from 1 to n). place buildings with money
+- some buildings are permanent and can't be moved
+- *CONSIDER* either selling buildings or destroying buildings. some can be sold, some can sell
 
 mini bosses every once in a while.
 after beating, new enemies are added to wave pool
 
 final boss to end the game -> maybe make option to go endless?
 
-units:
+UNITS:
 either melee or ranged or hybrid
 building will spawn units at a certain rate up to a maximum population
 

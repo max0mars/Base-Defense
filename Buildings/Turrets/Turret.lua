@@ -1,11 +1,11 @@
-local object = require("Classes.object")
+local building = require("Buildings.Building")
 local bullet = require("Bullets.Bullet")
 
-Turret = setmetatable({}, object)
+Turret = setmetatable({}, building)
 Turret.__index = Turret
 
 function Turret:new(config)
-    local t = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
+    local t = setmetatable(building:new(config), { __index = self }) -- Create a new object with the base properties
     t.rotation = config.rotation or 0 -- Initial rotation of the turret
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
     t.turnSpeed = config.turnSpeed or math.huge -- Speed of turret rotation

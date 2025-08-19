@@ -1,6 +1,6 @@
-Documentation for consistently across files and programs. 
-Write something here when you make a design choice that 
-must be consistent to work
+Documentation to help me remeber and for consistency across files and programs. 
+Write here when you make a design choice that must be consistent or 
+something you want to implement in the future and don't wan to forget
 
 Hitboxes:
 - hitbox x,y may be different than obj x and y.
@@ -18,6 +18,10 @@ Shapes:
 For Enemies, Player Units, etc.:
 Things that aren't initialized when creating new Object:
 - size, w, h, shape, game, tag, 
+
+BUILDINGS
+
+
 
 
 *Not Implemented Yet*
