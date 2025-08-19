@@ -90,14 +90,14 @@ function Turret:draw()
     love.graphics.circle("fill", self.x, self.y, 8)
 
     -- Draw barrel
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.setLineWidth(3) -- Set barrel thickness
-    love.graphics.line(
-        self.x, self.y,
-        self.x + math.cos(self.rotation) * 20,
-        self.y + math.sin(self.rotation) * 20
-    )
-    love.graphics.setLineWidth(1) -- Reset line width to default
+    -- love.graphics.setColor(1, 1, 1)
+    -- love.graphics.setLineWidth(3) -- Set barrel thickness
+    -- love.graphics.line(
+    --     self.x, self.y,
+    --     self.x + math.cos(self.rotation) * 20,
+    --     self.y + math.sin(self.rotation) * 20
+    -- )
+    -- love.graphics.setLineWidth(1) -- Reset line width to default
     --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
 end
 

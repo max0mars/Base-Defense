@@ -1,18 +1,22 @@
+# CURRENT TASKS
+
+[ ] Create Unit Building
+[ ] Create wave manager
+
 # TODO
 
-
-
-PROGRAMING
-[ ] Saving/Loading
+## PROGRAMING
 [ ] Create Wave Spawner Manager or something
 [ ] Create income system
 [ ] Create upgrade system
-[ ] place turrets on base
-[ ] 
+[ ] function for placing buildings on base
+[ ] *targeting system
+[ ] *Saving/Loading
 
 
-DESIGN
+## DESIGN
 [ ] add more enemies
 [ ] add more turrets
-[ ] add mini bosses
-[ ] add final boss
+[ ] *add mini bosses
+[ ] *add final boss
+[ ] *design/balance waves

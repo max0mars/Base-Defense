@@ -12,6 +12,11 @@ upgrades can include:
     - spawn unit turret
     - passive turret (upgrade adjacent turrets, generate money, heal units, etc.)
 
+DESIGN CHOICE:
+- building placement is permanent
+- buildings are unlocked with upgrades, placement is made with gold, buildings can be sold and built multiple times
+- hybrid, some building have a max build limit, can't be removed, etc.
+
 mini bosses every once in a while.
 after beating, new enemies are added to wave pool
 

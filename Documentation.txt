@@ -18,3 +18,11 @@ Shapes:
 For Enemies, Player Units, etc.:
 Things that aren't initialized when creating new Object:
 - size, w, h, shape, game, tag, 
+
+
+*Not Implemented Yet*
+ADVANCED SWARM TARGETING system
+- all enemies have a variable called incoming damage
+- when a tower shoots an enemy, adds damage to incoming damage variable
+- when chosing a target, towers will check if incoming damage is enough to kill the enemy
+- if incoming dmg > hp then find a new target
