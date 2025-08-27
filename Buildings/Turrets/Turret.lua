@@ -4,7 +4,21 @@ local bullet = require("Bullets.Bullet")
 Turret = setmetatable({}, building)
 Turret.__index = Turret
 
+local default = {
+    mode = 'auto',
+    game = self,
+    type = 'turret',
+    turnSpeed = 11,
+    damage = 50,
+    fireRate = 2,
+    spread = 0.05,
+    bulletSpeed = 250,
+}
+
 function Turret:new(config)
+    for key, value in pairs(default) do
+        config[key] = config[key] or value
+    end
     local t = setmetatable(building:new(config), { __index = self }) -- Create a new object with the base properties
     t.rotation = config.rotation or 0 -- Initial rotation of the turret
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
@@ -19,16 +33,17 @@ function Turret:new(config)
     t.spread = config.spread or 0 -- Spread for bullets
     t.bulletSpeed = config.bulletSpeed or 400
     t.range = config.range or math.huge
+    t.barrel = config.barrel or 10
+    t.x, t.y = 0, 0
     return t
 end
-
 
 function Turret:addHitEffect(effectFunc)
     table.insert(self.hitEffects, effectFunc)
 end
 
 function Turret:fire()
-    local offset = love.math.random() * self.spread * 2 - self.spread
+    local offset = 0--love.math.random() * self.spread * 2 - self.spread
     local x, y = self:getFirePoint()
     config = {
         x = x,
@@ -61,7 +76,6 @@ end
 
 function Turret:update(dt)
     self.cooldown = self.cooldown - dt
-
     if self.mode == "auto" then
         self:getTarget()
         if self.target then
@@ -84,20 +98,21 @@ function Turret:update(dt)
 end
 
 function Turret:draw()
-
+    love.graphics.setColor(self.color or {1, 1, 1, 1})
+    -- love.graphics.rectangle("fill", x * 25, y * 25, 25, 25)
     -- Draw turret mount
     love.graphics.setColor(0, 0, 1)
     love.graphics.circle("fill", self.x, self.y, 8)
 
     -- Draw barrel
-    -- love.graphics.setColor(1, 1, 1)
-    -- love.graphics.setLineWidth(3) -- Set barrel thickness
-    -- love.graphics.line(
-    --     self.x, self.y,
-    --     self.x + math.cos(self.rotation) * 20,
-    --     self.y + math.sin(self.rotation) * 20
-    -- )
-    -- love.graphics.setLineWidth(1) -- Reset line width to default
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setLineWidth(3) -- Set barrel thickness
+    love.graphics.line(
+        self.x, self.y,
+        self.x + math.cos(self.rotation) * self.barrel,
+        self.y + math.sin(self.rotation) * self.barrel
+    )
+    love.graphics.setLineWidth(1) -- Reset line width to default
     --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
 end
 
@@ -120,7 +135,7 @@ function Turret:getTarget()
 end
 
 function Turret:getFirePoint()
-    return self.x + math.cos(self.rotation) * 20, self.y + math.sin(self.rotation) * 20
+    return self.x + math.cos(self.rotation) * self.barrel, self.y + math.sin(self.rotation) * self.barrel
 end
 
 function Turret:lookAt(x, y, dt)

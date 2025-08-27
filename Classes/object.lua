@@ -9,16 +9,16 @@ function object:new(config)
     local obj = {
         destroyed = false, -- Flag to indicate if the object is destroyed
         id = newID(),
-        -- x = config.x or 0,
-        -- y = config.y or 0,
-        -- size = config.size or nil, -- Default size is nil
-        -- w = config.w or nil, -- Width for rectangle
-        -- h = config.h or nil, -- Height for rectangle
-        -- shape = config.shape or nil, -- shape if needed
-        -- color = config.color or {1, 1, 1, 1}, -- Default color is white
-        -- game = config.game or nil, -- Reference to the game object if needed
-        -- tag = config.tag or nil, -- Tag for collision detection
-        -- big = config.big or false, -- Flag to indicate if the object is big
+        x = config.x or 0,
+        y = config.y or 0,
+        size = config.size or nil, -- Default size is nil
+        w = config.w or nil, -- Width for rectangle
+        h = config.h or nil, -- Height for rectangle
+        shape = config.shape or nil, -- shape if needed
+        color = config.color or {1, 1, 1, 1}, -- Default color is white
+        game = config.game or nil, -- Reference to the game object if needed
+        tag = config.tag or nil, -- Tag for collision detection
+        big = config.big or false, -- Flag to indicate if the object is big
     }
     -- if config.hitbox then
     --     if obj.shape ~= "circle" and obj.shape ~= "rectangle" then
@@ -63,13 +63,13 @@ end
 --     self.hitbox = hitbox -- Set the hitbox for the object
 -- end
 
--- function object:draw()
---     love.graphics.setColor(self.color) -- Set the color for drawing
---     if self.shape == "circle" then
---         love.graphics.circle("fill", self.x, self.y, self.size)
---     elseif self.shape == "rectangle" then
---         love.graphics.rectangle("fill", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
---     end
--- end
+function object:draw()
+    love.graphics.setColor(self.color or {1, 1, 1, 1}) -- Set the color for drawing
+    if self.shape == "circle" then
+        love.graphics.circle("fill", self.x, self.y, self.size)
+    elseif self.shape == "rectangle" then
+        love.graphics.rectangle("fill", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
+    end
+end
 
 return object

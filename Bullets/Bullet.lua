@@ -33,12 +33,6 @@ function Bullet:update(dt)
     -- Calculate new position
     self.x = self.x + math.cos(self.angle) * self.speed * dt
     self.y = self.y + math.sin(self.angle) * self.speed * dt
-    if(self.speed > 500) then
-        local ray = {
-            getHitbox = function() return {type = 'ray', x1 = oldX, y1 = oldY, x2 = self.x, y2 = self.y} end
-        }
-        collision:checkCollisionsRay(self, ray)
-    end
 end
 
 function Bullet:onCollision(obj)

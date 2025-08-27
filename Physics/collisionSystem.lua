@@ -146,6 +146,27 @@ function collision:checkCollisionsTagged(tag1, tag2)
     end
 end
 
+function collision:bruteforceTagged(objects, tag1, tag2)
+    for i = 1, #objects do
+        local obj1 = objects[i]
+        if obj1.tag == tag1 and not obj1.destroyed then
+            for j = i + 1, #objects do
+                local obj2 = objects[j]
+                if obj2.tag == tag2 and not obj2.destroyed then
+                    if collision:checkCollision(obj1, obj2) then
+                        if obj1.onCollision then
+                            obj1:onCollision(obj2)
+                        end
+                        if obj2.onCollision then
+                            obj2:onCollision(obj1)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- Handles checkings collisions between two objects
 -- Based on shapes of objects, it will call the appropriate collision function
 function collision:checkCollision(obj1, obj2)
