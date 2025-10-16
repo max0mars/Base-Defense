@@ -9,11 +9,9 @@ local Stats = {
     size = 8, -- Default size for basic enemies
     shape = "circle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies
-    hitbox = {
-        shape = "circle",
-    },
     hp = 100, -- Default health for basic enemies
     maxHp = 100, -- Maximum health for basic enemies
+    hitbox = true, -- Enemies have hitboxes by default
     tag = "enemy", -- Tag for collision detection
 }   
 

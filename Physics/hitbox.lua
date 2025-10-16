@@ -3,17 +3,13 @@ hitbox.__index = hitbox
 
 local collision = require("Physics.collisionSystem")
 
-function hitbox:new(config)
-    if not config.object then
+function hitbox:new(object)
+    if not object then
         error("object must be provided for hitbox creation")
-    end
-    if config.type ~= "circle" and config.type ~= "rectangle" then
-        error("Invalid hitbox type. Must be 'circle' or 'rectangle'")
     end
 
     local obj = setmetatable({}, self)
-    obj.object = config.object -- Reference to the object this hitbox belongs to
-    obj.type = config.type
+    obj.object = object -- Reference to the object this hitbox belongs to
     return obj
 end
 

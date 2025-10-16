@@ -3,6 +3,8 @@ Write here when you make a design choice that must be consistent or
 something you want to implement in the future and don't wan to forget
 
 Hitboxes:
+- AABB
+- Beam weapons: use angular distance?
 - hitbox x,y may be different than obj x and y.
 - use hitbox:getX / :getY / :getXY
 
