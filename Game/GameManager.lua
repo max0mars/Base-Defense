@@ -1,6 +1,6 @@
 local Base = require("Game.Base")
 local Turret = require("Buildings.Turrets.Turret")
-local collision = require("Physics.collisionSystem")
+local collision = require("Physics.collisionSystem_brute")
 local enemy = require("Enemies.Enemy")
 
 local game = {}
@@ -37,7 +37,11 @@ function game:load(saveData)
     self:newBuilding(Turret:new({game = self}), 3)
     self:newBuilding(Turret:new({game = self}), 4)
     self:newBuilding(Turret:new({game = self}), 5)
-    self:newBuilding(Turret:new({game = self}), 6)
+    self:newBuilding(Turret:new({game = self}), 22)
+    self:newBuilding(Turret:new({game = self}), 18)
+    self:newBuilding(Turret:new({game = self}), 45)
+    self:newBuilding(Turret:new({game = self}), 51)
+    self:newBuilding(Turret:new({game = self}), 39)
     self.ground = ground
 end
 
@@ -66,20 +70,21 @@ function game:takeOutTheTrash()
     end
 end
 
+local printTimer = 0
+local printInterval = 1 -- Print every second
+
 function game:update(dt)
-    -- collision:resetGrid() -- Reset the collision grid for the new frame
     for _, obj in ipairs(self.objects) do
         if not obj.destroyed then
             if obj.update then
                 obj:update(dt) -- Update each object if it has an update method
             end
-    --         if obj.hitbox then
-    --             collision:addToGrid(obj) -- Add the object to the collision grid
-    --         end
         end
     end
-    --collision:checkAllCollisions() -- Check for collisions between objects
-    --collision:checkCollisionsTagged("bullet", "enemy") -- Check collisions between bullets and enemies
+    -- printTimer = printTimer + dt
+    -- if printTimer >= printInterval then
+    --     printTimer = 0
+    -- end
     collision:bruteforceTagged(self.objects, "bullet", "enemy")
     self:spawner(dt) -- Handle enemy spawning
     self:takeOutTheTrash() -- Clean up destroyed objects
@@ -94,6 +99,8 @@ function game:draw()
             obj:draw() -- Draw each object if it has a draw method
         end
     end
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print("Score: " .. self.xp, 10, 10)
 end
 
 function game:mousepressed()
@@ -107,7 +114,7 @@ end
 
 
 -- eventually spawner will be moved to a separate file
-local spawnRate = 0.5
+local spawnRate = 2
 local spawntimer = 0
 local spawned = 0
 local spawnAmount = math.huge -- Number of enemies to spawn per wave

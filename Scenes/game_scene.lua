@@ -31,9 +31,6 @@ function game_scene:draw()
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
         love.graphics.setColor(1, 1, 1) -- Reset color for text
         love.graphics.printf("Game Paused", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
-        for _, obj in ipairs(game.objects) do
-            print(obj.tag, obj.x, obj.y) -- Debugging output for object positions
-        end
     end
 end
 

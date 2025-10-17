@@ -1,4 +1,5 @@
 collision = {
+    num = 0,
     grid = {},
     emptyGrid = {},
     largeObjects = {},
@@ -147,47 +148,56 @@ function collision:checkCollisionsTagged(tag1, tag2)
 end
 
 function collision:bruteforceTagged(objects, tag1, tag2)
+    objtag1 = {}
+    objtag2 = {}
     for i = 1, #objects do
-        local obj1 = objects[i]
-        if obj1.tag == tag1 and not obj1.destroyed then
-            for j = i + 1, #objects do
-                local obj2 = objects[j]
-                if obj2.tag == tag2 and not obj2.destroyed then
-                    if collision:checkCollision(obj1, obj2) then
-                        if obj1.onCollision then
-                            obj1:onCollision(obj2)
-                        end
-                        if obj2.onCollision then
-                            obj2:onCollision(obj1)
-                        end
+        if objects[i].tag == tag1 and not objects[i].destroyed then
+            table.insert(objtag1, objects[i])
+        elseif objects[i].tag == tag2 and not objects[i].destroyed then
+            table.insert(objtag2, objects[i])
+        end
+    end
+    for _, obj1 in ipairs(objtag1) do
+        for _, obj2 in ipairs(objtag2) do
+            if obj2.tag == tag2 and not obj2.destroyed then -- only finds collisions if tag2 created after tag1
+                if collision:checkCollision(obj1, obj2) then
+                    collision.num = collision.num + 1
+                    if obj1.onCollision then
+                        obj1:onCollision(obj2)
+                    end
+                    if obj2.onCollision then
+                        obj2:onCollision(obj1)
                     end
                 end
             end
         end
     end
 end
+     
 
 -- Handles checkings collisions between two objects
 -- Based on shapes of objects, it will call the appropriate collision function
 function collision:checkCollision(obj1, obj2)
     local a = obj1:getHitbox()
     local b = obj2:getHitbox()
-    if not a or not b then return false end
-    if a.type == "circle" and b.type == "circle" then
-        return self:circleCircle(a, b)
-    elseif a.type == "rectangle" and b.type == "rectangle" then
-        return self:rectRect(a, b)
-    elseif a.type == "circle" and b.type == "rectangle" then
-        return self:circleRect(a, b)
-    elseif a.type == "rectangle" and b.type == "circle" then
-        return self:circleRect(b, a)
-    elseif a.type == 'ray' and b.type == 'rectangle' then
-        return self:rayRect(a, b)
-    elseif a.type == 'ray' and b.type == 'circle' then
-        return self:rayCircle(a, b)
-    else
-        error("Error with hitbox types: " .. a.type .. " and " .. b.type)
+    if not a or not b then
     end
+    return self:rectRect(a, b) -- only rectangle-rectangle collision implemented
+    -- if a.type == "circle" and b.type == "circle" then
+    --     return self:circleCircle(a, b)
+    -- elseif a.type == "rectangle" and b.type == "rectangle" then
+    --     return self:rectRect(a, b)
+    -- elseif a.type == "circle" and b.type == "rectangle" then
+    --     return self:circleRect(a, b)
+    -- elseif a.type == "rectangle" and b.type == "circle" then
+    --     return self:circleRect(b, a)
+    -- elseif a.type == 'ray' and b.type == 'rectangle' then
+    --     return self:rayRect(a, b)
+    -- elseif a.type == 'ray' and b.type == 'circle' then
+    --     return self:rayCircle(a, b)
+    -- else
+    --     error("Error with hitbox types: " .. a.type .. " and " .. b.type)
+    -- end
 end
 
 -- Circle - Circle Collision check
@@ -203,7 +213,10 @@ end
 function collision:rectRect(a, b)
     local x1, y1, w1, h1 = a:getX(), a:getY(), a:getWidth(), a:getHeight()
     local x2, y2, w2, h2 = b:getX(), b:getY(), b:getWidth(), b:getHeight()
-    return math.abs(x1 - x2) * 2 < (w1/2 + w2/2) and math.abs(y1 - y2) * 2 < (h1/2 + h2/2)
+    if not (x1 and y1 and w1 and h1 and x2 and y2 and w2 and h2) then
+        error("One of the objects is missing width or height for rectangle collision")
+    end
+    return math.abs(x1 - x2) < (w1/2 + w2/2) and math.abs(y1 - y2) < (h1/2 + h2/2)
 end
 
 -- Circle - Rectangle Collision check

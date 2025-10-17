@@ -9,7 +9,7 @@ local default = {
     game = self,
     type = 'turret',
     turnSpeed = 11,
-    damage = 50,
+    damage = 10,
     fireRate = 2,
     spread = 0.05,
     bulletSpeed = 250,
@@ -51,17 +51,8 @@ function Turret:fire()
         angle = self.rotation + offset, -- Add spread to the angle
         speed = self.bulletSpeed, -- Speed of the bullet
         damage = self.damage, -- Damage dealt by the bullet
-        pierce = 1, -- Number of enemies the bullet can pierce
         hitEffects = self.hitEffects, -- Effects to apply on hit
-        lifespan = 5, -- Lifespan of the bullet
         game = self.game, -- Reference to the game object
-        color = {1, 1, 1, 1}, -- Default color for the bullet
-        size = 3, -- Size of the bullet
-        shape = "circle", -- Shape of the bullet
-        tag = "bullet", -- Tag for collision detection
-        hitbox = {
-            shape = "circle", -- Hitbox shape for the bullet
-        }
     }
     local b = self.bulletType:new(config)
     b.damage = self.damage

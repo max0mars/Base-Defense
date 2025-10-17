@@ -1,7 +1,7 @@
 hitbox = {}
 hitbox.__index = hitbox
 
-local collision = require("Physics.collisionSystem")
+local collision = require("Physics.collisionSystem_brute")
 
 function hitbox:new(object)
     if not object then
@@ -26,6 +26,7 @@ function hitbox:getXY()
 end
 
 function hitbox:getSize()
+    error("getSize is deprecated, use getWidth and getHeight instead")
     return self.object.size
 end
 

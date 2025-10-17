@@ -1,18 +1,30 @@
 local object = require("Classes.object")
-local collision = require("Physics.collisionSystem")
+--local collision = require("Physics.collisionSystem")
 
 Bullet = setmetatable({}, object)
 Bullet.__index = Bullet
 
+local stats = {
+    speed = 400, -- Speed of the bullet
+    damage = 10, -- Damage dealt by the bullet
+    pierce = 1, -- Number of enemies the bullet can pierce
+    hitEffects = {}, -- Effects to apply on hit
+    lifespan = 5, -- Lifespan of the bullet in seconds
+    tag = "bullet", -- Tag for collision detection
+    hitbox = true, -- Bullets have hitboxes
+    shape = "rectangle",
+    w = 4,
+    h = 4,
+}
+
 function Bullet:new(config)
+    for key, value in pairs(stats) do
+        config[key] = config[key] or value -- Use default values if not provided
+    end
+    config.tag = "bullet" -- Set the tag for collision detection
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
-    b.speed = config.speed or 400 -- Speed of the bullet
-    b.damage = config.damage or 10 -- Damage dealt by the bullet
-    b.pierce = config.pierce or 1 -- Number of enemies the bullet can pierce
     b.hitCache = {} -- Cache for hit enemies to avoid multiple hits
-    b.hitEffects = config.hitEffects or {} -- Effects to apply on hit
-    b.lifespan = config.lifespan or 5 -- Lifespan of the
     return b
 end
 
