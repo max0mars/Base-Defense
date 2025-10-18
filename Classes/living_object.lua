@@ -12,6 +12,12 @@ function living_object:new(config)
 end
 
 function living_object:drawHealthBar()
+    if self.hp < self.maxhp then
+        self:_drawHealthBar()
+    end
+end
+
+function living_object:_drawHealthBar()
     local width
     local height
     local yOffset = 0
@@ -57,9 +63,9 @@ end
 
 function living_object:draw()
     object.draw(self) -- Call the base object's draw method
-    if self.hp < self.maxhp then
-        self:drawHealthBar() -- Draw the health bar if hp is less than maxhp
-    end
+    -- if self.hp < self.maxhp then
+    --     self:drawHealthBar() -- Draw the health bar if hp is less than maxhp
+    -- end
 end
 
 return living_object

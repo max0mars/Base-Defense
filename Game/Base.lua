@@ -11,8 +11,8 @@ local default = {
     shape = "rectangle",
     color = {love.math.colorFromBytes(69, 69, 69)},
     hitbox = {shape = "rectangle"},
-    hp = 1000,
-    maxHp = 1000,
+    hp = 200,
+    maxHp = 200,
     tag = "base",
     game = self,
     big = true,
@@ -21,7 +21,8 @@ local default = {
         width = 4,
         height = 16,
         buildings = {}
-    }
+    },
+    selectedSlot = nil,
 }
 
 function Base:new(config)
@@ -39,6 +40,7 @@ function Base:new(config)
         height = config.buildGrid.height,
         buildings = {}
     }
+    obj.placing = false
     return obj
 end
 
@@ -51,10 +53,19 @@ function Base:draw()
             local slot = (j - 1) * self.buildGrid.width + i
             if not self.buildGrid.buildings[slot] then
                 love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
+                if self.placing and self.selectedSlot == slot then
+                    self.drawlast = {slot, i, j}
+                end
                 love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
                 love.graphics.print(slot, self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize)
             end
         end
+    end
+    if self.drawlast then
+        local slot, i, j = self.drawlast[1], self.drawlast[2], self.drawlast[3]
+        love.graphics.setColor(1, 1, 0, 1) -- Yellow color for selected slot
+        love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+        self.drawlast = nil
     end
 
     for _, building in pairs(self.buildGrid.buildings) do

@@ -13,8 +13,8 @@ local Stats = {
     maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
     tag = "enemy", -- Tag for collision detection
-    w = 50,
-    h = 50,
+    w = 25,
+    h = 25,
 }   
 
 function Enemy:new(config)

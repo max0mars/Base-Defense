@@ -1,14 +1,6 @@
 # CURRENT TASKS
 
-[ ] Create placement grid for buildings
-[ ] fix object.lua class inheiritance (only include things EVERY object will use in object.lua)
-    - bullet
-    - living_object
-        - enemy
-        - base
-        - unit
-[ ] Create Unit Building
-[ ] Create wave manager
+
 
 
 # TODO
@@ -17,9 +9,8 @@
 [ ] Create Wave Spawner Manager or something
 [ ] Create income system
 [ ] Create upgrade system
-[ ] Make a more clear hitbox system
 [ ] Implement sweep and prune collision detection
-[ ] *advanced turret targeting system*
+[ ] *advanced turret targeting system* (closest, strongest, weakest, etc.)
 [ ] *Saving/Loading*
 
 ## DESIGN

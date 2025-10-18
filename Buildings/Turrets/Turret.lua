@@ -6,16 +6,17 @@ Turret.__index = Turret
 
 local default = {
     mode = 'auto',
-    game = self,
     type = 'turret',
     turnSpeed = 11,
     damage = 10,
-    fireRate = 2,
+    fireRate = 0.5,
     spread = 0.05,
     bulletSpeed = 250,
+    barrel = 10
 }
 
 function Turret:new(config)
+    config = config or {}
     for key, value in pairs(default) do
         config[key] = config[key] or value
     end
@@ -33,8 +34,8 @@ function Turret:new(config)
     t.spread = config.spread or 0 -- Spread for bullets
     t.bulletSpeed = config.bulletSpeed or 400
     t.range = config.range or math.huge
-    t.barrel = config.barrel or 10
-    t.x, t.y = 0, 0
+    t.barrel = config.barrel or 0
+    --t.x, t.y = 0, 0
     return t
 end
 
@@ -42,7 +43,7 @@ function Turret:addHitEffect(effectFunc)
     table.insert(self.hitEffects, effectFunc)
 end
 
-function Turret:fire()
+function Turret:fire(args)
     local offset = 0--love.math.random() * self.spread * 2 - self.spread
     local x, y = self:getFirePoint()
     config = {
@@ -53,15 +54,18 @@ function Turret:fire()
         damage = self.damage, -- Damage dealt by the bullet
         hitEffects = self.hitEffects, -- Effects to apply on hit
         game = self.game, -- Reference to the game object
+        targetX = args.targetX,
+        targetY = args.targetY,
     }
-    local b = self.bulletType:new(config)
-    b.damage = self.damage
-
-    -- Add upgrades to bullet
-    b.hitEffects = {}
-    for _, effect in ipairs(self.hitEffects) do
-        table.insert(b.hitEffects, effect)
+    for k, v in pairs(args or {}) do
+        config[k] = v
     end
+    local b = self.bulletType:new(config)
+    -- Add upgrades to bullet
+    -- b.hitEffects = {}
+    -- for _, effect in ipairs(self.hitEffects) do
+    --     table.insert(b.hitEffects, effect)
+    -- end
     self.game:addObject(b) -- Add the bullet to the game's object list
 end
 
@@ -70,10 +74,10 @@ function Turret:update(dt)
     if self.mode == "auto" then
         self:getTarget()
         if self.target then
-            local x,y = self:getTargetLeadPosition()
+            local x, y = self:getTargetLeadPosition()
             self:lookAt(x, y, dt) -- Aim at the target's lead position
             if self.cooldown <= 0 then
-                self:fire()
+                self:fire({targetX = x, targetY = y})
                 self.cooldown = self.fireRate
             end
         end

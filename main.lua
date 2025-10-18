@@ -9,6 +9,7 @@ scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to me
 function love.load()
     love.window.setTitle("Enemy and Base Example")
     love.window.setMode(800, 600, { resizable = false, vsync = true })
+    math.randomseed( os.time() )
     scene_manager:load() -- Load the initial scene
 end
 

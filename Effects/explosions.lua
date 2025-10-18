@@ -32,22 +32,25 @@ function explosions:draw()
     local alpha = 1 - progress
     
     for i = 1, 10 do
-        local angle = math.rad(i * 36) -- Spread out the circles
+        local angle = math.rad(i * 36) -- Spread out the squares
         local offsetX = math.cos(angle) * self.radius * 0.1
         local offsetY = math.sin(angle) * self.radius * 0.1
         
-        -- Draw smaller circles around the main explosion
+        -- Draw smaller squares around the main explosion
         love.graphics.setColor(1, 0, 0, alpha * 0.5) -- Red with fade
-        love.graphics.circle("line", self.x + offsetX, self.y + offsetY, self.radius * 0.2)
+        local smallSize = self.radius * 0.4
+        love.graphics.rectangle("line", self.x + offsetX - smallSize/2, self.y + offsetY - smallSize/2, smallSize, smallSize)
     end
-    -- Draw expanding circle with fade
+    -- Draw expanding square with fade
     love.graphics.setColor(1, 0.5, 0, alpha) -- Orange with fade
-    love.graphics.circle("line", self.x, self.y, self.radius)
+    local mainSize = self.radius * 2
+    love.graphics.rectangle("line", self.x - mainSize/2, self.y - mainSize/2, mainSize, mainSize)
     
-    -- Optional: Add inner circle
+    -- Optional: Add inner square
     if self.radius > 10 then
         love.graphics.setColor(1, 1, 0, alpha * 0.5) -- Yellow center
-        love.graphics.circle("line", self.x, self.y, self.radius * 0.6)
+        local innerSize = self.radius * 1.2
+        love.graphics.rectangle("line", self.x - innerSize/2, self.y - innerSize/2, innerSize, innerSize)
     end
 end
 
