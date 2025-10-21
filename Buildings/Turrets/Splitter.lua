@@ -3,7 +3,7 @@ local Splitter = setmetatable({}, Turret)
 Splitter.__index = Splitter
 
 default = {
-    damage = 20,
+    damage = 10,
     fireRate = 2, -- seconds between shots
     spread = 0.1,
     splitamount = 5,

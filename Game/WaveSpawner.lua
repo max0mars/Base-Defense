@@ -19,7 +19,7 @@ local default = {
             reference = require("Enemies.Speeder")
         },
         {
-            spawnAmount = 20,
+            spawnAmount = 3,
             name = "Basic",
             maxSpawnAmount = 3,
             factor = 1.3,
