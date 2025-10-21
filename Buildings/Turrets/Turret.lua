@@ -58,9 +58,9 @@ function Turret:fire(args)
     for k, v in pairs(args or {}) do
         config[k] = v
     end
-    for k, v in pairs(self) do
-        config[k] = config[k] or v
-    end
+    -- for k, v in pairs(self) do
+    --     config[k] = config[k] or v
+    -- end
     local b = self.bulletType:new(config)
     -- Add upgrades to bullet
     -- b.hitEffects = {}

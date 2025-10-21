@@ -3,17 +3,18 @@ local Splitter = setmetatable({}, Turret)
 Splitter.__index = Splitter
 
 default = {
-    damage = 5,
+    damage = 20,
     fireRate = 2, -- seconds between shots
     spread = 0.1,
     splitamount = 5,
-    splitDamage = 25
+    splitDamage = 25,
 }
 
 function Splitter:new(config)
     for key, value in pairs(default) do
         config[key] = config[key] or value
     end
+
 
     local instance = Turret:new(config)
     setmetatable(instance, Splitter)
@@ -25,20 +26,23 @@ function Splitter:new(config)
                 x = self.x,
                 y = self.y,
                 angle = angle,
-                hitCache = self.hitCache,
+                hitCache = {},
                 damage = self.splitDamage,
                 game = self.game,
             }
-            self.game:addObject(self.bulletType:new(splitBulletConfig))
+            for k, v in pairs(self.hitCache) do
+                splitBulletConfig.hitCache[k] = v
+            end
+            self.game:addObject(self:new(splitBulletConfig))
         end
     end)
     return instance
 end
 
 function Splitter:fire(args)
-    args.spread = 0.1
-    args.splitamount = 5
-    args.splitDamage = 5
+    args.spread = self.spread
+    args.splitamount = self.splitamount
+    args.splitDamage = self.splitDamage
     Turret.fire(self, args)
 end
 

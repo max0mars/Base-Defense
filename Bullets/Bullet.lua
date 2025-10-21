@@ -55,7 +55,6 @@ function Bullet:onCollision(obj)
 end
 
 function Bullet:onHit(enemy)
-    print("bullet angle: " .. tostring(self.angle))
     self.pierce = self.pierce - 1
     enemy:takeDamage(self.damage)
     for _, effect in ipairs(self.hitEffects) do
