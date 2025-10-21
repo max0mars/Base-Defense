@@ -4,6 +4,7 @@ local Reward = require("Game.Reward")
 local RewardSystem = {}
 local Turret = require("Buildings.Turrets.Turret")
 local Mortar = require("Buildings.Turrets.Mortar")
+local Splitter = require("Buildings.Turrets.Splitter")
 RewardSystem.__index = RewardSystem
 
 function RewardSystem:new(game)
@@ -43,8 +44,16 @@ function RewardSystem:initializeRewardPool()
         rarity = "rare",
         type = "building"
     }
+    local splitterTurret = {
+        name = "Splitter Turret",
+        description = "Splits on hit",
+        building = Splitter:new({game = self.game}),
+        rarity = "uncommon",
+        type = "building"
+    }
     table.insert(self.rewardPool, Reward:new(basicturret))
     table.insert(self.rewardPool, Reward:new(mortarTurret))
+    table.insert(self.rewardPool, Reward:new(splitterTurret))
 end
 
 function RewardSystem:activate()

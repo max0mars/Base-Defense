@@ -1,12 +1,14 @@
+local game = {}
+game.__index = game
+
 local Base = require("Game.Base")
 --local Turret = require("Buildings.Turrets.Turret")
 local mortar = require("Buildings.Turrets.Mortar")
 local collision = require("Physics.collisionSystem_brute")
 local enemy = require("Enemies.Enemy")
 local RewardSystem = require("Game.RewardSystem")
+local WaveSpawner = require("Game.WaveSpawner")
 
-local game = {}
-game.__index = game
 
 local ground = {
     x = 0,
@@ -27,6 +29,7 @@ function game:load(saveData)
         self.wave = 0 -- Initialize wave
         self.base = Base:new()
         self.rewardSystem = RewardSystem:new(self)
+        self.WaveSpawner = WaveSpawner:new({game = self})
         self.placing = false
         self.upgrade = true
     end
@@ -94,7 +97,7 @@ function game:update(dt)
         --     printTimer = 0
         -- end
         collision:bruteforceTagged(self.objects, "bullet", "enemy")
-        self:spawner(dt) -- Handle enemy spawning
+        self.WaveSpawner:update(dt)
     end
     self:takeOutTheTrash() -- remove references to destroyed objects
 end
@@ -187,46 +190,46 @@ end
 --*******************************************************
 
 -- eventually spawner will be moved to a separate file
-local spawnRate = 0.5 -- Time in seconds between spawns
-local spawntimer = 0
-local spawned = 0
-local spawnAmount = 3 -- Number of enemies to spawn per wave
-local rewardTriggered = false -- Flag to track if reward was shown for current wave
-function game:spawner(dt)
-    if spawned >= spawnAmount then
-        -- Check if all enemies are defeated and reward hasn't been triggered
-        local enemiesAlive = 0
-        for _, obj in ipairs(self.objects) do
-            if obj.tag == "enemy" and not obj.destroyed then
-                enemiesAlive = enemiesAlive + 1
-            end
-        end
+-- local spawnRate = 0.5 -- Time in seconds between spawns
+-- local spawntimer = 0
+-- local spawned = 0
+-- local spawnAmount = 3 -- Number of enemies to spawn per wave
+-- local rewardTriggered = false -- Flag to track if reward was shown for current wave
+-- function game:spawner(dt)
+--     if spawned >= spawnAmount then
+--         -- Check if all enemies are defeated and reward hasn't been triggered
+--         local enemiesAlive = 0
+--         for _, obj in ipairs(self.objects) do
+--             if obj.tag == "enemy" and not obj.destroyed then
+--                 enemiesAlive = enemiesAlive + 1
+--             end
+--         end
         
-        if enemiesAlive == 0 and not rewardTriggered then
-            -- Show reward selection at end of wave
-            self.upgrade = true
-            rewardTriggered = true
-        end
+--         if enemiesAlive == 0 and not rewardTriggered then
+--             -- Show reward selection at end of wave
+--             self.upgrade = true
+--             rewardTriggered = true
+--         end
 
-        if enemiesAlive == 0 and not self.rewardSystem.isActive then
-            wave = wave + 1
-            spawnAmount = spawnAmount + spawnAmount * 1.5
-            spawned = 0 -- Reset spawned counter for new wave
-            rewardTriggered = false -- Reset reward flag for new wave
-        end
-        return -- Stop spawning if the wave is complete
-    end
-    spawntimer = spawntimer - dt
-    if spawntimer < 0 then -- Adjust the spawn rate as needed
-        config = {
-            game = self,
-            x = 800,
-            y = math.random(110, 490)
-        }
-        self:addObject(enemy:new(config)) -- Add a new enemy at random position
-        spawntimer = spawnRate -- Reset the spawn timer
-        spawned = spawned + 1
-    end
-end
+--         if enemiesAlive == 0 and not self.rewardSystem.isActive then
+--             wave = wave + 1
+--             spawnAmount = spawnAmount + spawnAmount * 1.3
+--             spawned = 0 -- Reset spawned counter for new wave
+--             rewardTriggered = false -- Reset reward flag for new wave
+--         end
+--         return -- Stop spawning if the wave is complete
+--     end
+--     spawntimer = spawntimer - dt
+--     if spawntimer < 0 then -- Adjust the spawn rate as needed
+--         config = {
+--             game = self,
+--             x = 800,
+--             y = math.random(110, 490)
+--         }
+--         self:addObject(enemy:new(config)) -- Add a new enemy at random position
+--         spawntimer = spawnRate -- Reset the spawn timer
+--         spawned = spawned + 1
+--     end
+-- end
 
 return game

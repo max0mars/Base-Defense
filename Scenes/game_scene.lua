@@ -33,6 +33,7 @@ function game_scene:draw()
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
         love.graphics.setColor(1, 0, 0) -- Red color for text
         love.graphics.printf("Game Over", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
+        love.graphics.printf("Final Score: " .. game.xp, 0, love.graphics.getHeight() / 2 + 20, love.graphics.getWidth(), "center")
         return
     end
     game:draw()

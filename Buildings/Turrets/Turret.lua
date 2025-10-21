@@ -10,7 +10,6 @@ local default = {
     turnSpeed = 11,
     damage = 10,
     fireRate = 0.5,
-    spread = 0.05,
     bulletSpeed = 250,
     barrel = 10
 }
@@ -31,7 +30,6 @@ function Turret:new(config)
     t.hitEffects = {} -- Table to store hit effects
     t.damage = config.damage or 10 -- Damage dealt by the turret
     t.target = nil  -- Target to auto aim at
-    t.spread = config.spread or 0 -- Spread for bullets
     t.bulletSpeed = config.bulletSpeed or 400
     t.range = config.range or math.huge
     t.barrel = config.barrel or 0
@@ -59,6 +57,9 @@ function Turret:fire(args)
     }
     for k, v in pairs(args or {}) do
         config[k] = v
+    end
+    for k, v in pairs(self) do
+        config[k] = config[k] or v
     end
     local b = self.bulletType:new(config)
     -- Add upgrades to bullet

@@ -6,21 +6,21 @@ local Stats = {
     speed = 25,
     damage = 10,
     xp = 5,
-    size = 8, -- Default size for basic enemies
+    size = 25, -- Default size for basic enemies
     shape = "rectangle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies
     hp = 100, -- Default health for basic enemies
     maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
     tag = "enemy", -- Tag for collision detection
-    w = 25,
-    h = 25,
 }   
 
 function Enemy:new(config)
     for key, value in pairs(Stats) do
         config[key] = config[key] or value -- Use default values if not provided
     end
+    config.w = config.w or config.size
+    config.h = config.h or config.size
     local obj = living_object:new(config)
     setmetatable(obj, { __index = self })
     obj.target = obj.game.base.x + obj.game.base.w / 2 + (obj.size or obj.w/2)

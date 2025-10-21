@@ -24,7 +24,7 @@ function Bullet:new(config)
     config.tag = "bullet" -- Set the tag for collision detection
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
-    b.hitCache = {} -- Cache for hit enemies to avoid multiple hits
+    b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
     return b
 end
 
@@ -55,10 +55,11 @@ function Bullet:onCollision(obj)
 end
 
 function Bullet:onHit(enemy)
+    print("bullet angle: " .. tostring(self.angle))
     self.pierce = self.pierce - 1
     enemy:takeDamage(self.damage)
     for _, effect in ipairs(self.hitEffects) do
-        effect(self, enemy) 
+        effect(self, enemy)
     end
     if self.pierce <= 0 then
         self:died()
