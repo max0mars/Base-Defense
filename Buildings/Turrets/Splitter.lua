@@ -8,6 +8,7 @@ default = {
     spread = 0.1,
     splitamount = 5,
     splitDamage = 25,
+    color = {0.5, 0.5, 1, 1},
 }
 
 function Splitter:new(config)

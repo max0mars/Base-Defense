@@ -7,7 +7,7 @@ function living_object:new(config)
     local obj = object:new(config)
     setmetatable(obj, { __index = self })
     obj.hp = config.hp
-    obj.maxhp = config.maxHp -- Store the maximum health
+    obj.maxhp = config.maxHp or config.hp -- Store the maximum health
     return obj
 end
 
