@@ -175,6 +175,13 @@ function game:keypressed(key)
     if self.rewardSystem then
         self.rewardSystem:keypressed(key)
     end
+    if key == "space" then
+        for _, obj in ipairs(self.objects) do
+            if obj.tag == "turret" then
+                obj.target = nil -- Reset turret targets on any key press
+            end
+        end
+    end
 end
 
 function ground:draw()

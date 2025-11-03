@@ -7,6 +7,7 @@ Turret.__index = Turret
 local default = {
     mode = 'auto',
     type = 'turret',
+    tag = 'turret',
     turnSpeed = 11,
     damage = 10,
     fireRate = 0.5,
@@ -97,7 +98,7 @@ function Turret:draw()
     love.graphics.setColor(self.color or {1, 1, 1, 1})
     -- love.graphics.rectangle("fill", x * 25, y * 25, 25, 25)
     -- Draw turret mount
-    love.graphics.setColor(0, 0, 1)
+    --love.graphics.setColor(0, 0, 1)
     love.graphics.circle("fill", self.x, self.y, 8)
 
     -- Draw barrel
