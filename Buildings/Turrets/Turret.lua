@@ -8,11 +8,21 @@ local default = {
     mode = 'auto',
     type = 'turret',
     tag = 'turret',
-    turnSpeed = 11,
+    rotation = 0,
+    turnSpeed = math.huge,
+    fireRate = 0.2,
     damage = 10,
-    fireRate = 0.5,
-    bulletSpeed = 250,
-    barrel = 10
+    bulletSpeed = 400,
+    range = math.huge,
+    barrel = 0,
+    arcAngle = math.pi/4, -- 45 degrees
+    firingArc = {
+        direction = 0,    -- Firing arc facing direction in radians
+        minRange = 0,     -- Minimum firing range
+        maxRange = 600,   -- Maximum firing range  
+        angle = math.pi/4   -- Firing arc angle (in radians, math.pi = 180 degrees)
+    },
+    color = {1, 1, 1, 1}
 }
 
 function Turret:new(config)
@@ -20,20 +30,45 @@ function Turret:new(config)
     for key, value in pairs(default) do
         config[key] = config[key] or value
     end
+    
+    -- Ensure firingArc has no missing values
+    if config.firingArc then
+        if not config.firingArc.direction then
+            error("firingArc.direction is required when providing custom firingArc")
+        end
+        if not config.firingArc.minRange then
+            error("firingArc.minRange is required when providing custom firingArc")
+        end
+        if not config.firingArc.maxRange then
+            error("firingArc.maxRange is required when providing custom firingArc")
+        end
+        if not config.firingArc.angle then
+            error("firingArc.angle is required when providing custom firingArc")
+        end
+    end
+    
     local t = setmetatable(building:new(config), { __index = self }) -- Create a new object with the base properties
-    t.rotation = config.rotation or 0 -- Initial rotation of the turret
+    t.rotation = config.rotation
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
-    t.turnSpeed = config.turnSpeed or math.huge -- Speed of turret rotation
-    t.mode = config.mode or "auto"  -- "auto" for auto-aim, "manual" for manual aiming
-    t.fireRate = config.fireRate or 0.2 -- Rate of fire in seconds
+    t.turnSpeed = config.turnSpeed
+    t.mode = config.mode
+    t.fireRate = config.fireRate
     t.bulletType = config.bulletType or bullet
     t.cooldown = 0 -- Cooldown timer for firing
     t.hitEffects = {} -- Table to store hit effects
-    t.damage = config.damage or 10 -- Damage dealt by the turret
+    t.damage = config.damage
     t.target = nil  -- Target to auto aim at
-    t.bulletSpeed = config.bulletSpeed or 400
-    t.range = config.range or math.huge
-    t.barrel = config.barrel or 0
+    t.bulletSpeed = config.bulletSpeed
+    t.range = config.range
+    t.barrel = config.barrel
+    t.firingArc = {
+        direction = config.firingArc.direction,
+        minRange = config.firingArc.minRange,
+        maxRange = config.firingArc.maxRange,
+        angle = config.firingArc.angle
+    }
+    t.showArc = false -- Flag to show firing arc
+    t.selected = false -- Flag to show if turret is selected
     --t.x, t.y = 0, 0
     return t
 end
@@ -74,7 +109,7 @@ end
 function Turret:update(dt)
     self.cooldown = self.cooldown - dt
     if self.mode == "auto" then
-        self:getTarget()
+        self:getTargetArc()
         if self.target then
             local x, y = self:getTargetLeadPosition()
             self:lookAt(x, y, dt) -- Aim at the target's lead position
@@ -84,7 +119,7 @@ function Turret:update(dt)
             end
         end
     else
-        -- Manual aiming mode
+        -- Player control mode
         local mx, my = love.mouse.getPosition()
         self:lookAt(mx, my, dt)
         if love.mouse.isDown(1) and self.cooldown <= 0 then
@@ -95,7 +130,12 @@ function Turret:update(dt)
 end
 
 function Turret:draw()
-    love.graphics.setColor(self.color or {1, 1, 1, 1})
+    -- Draw firing arc if showArc flag is set
+    if self.showArc then
+        self:drawFiringArc(0.4)
+    end
+    
+    love.graphics.setColor(self.color)
     -- love.graphics.rectangle("fill", x * 25, y * 25, 25, 25)
     -- Draw turret mount
     --love.graphics.setColor(0, 0, 1)
@@ -111,6 +151,56 @@ function Turret:draw()
     )
     love.graphics.setLineWidth(1) -- Reset line width to default
     --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
+end
+
+function Turret:drawFiringArc(alpha)
+    alpha = alpha or 0.3
+    love.graphics.setColor(1, 1, 0, alpha) -- Yellow with transparency
+    
+    -- Calculate arc bounds using firing arc direction
+    local startAngle = self.firingArc.direction - self.firingArc.angle / 2
+    local endAngle = self.firingArc.direction + self.firingArc.angle / 2
+    
+    -- Draw the firing arc as a sector
+    if self.firingArc.minRange > 0 then
+        -- Draw arc with inner and outer radius
+        self:drawArcSector(self.x, self.y, self.firingArc.minRange, self.firingArc.maxRange, startAngle, endAngle)
+    else
+        -- Draw simple arc from center
+        self:drawArcSector(self.x, self.y, 0, self.firingArc.maxRange, startAngle, endAngle)
+    end
+    
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color
+end
+
+function Turret:drawArcSector(x, y, innerRadius, outerRadius, startAngle, endAngle)
+    local segments = 20
+    local angleStep = (endAngle - startAngle) / segments
+    
+    -- Draw the arc as a series of triangles
+    for i = 0, segments - 1 do
+        local angle1 = startAngle + i * angleStep
+        local angle2 = startAngle + (i + 1) * angleStep
+        
+        -- Create quad vertices
+        local x1_inner = x + math.cos(angle1) * innerRadius
+        local y1_inner = y + math.sin(angle1) * innerRadius
+        local x1_outer = x + math.cos(angle1) * outerRadius
+        local y1_outer = y + math.sin(angle1) * outerRadius
+        
+        local x2_inner = x + math.cos(angle2) * innerRadius
+        local y2_inner = y + math.sin(angle2) * innerRadius
+        local x2_outer = x + math.cos(angle2) * outerRadius
+        local y2_outer = y + math.sin(angle2) * outerRadius
+        
+        -- Draw two triangles to form a quad
+        love.graphics.polygon("fill", 
+            x1_inner, y1_inner,
+            x1_outer, y1_outer, 
+            x2_outer, y2_outer,
+            x2_inner, y2_inner
+        )
+    end
 end
 
 function Turret:getTarget()
@@ -129,6 +219,69 @@ function Turret:getTarget()
             end
         end
     end
+end
+
+function Turret:getTargetArc()
+    if self.target and self.target.destroyed then
+        self.target = nil -- Reset target if it is destroyed
+    elseif self.target and self:isInFiringArc(self.target) then
+        return self.target -- Return current target if still valid and in arc
+    end
+    
+    self.target = nil -- Clear target if it's out of arc
+    local closestDist = math.huge
+    local closestEnemy = nil
+    
+    for _, obj in ipairs(self.game.objects) do
+        if obj.tag == "enemy" and not obj.destroyed then
+            if self:isInFiringArc(obj) then
+                local dist = (obj.x - self.x)^2 + (obj.y - self.y)^2
+                if dist < closestDist then
+                    closestDist = dist
+                    closestEnemy = obj
+                end
+            end
+        end
+    end
+    
+    self.target = closestEnemy
+    return self.target
+end
+
+function Turret:isInFiringArc(target)
+    if not target then return false end
+    
+    local dx = target.x - self.x
+    local dy = target.y - self.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    -- Check if target is within range
+    if distance < self.firingArc.minRange or distance > self.firingArc.maxRange then
+        return false
+    end
+    
+    -- Calculate angle to target
+    local angleToTarget = math.atan2(dy, dx)
+    
+    -- Normalize angle to [0, 2π]
+    if angleToTarget < 0 then
+        angleToTarget = angleToTarget + 2 * math.pi
+    end
+    
+    -- Normalize direction to [0, 2π]
+    local normalizedDirection = self.firingArc.direction
+    if normalizedDirection < 0 then
+        normalizedDirection = normalizedDirection + 2 * math.pi
+    end
+    
+    -- Calculate angular difference
+    local angleDiff = math.abs(angleToTarget - normalizedDirection)
+    if angleDiff > math.pi then
+        angleDiff = 2 * math.pi - angleDiff
+    end
+    
+    -- Check if target is within firing arc angle
+    return angleDiff <= self.firingArc.angle / 2
 end
 
 function Turret:getFirePoint()
