@@ -18,7 +18,7 @@ function game_scene:mousepressed(x, y, button)
 end
 
 function game_scene:update(dt)
-    if game.gameover then
+    if game:isState("gameover") then
         self.gameover = true
     end
     if paused == 1 then

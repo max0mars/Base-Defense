@@ -14,7 +14,6 @@ local default = {
     hp = 200,
     maxHp = 200,
     tag = "base",
-    game = self,
     big = true,
     buildGrid = {
         cellSize = 25,
@@ -26,7 +25,13 @@ local default = {
 }
 
 function Base:new(config)
-    local config = config or default
+    local config = config or {}
+    -- Merge with defaults
+    for key, value in pairs(default) do
+        if config[key] == nil then
+            config[key] = value
+        end
+    end
     if not config.buildGrid then
         error("buildGrid is required for Base")
     end
@@ -40,7 +45,6 @@ function Base:new(config)
         height = config.buildGrid.height,
         buildings = {}
     }
-    obj.placing = false
     return obj
 end
 
@@ -53,7 +57,7 @@ function Base:draw()
             local slot = (j - 1) * self.buildGrid.width + i
             if not self.buildGrid.buildings[slot] then
                 love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
-                if self.placing and self.selectedSlot == slot then
+                if self.game:isState("placing") and self.selectedSlot == slot then
                     self.drawlast = {slot, i, j}
                 end
                 love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)

@@ -26,17 +26,19 @@ function game:load(saveData)
         self.xp = 0 -- Initialize XP
         self.money = 0 -- Initialize money
         self.wave = 0 -- Initialize wave
-        self.base = Base:new()
+        self.base = Base:new({game = self})
         self.rewardSystem = RewardSystem:new(self)
         self.WaveSpawner = WaveSpawner:new({game = self})
         self.inputHandler = InputHandler:new(self)
-        self.placing = false
-        self.upgrade = true
+        self.state = "wave" -- Current game state: "wave", "placing", "reward", "gameover"
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
     self:addObject(self.base) -- Add the base object to the game
     self.ground = ground
+    
+    -- Start the first wave
+    self.WaveSpawner:activateWave()
 end
 
 function game:newBuilding(building, slot)
@@ -73,40 +75,58 @@ local printInterval = 1 -- Print every second
 
 function game:update(dt)
     if self.base.hp <= 0 then
-        self.gameover = true
+        self:setState("gameover")
         return
     end
-    if self.upgrade then
+
+    -- Check if wave is complete and transition to reward state
+    if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
+        self:setState("reward")
         self.rewardSystem:activate()
-        self.upgrade = false
+    end
+    
+    -- Check if reward phase is over and start next wave
+    if self:isState("reward") and not self.rewardSystem.isActive then
+        self:setState("wave")
+        self.WaveSpawner:activateWave()
     end
 
     -- Update input handler
     self.inputHandler:update(dt)
 
-    -- Only update game objects if reward system is not active
-    if not self.rewardSystem.isActive and not self.placing then
-        for _, obj in ipairs(self.objects) do
-            if not obj.destroyed then
-                if obj.update then
-                    obj:update(dt) -- Update each object if it has an update method
-                end
+    -- Update game objects continuously (time doesn't freeze during rewards or placement)
+    for _, obj in ipairs(self.objects) do
+        if not obj.destroyed then
+            if obj.update then
+                obj:update(dt) -- Update each object if it has an update method
             end
         end
-        -- printTimer = printTimer + dt
-        -- if printTimer >= printInterval then
-        --     printTimer = 0
-        -- end
-        collision:bruteforceTagged(self.objects, "bullet", "enemy")
-        self.WaveSpawner:update(dt)
     end
+    -- printTimer = printTimer + dt
+    -- if printTimer >= printInterval then
+    --     printTimer = 0
+    -- end
+    collision:bruteforceTagged(self.objects, "bullet", "enemy")
+    self.WaveSpawner:update(dt)
+    
     self:takeOutTheTrash() -- remove references to destroyed objects
 end
 
 function game:placeBuilding(building)
-    self.base.placing = true
-    self.placing = true
+    self:setState("placing")
     self.blueprint = building:new({game = self})
+end
+
+function game:setState(newState)
+    self.state = newState
+end
+
+function game:getState()
+    return self.state
+end
+
+function game:isState(checkState)
+    return self.state == checkState
 end
 
 local wave = 1

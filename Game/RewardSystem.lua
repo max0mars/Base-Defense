@@ -68,6 +68,7 @@ function RewardSystem:selectReward(index)
             self.game:placeBuilding(reward.building)
         elseif reward.type == "upgrade" then
             reward:execute(self.game)
+            self.game:setState("wave")
         end
     end    
     self.isActive = false

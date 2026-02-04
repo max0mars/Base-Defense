@@ -13,11 +13,15 @@ function InputHandler:new(game)
 end
 
 function InputHandler:update(dt)
-    --local game = self.game
+    local game = self.game
     
     self.mouseX, self.mouseY = love.mouse.getPosition()
     self:handleTurretHover()
-    self:handleBuildingSlotHover()
+    
+    -- Only handle building slot hover when placing
+    if game:isState("placing") then
+        self:handleBuildingSlotHover()
+    end
 end
 
 function InputHandler:handleTurretHover()
@@ -80,7 +84,7 @@ function InputHandler:mousepressed(x, y, button)
     end
     
     -- Handle building placement
-    if game.placing and button == 1 then
+    if game:isState("placing") and button == 1 then
         local buildGrid = base.buildGrid
         local gridX = math.floor(x / buildGrid.cellSize) + 1
         local gridY = math.floor((y - buildGrid.y) / buildGrid.cellSize) + 1
@@ -89,8 +93,7 @@ function InputHandler:mousepressed(x, y, button)
             local slot = (gridY - 1) * buildGrid.width + gridX
             if not buildGrid.buildings[slot] then
                 game:newBuilding(game.blueprint, slot)
-                game.placing = false
-                base.placing = false
+                game:setState("wave")
                 game.blueprint = nil
             else
                 print("Slot " .. slot .. " is already occupied!")

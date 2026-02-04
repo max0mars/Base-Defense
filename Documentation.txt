@@ -42,6 +42,27 @@ COORDINATE SYSTEM:
 - Angles follow standard math: 0 = right, increases counter-clockwise
 - Y-axis is flipped, so visual "up" is negative Y direction
 
+GAME STATES:
+GameManager uses a unified string-based state system instead of scattered boolean flags.
+
+Current States:
+- "wave": Normal gameplay - turrets shooting, enemies spawning, player interaction
+- "placing": Building placement mode - player selecting where to place a new building
+- "reward": Upgrade selection phase - choosing between reward options after wave completion
+- "gameover": Game over screen - base HP reached 0, showing final score
+
+State Management Methods:
+- game:setState(newState) - Updates the current game state
+- game:getState() - Returns the current state string
+- game:isState(stateName) - Boolean check if currently in specified state
+
+State Transitions:
+- wave → reward: When wave ends (WaveSpawner triggers)
+- reward → placing: When building reward is selected
+- reward → wave: When upgrade reward is selected
+- placing → wave: When building is successfully placed
+- any → gameover: When base HP <= 0
+
 
 
 

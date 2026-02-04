@@ -47,7 +47,7 @@ function WaveSpawner:new(config)
         instance[k] = v
     end
     instance.Enemies = default.Enemies
-    instance.waveState = 2
+    instance.waveState = "idle"
     -- local instance = setmetatable({}, WaveSpawner)
     -- instance.game = config.game
     -- instance.spawnRate = config.spawnRate
@@ -60,18 +60,23 @@ end
 
 
 function WaveSpawner:update(dt)
-    if self.waveState == 2 then
-        self.waveState = 1
-        self.game.wave = self.game.wave + 1
-        self.waveEnemies = {}
+    if self.waveState == "idle" then
+        -- Wait for GameManager to activate the wave
+        return
+    elseif self.waveState == "active" then
+        -- Initialize wave if just activated
+        if not self.waveInitialized then
+            self.game.wave = self.game.wave + 1
+            self.waveEnemies = {}
+            self.waveInitialized = true
 
-        for i, e in ipairs(self.Enemies) do
-            if(e.maxSpawnAmount > 0) then
-                table.insert(self.waveEnemies, i)
+            for i, e in ipairs(self.Enemies) do
+                if(e.maxSpawnAmount > 0) then
+                    table.insert(self.waveEnemies, i)
+                end
             end
         end
-    elseif self.waveState == 0 then
-        self.game.upgrade = true
+    elseif self.waveState == "complete" then
         for i, e in ipairs(self.Enemies) do
             if(e.maxSpawnAmount <= -1) then
                 e.maxSpawnAmount = e.maxSpawnAmount + 1
@@ -83,7 +88,8 @@ function WaveSpawner:update(dt)
                 e.spawnAmount = e.maxSpawnAmount
             end
         end
-        self.waveState = 2
+        self.waveState = "idle"
+        self.waveInitialized = false
     else
         if(#self.waveEnemies == 0) then
             -- Check if all enemies are defeated
@@ -96,7 +102,7 @@ function WaveSpawner:update(dt)
             
             if enemiesAlive == 0 then
                 -- Show reward selection at end of wave
-                self.waveState = 0
+                self.waveState = "complete"
             end
             return -- Stop spawning if the wave is complete
         end
@@ -116,6 +122,12 @@ function WaveSpawner:update(dt)
             end
             self.spawntimer = self.spawnRate -- Reset the spawn timer
         end
+    end
+end
+
+function WaveSpawner:activateWave()
+    if self.waveState == "idle" then
+        self.waveState = "active"
     end
 end
 
