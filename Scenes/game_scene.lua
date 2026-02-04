@@ -14,7 +14,7 @@ function game_scene:load()
 end
 
 function game_scene:mousepressed(x, y, button)
-    game:mousepressed(x, y, button) -- Pass mouse events to the game module
+    game.inputHandler:mousepressed(x, y, button) -- Route through InputHandler
 end
 
 function game_scene:update(dt)
@@ -54,7 +54,7 @@ function game_scene:keypressed(key)
     elseif key == "-" then
         time_mul = math.max(time_mul - 0.5, 0) -- Decrease time multiplier down to 0x
     else 
-        game:keypressed(key) -- Call base class method for other keys
+        game.inputHandler:keypressed(key) -- Route through InputHandler
     end
 end
 
