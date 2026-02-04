@@ -23,6 +23,25 @@ Things that aren't initialized when creating new Object:
 
 BUILDINGS
 
+TURRETS:
+- rotation: Visual direction the turret barrel faces (in radians)
+  - 0 = pointing RIGHT (positive X direction)
+  - math.pi/2 = pointing DOWN (positive Y direction) 
+  - math.pi = pointing LEFT (negative X direction)
+  - 3*math.pi/2 = pointing UP (negative Y direction)
+
+- firingArc.direction: Center direction of the firing arc (in radians)
+  - 0 = firing arc centered facing RIGHT
+  - math.pi/2 = firing arc centered facing DOWN
+  - math.pi = firing arc centered facing LEFT  
+  - 3*math.pi/2 = firing arc centered facing UP
+  - Can be independent of visual rotation for strategic gameplay
+
+COORDINATE SYSTEM:
+- Love2D uses: X increases rightward, Y increases downward
+- Angles follow standard math: 0 = right, increases counter-clockwise
+- Y-axis is flipped, so visual "up" is negative Y direction
+
 
 
 

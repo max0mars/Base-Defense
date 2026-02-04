@@ -1,21 +1,25 @@
 # CURRENT TASKS
 
-
-
+[ ] Add Main turret (Player controlled)
+[ ] Add firing arcs to turrets (min/max, angle)
 
 # TODO
-*do later*
+
+_do later_
+
 ## PROGRAMING
+
 [ ] Create Wave Spawner Manager or something
 [ ] Create income system
 [ ] Create upgrade system
 [ ] Implement sweep and prune collision detection
-[ ] *advanced turret targeting system* (closest, strongest, weakest, etc.)
-[ ] *Saving/Loading*
+[ ] _advanced turret targeting system_ (closest, strongest, weakest, etc.)
+[ ] _Saving/Loading_
 
 ## DESIGN
+
 [ ] add more enemies
 [ ] add more turrets
 [ ] *add mini bosses
 [ ] *add final boss
-[ ] *design/balance waves
+[ ] \*design/balance waves
