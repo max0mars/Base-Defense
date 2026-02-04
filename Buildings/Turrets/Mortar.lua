@@ -1,3 +1,10 @@
+--[[
+    DEPRECATED: Mortar turret is deprecated during development.
+    This class needs to be properly implemented with the new firing arc system
+    and updated to match the current Turret architecture.
+    DO NOT USE in production code.
+--]]
+
 local Turret = require("Buildings.Turrets.Turret")
 local Mortar = setmetatable({}, Turret)
 Mortar.__index = Mortar
@@ -13,6 +20,7 @@ local default = {
 }
 
 function Mortar:new(config)
+    error("Mortar turret is deprecated. Use base Turret class instead.")
     config = config or {}
     for key, value in pairs(default) do
         config[key] = config[key] or value

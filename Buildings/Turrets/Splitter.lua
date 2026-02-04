@@ -1,6 +1,19 @@
+--[[
+    DEPRECATED: Splitter turret is deprecated during development.
+    This class needs to be properly implemented with the new firing arc system
+    and updated to match the current Turret architecture.
+    DO NOT USE in production code.
+--]]
+
 local Turret = require("Buildings.Turrets.Turret")
 local Splitter = setmetatable({}, Turret)
 Splitter.__index = Splitter
+
+--[[
+Splitter Turret:
+- Same functionality as regular turret but with on hit effect:
+- Fires a projectile that splits into multiple smaller projectiles upon hitting an enemy.
+--]]
 
 default = {
     damage = 10,
@@ -12,6 +25,7 @@ default = {
 }
 
 function Splitter:new(config)
+    error("Splitter turret is deprecated. Use base Turret class instead.")
     for key, value in pairs(default) do
         config[key] = config[key] or value
     end
