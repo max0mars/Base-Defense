@@ -9,6 +9,7 @@ local default = {
     spawnRate = 0.5, -- Time in seconds between spawns
     spawntimer = 0,
     waveEnemies = {},
+    waveInitialized = false,
     Enemies = {
         {
             name = "Speeder",
@@ -75,6 +76,38 @@ function WaveSpawner:update(dt)
                     table.insert(self.waveEnemies, i)
                 end
             end
+        else
+            if(#self.waveEnemies == 0) then
+                -- Check if all enemies are defeated
+                local enemiesAlive = 0
+                for _, obj in ipairs(self.game.objects) do
+                    if obj.tag == "enemy" and not obj.destroyed then
+                        enemiesAlive = enemiesAlive + 1
+                    end
+                end
+            
+                if enemiesAlive == 0 then
+                    -- Show reward selection at end of wave
+                    self.waveState = "complete"
+                end
+                return -- Stop spawning if the wave is complete
+            end
+            self.spawntimer = self.spawntimer - dt
+            if self.spawntimer < 0 then -- Adjust the spawn rate as needed
+                config = {
+                    game = self.game,
+                    x = 800,
+                    y = math.random(110, 490)
+                }
+                index = math.random(1, #self.waveEnemies)
+                reference = self.waveEnemies[index]
+                self.game:addObject(self.Enemies[reference].reference:new(config))
+                self.Enemies[reference].spawnAmount = self.Enemies[reference].spawnAmount - 1
+                if(self.Enemies[reference].spawnAmount <= 0) then
+                    table.remove(self.waveEnemies, index)
+                end
+                self.spawntimer = self.spawnRate -- Reset the spawn timer
+            end
         end
     elseif self.waveState == "complete" then
         for i, e in ipairs(self.Enemies) do
@@ -88,46 +121,14 @@ function WaveSpawner:update(dt)
                 e.spawnAmount = e.maxSpawnAmount
             end
         end
-        self.waveState = "idle"
-        self.waveInitialized = false
-    else
-        if(#self.waveEnemies == 0) then
-            -- Check if all enemies are defeated
-            local enemiesAlive = 0
-            for _, obj in ipairs(self.game.objects) do
-                if obj.tag == "enemy" and not obj.destroyed then
-                    enemiesAlive = enemiesAlive + 1
-                end
-            end
-            
-            if enemiesAlive == 0 then
-                -- Show reward selection at end of wave
-                self.waveState = "complete"
-            end
-            return -- Stop spawning if the wave is complete
-        end
-        self.spawntimer = self.spawntimer - dt
-        if self.spawntimer < 0 then -- Adjust the spawn rate as needed
-            config = {
-                game = self.game,
-                x = 800,
-                y = math.random(110, 490)
-            }
-            index = math.random(1, #self.waveEnemies)
-            reference = self.waveEnemies[index]
-            self.game:addObject(self.Enemies[reference].reference:new(config))
-            self.Enemies[reference].spawnAmount = self.Enemies[reference].spawnAmount - 1
-            if(self.Enemies[reference].spawnAmount <= 0) then
-                table.remove(self.waveEnemies, index)
-            end
-            self.spawntimer = self.spawnRate -- Reset the spawn timer
-        end
+        self.waveState = "idle"        
     end
 end
 
-function WaveSpawner:activateWave()
+function WaveSpawner:startNextWave()
     if self.waveState == "idle" then
         self.waveState = "active"
+        self.waveInitialized = false
     end
 end
 

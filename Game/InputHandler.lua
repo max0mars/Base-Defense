@@ -93,7 +93,7 @@ function InputHandler:mousepressed(x, y, button)
             local slot = (gridY - 1) * buildGrid.width + gridX
             if not buildGrid.buildings[slot] then
                 game:newBuilding(game.blueprint, slot)
-                game:setState("wave")
+                game:setState("preparing")
                 game.blueprint = nil
             else
                 print("Slot " .. slot .. " is already occupied!")
@@ -141,12 +141,12 @@ end
 
 function InputHandler:keypressed(key)
     local game = self.game
-    local rewardSystem = game.rewardSystem
+    -- local rewardSystem = game.rewardSystem
     
-    -- Handle reward system input first
-    if rewardSystem then
-        rewardSystem:keypressed(key)
-    end
+    -- -- Handle reward system input first
+    -- if rewardSystem then
+    --     rewardSystem:keypressed(key)
+    -- end
     
     -- Handle turret target reset
     if key == "space" then
@@ -154,6 +154,12 @@ function InputHandler:keypressed(key)
             if obj.tag == "turret" then
                 obj.target = nil -- Reset turret targets on space press
             end
+        end
+    elseif key == "return" or key == "enter" then
+        -- Start next wave if in preparing state
+        if game:isState("preparing") then
+            game.WaveSpawner:startNextWave()
+            game:setState("wave")
         end
     end
     

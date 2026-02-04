@@ -30,15 +30,15 @@ function game:load(saveData)
         self.rewardSystem = RewardSystem:new(self)
         self.WaveSpawner = WaveSpawner:new({game = self})
         self.inputHandler = InputHandler:new(self)
-        self.state = "wave" -- Current game state: "wave", "placing", "reward", "gameover"
+        self.state = "startup" -- Current game state: "startup", "wave", "placing", "reward", "gameover"
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
     self:addObject(self.base) -- Add the base object to the game
     self.ground = ground
     
-    -- Start the first wave
-    self.WaveSpawner:activateWave()
+    -- Transition to preparing state after initialization
+    self:setState("preparing")
 end
 
 function game:newBuilding(building, slot)
@@ -85,10 +85,14 @@ function game:update(dt)
         self.rewardSystem:activate()
     end
     
-    -- Check if reward phase is over and start next wave
+    -- Check if reward phase is over and go to preparing state
     if self:isState("reward") and not self.rewardSystem.isActive then
-        self:setState("wave")
-        self.WaveSpawner:activateWave()
+        self:setState("preparing")
+    end
+    
+    -- Check if in preparing state and enter key pressed to start wave
+    if self:isState("preparing") then
+        -- Wave start is handled by InputHandler when enter key is pressed
     end
 
     -- Update input handler
@@ -144,9 +148,6 @@ function game:draw()
     for _, obj in ipairs(healthyboys) do
         obj:drawHealthBar() -- Draw health bars for living objects
     end
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("Score: " .. self.xp, 10, 10)
-    love.graphics.print("Wave: " .. wave, 10, 50)
     
     -- Draw reward system on top of everything
     if self.rewardSystem then

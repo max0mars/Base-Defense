@@ -43,7 +43,12 @@ function game_scene:draw()
         love.graphics.setColor(1, 1, 1) -- Reset color for text
         love.graphics.printf("Game Paused", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
     end
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print("Score: " .. game.xp, 10, 10)
     love.graphics.print("Time Multiplier: " .. string.format("%.1f", time_mul) .. "x", 10, 30)
+    love.graphics.print("Wave: " .. game.wave, 10, 50)
+    love.graphics.print("Game State: " .. game.state, 10, 70)
+    love.graphics.print("Wave State: " .. game.WaveSpawner.waveState, 200, 10)
 end
 
 function game_scene:keypressed(key)

@@ -68,24 +68,24 @@ function RewardSystem:selectReward(index)
             self.game:placeBuilding(reward.building)
         elseif reward.type == "upgrade" then
             reward:execute(self.game)
-            self.game:setState("wave")
+            self.game:setState("preparing")
         end
     end    
     self.isActive = false
     self.currentChoices = {}
 end
 
-function RewardSystem:keypressed(key)
-    if not self.isActive then return end
+-- function RewardSystem:keypressed(key)
+--     if not self.isActive then return end
     
-    if key == "left" or key == "a" then
-        self.selectedIndex = math.max(1, self.selectedIndex - 1)
-    elseif key == "right" or key == "d" then
-        self.selectedIndex = math.min(#self.currentChoices, self.selectedIndex + 1)
-    elseif key == "return" or key == "space" then
-        self:selectReward(self.selectedIndex)
-    end
-end
+--     if key == "left" or key == "a" then
+--         self.selectedIndex = math.max(1, self.selectedIndex - 1)
+--     elseif key == "right" or key == "d" then
+--         self.selectedIndex = math.min(#self.currentChoices, self.selectedIndex + 1)
+--     elseif key == "return" or key == "space" then
+--         self:selectReward(self.selectedIndex)
+--     end
+-- end
 
 function RewardSystem:draw()
     if not self.isActive then return end

@@ -46,6 +46,8 @@ GAME STATES:
 GameManager uses a unified string-based state system instead of scattered boolean flags.
 
 Current States:
+- "startup": Initial game state during loading and setup
+- "preparing": Waiting state before wave begins, waits for player to press Enter
 - "wave": Normal gameplay - turrets shooting, enemies spawning, player interaction
 - "placing": Building placement mode - player selecting where to place a new building
 - "reward": Upgrade selection phase - choosing between reward options after wave completion
@@ -57,10 +59,12 @@ State Management Methods:
 - game:isState(stateName) - Boolean check if currently in specified state
 
 State Transitions:
+- startup → preparing: When game initialization completes
+- preparing → wave: When player presses Enter key
 - wave → reward: When wave ends (WaveSpawner triggers)
 - reward → placing: When building reward is selected
-- reward → wave: When upgrade reward is selected
-- placing → wave: When building is successfully placed
+- reward → preparing: When upgrade reward is selected
+- placing → preparing: When building is successfully placed
 - any → gameover: When base HP <= 0
 
 
