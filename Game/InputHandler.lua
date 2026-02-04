@@ -22,6 +22,8 @@ function InputHandler:update(dt)
     if game:isState("placing") then
         self:handleBuildingSlotHover()
     end
+
+    self:handleButtonHold()
 end
 
 function InputHandler:handleTurretHover()
@@ -44,6 +46,16 @@ function InputHandler:handleTurretHover()
                 obj.showArc = false
             end
         end
+    end
+end
+
+function InputHandler:handleButtonHold()
+    local mainTurret = self.game.mainTurret
+    -- Placeholder for handling button hold actions if needed
+    -- Currently not implemented
+    if love.mouse.isDown(1) then
+        -- Handle left mouse button hold actions here
+        mainTurret:PlayerClick(self.mouseX, self.mouseY)
     end
 end
 
@@ -77,6 +89,7 @@ function InputHandler:mousepressed(x, y, button)
     local game = self.game
     local rewardSystem = game.rewardSystem
     local base = game.base
+    local mainTurret = game.mainTurret
     
     -- Handle reward system input first
     if rewardSystem then
@@ -109,11 +122,10 @@ function InputHandler:mousepressed(x, y, button)
             if obj.tag == "turret" and not obj.destroyed then
                 if self:isMouseOverTurret(obj) then
                     self:selectTurret(obj)
-                    return
                 end
             end
         end
-        
+        mainTurret:PlayerClick(x, y)
         -- If not clicking on turret, clear selection
         self:clearSelection()
     end
@@ -157,7 +169,9 @@ function InputHandler:keypressed(key)
         end
     elseif key == "return" or key == "enter" then
         -- Start next wave if in preparing state
-        if game:isState("preparing") then
+        if game:isState("startup") then
+            game:setState("preparing")
+        elseif game:isState("preparing") then
             game.WaveSpawner:startNextWave()
             game:setState("wave")
         end

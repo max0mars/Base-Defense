@@ -7,6 +7,7 @@ local enemy = require("Enemies.Enemy")
 local RewardSystem = require("Game.RewardSystem")
 local WaveSpawner = require("Game.WaveSpawner")
 local InputHandler = require("Game.InputHandler")
+local MainTurret = require("Buildings.Turrets.MainTurret")
 
 
 local ground = {
@@ -37,8 +38,9 @@ function game:load(saveData)
     self:addObject(self.base) -- Add the base object to the game
     self.ground = ground
     
-    -- Transition to preparing state after initialization
-    self:setState("preparing")
+    -- Place MainTurret in center slot (slot 7: row 2, column 3)
+    self.mainTurret = MainTurret:new({game = self})
+    self:newBuilding(self.mainTurret, 7)
 end
 
 function game:newBuilding(building, slot)
@@ -74,11 +76,14 @@ local printTimer = 0
 local printInterval = 1 -- Print every second
 
 function game:update(dt)
-    if self.base.hp <= 0 then
+    if self.base.hp <= 0 then -- this should be handled elsewhere
         self:setState("gameover")
         return
     end
 
+    if self:isState("startup") then
+        
+    end
     -- Check if wave is complete and transition to reward state
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
         self:setState("reward")
@@ -152,6 +157,13 @@ function game:draw()
     -- Draw reward system on top of everything
     if self.rewardSystem then
         self.rewardSystem:draw()
+    end
+    if self:isState("startup") then
+        love.graphics.setColor(1, 1, 1, 0.5)
+        love.graphics.printf("Aim the main turret with mouse. Click to shoot. Other Turrets will fight on their own. Hit Enter to Continue. ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
+    elseif self:isState("preparing") then
+        love.graphics.setColor(1, 1, 1, 0.5)
+        love.graphics.printf("Press Enter to Start Wave ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
     end
 end
 

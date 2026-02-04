@@ -5,7 +5,6 @@ Turret = setmetatable({}, building)
 Turret.__index = Turret
 
 local default = {
-    mode = 'auto',
     type = 'turret',
     tag = 'turret',
     rotation = 0,
@@ -51,7 +50,6 @@ function Turret:new(config)
     t.rotation = config.rotation
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
     t.turnSpeed = config.turnSpeed
-    t.mode = config.mode
     t.fireRate = config.fireRate
     t.bulletType = config.bulletType or bullet
     t.cooldown = 0 -- Cooldown timer for firing
@@ -108,22 +106,12 @@ end
 
 function Turret:update(dt)
     self.cooldown = self.cooldown - dt
-    if self.mode == "auto" then
-        self:getTargetArc()
-        if self.target then
-            local x, y = self:getTargetLeadPosition()
-            self:lookAt(x, y, dt) -- Aim at the target's lead position
-            if self.cooldown <= 0 then
-                self:fire({targetX = x, targetY = y})
-                self.cooldown = self.fireRate
-            end
-        end
-    else
-        -- Player control mode
-        local mx, my = love.mouse.getPosition()
-        self:lookAt(mx, my, dt)
-        if love.mouse.isDown(1) and self.cooldown <= 0 then
-            self:fire()
+    self:getTargetArc()
+    if self.target then
+        local x, y = self:getTargetLeadPosition()
+        self:lookAt(x, y, dt) -- Aim at the target's lead position
+        if self.cooldown <= 0 then
+            self:fire({targetX = x, targetY = y})
             self.cooldown = self.fireRate
         end
     end
