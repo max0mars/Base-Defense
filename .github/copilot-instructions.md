@@ -18,6 +18,7 @@ object (Classes/object.lua)
 │   └── Enemy (basic enemy behavior)
 └── building (Buildings/Building.lua)
     └── Turret (shooting mechanics)
+        └── MainTurret (player-controlled, no firing arcs)
 ```
 
 **Game Manager Pattern**: [Game/GameManager.lua](Game/GameManager.lua) is the central coordinator:
@@ -25,9 +26,20 @@ object (Classes/object.lua)
 - Manages all game objects in `self.objects` table
 - Handles score, XP, money, waves
 - Integrates collision system, reward system, wave spawning
+- Uses unified string-based state management system
 - Use `game:addObject(obj)` to register any new game entity
+- State management: `game:setState(state)`, `game:isState(state)`, `game:getState()`
 
 ## Critical Development Patterns
+
+**State Management**: GameManager uses unified string-based states:
+
+```lua
+-- Game states: "startup", "preparing", "wave", "placing", "reward", "gameover"
+game:setState("wave")     -- Set current state
+if game:isState("wave") then -- Check current state
+local current = game:getState() -- Get current state
+```
 
 **Object Creation**: Always use the constructor pattern with config tables:
 
@@ -66,6 +78,20 @@ config.game = game  -- Essential for most objects
 **Destruction Pattern**: Objects use `destroyed` flag + `died()` method, not immediate deletion
 
 ## Key Integration Points
+
+**State System**: GameManager coordinates all state transitions:
+
+- startup → preparing (after initialization)
+- preparing → wave (player presses Enter)
+- wave → reward (WaveSpawner completes)
+- reward → placing/preparing (reward selection)
+
+**MainTurret**: Player-controlled turret placed automatically at game start:
+
+- No firing arc restrictions
+- Manual targeting and shooting
+- Enhanced stats and visual appearance
+- Reload bar display during cooldown
 
 **Love2D Callbacks**: Only [main.lua](main.lua) handles Love2D events - scenes receive them via scene_manager delegation
 

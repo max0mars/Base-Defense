@@ -24,6 +24,7 @@ Things that aren't initialized when creating new Object:
 BUILDINGS
 
 TURRETS:
+Regular Turret (Buildings/Turrets/Turret.lua):
 - rotation: Visual direction the turret barrel faces (in radians)
   - 0 = pointing RIGHT (positive X direction)
   - math.pi/2 = pointing DOWN (positive Y direction) 
@@ -36,6 +37,15 @@ TURRETS:
   - math.pi = firing arc centered facing LEFT  
   - 3*math.pi/2 = firing arc centered facing UP
   - Can be independent of visual rotation for strategic gameplay
+
+MainTurret (Buildings/Turrets/MainTurret.lua):
+- Player-controlled turret, placed automatically at game start in center slot
+- No firing arc restrictions - can fire in any direction
+- No automatic targeting - controlled entirely by player
+- Enhanced stats: faster fire rate, more damage, faster bullets
+- Orange color and larger appearance for visual distinction
+- Displays reload bar when on cooldown
+- Manual firing via playerShoot(targetX, targetY) method
 
 COORDINATE SYSTEM:
 - Love2D uses: X increases rightward, Y increases downward
@@ -66,6 +76,17 @@ State Transitions:
 - reward → preparing: When upgrade reward is selected
 - placing → preparing: When building is successfully placed
 - any → gameover: When base HP <= 0
+
+WAVESPAWNER STATES:
+WaveSpawner has its own internal state system:
+- "idle": Waiting for GameManager to activate next wave
+- "active": Wave in progress, spawning enemies
+- "complete": All enemies defeated, ready for reward phase
+
+Wave Control:
+- GameManager monitors WaveSpawner.waveState
+- When waveState == "complete", GameManager transitions to reward state
+- WaveSpawner:startNextWave() activates wave from idle state
 
 
 
