@@ -2,12 +2,11 @@ local game = {}
 game.__index = game
 
 local Base = require("Game.Base")
---local Turret = require("Buildings.Turrets.Turret")
-local mortar = require("Buildings.Turrets.Mortar")
 local collision = require("Physics.collisionSystem_brute")
 local enemy = require("Enemies.Enemy")
 local RewardSystem = require("Game.RewardSystem")
 local WaveSpawner = require("Game.WaveSpawner")
+local InputHandler = require("Game.InputHandler")
 
 
 local ground = {
@@ -30,6 +29,7 @@ function game:load(saveData)
         self.base = Base:new()
         self.rewardSystem = RewardSystem:new(self)
         self.WaveSpawner = WaveSpawner:new({game = self})
+        self.inputHandler = InputHandler:new(self)
         self.placing = false
         self.upgrade = true
     end
@@ -81,7 +81,8 @@ function game:update(dt)
         self.upgrade = false
     end
 
-    self:selectedSlot()
+    -- Update input handler
+    self.inputHandler:update(dt)
 
     -- Only update game objects if reward system is not active
     if not self.rewardSystem.isActive and not self.placing then
@@ -100,19 +101,6 @@ function game:update(dt)
         self.WaveSpawner:update(dt)
     end
     self:takeOutTheTrash() -- remove references to destroyed objects
-end
-
-function game:selectedSlot()
-    mouseX, mouseY = love.mouse.getPosition()
-    local gridX = math.floor(mouseX / self.base.buildGrid.cellSize) + 1
-    local gridY = math.floor((mouseY - self.base.buildGrid.y) / self.base.buildGrid.cellSize) + 1
-    if gridX >= 1 and gridX <= self.base.buildGrid.width and
-       gridY >= 1 and gridY <= self.base.buildGrid.height then
-        local slot = (gridY - 1) * self.base.buildGrid.width + gridX
-        self.base.selectedSlot = slot
-    else
-        self.base.selectedSlot = nil
-    end
 end
 
 function game:placeBuilding(building)
@@ -146,97 +134,10 @@ function game:draw()
     end
 end
 
-function game:mousepressed(x, y, button)
-    -- Pass mouse events to reward system
-    if self.rewardSystem then
-        self.rewardSystem:mousepressed(x, y, button)
-    end
-    if self.placing and button == 1 then
-        -- Place building if in placing mode
-        local gridX = math.floor(x / self.base.buildGrid.cellSize) + 1
-        local gridY = math.floor((y - self.base.buildGrid.y) / self.base.buildGrid.cellSize) + 1
-        if gridX >= 1 and gridX <= self.base.buildGrid.width and
-           gridY >= 1 and gridY <= self.base.buildGrid.height then
-            local slot = (gridY - 1) * self.base.buildGrid.width + gridX
-            if not self.base.buildGrid.buildings[slot] then
-                self:newBuilding(self.blueprint, slot)
-                self.placing = false
-                self.base.placing = false
-                self.blueprint = nil
-            else
-                print("Slot " .. slot .. " is already occupied!")
-            end
-        end
-    end
-end
-
-function game:keypressed(key)
-    -- Pass key events to reward system
-    if self.rewardSystem then
-        self.rewardSystem:keypressed(key)
-    end
-    if key == "space" then
-        for _, obj in ipairs(self.objects) do
-            if obj.tag == "turret" then
-                obj.target = nil -- Reset turret targets on any key press
-            end
-        end
-    end
-end
 
 function ground:draw()
     love.graphics.setColor(self.color)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 end
-
-
-
---*******************************************************
---*******************************************************
---*******************************************************
---*******************************************************
-
--- eventually spawner will be moved to a separate file
--- local spawnRate = 0.5 -- Time in seconds between spawns
--- local spawntimer = 0
--- local spawned = 0
--- local spawnAmount = 3 -- Number of enemies to spawn per wave
--- local rewardTriggered = false -- Flag to track if reward was shown for current wave
--- function game:spawner(dt)
---     if spawned >= spawnAmount then
---         -- Check if all enemies are defeated and reward hasn't been triggered
---         local enemiesAlive = 0
---         for _, obj in ipairs(self.objects) do
---             if obj.tag == "enemy" and not obj.destroyed then
---                 enemiesAlive = enemiesAlive + 1
---             end
---         end
-        
---         if enemiesAlive == 0 and not rewardTriggered then
---             -- Show reward selection at end of wave
---             self.upgrade = true
---             rewardTriggered = true
---         end
-
---         if enemiesAlive == 0 and not self.rewardSystem.isActive then
---             wave = wave + 1
---             spawnAmount = spawnAmount + spawnAmount * 1.3
---             spawned = 0 -- Reset spawned counter for new wave
---             rewardTriggered = false -- Reset reward flag for new wave
---         end
---         return -- Stop spawning if the wave is complete
---     end
---     spawntimer = spawntimer - dt
---     if spawntimer < 0 then -- Adjust the spawn rate as needed
---         config = {
---             game = self,
---             x = 800,
---             y = math.random(110, 490)
---         }
---         self:addObject(enemy:new(config)) -- Add a new enemy at random position
---         spawntimer = spawnRate -- Reset the spawn timer
---         spawned = spawned + 1
---     end
--- end
 
 return game
