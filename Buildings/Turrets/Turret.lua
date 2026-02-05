@@ -14,12 +14,11 @@ local default = {
     bulletSpeed = 400,
     range = math.huge,
     barrel = 0,
-    arcAngle = math.pi/4, -- 45 degrees
     firingArc = {
         direction = 0,    -- Firing arc facing direction in radians
         minRange = 0,     -- Minimum firing range
         maxRange = 600,   -- Maximum firing range  
-        angle = math.pi/4   -- Firing arc angle (in radians, math.pi = 180 degrees)
+        angle = math.pi/8   -- Firing arc angle (in radians, math.pi = 180 degrees)
     },
     color = {1, 1, 1, 1}
 }
@@ -77,7 +76,15 @@ end
 
 function Turret:fire(args)
     local offset = 0--love.math.random() * self.spread * 2 - self.spread
-    local x, y = self:getFirePoint()
+    local x, y
+    
+    -- Use provided position or default to fire point
+    if args and args.fireX and args.fireY then
+        x, y = args.fireX, args.fireY
+    else
+        x, y = self:getFirePoint()
+    end
+    
     config = {
         x = x,
         y = y,
@@ -143,7 +150,7 @@ end
 
 function Turret:drawFiringArc(alpha)
     alpha = alpha or 0.3
-    love.graphics.setColor(1, 1, 0, alpha) -- Yellow with transparency
+    love.graphics.setColor(0.5, 0.5, 0.5, alpha) -- Grey with transparency
     
     -- Calculate arc bounds using firing arc direction
     local startAngle = self.firingArc.direction - self.firingArc.angle / 2

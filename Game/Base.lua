@@ -57,15 +57,39 @@ function Base:draw()
             local slot = (j - 1) * self.buildGrid.width + i
             if not self.buildGrid.buildings[slot] then
                 love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
-                if self.game:isState("placing") and self.selectedSlot == slot then
+                
+                -- Check if this slot should be highlighted
+                local shouldHighlight = false
+                if self.game:isState("placing") and self.selectedSlots then
+                    -- Highlight multiple slots during placement
+                    for _, selectedSlot in ipairs(self.selectedSlots) do
+                        if selectedSlot == slot then
+                            shouldHighlight = true
+                            break
+                        end
+                    end
+                elseif self.selectedSlot == slot then
+                    shouldHighlight = true
+                end
+                
+                if shouldHighlight then
                     self.drawlast = {slot, i, j}
                 end
+                
                 love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
                 love.graphics.print(slot, self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize)
             end
         end
     end
-    if self.drawlast then
+    -- Draw yellow highlights for selected slots
+    if self.game:isState("placing") and self.selectedSlots then
+        love.graphics.setColor(1, 1, 0, 1) -- Yellow color for selected slots
+        for _, slot in ipairs(self.selectedSlots) do
+            local i = ((slot - 1) % self.buildGrid.width) + 1
+            local j = math.ceil(slot / self.buildGrid.width)
+            love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+        end
+    elseif self.drawlast then
         local slot, i, j = self.drawlast[1], self.drawlast[2], self.drawlast[3]
         love.graphics.setColor(1, 1, 0, 1) -- Yellow color for selected slot
         love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
@@ -77,13 +101,56 @@ function Base:draw()
     end
 end
 
-function Base:addBuilding(building, slot)
-    if not building or not slot or self.buildGrid.buildings[slot] then
-        error("Invalid building or slot is missing or the slot is already occupied")
+function Base:addBuilding(building, anchorSlot)
+    if not building or not anchorSlot then
+        error("Invalid building or anchor slot is missing")
     end
-    self.buildGrid.buildings[slot] = building
-    building.slot = slot
+    
+    -- Generate slots that the building will occupy
+    local slotsToOccupy = building:getSlotsFromPattern(anchorSlot)
+    
+    -- Check if all required slots are available
+    if not self:areSlotsAvailable(slotsToOccupy, anchorSlot) then
+        error("One or more required slots are already occupied")
+    end
+    
+    -- Set building's anchor slot and calculate final occupied slots
+    building.slot = anchorSlot
+    local finalSlots = building:getSlotsFromPattern(anchorSlot)
+    building.slotsOccupied = finalSlots -- For legacy compatibility
+    
+    -- Occupy all slots
+    for _, slot in ipairs(finalSlots) do
+        self.buildGrid.buildings[slot] = building
+    end
+    
     building.x, building.y = building:getX() + building.buildGrid.cellSize/2, building:getY() + building.buildGrid.cellSize/2
+end
+
+function Base:areSlotsAvailable(slotsToCheck, anchorSlot)
+    for _, slot in ipairs(slotsToCheck) do
+        if slot < 1 or slot > (self.buildGrid.width * self.buildGrid.height) or self.buildGrid.buildings[slot] then
+            return false
+        end
+    end
+    return true
+end
+
+function Base:adjustSlotsToAnchor(slotsPattern, anchorSlot)
+    -- Adjust slot pattern based on where the anchor slot is placed
+    local minSlot = math.min(unpack(slotsPattern))
+    local offset = anchorSlot - minSlot
+    local adjustedSlots = {}
+    
+    for _, slot in ipairs(slotsPattern) do
+        table.insert(adjustedSlots, slot + offset)
+    end
+    
+    return adjustedSlots
+end
+
+function Base:getBuildingAtSlot(slot)
+    return self.buildGrid.buildings[slot]
 end
 
 return Base
