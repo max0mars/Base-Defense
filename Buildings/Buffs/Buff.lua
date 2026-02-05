@@ -15,6 +15,8 @@ default = {
         {0, 1}, 
         {0, 2}, {1, 2}
     },
+    --dark green color (normalized to 0-1 range for Love2D)
+    color = {21/255, 71/255, 52/255},
 }
 
 -- buff provides either a stat boost or an on hit ability to nearby towers
@@ -31,7 +33,7 @@ function Buff:new(config)
     b.statChanges = config.statChanges
     b.onHitEffect = config.onHitEffect
     b.affectedSlots = config.affectedSlots
-    
+    b.color = config.color
     return b
 end
 
@@ -85,6 +87,14 @@ function Buff:applyBuffs()
             if self.statChanges.range then
                 buffData.rangeMultiplier = self.statChanges.range
             end
+            
+            -- Set buff type and onHit effect if applicable
+            buffData.type = self.buffType
+            if self.buffType == "onHit" and self.onHitEffect then
+                -- onHitEffect should be a table: {id=..., func=...}
+                buffData.onHitEffect = self.onHitEffect
+            end
+            
             building:addBuff(self.id, buffData)
         end
     end
