@@ -7,8 +7,8 @@ function InputHandler:new(game)
     obj.mouseX = 0
     obj.mouseY = 0
     obj.buildMode = false
-    obj.selectedTurret = nil
-    obj.hoveredTurret = nil
+    obj.selectedBuilding = nil
+    obj.hoveredBuilding = nil
     return obj
 end
 
@@ -23,18 +23,18 @@ function InputHandler:update(dt)
         if obj.tag == "turret" and not obj.destroyed then
             if showAllArcs then
                 obj.showArc = true
-            elseif obj ~= self.selectedTurret and obj ~= self.hoveredTurret then
+            elseif obj ~= self.selectedBuilding and obj ~= self.hoveredBuilding then
                 obj.showArc = false
             end
         end
     end
     
-    self:handleTurretHover()
+    self:handleBuildingHover()
     
     -- Update selected turret's firing arc direction during preparation phase
-    if game:isState("preparing") and self.selectedTurret then
-        local dx = self.mouseX - self.selectedTurret.x
-        local dy = self.mouseY - self.selectedTurret.y
+    if game:isState("preparing") and self.selectedBuilding and self.selectedBuilding.firingArc then
+        local dx = self.mouseX - self.selectedBuilding.x
+        local dy = self.mouseY - self.selectedBuilding.y
         local angleToMouse = math.atan2(dy, dx)
         
         -- Normalize angle to [0, 2π]
@@ -42,7 +42,7 @@ function InputHandler:update(dt)
             angleToMouse = angleToMouse + 2 * math.pi
         end
         
-        self.selectedTurret.firingArc.direction = angleToMouse
+        self.selectedBuilding.firingArc.direction = angleToMouse
     end
     
     -- Only handle building slot hover when placing
@@ -53,27 +53,47 @@ function InputHandler:update(dt)
     self:handleButtonHold()
 end
 
-function InputHandler:handleTurretHover()
+function InputHandler:handleBuildingHover()
     local gameObjects = self.game.objects
     local showAllArcs = love.keyboard.isDown("space")
+    local base = self.game.base
     
-    -- Clear previous hover state (but preserve selected turret arc and space override)
-    if self.hoveredTurret and self.hoveredTurret ~= self.selectedTurret and not showAllArcs then
-        self.hoveredTurret.showArc = false
+    -- Clear previous hover state
+    if self.hoveredBuilding and self.hoveredBuilding ~= self.selectedBuilding then
+        -- Clear turret arc if it's a turret
+        if self.hoveredBuilding.showArc and not showAllArcs then
+            self.hoveredBuilding.showArc = false
+        end
+        -- Clear buff hover slots if it's a buff building
+        if self.hoveredBuilding.type == "passive" then
+            base.buffHoverSlots = nil
+        end
     end
-    self.hoveredTurret = nil
+    self.hoveredBuilding = nil
     
-    -- Check for turret hover (exclude MainTurret from firing arcs)
+    -- Check for building hover
     for _, obj in ipairs(gameObjects) do
-        if (obj.tag == "turret") and not obj.destroyed then
-            if self:isMouseOverTurret(obj) then
-                obj.showArc = true
-                self.hoveredTurret = obj
-                break -- Only hover one turret at a time
+        if (obj.tag == "turret" or obj.type == "passive") and not obj.destroyed then
+            if self:isMouseOverBuilding(obj) then
+                self.hoveredBuilding = obj
+                
+                -- Handle turret-specific hover (firing arcs)
+                if obj.tag == "turret" then
+                    obj.showArc = true
+                end
+                
+                -- Handle buff building hover (affected slots)
+                if obj.type == "passive" and obj.getAffectedSlotsFromAnchor then
+                    base.buffHoverSlots = obj:getAffectedSlotsFromAnchor(obj.slot)
+                end
+                
+                break -- Only hover one building at a time
             else
-                -- Only clear showArc if this turret is not selected and space is not held
-                if obj ~= self.selectedTurret and not showAllArcs then
-                    obj.showArc = false
+                -- Clear effects if not hovered and not selected
+                if obj ~= self.selectedBuilding and not showAllArcs then
+                    if obj.tag == "turret" then
+                        obj.showArc = false
+                    end
                 end
             end
         end
@@ -90,14 +110,28 @@ function InputHandler:handleButtonHold()
     end
 end
 
-function InputHandler:isMouseOverTurret(turret)
-    local dx = self.mouseX - turret.x
-    local dy = self.mouseY - turret.y
-    local distance = math.sqrt(dx * dx + dy * dy)
+function InputHandler:isMouseOverBuilding(building)
+    if not building.slot then return false end -- Building not placed yet
     
-    -- Slightly larger radius than visual turret for easier hovering
-    local hoverRadius = 12
-    return distance <= hoverRadius
+    -- Get all slots occupied by the building
+    local occupiedSlots = building:getSlotsFromPattern(building.slot)
+    local buildGrid = building.buildGrid
+    
+    -- Check if mouse is over any occupied slot
+    for _, slot in ipairs(occupiedSlots) do
+        local i = ((slot - 1) % buildGrid.width) + 1
+        local j = math.ceil(slot / buildGrid.width)
+        local slotX = buildGrid.x + (i - 1) * buildGrid.cellSize
+        local slotY = buildGrid.y + (j - 1) * buildGrid.cellSize
+        
+        -- Check if mouse is within this slot
+        if self.mouseX >= slotX and self.mouseX <= slotX + buildGrid.cellSize and
+           self.mouseY >= slotY and self.mouseY <= slotY + buildGrid.cellSize then
+            return true
+        end
+    end
+    
+    return false
 end
 
 function InputHandler:handleBuildingSlotHover()
@@ -115,14 +149,35 @@ function InputHandler:handleBuildingSlotHover()
         -- If placing, show all slots the building would occupy
         if game:isState("placing") and game.blueprint then
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
-            base.selectedSlots = slotsToOccupy
+            local invalidSlots = game.blueprint:getInvalidSlotsFromPattern(anchorSlot, base.buildGrid)
+            
+            if #invalidSlots > 0 then
+                -- Invalid placement - show ALL building slots as red
+                base.selectedSlots = nil
+                base.invalidSlots = slotsToOccupy -- Show all slots the building would occupy as invalid
+            else
+                -- Valid placement - show yellow highlights
+                base.selectedSlots = slotsToOccupy
+                base.invalidSlots = nil
+            end
+            
+            -- If placing a buff building, also show affected slots in green (only if placement is valid)
+            if game.blueprint.getAffectedSlotsFromAnchor and #invalidSlots == 0 then
+                base.affectedSlots = game.blueprint:getAffectedSlotsFromAnchor(anchorSlot)
+            else
+                base.affectedSlots = nil
+            end
         else
             base.selectedSlot = anchorSlot
             base.selectedSlots = nil
+            base.affectedSlots = nil
+            base.invalidSlots = nil
         end
     else
         base.selectedSlot = nil
         base.selectedSlots = nil
+        base.affectedSlots = nil
+        base.invalidSlots = nil
     end
 end
 
@@ -159,18 +214,18 @@ function InputHandler:mousepressed(x, y, button)
         return -- Don't process turret selection during building placement
     end
     
-    -- Handle turret selection and other mouse interactions
+    -- Handle building selection and other mouse interactions
     if button == 1 then -- Left click
-        local clickedOnTurret = false
+        local clickedOnBuilding = false
         
-        -- Only allow turret selection during preparing phase
+        -- Only allow building selection during preparing phase
         if game:isState("preparing") then
-            -- Check if clicking on a turret (exclude MainTurret)
+            -- Check if clicking on a building (exclude MainTurret)
             for _, obj in ipairs(game.objects) do
-                if obj.tag == "turret" and obj.tag ~= "mainTurret" and not obj.destroyed then
-                    if self:isMouseOverTurret(obj) then
-                        self:selectTurret(obj)
-                        clickedOnTurret = true
+                if (obj.tag == "turret" or obj.tag == "passive") and obj.tag ~= "mainTurret" and not obj.destroyed then
+                    if self:isMouseOverBuilding(obj) then
+                        self:selectBuilding(obj)
+                        clickedOnBuilding = true
                         break
                     end
                 end
@@ -180,41 +235,53 @@ function InputHandler:mousepressed(x, y, button)
         -- Handle MainTurret clicking (firing only, not selectable)
         for _, obj in ipairs(game.objects) do
             if obj.tag == "mainTurret" and not obj.destroyed then
-                if self:isMouseOverTurret(obj) then
+                if self:isMouseOverBuilding(obj) then
                     -- Handle MainTurret firing (only in wave state)
                     obj:PlayerClick(x, y)
-                    clickedOnTurret = true
+                    clickedOnBuilding = true
                     break
                 end
             end
         end
         
-        -- If not clicking on turret, clear selection
-        if not clickedOnTurret then
+        -- If not clicking on building, clear selection
+        if not clickedOnBuilding then
             self:clearSelection()
         end
     end
 end
 
-function InputHandler:selectTurret(turret)
+function InputHandler:selectBuilding(building)
     -- Clear previous selection
-    if self.selectedTurret then
-        self.selectedTurret.selected = false
-        self.selectedTurret.showArc = false
-    end
+    self:clearSelection()
     
     -- Set new selection
-    self.selectedTurret = turret
-    turret.selected = true
-    turret.showArc = true
+    self.selectedBuilding = building
+    building.selected = true
+    
+    -- Handle building-specific selection behavior
+    if building.tag == "turret" then
+        building.showArc = true
+    elseif building.type == "passive" and building.getAffectedSlotsFromAnchor then
+        -- Show affected slots for buff buildings
+        self.game.base.buffHoverSlots = building:getAffectedSlotsFromAnchor(building.slot)
+    end
 end
 
 function InputHandler:clearSelection()
-    if self.selectedTurret then
-        self.selectedTurret.selected = false
-        self.selectedTurret.showArc = false
-        self.selectedTurret = nil
+    if self.selectedBuilding then
+        self.selectedBuilding.selected = false
+        
+        -- Handle building-specific clearing
+        if self.selectedBuilding.tag == "turret" then
+            self.selectedBuilding.showArc = false
+        end
+        
+        self.selectedBuilding = nil
     end
+    
+    -- Clear buff hover visualization
+    self.game.base.buffHoverSlots = nil
 end
 
 function InputHandler:keypressed(key)
@@ -234,6 +301,7 @@ function InputHandler:keypressed(key)
         if game:isState("startup") then
             game:setState("preparing")
         elseif game:isState("preparing") then
+            game:recalculateAllBuffs() -- Recalculate all buffs before wave starts
             game.WaveSpawner:startNextWave()
             game:setState("wave")
         end

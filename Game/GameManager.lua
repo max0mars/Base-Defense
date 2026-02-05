@@ -44,7 +44,7 @@ function game:load(saveData)
     local gridHeight = self.base.buildGrid.height
     local centerRow = math.ceil(gridHeight / 2)
     local centerCol = math.ceil(gridWidth / 2)
-    
+
     self:newBuilding(self.mainTurret, (centerRow - 1) * gridWidth + centerCol)
 end
 
@@ -67,6 +67,22 @@ end
 
 function game:addObject(obj)
     table.insert(self.objects, obj) -- Add the object to the game's object list
+end
+
+function game:recalculateAllBuffs()
+    -- Clear all existing buffs from turrets
+    for _, obj in ipairs(self.objects) do
+        if obj.clearAllBuffs then -- This is a turret
+            obj:clearAllBuffs()
+        end
+    end
+    
+    -- Reapply all buffs from buff buildings
+    for _, obj in ipairs(self.objects) do
+        if obj.applyBuffs then -- This is a buff building
+            obj:applyBuffs()
+        end
+    end
 end
 
 function game:takeOutTheTrash()

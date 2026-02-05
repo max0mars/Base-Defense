@@ -9,8 +9,8 @@ local default = {
     tag = 'turret',
     rotation = 0,
     turnSpeed = math.huge,
-    fireRate = 0.2,
-    damage = 10,
+    fireRate = 1,
+    damage = 25,
     bulletSpeed = 400,
     range = math.huge,
     barrel = 0,
@@ -20,6 +20,7 @@ local default = {
         maxRange = 600,   -- Maximum firing range  
         angle = math.pi/8   -- Firing arc angle (in radians, math.pi = 180 degrees)
     },
+    shapePattern = {{0, 0}},
     color = {1, 1, 1, 1}
 }
 
@@ -66,12 +67,98 @@ function Turret:new(config)
     }
     t.showArc = false -- Flag to show firing arc
     t.selected = false -- Flag to show if turret is selected
+    
+    -- Buff system - dictionary keyed by source ID
+    t.buffs = {} -- {sourceId: {type, multipliers, bonuses, etc}}
+    t.currentStats = { -- Calculated stats after applying buffs
+        damage = t.damage,
+        fireRate = t.fireRate,
+        bulletSpeed = t.bulletSpeed,
+        range = t.range
+    }
+    
     --t.x, t.y = 0, 0
     return t
 end
 
 function Turret:addHitEffect(effectFunc)
     table.insert(self.hitEffects, effectFunc)
+end
+
+-- Buff Management System
+function Turret:addBuff(sourceId, buffData)
+    -- buffData format: {damageMultiplier=1.5, fireRateMultiplier=0.8, rangeBonus=50, etc}
+    self.buffs[sourceId] = buffData
+    self:updateBuffedStats()
+end
+
+function Turret:removeBuff(sourceId)
+    if self.buffs[sourceId] then
+        self.buffs[sourceId] = nil
+        self:updateBuffedStats()
+    end
+end
+
+function Turret:clearAllBuffs()
+    self.buffs = {}
+    self:updateBuffedStats()
+end
+
+function Turret:updateBuffedStats()
+    -- Reset to base stats (stored directly on turret)
+    self.currentStats.damage = self.damage
+    self.currentStats.fireRate = self.fireRate
+    self.currentStats.bulletSpeed = self.bulletSpeed
+    self.currentStats.range = self.range
+    
+    -- Accumulate linear multipliers and bonuses
+    local damageMultiplier = 0  -- Will be added to 1.0 (so 0.2 = +20%)
+    local fireRateMultiplier = 0
+    local bulletSpeedMultiplier = 0
+    local rangeMultiplier = 0
+    local damageBonus = 0
+    local rangeBonus = 0
+    
+    -- Apply all active buffs (linear stacking)
+    for sourceId, buff in pairs(self.buffs) do
+        if buff.damageMultiplier then
+            damageMultiplier = damageMultiplier + (buff.damageMultiplier - 1)
+        end
+        if buff.damageBonus then
+            damageBonus = damageBonus + buff.damageBonus
+        end
+        if buff.fireRateMultiplier then
+            fireRateMultiplier = fireRateMultiplier + (buff.fireRateMultiplier - 1)
+        end
+        if buff.bulletSpeedMultiplier then
+            bulletSpeedMultiplier = bulletSpeedMultiplier + (buff.bulletSpeedMultiplier - 1)
+        end
+        if buff.rangeBonus then
+            rangeBonus = rangeBonus + buff.rangeBonus
+        end
+        if buff.rangeMultiplier then
+            rangeMultiplier = rangeMultiplier + (buff.rangeMultiplier - 1)
+        end
+    end
+    
+    -- Apply final calculations
+    self.currentStats.damage = (self.damage * (1 + damageMultiplier)) + damageBonus
+    self.currentStats.fireRate = self.fireRate * (1 + fireRateMultiplier)
+    self.currentStats.bulletSpeed = self.bulletSpeed * (1 + bulletSpeedMultiplier)
+    self.currentStats.range = (self.range * (1 + rangeMultiplier)) + rangeBonus
+    
+    -- Update firing arc range to match buffed range
+    local originalMaxRange = self.firingArc.maxRange
+    local rangeRatio = self.currentStats.range / self.range
+    self.firingArc.maxRange = originalMaxRange * rangeRatio
+end
+
+function Turret:getActiveBuff(sourceId)
+    return self.buffs[sourceId]
+end
+
+function Turret:hasBuffFrom(sourceId)
+    return self.buffs[sourceId] ~= nil
 end
 
 function Turret:fire(args)
@@ -89,8 +176,8 @@ function Turret:fire(args)
         x = x,
         y = y,
         angle = self.rotation + offset, -- Add spread to the angle
-        speed = self.bulletSpeed, -- Speed of the bullet
-        damage = self.damage, -- Damage dealt by the bullet
+        speed = self.currentStats.bulletSpeed, -- Speed of the bullet
+        damage = self.currentStats.damage, -- Damage dealt by the bullet
         hitEffects = self.hitEffects, -- Effects to apply on hit
         game = self.game, -- Reference to the game object
         targetX = args.targetX,
@@ -119,7 +206,7 @@ function Turret:update(dt)
         self:lookAt(x, y, dt) -- Aim at the target's lead position
         if self.cooldown <= 0 then
             self:fire({targetX = x, targetY = y})
-            self.cooldown = self.fireRate
+            self.cooldown = self.currentStats.fireRate
         end
     end
 end
@@ -204,7 +291,7 @@ function Turret:getTarget()
     elseif self.target then
         return self.target -- Return the current target if it is still valid
     end-- If we already have a target, no need to search again
-    local dist = self.range^2 -- Use squared distance to avoid sqrt for performance
+    local dist = self.currentStats.range^2 -- Use squared distance to avoid sqrt for performance
     for _, obj in ipairs(self.game.objects) do
         if obj.tag == "enemy" and not obj.destroyed then
             local newdist = (obj.x - self.x)^2 + (obj.y - self.y)^2 -- Calculate squared distance to avoid sqrt for performance
@@ -334,7 +421,7 @@ function Turret:getTargetLeadPosition()
     local y = self.y
     local targetx = self.target.x
     local targety = self.target.y
-    local pSpeed = self.bulletSpeed
+    local pSpeed = self.currentStats.bulletSpeed
     local targetvx = self.target:getVelocity() -- Assuming the target has a method to get its velocity
     local targetvy = 0 -- Assuming enemies move horizontally
 

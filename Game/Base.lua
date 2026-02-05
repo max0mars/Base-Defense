@@ -95,6 +95,45 @@ function Base:draw()
         love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
         self.drawlast = nil
     end
+    
+    -- Draw red outlines for invalid slots
+    if self.game:isState("placing") and self.invalidSlots then
+        love.graphics.setColor(1, 0, 0, 1) -- Red color for invalid slots
+        love.graphics.setLineWidth(2)
+        for _, slot in ipairs(self.invalidSlots) do
+            -- Only draw if slot is within valid grid bounds for visualization
+            if slot >= 1 and slot <= (self.buildGrid.width * self.buildGrid.height) then
+                local i = ((slot - 1) % self.buildGrid.width) + 1
+                local j = math.ceil(slot / self.buildGrid.width)
+                love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+            end
+        end
+        love.graphics.setLineWidth(1) -- Reset line width
+    end
+    
+    -- Draw green outlines for buff-affected slots
+    if self.game:isState("placing") and self.affectedSlots then
+        love.graphics.setColor(0, 1, 0, 1) -- Green color for affected slots
+        love.graphics.setLineWidth(2)
+        for _, slot in ipairs(self.affectedSlots) do
+            local i = ((slot - 1) % self.buildGrid.width) + 1
+            local j = math.ceil(slot / self.buildGrid.width)
+            love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+        end
+        love.graphics.setLineWidth(1) -- Reset line width
+    end
+    
+    -- Draw green outline for buff building hover/selection slots
+    if self.buffHoverSlots then
+        love.graphics.setColor(0, 1, 0, 1) -- Bright green outline
+        love.graphics.setLineWidth(2)
+        for _, slot in ipairs(self.buffHoverSlots) do
+            local i = ((slot - 1) % self.buildGrid.width) + 1
+            local j = math.ceil(slot / self.buildGrid.width)
+            love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+        end
+        love.graphics.setLineWidth(1) -- Reset line width
+    end
 
     for _, building in pairs(self.buildGrid.buildings) do
         building:draw()

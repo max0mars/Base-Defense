@@ -3,6 +3,7 @@ local Reward = require("Game.Reward")
 
 local RewardSystem = {}
 local Turret = require("Buildings.Turrets.Turret")
+local Buff = require("Buildings.Buffs.Buff")
 RewardSystem.__index = RewardSystem
 
 function RewardSystem:new(game)
@@ -35,7 +36,15 @@ function RewardSystem:initializeRewardPool()
         rarity = "common",
         type = "building"
     }
+    local ammoCache = Reward:new{
+        name = "Ammo Cache",
+        description = "Increase turret damage by 20%",
+        rarity = "common",
+        type = "building",
+        building = Buff:new({game = self.game})
+    }
     table.insert(self.rewardPool, Reward:new(basicturret))
+    table.insert(self.rewardPool, ammoCache)
 end
 
 function RewardSystem:activate()

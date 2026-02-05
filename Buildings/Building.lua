@@ -8,10 +8,9 @@ function building:new(config)
         error("Type must be either 'unit', 'turret', or 'passive'")
     end
     if(config.type == "passive") then
-        if(not config.passiveShape) then
-            error("Passive shape is required for passive buildings")
+        if(not config.affectedSlots) then
+            error("Affected slots are required for passive buildings")
         end
-        b.passiveShape = config.passiveShape
     end
     if(not config.game) then
         error("Game reference is required")
@@ -51,6 +50,33 @@ function building:getSlotsFromPattern(anchorSlot)
     end
     
     return slots
+end
+
+function building:getInvalidSlotsFromPattern(anchorSlot, buildGrid)
+    -- Get all slots that would be invalid (out of bounds or occupied)
+    local invalidSlots = {}
+    local gridWidth = buildGrid.width
+    
+    -- Calculate anchor position in grid coordinates
+    local anchorX = ((anchorSlot - 1) % gridWidth)
+    local anchorY = math.floor((anchorSlot - 1) / gridWidth)
+    
+    for _, coord in ipairs(self.shapePattern) do
+        local offsetX, offsetY = coord[1], coord[2]
+        local actualX = anchorX + offsetX
+        local actualY = anchorY + offsetY
+        
+        local slot = actualY * gridWidth + actualX + 1
+        
+        -- Check if out of bounds or occupied
+        if actualX < 0 or actualX >= gridWidth or actualY < 0 or actualY >= buildGrid.height then
+            table.insert(invalidSlots, slot) -- Out of bounds
+        elseif slot >= 1 and slot <= (gridWidth * buildGrid.height) and buildGrid.buildings[slot] then
+            table.insert(invalidSlots, slot) -- Occupied
+        end
+    end
+    
+    return invalidSlots
 end
 
 function building:generateSlotsFromPattern()
@@ -150,10 +176,23 @@ function building:getSurrounding()
 end
 
 function building:draw()
-    local x = self.slot % self.buildGrid.width
-    local y = math.ceil(self.slot / self.buildGrid.width)
+    if not self.slot then return end -- Can't draw without placement
+    
     love.graphics.setColor(self.color or {1, 1, 1, 1})
-    love.graphics.rectangle("fill", x * 25, y * 25, 25, 25)
+    
+    -- Draw filled rectangles for each occupied slot
+    local occupiedSlots = self:getSlotsFromPattern(self.slot)
+    for _, slot in ipairs(occupiedSlots) do
+        local i = ((slot - 1) % self.buildGrid.width) + 1
+        local j = math.ceil(slot / self.buildGrid.width)
+        local x = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
+        local y = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
+        
+        love.graphics.rectangle("fill", x, y, self.buildGrid.cellSize, self.buildGrid.cellSize)
+    end
+    
+    -- Reset color
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 return building
