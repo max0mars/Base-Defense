@@ -40,7 +40,12 @@ function game:load(saveData)
     
     -- Place MainTurret in center slot (slot 7: row 2, column 3)
     self.mainTurret = MainTurret:new({game = self})
-    self:newBuilding(self.mainTurret, 7)
+    local gridWidth = self.base.buildGrid.width
+    local gridHeight = self.base.buildGrid.height
+    local centerRow = math.ceil(gridHeight / 2)
+    local centerCol = math.ceil(gridWidth / 2)
+    
+    self:newBuilding(self.mainTurret, (centerRow - 1) * gridWidth + centerCol)
 end
 
 function game:newBuilding(building, slot)
