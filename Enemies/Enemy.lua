@@ -45,8 +45,13 @@ function Enemy:update(dt)
     end
 end
 
-function Enemy:addEffect(effect)
-    
+function Enemy:addEffect(id, effect)
+    if self.effects[id] then
+        if effect.stackable 
+        -- if self.effects[id].duration then
+        --     self.effects[id].duration = math.max(self.effects[id].duration, effect.duration) -- Refresh duration if new effect has longer duration
+        -- end
+    end
     table.insert(self.effects, effect)
 end
 

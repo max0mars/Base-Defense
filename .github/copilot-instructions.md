@@ -30,6 +30,73 @@ object (Classes/object.lua)
 - Use `game:addObject(obj)` to register any new game entity
 - State management: `game:setState(state)`, `game:isState(state)`, `game:getState()`
 
+## File System Hierarchy
+
+```
+Base-Defense/
+├── conf.lua                           # Love2D configuration
+├── main.lua                           # Entry point, Love2D callbacks
+├── Documentation.txt                  # Design decisions and conventions
+├── Game Design                        # Design document folder
+│
+├── Classes/                           # Base object inheritance
+│   ├── object.lua                     # Base object class with ID system
+│   └── living_object.lua              # Adds HP/damage to objects
+│
+├── Game/                              # Core game systems
+│   ├── GameManager.lua                # Central coordinator, state management
+│   ├── Base.lua                       # Building grid, slot visualization
+│   ├── InputHandler.lua               # Unified input handling
+│   ├── RewardSystem.lua               # Post-wave reward selection
+│   ├── Reward.lua                     # Individual reward definitions
+│   └── WaveSpawner.lua                # Enemy spawning and wave progression
+│
+├── Buildings/                         # All placeable structures
+│   ├── Building.lua                   # Base building class with multi-slot system
+│   ├── Buffs/                         # Passive buildings that enhance turrets
+│   │   ├── Buff.lua                   # Generic buff building base
+│   │   └── buff.lua                   # Specific buff implementation
+│   └── Turrets/                       # Combat buildings
+│       ├── Turret.lua                 # Base turret with firing arcs, buffs
+│       ├── MainTurret.lua             # 2x2 player-controlled turret
+│       ├── Mortar.lua                 # [DEPRECATED] Area damage turret
+│       └── Splitter.lua               # [DEPRECATED] Multi-projectile turret
+│
+├── Enemies/                           # Enemy types and AI
+│   ├── Enemy.lua                      # Base enemy class
+│   ├── Speeder.lua                    # Fast, low-HP enemy
+│   └── Tank.lua                       # Slow, high-HP enemy
+│
+├── Bullets/                           # Projectile mechanics
+│   ├── Bullet.lua                     # Standard projectile
+│   └── Mortar_Bullet.lua              # Arcing projectile with splash
+│
+├── Effects/                           # Visual effects
+│   └── explosions.lua                 # Explosion animation system
+│
+├── Physics/                           # Collision detection
+│   ├── collisionSystem_brute.lua      # Spatial grid collision system
+│   └── hitbox.lua                     # AABB hitbox wrapper
+│
+├── Scenes/                            # Game state management
+│   ├── scene_manager.lua              # Scene switching system
+│   ├── scene.lua                      # Base scene class
+│   ├── menu_scene.lua                 # Main menu
+│   └── game_scene.lua                 # Core gameplay scene
+│
+└── .github/
+    └── copilot-instructions.md        # This documentation file
+```
+
+### Key File Relationships
+
+- **GameManager.lua** ← Central hub connecting all systems
+- **InputHandler.lua** ← Handles building placement, selection, and interaction  
+- **Building.lua** ← Base for all placeable structures with shapePattern system
+- **Turret.lua** ← Combat buildings with firing arcs and buff integration
+- **Base.lua** ← Grid visualization and slot management
+- **RewardSystem.lua** ← Post-wave building/upgrade selection
+
 ## Critical Development Patterns
 
 **State Management**: GameManager uses unified string-based states:
