@@ -4,6 +4,7 @@ local living_object = setmetatable({}, object)
 living_object.__index = living_object
 
 function living_object:new(config)
+    config.StatusEffectManager = true
     local obj = object:new(config)
     setmetatable(obj, { __index = self })
     obj.hp = config.hp

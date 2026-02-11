@@ -101,7 +101,6 @@ function game:update(dt)
         self:setState("gameover")
         return
     end
-
     if self:isState("startup") then
         
     end
@@ -173,6 +172,7 @@ function game:draw()
     end
     for _, obj in ipairs(healthyboys) do
         obj:drawHealthBar() -- Draw health bars for living objects
+        --obj.effectManager:drawStatusEffects() -- Draw status effects for living objects
     end
     
     -- Draw reward system on top of everything

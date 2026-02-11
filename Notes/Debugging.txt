@@ -1,0 +1,16 @@
+debugging poison status:
+
+Poison Status
+- name, duration, damage, maxstack, onUpdate
+
+
+EffectManager
+- table.insert(effect)
+
+Bullet
+- for effect in hitEffects do: effect:func(enemy)
+
+Turret
+- fire() config = {hitEffects = self.hitEffects)
+
+Says target.id is nil???

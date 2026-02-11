@@ -1,4 +1,5 @@
 local hitbox = require("Physics.hitbox") -- Import the hitbox module
+local EffectManager = require("Game.StatusEffects.EffectManager") -- Import the EffectManager module
 
 local object = {
     id_count = 0, -- Unique identifier for the object
@@ -25,6 +26,9 @@ function object:new(config)
     obj.color = config.color or {1, 1, 1, 1} -- Default color is white
     obj.game = config.game or nil -- Reference to the game object if needed
     obj.tag = config.tag or nil -- Tag for collision detection
+    if config.StatusEffectManager then
+        obj.StatusEffectManager = EffectManager:new{owner = obj} -- Initialize EffectManager if config provided
+    end
     if config.hitbox then
         if not obj.w or not obj.h then
             error("Width (w) and Height (h) must be provided for hitbox")

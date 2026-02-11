@@ -36,15 +36,23 @@ function RewardSystem:initializeRewardPool()
         rarity = "common",
         type = "building"
     }
-    local ammoCache = Reward:new{
+    local ammoCache = {
         name = "Ammo Cache",
         description = "Increase turret damage by 20%",
         rarity = "common",
         type = "building",
         building = Buff:new({game = self.game})
     }
-    table.insert(self.rewardPool, Reward:new(basicturret))
-    table.insert(self.rewardPool, ammoCache)
+    local poisonTurret = {
+        name = "Poison Turret",
+        description = "Bullets apply poison effect",
+        rarity = "uncommon",
+        type = "building",
+        building = require("Buildings.Turrets.PoisonTurret"):new({game = self.game})
+    }
+    --table.insert(self.rewardPool, Reward:new(basicturret))
+    --table.insert(self.rewardPool, Reward:new(ammoCache))
+    table.insert(self.rewardPool, Reward:new(poisonTurret))
 end
 
 function RewardSystem:activate()

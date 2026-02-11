@@ -13,10 +13,10 @@ local Stats = {
     maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
     tag = "enemy", -- Tag for collision detection
-    effects = {}
 }   
 
 function Enemy:new(config)
+    config = config or {}
     for key, value in pairs(Stats) do
         config[key] = config[key] or value -- Use default values if not provided
     end
@@ -35,24 +35,7 @@ function Enemy:update(dt)
         self.game.base:takeDamage(self.damage) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
-    for i = #self.effects, 1, -1 do
-        local effect = self.effects[i]
-        if effect.onUpdate then
-            effect.onUpdate(self, dt) -- Call onUpdate function for the effect
-        else
-            error("Effect " .. effect.tag .. " is missing onUpdate function")
-        end
-    end
-end
-
-function Enemy:addEffect(id, effect)
-    if self.effects[id] then
-        if effect.stackable 
-        -- if self.effects[id].duration then
-        --     self.effects[id].duration = math.max(self.effects[id].duration, effect.duration) -- Refresh duration if new effect has longer duration
-        -- end
-    end
-    table.insert(self.effects, effect)
+    self.StatusEffectManager:update(dt) -- Update status effects
 end
 
 function Enemy:getVelocity()

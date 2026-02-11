@@ -23,8 +23,9 @@ function InputHandler:update(dt)
         if obj.tag == "turret" and not obj.destroyed then
             if showAllArcs then
                 obj.showArc = true
-            elseif obj ~= self.selectedBuilding and obj ~= self.hoveredBuilding then
-                obj.showArc = false
+            else
+                -- Only keep selected building's arc visible when space not held
+                obj.showArc = (obj == self.selectedBuilding)
             end
         end
     end

@@ -12,12 +12,12 @@ local default = {
     fireRate = 1,
     damage = 25,
     bulletSpeed = 400,
-    range = math.huge,
+    range = 600,
     barrel = 0,
     firingArc = {
         direction = 0,    -- Firing arc facing direction in radians
         minRange = 0,     -- Minimum firing range
-        maxRange = 600,   -- Maximum firing range  
+        --maxRange = 600,   -- Maximum firing range  
         angle = math.pi/8   -- Firing arc angle (in radians, math.pi = 180 degrees)
     },
     shapePattern = {{0, 0}},
@@ -38,9 +38,9 @@ function Turret:new(config)
         if not config.firingArc.minRange then
             error("firingArc.minRange is required when providing custom firingArc")
         end
-        if not config.firingArc.maxRange then
-            error("firingArc.maxRange is required when providing custom firingArc")
-        end
+        -- if not config.firingArc.maxRange then
+        --     error("firingArc.maxRange is required when providing custom firingArc")
+        -- end
         if not config.firingArc.angle then
             error("firingArc.angle is required when providing custom firingArc")
         end
@@ -62,7 +62,7 @@ function Turret:new(config)
     t.firingArc = {
         direction = config.firingArc.direction,
         minRange = config.firingArc.minRange,
-        maxRange = config.firingArc.maxRange,
+        maxRange = config.range,
         angle = config.firingArc.angle
     }
     t.showArc = false -- Flag to show firing arc
@@ -81,8 +81,8 @@ function Turret:new(config)
     return t
 end
 
-function Turret:addHitEffect(effectFunc)
-    table.insert(self.hitEffects, effectFunc)
+function Turret:addHitEffect(effect)
+    table.insert(self.hitEffects, effect)
 end
 
 -- Buff Management System
@@ -199,7 +199,7 @@ function Turret:hasBuffFrom(sourceId)
 end
 
 function Turret:fire(args)
-    local offset = 0--love.math.random() * self.spread * 2 - self.spread
+    local offset = 0 --love.math.random() * self.spread * 2 - self.spread
     local x, y
     
     -- Use provided position or default to fire point
@@ -208,8 +208,8 @@ function Turret:fire(args)
     else
         x, y = self:getFirePoint()
     end
-    
-    config = {
+
+    local config = {
         x = x,
         y = y,
         angle = self.rotation + offset, -- Add spread to the angle
@@ -217,22 +217,20 @@ function Turret:fire(args)
         damage = self.currentStats.damage, -- Damage dealt by the bullet
         hitEffects = self.hitEffects, -- Effects to apply on hit
         game = self.game, -- Reference to the game object
-        targetX = args.targetX,
-        targetY = args.targetY,
+        sourceId = self.id, -- Track which turret fired this bullet
+        targetX = args and args.targetX or nil,
+        targetY = args and args.targetY or nil,
     }
-    for k, v in pairs(args or {}) do
-        config = {
-            x = x,
-            y = y,
-            angle = self.rotation + offset, -- Add spread to the angle
-            speed = self.currentStats.bulletSpeed, -- Speed of the bullet
-            damage = self.currentStats.damage, -- Damage dealt by the bullet
-            hitEffects = self.hitEffects, -- Effects to apply on hit
-            game = self.game, -- Reference to the game object
-            sourceId = self.id, -- Track which turret fired this bullet
-            targetX = args.targetX,
-            targetY = args.targetY,
-        }
+
+    -- If args has extra keys, override config
+    if args then
+        for k, v in pairs(args) do
+            config[k] = v
+        end
+    end
+
+    --self.bulletType:new(config)
+    self.game:addObject(self.bulletType:new(config))
 end
 
 function Turret:update(dt)

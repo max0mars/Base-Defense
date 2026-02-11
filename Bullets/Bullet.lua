@@ -58,12 +58,8 @@ function Bullet:onHit(enemy)
     self.pierce = self.pierce - 1
     enemy:takeDamage(self.damage)
     for _, effect in ipairs(self.hitEffects) do
-        if type(effect) == "function" then
-            error("Bullet hitEffect should be a table with func field, not a direct function.")
-            effect(self, enemy)
-        elseif type(effect) == "table" and effect.func then
-            effect.func(self, enemy)
-        end
+        --print(effect.name)
+        effect:func(enemy)
     end
     if self.pierce <= 0 then
         self:died()
