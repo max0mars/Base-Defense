@@ -2,12 +2,13 @@ local StatusEffect = {}
 StatusEffect.__index = StatusEffect
 
 default = {
-    name = nil,
-    duration = nil, -- Duration in seconds
+    name = "Status Effect", -- Name of the status effect
+    duration = 5, -- Duration in seconds
     onApply = nil, -- Function to call when the effect is applied
     onUpdate = nil, -- Function to call every update while the effect is active
     onExpire = nil, -- Function to call when the effect expires
-    maxStacks = 1, -- Maximum number of stacks for this effect
+    maxStacks = math.huge, -- Maximum number of stacks for this effect
+    source = nil, -- The source of the effect (e.g., the entity that applied it)
 }
 
 function StatusEffect:new(config)
@@ -21,10 +22,4 @@ function StatusEffect:new(config)
     return instance
 end
 
-function StatusEffect:apply(target)
-    if self.onApply then
-        self.onApply(target)
-    end
-end
-
-function 
+return StatusEffect
