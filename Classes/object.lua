@@ -27,7 +27,7 @@ function object:new(config)
     obj.game = config.game or nil -- Reference to the game object if needed
     obj.tag = config.tag or nil -- Tag for collision detection
     if config.StatusEffectManager then
-        obj.StatusEffectManager = EffectManager:new{owner = obj} -- Initialize EffectManager if config provided
+        obj.StatusEffectManager = EffectManager:new(obj) -- Initialize EffectManager if config provided
     end
     if config.hitbox then
         if not obj.w or not obj.h then

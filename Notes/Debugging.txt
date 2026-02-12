@@ -11,6 +11,9 @@ Bullet
 - for effect in hitEffects do: effect:func(enemy)
 
 Turret
-- fire() config = {hitEffects = self.hitEffects)
+- fire() config = {hitEffects = self.hitEffects}
 
-Says target.id is nil???
+LOG
+Applying poison effect to target: 23
+Target has StatusEffectManager, applying poison effect.
+applied Status Effect

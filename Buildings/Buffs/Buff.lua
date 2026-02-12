@@ -1,9 +1,9 @@
 local building = require("Buildings.Building")
 
-Buff = setmetatable({}, building)
+local Buff = setmetatable({}, building)
 Buff.__index = Buff
 
-default = {
+local default = {
     type = "passive",
     tag = "passive",
     buffType = "stat", -- "stat" or "onHit"

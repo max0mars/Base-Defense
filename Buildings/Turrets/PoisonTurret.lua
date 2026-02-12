@@ -21,7 +21,7 @@ function PoisonTurret:new(config)
     local poisonOnHit = {
         name = "poison",
         func = function(target)
-            print("Applying poison effect to " .. target.id)
+            print("Applying poison effect to target: " .. target.id)
             -- Apply poison effect to the target's effect manager
             if target.StatusEffectManager then
                 print("Target has StatusEffectManager, applying poison effect.")

@@ -57,9 +57,10 @@ end
 function Bullet:onHit(enemy)
     self.pierce = self.pierce - 1
     enemy:takeDamage(self.damage)
+    print(enemy.id)
     for _, effect in ipairs(self.hitEffects) do
         --print(effect.name)
-        effect:func(enemy)
+        effect.func(enemy)
     end
     if self.pierce <= 0 then
         self:died()

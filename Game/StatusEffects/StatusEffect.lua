@@ -12,6 +12,7 @@ default = {
 }
 
 function StatusEffect:new(config)
+    config = config or {}
     for key, value in pairs(default) do
         config[key] = config[key] or value
     end

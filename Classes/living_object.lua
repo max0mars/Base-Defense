@@ -51,6 +51,7 @@ function living_object:_drawHealthBar()
     love.graphics.rectangle("line", barX, barY, width, height)
 end
 
+
 function living_object:takeDamage(amount, type)
     if type == nil then
         type = "physical" -- Default damage type
@@ -67,6 +68,22 @@ end
 
 function living_object:draw()
     object.draw(self) -- Call the base object's draw method
+end
+
+function living_object:getHealthBarRect()
+    local width, height, yOffset
+    if self.shape == "circle" then
+        width = self.size * 2
+        height = self.size
+        yOffset = 0
+    else
+        width = self.w
+        height = 10
+        yOffset = self.h / 2
+    end
+    local barX = self.x - width / 2
+    local barY = self.y - 20 - yOffset
+    return barX, barY, width, height
 end
 
 return living_object

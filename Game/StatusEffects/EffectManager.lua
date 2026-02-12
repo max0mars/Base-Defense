@@ -25,7 +25,9 @@ function StatusEffectManager:applyEffect(effect)
         -- max stacks
     else
         table.insert(self.effects[effect.name], effect)
-        effect:onApply(self.owner) -- Call the onApply function when the effect is applied
+        if effect.onApply then
+            effect:onApply(self.owner) -- Call the onApply function when the effect is applied
+        end
     end
 end
 
@@ -51,7 +53,7 @@ end
 
 -- Draws status effect icons (colored circles with stack numbers) above the owner's health bar
 function StatusEffectManager:drawStatusEffects()
-    local iconSize = 16 -- constant size for all objects
+    local iconSize = 4 -- constant size for all objects (4x smaller)
     local spacing = 4   -- space between icons
     -- Get health bar position and size from owner
     if not self.owner or not self.owner.getHealthBarRect then return end

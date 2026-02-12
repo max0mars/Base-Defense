@@ -8,6 +8,7 @@ local RewardSystem = require("Game.RewardSystem")
 local WaveSpawner = require("Game.WaveSpawner")
 local InputHandler = require("Game.InputHandler")
 local MainTurret = require("Buildings.Turrets.MainTurret")
+local PoisonTurret = require("Buildings.Turrets.PoisonTurret")
 
 
 local ground = {
@@ -46,6 +47,8 @@ function game:load(saveData)
     local centerCol = math.ceil(gridWidth / 2)
 
     self:newBuilding(self.mainTurret, (centerRow - 1) * gridWidth + centerCol)
+    self:newBuilding(PoisonTurret:new({game = self}), 32) -- Place a PoisonTurret in the top-left corner for testing
+
 end
 
 function game:newBuilding(building, slot)
@@ -172,7 +175,7 @@ function game:draw()
     end
     for _, obj in ipairs(healthyboys) do
         obj:drawHealthBar() -- Draw health bars for living objects
-        --obj.effectManager:drawStatusEffects() -- Draw status effects for living objects
+        obj.StatusEffectManager:drawStatusEffects() -- Draw status effects for living objects
     end
     
     -- Draw reward system on top of everything
