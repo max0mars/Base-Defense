@@ -175,7 +175,9 @@ function game:draw()
     end
     for _, obj in ipairs(healthyboys) do
         obj:drawHealthBar() -- Draw health bars for living objects
-        obj.StatusEffectManager:drawStatusEffects() -- Draw status effects for living objects
+        if obj.effectManager then
+            obj.effectManager:drawStatusEffects() -- Draw status effects for living objects
+        end
     end
     
     -- Draw reward system on top of everything

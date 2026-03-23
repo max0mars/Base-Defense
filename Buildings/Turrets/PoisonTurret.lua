@@ -17,19 +17,7 @@ function PoisonTurret:new(config)
     end
     local t = Turret:new(config)
     setmetatable(t, { __index = self })
-    -- Add poison effect to hitEffects
-    local poisonOnHit = {
-        name = "poison",
-        func = function(target)
-            print("Applying poison effect to target: " .. target.id)
-            -- Apply poison effect to the target's effect manager
-            if target.StatusEffectManager then
-                print("Target has StatusEffectManager, applying poison effect.")
-                target.StatusEffectManager:applyEffect(PoisonEffect:new{})
-            end
-        end
-    }
-    t:addHitEffect(poisonOnHit)
+    t:addHitEffect(PoisonEffect:new{})
     return t
 end
 

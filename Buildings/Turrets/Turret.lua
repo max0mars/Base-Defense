@@ -86,117 +86,117 @@ function Turret:addHitEffect(effect)
 end
 
 -- Buff Management System
-function Turret:addBuff(sourceId, buffData)
-    -- buffData format: {type="stat"|"onHit", damageMultiplier=1.5, fireRateMultiplier=0.8, rangeBonus=50, onHitEffect=function, etc}
+-- function Turret:addBuff(sourceId, buffData)
+--     -- buffData format: {type="stat"|"onHit", damageMultiplier=1.5, fireRateMultiplier=0.8, rangeBonus=50, onHitEffect=function, etc}
     
-    if buffData.type == "stat" or not buffData.type then
-        -- Handle stat buffs (default behavior)
-        self.buffs[sourceId] = buffData
-        self:updateBuffedStats()
-    elseif buffData.type == "onHit" then
-        -- Handle onHit buffs
-        self.buffs[sourceId] = buffData
-        if buffData.onHitEffect and buffData.onHitEffect.func and buffData.onHitEffect.id then
-            -- Only add if not already present (by id)
-            local alreadyPresent = false
-            for _, effect in ipairs(self.hitEffects) do
-                if type(effect) == "table" and effect.id == buffData.onHitEffect.id then
-                    alreadyPresent = true
-                    break
-                end
-            end
-            if not alreadyPresent then
-                table.insert(self.hitEffects, buffData.onHitEffect)
-                buffData._effectIndex = #self.hitEffects
-            end
-        end
-    end
-end
+--     if buffData.type == "stat" or not buffData.type then
+--         -- Handle stat buffs (default behavior)
+--         self.buffs[sourceId] = buffData
+--         self:updateBuffedStats()
+--     elseif buffData.type == "onHit" then
+--         -- Handle onHit buffs
+--         self.buffs[sourceId] = buffData
+--         if buffData.onHitEffect and buffData.onHitEffect.func and buffData.onHitEffect.id then
+--             -- Only add if not already present (by id)
+--             local alreadyPresent = false
+--             for _, effect in ipairs(self.hitEffects) do
+--                 if type(effect) == "table" and effect.id == buffData.onHitEffect.id then
+--                     alreadyPresent = true
+--                     break
+--                 end
+--             end
+--             if not alreadyPresent then
+--                 table.insert(self.hitEffects, buffData.onHitEffect)
+--                 buffData._effectIndex = #self.hitEffects
+--             end
+--         end
+--     end
+-- end
 
-function Turret:removeBuff(sourceId)
-    local buff = self.buffs[sourceId]
-    if buff then
-        if buff.type == "onHit" and buff._effectIndex then
-            -- Remove onHit effect by id
-            local removeId = buff.onHitEffect and buff.onHitEffect.id
-            if removeId then
-                for i = #self.hitEffects, 1, -1 do
-                    if type(self.hitEffects[i]) == "table" and self.hitEffects[i].id == removeId then
-                        table.remove(self.hitEffects, i)
-                    end
-                end
-            end
-        end
-        self.buffs[sourceId] = nil
-        self:updateBuffedStats()
-    end
-end
+-- function Turret:removeBuff(sourceId)
+--     local buff = self.buffs[sourceId]
+--     if buff then
+--         if buff.type == "onHit" and buff._effectIndex then
+--             -- Remove onHit effect by id
+--             local removeId = buff.onHitEffect and buff.onHitEffect.id
+--             if removeId then
+--                 for i = #self.hitEffects, 1, -1 do
+--                     if type(self.hitEffects[i]) == "table" and self.hitEffects[i].id == removeId then
+--                         table.remove(self.hitEffects, i)
+--                     end
+--                 end
+--             end
+--         end
+--         self.buffs[sourceId] = nil
+--         self:updateBuffedStats()
+--     end
+-- end
 
-function Turret:clearAllBuffs()
-    self.buffs = {}
-    self:updateBuffedStats()
-end
+-- function Turret:clearAllBuffs()
+--     self.buffs = {}
+--     self:updateBuffedStats()
+-- end
 
-function Turret:updateBuffedStats()
-    -- Reset to base stats (stored directly on turret)
-    self.currentStats.damage = self.damage
-    self.currentStats.fireRate = self.fireRate
-    self.currentStats.bulletSpeed = self.bulletSpeed
-    self.currentStats.range = self.range
+-- function Turret:updateBuffedStats()
+--     -- Reset to base stats (stored directly on turret)
+--     self.currentStats.damage = self.damage
+--     self.currentStats.fireRate = self.fireRate
+--     self.currentStats.bulletSpeed = self.bulletSpeed
+--     self.currentStats.range = self.range
     
-    -- Accumulate linear multipliers and bonuses
-    local damageMultiplier = 0  -- Will be added to 1.0 (so 0.2 = +20%)
-    local fireRateMultiplier = 0
-    local bulletSpeedMultiplier = 0
-    local rangeMultiplier = 0
-    local damageBonus = 0
-    local rangeBonus = 0
+--     -- Accumulate linear multipliers and bonuses
+--     local damageMultiplier = 0  -- Will be added to 1.0 (so 0.2 = +20%)
+--     local fireRateMultiplier = 0
+--     local bulletSpeedMultiplier = 0
+--     local rangeMultiplier = 0
+--     local damageBonus = 0
+--     local rangeBonus = 0
     
-    -- Apply all active stat buffs (linear stacking)
-    for sourceId, buff in pairs(self.buffs) do
-        -- Only apply stat changes for stat buffs or buffs without explicit type (default)
-        if buff.type == "stat" or not buff.type then
-            if buff.damageMultiplier then
-                damageMultiplier = damageMultiplier + (buff.damageMultiplier - 1)
-            end
-            if buff.damageBonus then
-                damageBonus = damageBonus + buff.damageBonus
-            end
-            if buff.fireRateMultiplier then
-                fireRateMultiplier = fireRateMultiplier + (buff.fireRateMultiplier - 1)
-            end
-            if buff.bulletSpeedMultiplier then
-                bulletSpeedMultiplier = bulletSpeedMultiplier + (buff.bulletSpeedMultiplier - 1)
-            end
-            if buff.rangeBonus then
-                rangeBonus = rangeBonus + buff.rangeBonus
-            end
-            if buff.rangeMultiplier then
-                rangeMultiplier = rangeMultiplier + (buff.rangeMultiplier - 1)
-            end
-        end
-        -- onHit buffs don't affect stats, only add hit effects
-    end
+--     -- Apply all active stat buffs (linear stacking)
+--     for sourceId, buff in pairs(self.buffs) do
+--         -- Only apply stat changes for stat buffs or buffs without explicit type (default)
+--         if buff.type == "stat" or not buff.type then
+--             if buff.damageMultiplier then
+--                 damageMultiplier = damageMultiplier + (buff.damageMultiplier - 1)
+--             end
+--             if buff.damageBonus then
+--                 damageBonus = damageBonus + buff.damageBonus
+--             end
+--             if buff.fireRateMultiplier then
+--                 fireRateMultiplier = fireRateMultiplier + (buff.fireRateMultiplier - 1)
+--             end
+--             if buff.bulletSpeedMultiplier then
+--                 bulletSpeedMultiplier = bulletSpeedMultiplier + (buff.bulletSpeedMultiplier - 1)
+--             end
+--             if buff.rangeBonus then
+--                 rangeBonus = rangeBonus + buff.rangeBonus
+--             end
+--             if buff.rangeMultiplier then
+--                 rangeMultiplier = rangeMultiplier + (buff.rangeMultiplier - 1)
+--             end
+--         end
+--         -- onHit buffs don't affect stats, only add hit effects
+--     end
     
-    -- Apply final calculations
-    self.currentStats.damage = (self.damage * (1 + damageMultiplier)) + damageBonus
-    self.currentStats.fireRate = self.fireRate * (1 + fireRateMultiplier)
-    self.currentStats.bulletSpeed = self.bulletSpeed * (1 + bulletSpeedMultiplier)
-    self.currentStats.range = (self.range * (1 + rangeMultiplier)) + rangeBonus
+--     -- Apply final calculations
+--     self.currentStats.damage = (self.damage * (1 + damageMultiplier)) + damageBonus
+--     self.currentStats.fireRate = self.fireRate * (1 + fireRateMultiplier)
+--     self.currentStats.bulletSpeed = self.bulletSpeed * (1 + bulletSpeedMultiplier)
+--     self.currentStats.range = (self.range * (1 + rangeMultiplier)) + rangeBonus
     
-    -- Update firing arc range to match buffed range
-    local originalMaxRange = self.firingArc.maxRange
-    local rangeRatio = self.currentStats.range / self.range
-    self.firingArc.maxRange = originalMaxRange * rangeRatio
-end
+--     -- Update firing arc range to match buffed range
+--     local originalMaxRange = self.firingArc.maxRange
+--     local rangeRatio = self.currentStats.range / self.range
+--     self.firingArc.maxRange = originalMaxRange * rangeRatio
+-- end
 
-function Turret:getActiveBuff(sourceId)
-    return self.buffs[sourceId]
-end
+-- function Turret:getActiveBuff(sourceId)
+--     return self.buffs[sourceId]
+-- end
 
-function Turret:hasBuffFrom(sourceId)
-    return self.buffs[sourceId] ~= nil
-end
+-- function Turret:hasBuffFrom(sourceId)
+--     return self.buffs[sourceId] ~= nil
+-- end
 
 function Turret:fire(args)
     local offset = 0 --love.math.random() * self.spread * 2 - self.spread

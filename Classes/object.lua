@@ -26,8 +26,8 @@ function object:new(config)
     obj.color = config.color or {1, 1, 1, 1} -- Default color is white
     obj.game = config.game or nil -- Reference to the game object if needed
     obj.tag = config.tag or nil -- Tag for collision detection
-    if config.StatusEffectManager then
-        obj.StatusEffectManager = EffectManager:new(obj) -- Initialize EffectManager if config provided
+    if config.effectManager then
+        obj.effectManager = EffectManager:new(obj) -- Initialize EffectManager if config provided
     end
     if config.hitbox then
         if not obj.w or not obj.h then
@@ -60,6 +60,14 @@ end
 
 function object:getHitbox()
     return self.hitbox -- Return the hitbox associated with the object
+end
+
+function object:getStat(statName)
+    local baseValue = self.baseStats and self.baseStats[statName] or self[statName]
+    if self.effectManager and self.effectManager.calculateStat then
+        return self.effectManager:calculateStat(statName, baseValue)
+    end
+    return baseValue
 end
 
 -- function object:getSize()

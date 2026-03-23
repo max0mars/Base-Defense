@@ -13,7 +13,7 @@ local Stats = {
     maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
     tag = "enemy", -- Tag for collision detection
-    StatusEffectManager = true, -- Enemies have a StatusEffectManager by default
+    effectManager = true, -- Enemies have a effectManager by default
 }   
 
 function Enemy:new(config)
@@ -36,7 +36,7 @@ function Enemy:update(dt)
         self.game.base:takeDamage(self.damage) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
-    self.StatusEffectManager:update(dt) -- Update status effects
+    self.effectManager:update(dt) -- Update status effects
 end
 
 function Enemy:getVelocity()

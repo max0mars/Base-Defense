@@ -54,14 +54,18 @@ function Bullet:onCollision(obj)
     end
 end
 
-function Bullet:onHit(enemy)
+function Bullet:onHit(target)
     self.pierce = self.pierce - 1
-    enemy:takeDamage(self.damage)
-    print(enemy.id)
-    for _, effect in ipairs(self.hitEffects) do
-        --print(effect.name)
-        effect.func(enemy)
+    target:takeDamage(self.damage)
+    print(target.id)
+    
+    if target.effectManager then
+        for _, effectTemplate in ipairs(self.hitEffects) do
+            target.effectManager:applyEffect(effectTemplate)
+        end
+        target.effectManager:triggerEvent("onHit", self)
     end
+    
     if self.pierce <= 0 then
         self:died()
     end
