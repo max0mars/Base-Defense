@@ -13,7 +13,7 @@ Mortar.__index = Mortar
 local default = {
     damage = 50,
     bulletType = require("Bullets.Mortar_Bullet"),
-    fireRate = 4, -- seconds between shots
+    fireRate = 0.25, -- Hz (was 4s delay)
     cooldown = 0, -- cooldown timer
     mode = "auto",
     type = "turret",
@@ -70,7 +70,11 @@ function Mortar:drawReloadBar()
         local barY = self.y - 20  -- Position above the mortar
         
         
-        local reloadProgress = 1 - (self.cooldown / self.fireRate)
+        local currentFireRate = self:getStat("fireRate", self.fireRate)
+        local reloadProgress = 0
+        if currentFireRate > 0 then
+            reloadProgress = 1 - (self.cooldown / (1 / currentFireRate))
+        end
         
         -- Draw background (dark grey)
         love.graphics.setColor(0.3, 0.3, 0.3, 0.8)

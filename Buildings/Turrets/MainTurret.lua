@@ -6,9 +6,8 @@ MainTurret.__index = MainTurret
 local default = {
     --type = 'turret',
     tag = 'mainTurret',
-    rotation = 0,
     turnSpeed = math.huge,
-    fireRate = 0.2,
+    fireRate = 5, -- Hz (was 0.2s delay)
     damage = 65,      -- More damage than regular turret
     bulletSpeed = 800, -- Faster bullets
     range = math.huge,
@@ -65,15 +64,18 @@ function MainTurret:PlayerClick(targetX, targetY)
     
     -- Fire directly at specified coordinates if not on cooldown
     if self.cooldown <= 0 then
-        local centerX, centerY = self:getCenterPosition()
-        self:fire({
-            targetX = targetX, 
-            targetY = targetY,
-            fireX = centerX,
-            fireY = centerY
-        })
-        self.cooldown = self.fireRate
-        return true -- Successfully fired
+        local currentFireRate = self:getStat("fireRate")
+        if currentFireRate > 0 then
+            local centerX, centerY = self:getCenterPosition()
+            self:fire({
+                targetX = targetX, 
+                targetY = targetY,
+                fireX = centerX,
+                fireY = centerY
+            })
+            self.cooldown = 1 / currentFireRate
+            return true -- Successfully fired
+        end
     end
     return false -- Still on cooldown
 end
@@ -86,7 +88,11 @@ function MainTurret:drawReloadBar(centerX, centerY)
         local barX = (centerX or self.x) - barWidth/2
         local barY = (centerY or self.y) - 30  -- Position higher above the larger turret
         
-        local reloadProgress = 1 - (self.cooldown / self.fireRate)
+        local currentFireRate = self:getStat("fireRate")
+        local reloadProgress = 0
+        if currentFireRate > 0 then
+            reloadProgress = 1 - (self.cooldown / (1 / currentFireRate))
+        end
         
         -- Draw background (dark grey)
         love.graphics.setColor(0.3, 0.3, 0.3, 0.8)

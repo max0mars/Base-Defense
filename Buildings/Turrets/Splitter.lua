@@ -17,7 +17,7 @@ Splitter Turret:
 
 default = {
     damage = 10,
-    fireRate = 2, -- seconds between shots
+    fireRate = 0.5, -- Hz (was 2s delay)
     spread = 0.1,
     splitamount = 5,
     splitDamage = 25,

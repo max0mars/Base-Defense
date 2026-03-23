@@ -62,57 +62,39 @@ function Buff:getAffectedSlotsFromAnchor(anchorSlot)
 end
 
 function Buff:applyBuffs()
-    -- Apply this buff to all turrets in affected slots
-    if not self.slot then return end -- Not placed yet
-    
-    local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
-    local base = self.game.base
-    
-    for _, slot in ipairs(affectedSlots) do
-        local building = base.buildGrid.buildings[slot]
-        if building and building.addBuff then -- Check if it's a turret with buff capability
-            local buffData = {}
-            
-            -- Convert statChanges to buff format
-            if self.statChanges.damage then
-                buffData.damageMultiplier = self.statChanges.damage
-            end
-            if self.statChanges.fireRate then
-                -- Invert fireRate buff since lower fireRate = better (faster firing)
-                buffData.fireRateMultiplier = 1 / self.statChanges.fireRate
-            end
-            if self.statChanges.bulletSpeed then
-                buffData.bulletSpeedMultiplier = self.statChanges.bulletSpeed
-            end
-            if self.statChanges.range then
-                buffData.rangeMultiplier = self.statChanges.range
-            end
-            
-            -- Set buff type and onHit effect if applicable
-            buffData.type = self.buffType
-            if self.buffType == "onHit" and self.onHitEffect then
-                -- onHitEffect should be a table: {id=..., func=...}
-                buffData.onHitEffect = self.onHitEffect
-            end
-            
-            building:addBuff(self.id, buffData)
-        end
-    end
-end
-
-function Buff:removeBuffs()
-    -- Remove this buff from all turrets
+    -- Apply this buff to all turrets in affected slots using the EffectManager
     if not self.slot then return end
     
     local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
     local base = self.game.base
     
     for _, slot in ipairs(affectedSlots) do
-        local building = base.buildGrid.buildings[slot]
-        if building and building.removeBuff then
-            building:removeBuff(self.id)
+        local target = base.buildGrid.buildings[slot]
+        if target and target.effectManager then
+            local effect = {
+                name = "buff_" .. self.id,
+                statModifiers = {}
+            }
+            
+            -- Map statChanges to standard EffectManager keys
+            for statName, value in pairs(self.statChanges) do
+                -- statChanges uses multipliers like 1.2, EffectManager uses mult additives like 0.2
+                effect.statModifiers[statName] = { mult = value - 1 }
+            end
+            
+            if self.buffType == "onHit" and self.onHitEffect then
+                effect.onHit = self.onHitEffect
+            end
+            
+            target.effectManager:applyEffect(effect)
         end
     end
+end
+
+function Buff:removeBuffs()
+    -- Effect removal is currently handled by the EffectManager's internal logic 
+    -- if we were to implement a named removal, but for now recalculateAllBuffs 
+    -- in GameManager handles clearing most states if needed.
 end
 
 return Buff

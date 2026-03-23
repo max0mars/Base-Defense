@@ -5,7 +5,7 @@ local PoisonTurret = setmetatable({}, { __index = Turret })
 PoisonTurret.__index = PoisonTurret
 
 local default = {
-    fireRate = 2, -- Slower fire rate than regular turret
+    fireRate = 0.5, -- Hz (was 2s delay)
     damage = 5,
     color = {0.5, 1, 0.5, 1} -- Greenish color to indicate poison effect
 }

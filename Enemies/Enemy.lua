@@ -31,7 +31,8 @@ end
 
 function Enemy:update(dt)
     if self.destroyed then return end
-    self.x = self.x - (self:getStat("speed") * dt)
+    local currentSpeed = self:getStat("speed")
+    self.x = self.x - (currentSpeed * dt)
     if self.x < self.target then
         self.game.base:takeDamage(self:getStat("damage")) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
@@ -40,7 +41,8 @@ function Enemy:update(dt)
 end
 
 function Enemy:getVelocity()
-    return -self:getStat("speed"), 0 -- Enemies move left by default
+    local currentSpeed = self:getStat("speed")
+    return -currentSpeed, 0 -- Enemies move left by default
 end
 
 function Enemy:onCollision(obj)
