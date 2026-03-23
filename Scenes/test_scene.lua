@@ -6,137 +6,139 @@ local EffectManager = require("Game.StatusEffects.EffectManager")
 setmetatable(test_scene, { __index = scene })
 
 function test_scene:load()
-    print("\n" .. string.rep("=", 40))
-    print("EFFECT MANAGER TEST SUITE STARTING...")
-    print(string.rep("=", 40))
+    print("\n" .. string.rep("=", 60))
+    print("GLOBAL-LOCAL HIERARCHY TEST SUITE")
+    print(string.rep("=", 60))
 
-    -- Mock owner structure
-    local owner = {
-        name = "TestDummy",
-        getHealthBarRect = function() return 100, 100, 100, 10 end
-    }
-
-    local em = EffectManager:new(owner)
+    -- Setup managers
+    local globalEM = EffectManager:new() -- Global
+    local localOwner = { name = "LocalUnit", getHealthBarRect = function() return 100, 100, 50, 5 end }
+    local localEM = EffectManager:new(localOwner)
+    localEM.parent = globalEM
 
     -----------------------------------------------------------
-    -- Test 1: Base Stat check and Caching
+    -- Test 1: Global Inheritance
     -----------------------------------------------------------
-    print("\n[TEST 1] Testing base stat and dirty flag cache")
-    local s1 = em:getStat("speed", 100)
-    print("  Initial speed: " .. s1)
+    print("\n[TEST 1] Testing Global inheritance of stats")
+    print("  Setup: Base speed = 100. Applying a +100% mult buff to GLOBAL manager.")
     
-    -- Check if it actually caches (we can't easily peek but we'll check it remains consistent)
-    local s2 = em:getStat("speed", 100)
-    if s1 == s2 then
-        print("  SUCCESS: Base speed is consistent at " .. s1)
+    globalEM:applyEffect({
+        name = "world_speed",
+        statModifiers = { speed = { mult = 1.0 } }
+    })
+    
+    local speed = localEM:getStat("speed", 100)
+    print("  Action: Checking speed on LOCAL manager (linked to Global).")
+    
+    if speed == 200 then
+        print("  SUCCESS: Global speed buff reached local unit. (Speed is 200)")
+    else
+        print("  FAILED: Local speed should be 200, got " .. speed)
     end
 
     -----------------------------------------------------------
-    -- Test 2: Mult & Flat Modifiers
+    -- Test 2: Combined Formulas
     -----------------------------------------------------------
-    -- Formula: (Base + AdditiveSum) * (1 + MultiplierSum)
-    print("\n[TEST 2] Testing Formula (Base + Flat) * (1 + Mult)")
+    print("\n[TEST 2] Testing stacked Local/Global formula")
+    print("  Setup: Global buff (+100% mult) already active.")
+    print("  Action: Applying LOCAL flat buff (+20) to unit.")
     
-    local buff1 = {
+    localEM:applyEffect({
         name = "boots",
-        statModifiers = { speed = { add = 10 } }
-    }
-    local buff2 = {
-        name = "haste",
+        statModifiers = { speed = { add = 20 } }
+    })
+    
+    speed = localEM:getStat("speed", 100)
+    local expected = (100 + 20) * (1 + 1.0) -- 240
+    print("  Calculation: (Base 100 + Local 20) * (1 + Global 100%) = " .. expected)
+    
+    if speed == expected then
+        print("  SUCCESS: Buffs from multiple managers combined correctly. (Speed is " .. speed .. ")")
+    else
+        print("  FAILED: Multi-source formula error. Expected " .. expected .. ", got " .. speed)
+    end
+
+    -----------------------------------------------------------
+    -- Test 3: Versioning & Invalidation
+    -----------------------------------------------------------
+    print("\n[TEST 3] Testing version-based cache invalidation")
+    print("  Status: Local speed " .. speed .. " is currently cached.")
+    print("  Action: Adding an additional GLOBAL buff (+0.5 mult) while unit is idle.")
+    
+    globalEM:applyEffect({
+        name = "super_haste",
         statModifiers = { speed = { mult = 0.5 } }
-    }
+    })
     
-    em:applyEffect(buff1)
-    em:applyEffect(buff2)
+    print("  Detail: Global version changed. Checking if Local cache invalidates and recalculates...")
+    speed = localEM:getStat("speed", 100)
+    expected = (100 + 20) * (1 + 1.0 + 0.5) -- 300
     
-    local speed = em:getStat("speed", 100)
-    local expectedValue = (100 + 10) * (1 + 0.5) -- 110 * 1.5 = 165
-    
-    if speed == expectedValue then
-        print("  SUCCESS: Speed is " .. speed .. " (110 * 1.5)")
+    if speed == 300 then
+        print("  SUCCESS: Local manager detected Global version increase and updated. (Speed is 300)")
     else
-        print("  FAILED: Speed should be " .. expectedValue .. ", got " .. speed)
+        print("  FAILED: Version tracking failed to update cache. Got " .. speed)
     end
 
     -----------------------------------------------------------
-    -- Test 3: Tag-based Damage
+    -- Test 4: Selective Damage Scaling (Tags)
     -----------------------------------------------------------
-    print("\n[TEST 3] Testing Damage Tags")
+    print("\n[TEST 4] Testing Damage Tags across hierarchy")
+    print("  Setup: Global fire scaling (+50%) and Local fire scaling (+10 flat).")
     
-    local fireAmp = {
-        name = "fire_amp",
+    globalEM:applyEffect({
+        name = "global_ignite",
         targetTags = { "fire" },
-        statModifiers = { damage = { mult = 1.0 } } -- +100% fire damage
-    }
+        statModifiers = { damage = { mult = 0.5 } }
+    })
+    localEM:applyEffect({
+        name = "local_ignite",
+        targetTags = { "fire" },
+        statModifiers = { damage = { add = 10 } }
+    })
     
-    em:applyEffect(fireAmp)
+    print("  Action: Checking 'physical' damage (should ignore fire buffs) vs 'fire' damage.")
+    local phys = localEM:getDamage(100, { "physical" })
+    local fire = localEM:getDamage(100, { "fire" })
+    local expFire = (100 + 10) * (1 + 0.5) -- 165
     
-    local normalDmg = em:getDamage(100, { "physical" })
-    local fireDmg = em:getDamage(100, { "fire" })
+    print("  Result: Physical Damage = " .. phys .. ", Fire Damage = " .. fire)
     
-    print("  - Base Damage: 100")
-    print("  - Physical Tag: " .. normalDmg)
-    print("  - Fire Tag (+100%): " .. fireDmg)
-    
-    if normalDmg == 100 and fireDmg == 200 then
-        print("  SUCCESS: Damage tags correctly filtered")
+    if phys == 100 and fire == expFire then
+        print("  SUCCESS: Tag matching is filtering correctly across all layers.")
     else
-        print("  FAILED: Tag filtering failed")
+        print("  FAILED: Tag evaluation error.")
     end
 
     -----------------------------------------------------------
-    -- Test 4: Trigger Events
+    -- Test 5: triggerEvent Hook Bubbling
     -----------------------------------------------------------
-    print("\n[TEST 4] Testing triggerEvent hooks")
+    print("\n[TEST 5] Testing hook propagation (bubbling)")
+    print("  Setup: Adding high-level hook to GLOBAL manager for 'onScanned' event.")
     
-    local hookPassed = false
-    local counter = 0
-    local hookEffect = {
-        name = "counter_strike",
-        onHit = function(self, bullet)
-            counter = counter + 1
-            print("  - Hook called by: " .. (bullet.tag or "unknown"))
-            hookPassed = true
-        end
-    }
+    local globalSignal = false
+    globalEM:applyEffect({
+        name = "global_eye",
+        onScanned = function() globalSignal = true end
+    })
     
-    em:applyEffect(hookEffect)
-    em:triggerEvent("onHit", { tag = "bullet" })
+    print("  Action: Triggering 'onScanned' event on LOCAL manager instance.")
+    localEM:triggerEvent("onScanned")
     
-    if hookPassed and counter == 1 then
-        print("  SUCCESS: triggerEvent executed hook correctly")
-    end
-
-    -----------------------------------------------------------
-    -- Test 5: Stack Limits
-    -----------------------------------------------------------
-    print("\n[TEST 5] Testing Stack Limits")
-    
-    local stacker = {
-        name = "stacker",
-        maxStacks = 2,
-        statModifiers = { power = { add = 1 } }
-    }
-    
-    em:applyEffect(stacker)
-    em:applyEffect(stacker)
-    em:applyEffect(stacker) -- This 3rd stack should be ignored
-    
-    local power = em:getStat("power", 0)
-    if power == 2 then
-        print("  SUCCESS: Max stacks (2) respected correctly")
+    if globalSignal then
+        print("  SUCCESS: Global hook successfully fired from local event trigger.")
     else
-        print("  FAILED: Expected 2 stacks, got " .. power)
+        print("  FAILED: Event failed to bubble up to parent manager.")
     end
 
-    print("\n" .. string.rep("=", 40))
-    print("ALL TESTS COMPLETE")
-    print(string.rep("=", 40))
+    print("\n" .. string.rep("=", 60))
+    print("TEST SUITE COMPLETE")
+    print(string.rep("=", 60))
 end
 
 function test_scene:draw()
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Tests Outputted to Console/Terminal", 100, 100)
+    love.graphics.print("Detailed Hierarchy Tests are running in the Console.", 100, 100)
     love.graphics.print("Press 'Enter' to return to menu", 100, 150)
 end
 

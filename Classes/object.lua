@@ -28,6 +28,9 @@ function object:new(config)
     obj.tag = config.tag or nil -- Tag for collision detection
     if config.effectManager then
         obj.effectManager = EffectManager:new(obj) -- Initialize EffectManager if config provided
+        if obj.game and obj.game.globalEffectManager then
+            obj.effectManager.parent = obj.game.globalEffectManager
+        end
     end
     if config.hitbox then
         if not obj.w or not obj.h then

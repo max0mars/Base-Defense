@@ -9,6 +9,7 @@ local WaveSpawner = require("Game.WaveSpawner")
 local InputHandler = require("Game.InputHandler")
 local MainTurret = require("Buildings.Turrets.MainTurret")
 local PoisonTurret = require("Buildings.Turrets.PoisonTurret")
+local EffectManager = require("Game.StatusEffects.EffectManager")
 
 
 local ground = {
@@ -33,6 +34,7 @@ function game:load(saveData)
         self.WaveSpawner = WaveSpawner:new({game = self})
         self.inputHandler = InputHandler:new(self)
         self.state = "startup" -- Current game state: "startup", "wave", "placing", "reward", "gameover"
+        self.globalEffectManager = EffectManager:new() -- Global manager with no owner
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
@@ -140,6 +142,7 @@ function game:update(dt)
     -- end
     collision:bruteforceTagged(self.objects, "bullet", "enemy")
     self.WaveSpawner:update(dt)
+    self.globalEffectManager:update(dt)
     
     self:takeOutTheTrash() -- remove references to destroyed objects
 end

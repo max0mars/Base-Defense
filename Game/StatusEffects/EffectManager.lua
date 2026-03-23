@@ -7,16 +7,24 @@ local colors = {
 }
 
 function EffectManager:new(owner)
-    if not owner then
-        error("EffectManager requires an owner.")
+    if(owner == nil) then
+        print("Warning: EffectManager created without an owner")
     end
     local instance = setmetatable({}, EffectManager)
     instance.owner = owner
     instance.activeEffects = {}
     instance.effectCounts = {}
     instance.isDirty = true
+    instance.version = 0
+    instance.parent = nil
+    instance.lastParentVersion = 0
     instance.cache = {}
     return instance
+end
+
+function EffectManager:incrementVersion()
+    self.version = self.version + 1
+    self.isDirty = true
 end
 
 function EffectManager:applyEffect(effectTemplate)
@@ -35,7 +43,7 @@ function EffectManager:applyEffect(effectTemplate)
     else
         table.insert(self.activeEffects, effect)
         self.effectCounts[name] = currentStacks + 1
-        self.isDirty = true
+        self:incrementVersion()
         if effect.onApply then
             effect:onApply(self.owner)
         end
@@ -43,6 +51,7 @@ function EffectManager:applyEffect(effectTemplate)
 end
 
 function EffectManager:update(dt)
+    local changed = false
     for i = #self.activeEffects, 1, -1 do
         local effect = self.activeEffects[i]
         if effect.onUpdate then
@@ -56,9 +65,12 @@ function EffectManager:update(dt)
                 end
                 self.effectCounts[effect.name] = (self.effectCounts[effect.name] or 1) - 1
                 table.remove(self.activeEffects, i)
-                self.isDirty = true
+                changed = true
             end
         end
+    end
+    if changed then
+        self:incrementVersion()
     end
 end
 
@@ -101,25 +113,34 @@ function EffectManager:removeEffect(effect)
         if self.activeEffects[i] == effect then
             self.effectCounts[effect.name] = (self.effectCounts[effect.name] or 1) - 1
             table.remove(self.activeEffects, i)
-            self.isDirty = true
+            self:incrementVersion()
             break
         end
     end
 end
 
 function EffectManager:triggerEvent(eventName, ...)
+    -- Trigger local effects
     for i = 1, #self.activeEffects do
         local effect = self.activeEffects[i]
         if effect[eventName] and type(effect[eventName]) == "function" then
             effect[eventName](effect, ...)
         end
     end
+    -- Trigger parent effects
+    if self.parent then
+        self.parent:triggerEvent(eventName, ...)
+    end
 end
 
 function EffectManager:getStat(statName, baseValue)
-    if self.isDirty then
+    local parentVersionChanged = (self.parent and self.parent.version > self.lastParentVersion)
+    if self.isDirty or parentVersionChanged then
         self.cache = {}
         self.isDirty = false
+        if self.parent then
+            self.lastParentVersion = self.parent.version
+        end
     end
     
     if self.cache[statName] then
@@ -129,6 +150,7 @@ function EffectManager:getStat(statName, baseValue)
     local multiplierSum = 0.0
     local additiveSum = 0.0
 
+    -- Local effects
     for i = 1, #self.activeEffects do
         local effect = self.activeEffects[i]
         if effect.statModifiers and effect.statModifiers[statName] then
@@ -137,42 +159,62 @@ function EffectManager:getStat(statName, baseValue)
             additiveSum = additiveSum + (mod.add or mod.additive or 0)
         end
     end
+
+    -- Parent effects
+    if self.parent then
+        local pMult, pAdd = self.parent:_getModifierSums(statName)
+        multiplierSum = multiplierSum + pMult
+        additiveSum = additiveSum + pAdd
+    end
     
     local finalValue = (baseValue + additiveSum) * (1 + multiplierSum)
     self.cache[statName] = finalValue
     return finalValue
 end
 
-function EffectManager:getDamage(baseValue, damageTags)
+-- Helper for recursive summation without full finalValue calculation
+function EffectManager:_getModifierSums(statName, damageTags)
     local multiplierSum = 0.0
     local additiveSum = 0.0
 
     for i = 1, #self.activeEffects do
         local effect = self.activeEffects[i]
-        if effect.statModifiers and effect.statModifiers["damage"] then
-            local applies = false
-            if not effect.targetTags or #effect.targetTags == 0 then
-                applies = true
-            elseif damageTags then
-                for _, tag in ipairs(damageTags) do
-                    for _, targetTag in ipairs(effect.targetTags) do
-                        if tag == targetTag then
-                            applies = true
-                            break
+        local mod = effect.statModifiers and effect.statModifiers[statName]
+        if mod then
+            local applies = true
+            if statName == "damage" then
+                if effect.targetTags and #effect.targetTags > 0 then
+                    applies = false
+                    if damageTags then
+                        for _, tag in ipairs(damageTags) do
+                            for _, targetTag in ipairs(effect.targetTags) do
+                                if tag == targetTag then applies = true; break end
+                            end
+                            if applies then break end
                         end
                     end
-                    if applies then break end
                 end
             end
+
             if applies then
-                local mod = effect.statModifiers["damage"]
                 multiplierSum = multiplierSum + (mod.mult or mod.multiplier or 0)
                 additiveSum = additiveSum + (mod.add or mod.additive or 0)
             end
         end
     end
 
-    return (baseValue + additiveSum) * (1 + multiplierSum)
+    if self.parent then
+        local pMult, pAdd = self.parent:_getModifierSums(statName, damageTags)
+        multiplierSum = multiplierSum + pMult
+        additiveSum = additiveSum + pAdd
+    end
+
+    return multiplierSum, additiveSum
+end
+
+function EffectManager:getDamage(baseValue, damageTags)
+    local mult, add = self:_getModifierSums("damage", damageTags)
+    return (baseValue + add) * (1 + mult)
 end
 
 return EffectManager
