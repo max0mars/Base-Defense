@@ -31,21 +31,21 @@ end
 
 function Enemy:update(dt)
     if self.destroyed then return end
-    self.x = self.x - (self.speed * dt)
+    self.x = self.x - (self:getStat("speed") * dt)
     if self.x < self.target then
-        self.game.base:takeDamage(self.damage) -- Damage the base if the enemy reaches it
+        self.game.base:takeDamage(self:getStat("damage")) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
     self.effectManager:update(dt) -- Update status effects
 end
 
 function Enemy:getVelocity()
-    return -self.speed, 0 -- Enemies move left by default
+    return -self:getStat("speed"), 0 -- Enemies move left by default
 end
 
 function Enemy:onCollision(obj)
     if obj.tag == 'base' then
-        obj:takeDamage(self.damage)
+        obj:takeDamage(self:getStat("damage"))
         self:died() -- Destroy enemy on collision with base
     end
 end

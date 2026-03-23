@@ -25,6 +25,8 @@ function Bullet:new(config)
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
+    b.tags = config.tags or {} -- Initialize tags table
+    b.source = config.source or nil -- Track bullet source for stat calculation
     return b
 end
 
@@ -56,7 +58,13 @@ end
 
 function Bullet:onHit(target)
     self.pierce = self.pierce - 1
-    target:takeDamage(self.damage)
+    
+    local finalDamage = self.damage
+    if self.source and self.source.effectManager and self.source.effectManager.getDamage then
+        finalDamage = self.source.effectManager:getDamage(self.damage, self.tags)
+    end
+    
+    target:takeDamage(finalDamage)
     print(target.id)
     
     if target.effectManager then

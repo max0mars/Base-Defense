@@ -64,8 +64,8 @@ end
 
 function object:getStat(statName)
     local baseValue = self.baseStats and self.baseStats[statName] or self[statName]
-    if self.effectManager and self.effectManager.calculateStat then
-        return self.effectManager:calculateStat(statName, baseValue)
+    if self.effectManager and self.effectManager.getStat then
+        return self.effectManager:getStat(statName, baseValue)
     end
     return baseValue
 end

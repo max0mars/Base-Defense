@@ -3,6 +3,7 @@ local scene_manager = require("Scenes.scene_manager")
 
 scene_manager.scenes.menu = require("Scenes.menu_scene")
 scene_manager.scenes.game = require("Scenes.game_scene")
+scene_manager.scenes.test = require("Scenes.test_scene")
 
 scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to menu_scene
 

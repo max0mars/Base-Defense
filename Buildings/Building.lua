@@ -1,6 +1,6 @@
 local obj = require("Classes.object")
 
-local building = {}
+local building = setmetatable({}, obj)
 building.__index = building
 
 function building:new(config)
