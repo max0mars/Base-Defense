@@ -7,6 +7,7 @@ local default = {
     hp = 2000, -- Set health for tank
     maxHp = 2000,
     color = {1, 1, 0, 1}, -- Default color for basic enemies
+    types = { enemy = true},
     size = 45
 }
 

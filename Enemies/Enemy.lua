@@ -12,7 +12,7 @@ local Stats = {
     hp = 100, -- Default health for basic enemies
     maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
-    tag = "enemy", -- Tag for collision detection
+    types = { enemy = true}, -- Using Multi-Type system
     effectManager = true, -- Enemies have a effectManager by default
 }   
 
@@ -46,7 +46,7 @@ function Enemy:getVelocity()
 end
 
 function Enemy:onCollision(obj)
-    if obj.tag == 'base' then
+    if obj:isType('base') then
         obj:takeDamage(self:getStat("damage"))
         self:died() -- Destroy enemy on collision with base
     end

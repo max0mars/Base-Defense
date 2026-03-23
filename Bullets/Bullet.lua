@@ -10,7 +10,7 @@ local stats = {
     pierce = 1, -- Number of enemies the bullet can pierce
     hitEffects = {}, -- Effects to apply on hit
     lifespan = 5, -- Lifespan of the bullet in seconds
-    tag = "bullet", -- Tag for collision detection
+    types = { bullet = true }, -- Multi-Type classification
     hitbox = true, -- Bullets have hitboxes
     shape = "rectangle",
     w = 4,
@@ -21,7 +21,6 @@ function Bullet:new(config)
     for key, value in pairs(stats) do
         config[key] = config[key] or value -- Use default values if not provided
     end
-    config.tag = "bullet" -- Set the tag for collision detection
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
@@ -50,7 +49,7 @@ function Bullet:update(dt)
 end
 
 function Bullet:onCollision(obj)
-    if obj.tag == 'enemy' and not self.hitCache[obj:getID()] then
+    if obj:isType('enemy') and not self.hitCache[obj:getID()] then
         self.hitCache[obj:getID()] = true -- Mark this enemy as hit
         self:onHit(obj) -- Call the hit function
     end

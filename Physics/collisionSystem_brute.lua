@@ -100,7 +100,7 @@ function collision:checkAllCollisions()
     end
 end
 
-function collision:checkCollisionsTagged(tag1, tag2)
+function collision:checkCollisionsByType(type1, type2)
     for x = 1, #self.grid do
         for y = 1, #self.grid[x] do
             local cell = self.grid[x][y]
@@ -109,7 +109,7 @@ function collision:checkCollisionsTagged(tag1, tag2)
                     local obj1 = cell[i]
                     for j = i + 1, #cell do
                         local obj2 = cell[j]
-                        if obj1.tag == tag1 and obj2.tag == tag2 or obj1.tag == tag2 and obj2.tag == tag1 then
+                        if (obj1:isType(type1) and obj2:isType(type2)) or (obj1:isType(type2) and obj2:isType(type1)) then
                             if not obj1.destroyed and not obj2.destroyed and collision:checkCollision(obj1, obj2) then
                                 if obj1.onCollision then
                                     obj1:onCollision(obj2)
@@ -130,7 +130,7 @@ function collision:checkCollisionsTagged(tag1, tag2)
                 for y = 1, #self.grid[x] do
                     local cell = self.grid[x][y]
                     for _, other in ipairs(cell) do
-                        if obj.tag == tag1 and other.tag == tag2 or obj.tag == tag2 and other.tag == tag1 then
+                        if (obj:isType(type1) and other:isType(type2)) or (obj:isType(type2) and other:isType(type1)) then
                             if other ~= obj and not other.destroyed and collision:checkCollision(obj, other) then
                                 if obj.onCollision then
                                     obj:onCollision(other)
@@ -147,19 +147,19 @@ function collision:checkCollisionsTagged(tag1, tag2)
     end
 end
 
-function collision:bruteforceTagged(objects, tag1, tag2)
-    objtag1 = {}
-    objtag2 = {}
+function collision:bruteforceByType(objects, type1, type2)
+    objlist1 = {}
+    objlist2 = {}
     for i = 1, #objects do
-        if objects[i].tag == tag1 and not objects[i].destroyed then
-            table.insert(objtag1, objects[i])
-        elseif objects[i].tag == tag2 and not objects[i].destroyed then
-            table.insert(objtag2, objects[i])
+        if objects[i]:isType(type1) and not objects[i].destroyed then
+            table.insert(objlist1, objects[i])
+        elseif objects[i]:isType(type2) and not objects[i].destroyed then
+            table.insert(objlist2, objects[i])
         end
     end
-    for _, obj1 in ipairs(objtag1) do
-        for _, obj2 in ipairs(objtag2) do
-            if obj2.tag == tag2 and not obj2.destroyed then -- only finds collisions if tag2 created after tag1
+    for _, obj1 in ipairs(objlist1) do
+        for _, obj2 in ipairs(objlist2) do
+            if not obj2.destroyed then 
                 if collision:checkCollision(obj1, obj2) then
                     collision.num = collision.num + 1
                     if obj1.onCollision then
@@ -305,10 +305,10 @@ function collision:rayRect(a, b)
     return true
 end
 
-function collision:checkCollisionsRay(obj, ray, tag)
+function collision:checkCollisionsRay(obj, ray, typeName)
     local collisions = {}
     for _, other in ipairs(self.allObjects) do
-        if other.tag == tag and not other.destroyed and collision:checkCollision(ray, other) then
+        if other:isType(typeName) and not other.destroyed and collision:checkCollision(ray, other) then
             obj:onCollision(other) -- Call onCollision method if it exists
         end
     end

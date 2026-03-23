@@ -52,9 +52,9 @@ function living_object:_drawHealthBar()
 end
 
 
-function living_object:takeDamage(amount, type)
-    if type == nil then
-        type = "physical" -- Default damage type
+function living_object:takeDamage(amount, damageType)
+    if damageType == nil then
+        damageType = "physical" -- Default damage type
     end
     self.hp = self.hp - amount
     if self.hp <= 0 then

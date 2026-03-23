@@ -4,8 +4,7 @@ local MainTurret = setmetatable({}, Turret)
 MainTurret.__index = MainTurret
 
 local default = {
-    --type = 'turret',
-    tag = 'mainTurret',
+    types = { turret = true, mainTurret = true },
     turnSpeed = math.huge,
     fireRate = 5, -- Hz (was 0.2s delay)
     damage = 65,      -- More damage than regular turret

@@ -5,8 +5,7 @@ Turret = setmetatable({}, building)
 Turret.__index = Turret
 
 local default = {
-    type = 'turret',
-    --tag = 'turret',
+    types = { turret = true },
     rotation = 0,
     turnSpeed = math.huge,
     fireRate = 1,
@@ -214,7 +213,7 @@ function Turret:getTarget()
     local range = self:getStat("range")
     local dist = range * range -- Use squared distance to avoid sqrt for performance
     for _, obj in ipairs(self.game.objects) do
-        if obj.tag == "enemy" and not obj.destroyed then
+        if obj:isType("enemy") and not obj.destroyed then
             local newdist = (obj.x - self.x)^2 + (obj.y - self.y)^2 -- Calculate squared distance to avoid sqrt for performance
             if newdist < dist then
                 dist = newdist -- Calculate distance to the enemy
@@ -236,7 +235,7 @@ function Turret:getTargetArc()
     local closestEnemy = nil
     
     for _, obj in ipairs(self.game.objects) do
-        if obj.tag == "enemy" and not obj.destroyed then
+        if obj:isType("enemy") and not obj.destroyed then
             if self:isInFiringArc(obj) then
                 local dist = (obj.x - self.x)^2 + (obj.y - self.y)^2
                 if dist < closestDist then

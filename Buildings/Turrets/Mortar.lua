@@ -16,7 +16,7 @@ local default = {
     fireRate = 0.25, -- Hz (was 4s delay)
     cooldown = 0, -- cooldown timer
     mode = "auto",
-    type = "turret",
+    types = { turret = true },
 }
 
 function Mortar:new(config)

@@ -140,7 +140,7 @@ function game:update(dt)
     -- if printTimer >= printInterval then
     --     printTimer = 0
     -- end
-    collision:bruteforceTagged(self.objects, "bullet", "enemy")
+    collision:bruteforceByType(self.objects, "bullet", "enemy")
     self.WaveSpawner:update(dt)
     self.globalEffectManager:update(dt)
     

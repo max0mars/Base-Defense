@@ -25,7 +25,21 @@ function object:new(config)
     obj.shape = config.shape or nil -- shape if needed
     obj.color = config.color or {1, 1, 1, 1} -- Default color is white
     obj.game = config.game or nil -- Reference to the game object if needed
-    obj.tag = config.tag or nil -- Tag for collision detection
+    
+    -- Initialize Multi-Type system (O(1) lookup)
+    obj.types = {}
+    if config.types then
+        if type(config.types) == "table" then
+            for _, t in ipairs(config.types) do obj.types[t] = true end
+            for k, v in pairs(config.types) do if type(k) == "string" then obj.types[k] = v end end
+        elseif type(config.types) == "string" then
+            obj.types[config.types] = true
+        end
+    end
+    -- Support transition from tag to types
+    if config.tag then
+        obj.types[config.tag] = true
+    end
     if config.effectManager then
         obj.effectManager = EffectManager:new(obj) -- Initialize EffectManager if config provided
         if obj.game and obj.game.globalEffectManager then
@@ -63,6 +77,10 @@ end
 
 function object:getHitbox()
     return self.hitbox -- Return the hitbox associated with the object
+end
+    
+function object:isType(typeName)
+    return self.types and self.types[typeName] == true
 end
 
 function object:getStat(statName)

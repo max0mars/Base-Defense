@@ -13,7 +13,7 @@ local default = {
     hitbox = {shape = "rectangle"},
     hp = 200,
     maxHp = 200,
-    tag = "base",
+    types = { base = true},
     big = true,
     buildGrid = {
         cellSize = 25,

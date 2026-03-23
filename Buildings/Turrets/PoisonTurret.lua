@@ -7,6 +7,7 @@ PoisonTurret.__index = PoisonTurret
 local default = {
     fireRate = 0.5, -- Hz (was 2s delay)
     damage = 5,
+    types = { turret = true },
     color = {0.5, 1, 0.5, 1} -- Greenish color to indicate poison effect
 }
 

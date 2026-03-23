@@ -4,8 +4,7 @@ local Buff = setmetatable({}, building)
 Buff.__index = Buff
 
 local default = {
-    type = "passive",
-    tag = "passive",
+    types = { passive = true },
     buffType = "stat", -- "stat" or "onHit"
     statChanges = {damage = 1.2, fireRate = 1.2}, -- Table of stat changes, e.g. {damage = 1.2, fireRate = 0.8}
     onHitEffect = nil, -- Function to call on hit if buffType is "onHit"

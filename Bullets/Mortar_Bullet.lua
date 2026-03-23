@@ -29,7 +29,7 @@ end
 function bullet:hit()
     self.game:addObject(explosions:new(self.x, self.y, self.explosion_radius, self.explosion_duration))
     for i, target in ipairs(self.game.objects) do
-        if target.x and target.y and target.tag == "enemy" then
+        if target.x and target.y and target:isType("enemy") then
             local distance = (((target.x - self.x))^2 + (target.y - self.y)^2)^0.5 -- Calculate distance to the target
             if distance < self.explosion_radius then -- Check if the target is within the bullet's radius
                 target:takeDamage(self.damage * (self.explosion_radius - distance) / self.explosion_radius) -- Deal damage to the target
@@ -69,7 +69,7 @@ function bullet:new(config)
     obj.peakHeight = config.peakHeight * distanceFactor * config.flytime -- Peak height of the bullet arc
     obj.elapsedTime = 0
     obj.destroyed = false -- Bullet is not destroyed initially
-    obj.tag = "mortar_bullet"
+    obj.types = { bullet = true}
     return obj
 end
 

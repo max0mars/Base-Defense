@@ -21,6 +21,7 @@ default = {
     spread = 0.1,
     splitamount = 5,
     splitDamage = 25,
+    types = { turret = true },
     color = {0, 0, 1},
 }
 

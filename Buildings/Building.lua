@@ -4,10 +4,10 @@ local building = setmetatable({}, obj)
 building.__index = building
 
 function building:new(config)
-    if(config.type ~= "unit" and config.type ~= "turret" and config.type ~= "passive") then
-        error("Type must be either 'unit', 'turret', or 'passive'")
+    if(not config.types) then
+        error("Types are required for all buildings")
     end
-    if(config.type == "passive") then
+    if(config.types.passive) then
         if(not config.affectedSlots) then
             error("Affected slots are required for passive buildings")
         end
@@ -16,7 +16,6 @@ function building:new(config)
         error("Game reference is required")
     end
     local b = setmetatable(obj:new(config), {__index = self})
-    b.type = config.type
     
     -- shapePattern is now required - defines building shape as {x,y} coordinate offsets
     if not config.shapePattern then
