@@ -154,9 +154,6 @@ function Turret:draw(drawx, drawy)
     )
     love.graphics.setLineWidth(1) -- Reset line width to default
     --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
-    if self.showEffects then
-        self:drawTooltip(drawx, drawy)
-    end
 end
 
 function Turret:getTooltipStrings()
@@ -455,6 +452,20 @@ function Turret:getTargetLeadPosition()
     local lead_y = targety + targetvy * t
 
     return lead_x, lead_y -- Return the position to aim at
+end
+
+function Turret:clearAllBuffs()
+    if self.effectManager then
+        for i = #self.effectManager.activeEffects, 1, -1 do
+            local effect = self.effectManager.activeEffects[i]
+            if effect.isBuffTotem then
+                local eName = effect.name
+                self.effectManager.effectCounts[eName] = (self.effectManager.effectCounts[eName] or 1) - 1
+                table.remove(self.effectManager.activeEffects, i)
+            end
+        end
+        self.effectManager:incrementVersion()
+    end
 end
 
 function Turret:lookAtTarget(dt)

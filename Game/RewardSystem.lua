@@ -50,7 +50,7 @@ function RewardSystem:generateChoices()
         selectedIndices[index] = true
         local reward = self.rewardPool[index]
         table.insert(self.currentChoices, reward)
-        print("Added reward to choices: " .. reward.name)
+        --print("Added reward to choices: " .. reward.name)
     end
 end
 
@@ -58,7 +58,7 @@ function RewardSystem:selectReward(index)
     if not self.isActive then return end
     local reward = self.currentChoices[index]
     if reward then
-        print("Selected reward: " .. reward.name)
+        --print("Selected reward: " .. reward.name)
         if reward.type == "building" then
             self.game:placeBuilding(reward.building)
         elseif reward.type == "upgrade" then

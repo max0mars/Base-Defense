@@ -60,6 +60,10 @@ function InputHandler:handleBuildingHover()
     local base = self.game.base
     
     base.buffHoverSlots = nil
+    if self.hoveredBuilding then
+        self.hoveredBuilding.showEffects = false
+        self.hoveredBuilding.showArc = false
+    end
     self.hoveredBuilding = nil
     
     -- Check for building hover
@@ -199,6 +203,7 @@ function InputHandler:mousepressed(x, y, button)
                 game:newBuilding(game.blueprint, anchorSlot)
                 game:setState("preparing")
                 game.blueprint = nil
+                game:recalculateAllBuffs()
             else
                 print("Cannot place building: required slots are occupied or out of bounds!")
             end

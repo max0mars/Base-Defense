@@ -59,13 +59,8 @@ end
 function Bullet:onHit(target)
     self.pierce = self.pierce - 1
     
-    local finalDamage = self.damage
-    if self.source and self.source.effectManager and self.source.effectManager.getDamage then
-        finalDamage = self.source.effectManager:getDamage(self.damage, self.tags)
-    end
-    
-    target:takeDamage(finalDamage)
-    print(target.id)
+    print("damage dealt = " .. target:takeDamage(self.damage))
+    --print(target.id)
     
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do

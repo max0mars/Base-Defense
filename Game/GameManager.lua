@@ -188,6 +188,27 @@ function game:draw()
             obj.effectManager:drawStatusEffects() -- Draw status effects for living objects
         end
     end
+
+    -- Draw building preview directly at mouse position (using its own draw method)
+    if self:isState("placing") and self.blueprint then
+        --self.blueprint.x, self.blueprint.y = self.inputHandler.mouseX, self.inputHandler.mouseY
+        self.blueprint.isPreview = true
+        self.blueprint:draw(self.inputHandler.mouseX, self.inputHandler.mouseY)
+        self.blueprint.isPreview = false
+    end
+
+    -- Reset color at end of draw to be safe
+    love.graphics.setColor(1, 1, 1, 1)
+    
+    -- Draw building tooltips on top of everything else (except UI)
+    local hovered = self.inputHandler.hoveredBuilding
+    if hovered and hovered.showEffects and hovered.drawTooltip then
+        local tipX, tipY = hovered.x, hovered.y
+        if hovered.getCenterPosition then
+            tipX, tipY = hovered:getCenterPosition()
+        end
+        hovered:drawTooltip(tipX, tipY)
+    end
     
     -- Draw reward system on top of everything
     if self.rewardSystem then
