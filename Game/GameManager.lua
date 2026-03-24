@@ -202,6 +202,19 @@ function game:draw()
     
     if self.inputHandler.destructionTarget then
         local target = self.inputHandler.destructionTarget
+        
+        local occupiedSlots = target:getSlotsFromPattern(target.slot)
+        local buildGrid = target.buildGrid
+        love.graphics.setColor(1, 0, 0, 0.4)
+        for _, slot in ipairs(occupiedSlots) do
+            local i = ((slot - 1) % buildGrid.width) + 1
+            local j = math.ceil(slot / buildGrid.width)
+            local sx = buildGrid.x + (i - 1) * buildGrid.cellSize
+            local sy = buildGrid.y + (j - 1) * buildGrid.cellSize
+            love.graphics.rectangle("fill", sx, sy, buildGrid.cellSize, buildGrid.cellSize)
+        end
+        love.graphics.setColor(1, 1, 1, 1)
+        
         local tipX, tipY = target.x, target.y
         if target.getCenterPosition then tipX, tipY = target:getCenterPosition() end
         

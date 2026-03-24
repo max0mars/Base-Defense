@@ -11,6 +11,7 @@ function InputHandler:new(game)
     obj.hoveredBuilding = nil
     obj.destructionTarget = nil
     obj.confirmRect = nil
+    obj.fireDelay = 0
     return obj
 end
 
@@ -70,6 +71,10 @@ function InputHandler:update(dt)
     end
 
     self:handleButtonHold()
+    
+    if self.fireDelay > 0 then
+        self.fireDelay = self.fireDelay - dt
+    end
 end
 
 function InputHandler:handleBuildingHover()
@@ -115,9 +120,19 @@ function InputHandler:handleBuildingHover()
 end
 
 function InputHandler:handleButtonHold()
-    local mainTurret = self.game.mainTurret
-    -- Placeholder for handling button hold actions if needed
-    -- Currently not implemented
+    local game = self.game
+    local mainTurret = game.mainTurret
+    
+    -- Prevent firing while interacting with UI, placing buildings, or destroying
+    if game.inputMode ~= "idle" then return end
+    if self.destructionTarget then return end
+    if game.rewardSystem and game.rewardSystem.isActive then return end
+    if self.fireDelay > 0 then return end
+    
+    -- Prevent firing if mouse is over the inventory area (bottom 100 pixels)
+    local invHeight = 100
+    if self.mouseY >= love.graphics.getHeight() - invHeight then return end
+
     if love.mouse.isDown(1) then
         -- Handle left mouse button hold actions here
         mainTurret:PlayerClick(self.mouseX, self.mouseY)
@@ -276,6 +291,7 @@ function InputHandler:mousepressed(x, y, button)
     -- Handle aiming after placement
     if game.inputMode == "aiming" and button == 1 then
         game.inputMode = "idle"
+        self.fireDelay = 0.15 -- Small delay to prevent accidental firing
         self:clearSelection()
         return
     end
