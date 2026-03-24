@@ -1,9 +1,12 @@
 # CURRENT TASKS
 
-Working on redoing 'tag' vs 'types' system
-Currently trying to get everything to check for type
+Money system
 
-## PROGRAMING
+## Testing
+
+Not 100% sure new type vs tag is working but no bugs so far
+
+## Mechanics
 
 Create Wave Spawner Manager
 Create income system

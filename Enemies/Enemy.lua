@@ -5,7 +5,7 @@ Enemy.__index = Enemy
 local Stats = {
     speed = 25,
     damage = 10,
-    xp = 5,
+    reward = 5,
     size = 25, -- Default size for basic enemies
     shape = "rectangle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies
@@ -53,7 +53,7 @@ function Enemy:onCollision(obj)
 end
 
 function Enemy:died()
-    self.game:addXP(self.xp) -- Give XP to the game when the enemy dies
+    self.game:addMoney(self.reward) -- Give XP to the game when the enemy dies
     self:destroy() -- Call the destroy method from the base living_object
 end
 

@@ -130,31 +130,113 @@ function Turret:update(dt)
     end
 end
 
-function Turret:draw()
+function Turret:draw(drawx, drawy)
+    drawx = drawx or self.x
+    drawy = drawy or self.y
     -- Draw firing arc if showArc flag is set
     if self.showArc then
-        self:drawFiringArc(0.4)
+        self:drawFiringArc(drawx, drawy, 0.4)
     end
     
     love.graphics.setColor(self.color)
     -- love.graphics.rectangle("fill", x * 25, y * 25, 25, 25)
     -- Draw turret mount
     --love.graphics.setColor(0, 0, 1)
-    love.graphics.circle("fill", self.x, self.y, 8)
+    love.graphics.circle("fill", drawx, drawy, 8)
 
     -- Draw barrel
     love.graphics.setColor(1, 1, 1)
     love.graphics.setLineWidth(3) -- Set barrel thickness
     love.graphics.line(
-        self.x, self.y,
-        self.x + math.cos(self.rotation) * self.barrel,
-        self.y + math.sin(self.rotation) * self.barrel
+        drawx, drawy,
+        drawx + math.cos(self.rotation) * self.barrel,
+        drawy + math.sin(self.rotation) * self.barrel
     )
     love.graphics.setLineWidth(1) -- Reset line width to default
     --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
+    if self.showEffects then
+        self:drawTooltip(drawx, drawy)
+    end
 end
 
-function Turret:drawFiringArc(alpha)
+function Turret:getTooltipStrings()
+    local strings = {}
+    if not self.effectManager then return strings end
+    
+    local nameMap = {}
+    local flatMap = {}
+    local multMap = {}
+    
+    local function processEffects(em)
+        for _, effect in ipairs(em.activeEffects) do
+            if effect.statModifiers then
+                for statName, mod in pairs(effect.statModifiers) do
+                    nameMap[statName] = true
+                    flatMap[statName] = (flatMap[statName] or 0) + (mod.add or mod.additive or 0)
+                    multMap[statName] = (multMap[statName] or 0) + (mod.mult or mod.multiplier or 0)
+                end
+            end
+        end
+        if em.parent then processEffects(em.parent) end
+    end
+    
+    processEffects(self.effectManager)
+    
+    for statName, _ in pairs(nameMap) do
+        local flat = flatMap[statName] or 0
+        local mult = multMap[statName] or 0
+        if flat ~= 0 or mult ~= 0 then
+            -- Capitalize statName
+            local displayStat = statName:gsub("^%l", string.upper)
+            local sign = flat >= 0 and "+" or ""
+            local totalMult = 1 + mult
+            local str = string.format("%s = %s%g * %g", displayStat, sign, flat, totalMult)
+            table.insert(strings, str)
+        end
+    end
+    return strings
+end
+
+function Turret:drawTooltip(drawx, drawy)
+    local strings = self:getTooltipStrings()
+    if #strings == 0 then return end
+    
+    local font = love.graphics.getFont()
+    local lineHeight = font:getHeight()
+    local padding = 5
+    local boxHeight = padding * 2 + #strings * lineHeight
+    
+    local maxWidth = 0
+    for _, str in ipairs(strings) do
+        local w = font:getWidth(str)
+        if w > maxWidth then maxWidth = w end
+    end
+    local boxWidth = maxWidth + padding * 2
+    
+    local tipX = drawx - boxWidth / 2
+    local tipY = drawy - 30 - boxHeight -- 30 pixels above gives room for health bar
+    
+    -- Ensure it doesn't go off the left side (or right side)
+    if tipX < 5 then
+        tipX = 5
+    elseif tipX + boxWidth > love.graphics.getWidth() - 5 then
+        tipX = love.graphics.getWidth() - 5 - boxWidth
+    end
+    
+    local r, g, b, a = love.graphics.getColor()
+    love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+    love.graphics.rectangle("fill", tipX, tipY, boxWidth, boxHeight)
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    for i, str in ipairs(strings) do
+        love.graphics.print(str, tipX + padding, tipY + padding + (i - 1) * lineHeight)
+    end
+    love.graphics.setColor(r, g, b, a)
+end
+
+function Turret:drawFiringArc(drawx, drawy, alpha)
+    drawx = drawx or self.x
+    drawy = drawy or self.y
     alpha = alpha or 0.3
     love.graphics.setColor(0.5, 0.5, 0.5, alpha) -- Grey with transparency
     
@@ -165,10 +247,10 @@ function Turret:drawFiringArc(alpha)
     -- Draw the firing arc as a sector
     if self.firingArc.minRange > 0 then
         -- Draw arc with inner and outer radius
-        self:drawArcSector(self.x, self.y, self.firingArc.minRange, self:getStat("range"), startAngle, endAngle)
+        self:drawArcSector(drawx, drawy, self.firingArc.minRange, self:getStat("range"), startAngle, endAngle)
     else
         -- Draw simple arc from center
-        self:drawArcSector(self.x, self.y, 0, self:getStat("range"), startAngle, endAngle)
+        self:drawArcSector(drawx, drawy, 0, self:getStat("range"), startAngle, endAngle)
     end
     
     love.graphics.setColor(1, 1, 1, 1) -- Reset color

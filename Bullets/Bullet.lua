@@ -21,11 +21,12 @@ function Bullet:new(config)
     for key, value in pairs(stats) do
         config[key] = config[key] or value -- Use default values if not provided
     end
+    if(config.source == nil) then error("Bullet has no source??? Where did it come from then??? (set config.source when creating bullet)") end
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
     b.tags = config.tags or {} -- Initialize tags table
-    b.source = config.source or nil -- Track bullet source for stat calculation
+    b.source = config.source -- Track bullet source for stat calculation
     return b
 end
 

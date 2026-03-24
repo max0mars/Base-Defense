@@ -11,6 +11,7 @@ function love.load()
     love.window.setTitle("Enemy and Base Example")
     love.window.setMode(800, 600, { resizable = false, vsync = true })
     math.randomseed( os.time() )
+    love.graphics.setDefaultFilter("nearest", "nearest")
     scene_manager:load() -- Load the initial scene
 end
 

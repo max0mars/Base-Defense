@@ -130,6 +130,10 @@ function MainTurret:draw()
     -- Draw reload bar positioned above the centered turret
     self:drawReloadBar(centerX, centerY)
     
+    if self.showEffects then
+        self:drawTooltip(centerX, centerY)
+    end
+    
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
 end

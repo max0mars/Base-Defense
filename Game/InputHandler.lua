@@ -59,17 +59,7 @@ function InputHandler:handleBuildingHover()
     local showAllArcs = love.keyboard.isDown("space")
     local base = self.game.base
     
-    -- Clear previous hover state
-    if self.hoveredBuilding and self.hoveredBuilding ~= self.selectedBuilding then
-        -- Clear turret arc if it's a turret
-        if self.hoveredBuilding.showArc and not showAllArcs then
-            self.hoveredBuilding.showArc = false
-        end
-        -- Clear buff hover slots if it's a buff building
-        if self.hoveredBuilding:isType("passive") then
-            base.buffHoverSlots = nil
-        end
-    end
+    base.buffHoverSlots = nil
     self.hoveredBuilding = nil
     
     -- Check for building hover
@@ -77,7 +67,7 @@ function InputHandler:handleBuildingHover()
         if (obj:isType("turret") or obj:isType("passive")) and not obj.destroyed then
             if self:isMouseOverBuilding(obj) then
                 self.hoveredBuilding = obj
-                
+                obj.showEffects = true
                 -- Handle turret-specific hover (firing arcs)
                 if obj:isType("turret") then
                     obj.showArc = true
@@ -94,6 +84,7 @@ function InputHandler:handleBuildingHover()
                 if obj ~= self.selectedBuilding and not showAllArcs then
                     if obj:isType("turret") then
                         obj.showArc = false
+                        obj.showEffects = false
                     end
                 end
             end
@@ -204,7 +195,7 @@ function InputHandler:mousepressed(x, y, button)
             
             -- Check if all required slots are available
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
-            if base:areSlotsAvailable(slotsToOccupy, anchorSlot) then
+            if base:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
                 game:newBuilding(game.blueprint, anchorSlot)
                 game:setState("preparing")
                 game.blueprint = nil

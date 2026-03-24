@@ -175,7 +175,9 @@ function building:getSurrounding()
 end
 
 function building:draw()
-    if not self.slot then return end -- Can't draw without placement
+    if not self.slot then
+        error("Can't draw building if it's not placed on grid")
+    end -- Can't draw without placement
     
     love.graphics.setColor(self.color or {1, 1, 1, 1})
     
@@ -192,6 +194,13 @@ function building:draw()
     
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+function building:isFullyInsideGrid(slotsToCheck)
+    local requiredCount = #self.shapePattern
+    local currentCount = #slotsToCheck
+    
+    return currentCount == requiredCount
 end
 
 return building

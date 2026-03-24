@@ -81,6 +81,7 @@ function Base:draw()
             end
         end
     end
+    
     -- Draw yellow highlights for selected slots
     if self.game:isState("placing") and self.selectedSlots then
         love.graphics.setColor(1, 1, 0, 1) -- Yellow color for selected slots
@@ -122,7 +123,9 @@ function Base:draw()
         end
         love.graphics.setLineWidth(1) -- Reset line width
     end
-    
+    if self.game:isState("placing") then
+        self.game.blueprint:draw(self.game.inputHandler.mouseX, self.game.inputHandler.mouseY)
+    end
     -- Draw green outline for buff building hover/selection slots
     if self.buffHoverSlots then
         love.graphics.setColor(0, 1, 0, 1) -- Bright green outline
@@ -149,7 +152,7 @@ function Base:addBuilding(building, anchorSlot)
     local slotsToOccupy = building:getSlotsFromPattern(anchorSlot)
     
     -- Check if all required slots are available
-    if not self:areSlotsAvailable(slotsToOccupy, anchorSlot) then
+    if not self:areSlotsAvailable(building, slotsToOccupy, anchorSlot) then
         error("One or more required slots are already occupied")
     end
     
@@ -166,11 +169,14 @@ function Base:addBuilding(building, anchorSlot)
     building.x, building.y = building:getX() + building.buildGrid.cellSize/2, building:getY() + building.buildGrid.cellSize/2
 end
 
-function Base:areSlotsAvailable(slotsToCheck, anchorSlot)
+function Base:areSlotsAvailable(building, slotsToCheck, anchorSlot)
     for _, slot in ipairs(slotsToCheck) do
         if slot < 1 or slot > (self.buildGrid.width * self.buildGrid.height) or self.buildGrid.buildings[slot] then
             return false
         end
+    end
+    if not building:isFullyInsideGrid(slotsToCheck) then
+        return false
     end
     return true
 end

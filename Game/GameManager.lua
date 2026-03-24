@@ -8,7 +8,6 @@ local RewardSystem = require("Game.RewardSystem")
 local WaveSpawner = require("Game.WaveSpawner")
 local InputHandler = require("Game.InputHandler")
 local MainTurret = require("Buildings.Turrets.MainTurret")
-local PoisonTurret = require("Buildings.Turrets.PoisonTurret")
 local EffectManager = require("Game.StatusEffects.EffectManager")
 
 
@@ -35,6 +34,13 @@ function game:load(saveData)
         self.inputHandler = InputHandler:new(self)
         self.state = "startup" -- Current game state: "startup", "wave", "placing", "reward", "gameover"
         self.globalEffectManager = EffectManager:new() -- Global manager with no owner
+        local damageBuff = {
+            name = "Damage Buff",
+            statModifiers = {damage = {mult = 0.1}},
+            description = "Increases damage by 10%",
+            duration = math.huge,
+        }
+        self.globalEffectManager:applyEffect(damageBuff)
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
@@ -49,7 +55,7 @@ function game:load(saveData)
     local centerCol = math.ceil(gridWidth / 2)
 
     self:newBuilding(self.mainTurret, (centerRow - 1) * gridWidth + centerCol)
-    self:newBuilding(PoisonTurret:new({game = self}), 32) -- Place a PoisonTurret in the top-left corner for testing
+    --self:newBuilding(PoisonTurret:new({game = self}), 32) -- Place a PoisonTurret in the top-left corner for testing
 
 end
 

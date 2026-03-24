@@ -5,9 +5,12 @@ Buff.__index = Buff
 
 local default = {
     types = { passive = true },
-    buffType = "stat", -- "stat" or "onHit"
-    statChanges = {damage = 1.2, fireRate = 1.2}, -- Table of stat changes, e.g. {damage = 1.2, fireRate = 0.8}
-    onHitEffect = nil, -- Function to call on hit if buffType is "onHit"
+    effect = {
+        name = "Damage Buff",
+        statModifiers = {damage = {mult = 0.1}},
+        description = "Increases damage by 10%",
+        duration = math.huge,
+    },
     affectedSlots = {{1, 1}}, -- Array of slots that this buff affects
     shapePattern = {
         {0, 0}, {1, 0},
@@ -28,9 +31,7 @@ function Buff:new(config)
     end
     
     local b = setmetatable(building:new(config), { __index = self })
-    b.buffType = config.buffType
-    b.statChanges = config.statChanges
-    b.onHitEffect = config.onHitEffect
+    b.effect = config.effect
     b.affectedSlots = config.affectedSlots
     b.color = config.color
     return b
@@ -60,6 +61,43 @@ function Buff:getAffectedSlotsFromAnchor(anchorSlot)
     return slots
 end
 
+function Buff:draw(drawx, drawy)
+    if not drawx or not drawy then
+        if not self.slot then
+            error("Can't draw building if it's not placed on grid")
+        end -- Can't draw without placement
+    
+        love.graphics.setColor(self.color or {1, 1, 1, 1})
+        
+        -- Draw filled rectangles for each occupied slot
+        local occupiedSlots = self:getSlotsFromPattern(self.slot)
+        for _, slot in ipairs(occupiedSlots) do
+            local i = ((slot - 1) % self.buildGrid.width) + 1
+            local j = math.ceil(slot / self.buildGrid.width)
+            local x = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
+            local y = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
+            
+            love.graphics.rectangle("fill", x, y, self.buildGrid.cellSize, self.buildGrid.cellSize)
+        end
+        
+        -- Reset color
+        love.graphics.setColor(1, 1, 1, 1)
+    else
+        love.graphics.setColor(self.color or {1, 1, 1, 1})
+        
+        -- Draw the building's shape based on shapePattern
+        for _, coord in ipairs(self.shapePattern) do
+            local cellX = drawx + (coord[1] * self.buildGrid.cellSize)
+            local cellY = drawy + (coord[2] * self.buildGrid.cellSize)
+            
+            love.graphics.rectangle("fill", cellX, cellY, self.buildGrid.cellSize, self.buildGrid.cellSize)
+        end
+        
+        -- Reset color
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+end
+
 function Buff:applyBuffs()
     -- Apply this buff to all turrets in affected slots using the EffectManager
     if not self.slot then return end
@@ -70,22 +108,18 @@ function Buff:applyBuffs()
     for _, slot in ipairs(affectedSlots) do
         local target = base.buildGrid.buildings[slot]
         if target and target.effectManager then
-            local effect = {
-                name = "buff_" .. self.id,
-                statModifiers = {}
-            }
-            
-            -- Map statChanges to standard EffectManager keys
-            for statName, value in pairs(self.statChanges) do
-                -- statChanges uses multipliers like 1.2, EffectManager uses mult additives like 0.2
-                effect.statModifiers[statName] = { mult = value - 1 }
+            local effectToApply = {}
+            -- Shallow copy the effect provided in configuration
+            if self.effect then
+                for k, v in pairs(self.effect) do
+                    effectToApply[k] = v
+                end
+                
+                -- Append building ID to ensure multiple buildings of same type stack
+                effectToApply.name = (self.effect.name or "buff") .. "_" .. self.id
+                
+                target.effectManager:applyEffect(effectToApply)
             end
-            
-            if self.buffType == "onHit" and self.onHitEffect then
-                effect.onHit = self.onHitEffect
-            end
-            
-            target.effectManager:applyEffect(effect)
         end
     end
 end

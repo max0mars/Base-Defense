@@ -51,15 +51,22 @@ function living_object:_drawHealthBar()
     love.graphics.rectangle("line", barX, barY, width, height)
 end
 
-
 function living_object:takeDamage(amount, damageType)
     if damageType == nil then
         damageType = "physical" -- Default damage type
     end
-    self.hp = self.hp - amount
+    local damageTaken = 0
+    if(amount >= self.hp) then
+        damageTaken = self.hp
+        self.hp = 0
+    else
+        damageTaken = amount
+        self.hp = self.hp - amount
+    end
     if self.hp <= 0 then
         self:died()
     end
+    return damageTaken
 end
 
 function living_object:died()

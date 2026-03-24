@@ -2,9 +2,8 @@
 local Reward = require("Game.Reward")
 
 local RewardSystem = {}
-local Turret = require("Buildings.Turrets.Turret")
-local Buff = require("Buildings.Buffs.Buff")
 RewardSystem.__index = RewardSystem
+local RewardIndex = require("Game.RewardIndex")
 
 function RewardSystem:new(game)
     local system = setmetatable({}, self)
@@ -29,30 +28,9 @@ function RewardSystem:new(game)
 end
 
 function RewardSystem:initializeRewardPool()
-    local basicturret = {
-        name = "Basic Turret",
-        description = "Pew Pew",
-        building = Turret:new({game = self.game}),
-        rarity = "common",
-        type = "building"
-    }
-    local ammoCache = {
-        name = "Ammo Cache",
-        description = "Increase turret damage by 20%",
-        rarity = "common",
-        type = "building",
-        building = Buff:new({game = self.game})
-    }
-    local poisonTurret = {
-        name = "Poison Turret",
-        description = "Bullets apply poison effect",
-        rarity = "uncommon",
-        type = "building",
-        building = require("Buildings.Turrets.PoisonTurret"):new({game = self.game})
-    }
-    --table.insert(self.rewardPool, Reward:new(basicturret))
-    --table.insert(self.rewardPool, Reward:new(ammoCache))
-    table.insert(self.rewardPool, Reward:new(poisonTurret))
+    for _, reward in pairs(RewardIndex.Rewards) do
+        table.insert(self.rewardPool, Reward:new(reward))
+    end
 end
 
 function RewardSystem:activate()
