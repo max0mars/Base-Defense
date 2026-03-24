@@ -39,22 +39,6 @@ function game:load(saveData)
         self.autoStartWave = false
         self.inventory = Inventory:new(self)
         self.globalEffectManager = EffectManager:new() -- Global manager with no owner
-        local damageBuff = {
-            name = "Damage Buff",
-            statModifiers = {damage = {mult = 0.1}},
-            description = "Increases damage by 10%",
-            duration = math.huge,
-        }
-        local fireRateDebuff = {
-            name = "Fire Rate Debuff",
-            statModifiers = {fireRate = {mult = -0.1}},
-            description = "Decreases fire rate by 10%",
-            duration = math.huge,
-        }
-        self.globalEffectManager:applyEffect(damageBuff)
-        self.globalEffectManager:applyEffect(damageBuff)
-        self.globalEffectManager:applyEffect(damageBuff)
-        self.globalEffectManager:applyEffect(fireRateDebuff)
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
@@ -216,14 +200,46 @@ function game:draw()
     -- Reset color at end of draw to be safe
     love.graphics.setColor(1, 1, 1, 1)
     
-    -- Draw building tooltips on top of everything else (except UI)
-    local hovered = self.inputHandler.hoveredBuilding
-    if hovered and hovered.showEffects and hovered.effectManager and hovered.effectManager.drawTooltip then
-        local tipX, tipY = hovered.x, hovered.y
-        if hovered.getCenterPosition then
-            tipX, tipY = hovered:getCenterPosition()
+    if self.inputHandler.destructionTarget then
+        local target = self.inputHandler.destructionTarget
+        local tipX, tipY = target.x, target.y
+        if target.getCenterPosition then tipX, tipY = target:getCenterPosition() end
+        
+        local boxW, boxH = 220, 80
+        local cx = math.floor(tipX - boxW / 2)
+        local cy = math.floor(tipY - boxH - 40)
+        
+        if cx < 5 then 
+            cx = 5 
+        elseif cx + boxW > love.graphics.getWidth() - 5 then
+            cx = love.graphics.getWidth() - 5 - boxW
         end
-        hovered.effectManager:drawTooltip(tipX, tipY)
+        
+        love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
+        love.graphics.rectangle("fill", cx, cy, boxW, boxH)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("Do you want to destroy this building?", cx + 10, cy + 10, boxW - 20, "center")
+        
+        local btnW, btnH = 80, 25
+        local btnX = math.floor(cx + boxW / 2 - btnW / 2)
+        local btnY = math.floor(cy + 45)
+        
+        love.graphics.setColor(0.8, 0.2, 0.2, 1)
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("CONFIRM", btnX, btnY + 5, btnW, "center")
+        
+        self.inputHandler.confirmRect = {x = btnX, y = btnY, w = btnW, h = btnH}
+    else
+        -- Draw building tooltips on top of everything else (except UI)
+        local hovered = self.inputHandler.hoveredBuilding
+        if hovered and hovered.showEffects and hovered.effectManager and hovered.effectManager.drawTooltip then
+            local tipX, tipY = hovered.x, hovered.y
+            if hovered.getCenterPosition then
+                tipX, tipY = hovered:getCenterPosition()
+            end
+            hovered.effectManager:drawTooltip(tipX, tipY)
+        end
     end
     
     self.inventory:draw()

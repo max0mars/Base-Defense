@@ -50,6 +50,7 @@ function Bullet:update(dt)
 end
 
 function Bullet:onCollision(obj)
+    if self.destroyed then return end
     if obj:isType('enemy') and not self.hitCache[obj:getID()] then
         self.hitCache[obj:getID()] = true -- Mark this enemy as hit
         self:onHit(obj) -- Call the hit function

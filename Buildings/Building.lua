@@ -203,4 +203,12 @@ function building:isFullyInsideGrid(slotsToCheck)
     return currentCount == requiredCount
 end
 
+function building:remove()
+    local occupiedSlots = self:getSlotsFromPattern(self.slot)
+    for _, slot in ipairs(occupiedSlots) do
+        self.buildGrid.buildings[slot] = nil
+    end
+    self:destroy()
+end
+
 return building

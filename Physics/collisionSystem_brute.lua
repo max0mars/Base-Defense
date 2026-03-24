@@ -158,15 +158,17 @@ function collision:bruteforceByType(objects, type1, type2)
         end
     end
     for _, obj1 in ipairs(objlist1) do
-        for _, obj2 in ipairs(objlist2) do
-            if not obj2.destroyed then 
-                if collision:checkCollision(obj1, obj2) then
-                    collision.num = collision.num + 1
-                    if obj1.onCollision then
-                        obj1:onCollision(obj2)
-                    end
-                    if obj2.onCollision then
-                        obj2:onCollision(obj1)
+        if not obj1.destroyed then
+            for _, obj2 in ipairs(objlist2) do
+                if not obj2.destroyed and not obj1.destroyed then 
+                    if collision:checkCollision(obj1, obj2) then
+                        collision.num = collision.num + 1
+                        if obj1.onCollision then
+                            obj1:onCollision(obj2)
+                        end
+                        if obj2.onCollision then
+                            obj2:onCollision(obj1)
+                        end
                     end
                 end
             end

@@ -9,6 +9,8 @@ function InputHandler:new(game)
     obj.buildMode = false
     obj.selectedBuilding = nil
     obj.hoveredBuilding = nil
+    obj.destructionTarget = nil
+    obj.confirmRect = nil
     return obj
 end
 
@@ -62,7 +64,7 @@ function InputHandler:update(dt)
         -- Only handle building slot hover when placing
         if game.inputMode == "placing" then
             self:handleBuildingSlotHover()
-        elseif game.inputMode == "idle" then
+        elseif game.inputMode == "idle" and not self.destructionTarget then
             self:handleLockedSlotHover()
         end
     end
@@ -228,12 +230,43 @@ function InputHandler:mousepressed(x, y, button)
     local base = game.base
     local mainTurret = game.mainTurret
     
-    -- Handle reward system input first
     local rewardActive = rewardSystem and rewardSystem.isActive
     if rewardSystem then
         rewardSystem:mousepressed(x, y, button)
     end
     if rewardActive then return end
+    
+    if button == 2 then
+        local clickedTarget = false
+        for _, obj in ipairs(game.objects) do
+            if (obj:isType("turret") or obj:isType("passive")) and not obj:isType("mainTurret") and not obj.destroyed then
+                if self:isMouseOverBuilding(obj) then
+                    self.destructionTarget = obj
+                    clickedTarget = true
+                    break
+                end
+            end
+        end
+        if not clickedTarget then
+            self.destructionTarget = nil
+        end
+        return
+    end
+
+    if self.destructionTarget and button == 1 then
+        if self.confirmRect then
+            if x >= self.confirmRect.x and x <= self.confirmRect.x + self.confirmRect.w and
+               y >= self.confirmRect.y and y <= self.confirmRect.y + self.confirmRect.h then
+                self.destructionTarget:remove()
+                self.destructionTarget = nil
+                self.confirmRect = nil
+                game:recalculateAllBuffs()
+                return
+            end
+        end
+        self.destructionTarget = nil
+        self.confirmRect = nil
+    end
     
     -- Check inventory UI click first
     if game.inventory:mousepressed(x, y, button) then

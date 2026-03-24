@@ -20,7 +20,7 @@ local default = {
 }
 
 function Mortar:new(config)
-    error("Mortar turret is deprecated.")
+    error("Mortar turret is deprecated")
     config = config or {}
     for key, value in pairs(default) do
         config[key] = config[key] or value

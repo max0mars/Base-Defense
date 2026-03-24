@@ -23,6 +23,20 @@ RewardIndex.Rewards = {
         type = "building",
         building = require("Buildings.Turrets.PoisonTurret")
     },
+    sniper = {
+        name = "Sniper Turret",
+        description = "High damage, slow fire rate, massive range.",
+        rarity = "uncommon",
+        type = "building",
+        building = require("Buildings.Turrets.Sniper")
+    },
+    autoCannon = {
+        name = "Auto Cannon",
+        description = "High fire rate, low damage, shorter range.",
+        rarity = "uncommon",
+        type = "building",
+        building = require("Buildings.Turrets.AutoCannon")
+    },
 }   
 
 return RewardIndex

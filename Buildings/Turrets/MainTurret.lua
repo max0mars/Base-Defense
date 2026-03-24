@@ -6,7 +6,7 @@ MainTurret.__index = MainTurret
 local default = {
     types = { turret = true, mainTurret = true },
     turnSpeed = math.huge,
-    fireRate = 5, -- Hz (was 0.2s delay)
+    fireRate = 0.5, -- Hz (was 0.2s delay)
     damage = 65,      -- More damage than regular turret
     bulletSpeed = 800, -- Faster bullets
     range = math.huge,

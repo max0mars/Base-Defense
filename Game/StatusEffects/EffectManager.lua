@@ -241,13 +241,15 @@ function EffectManager:getTooltipStrings()
     for statName, _ in pairs(nameMap) do
         local flat = flatMap[statName] or 0
         local mult = multMap[statName] or 0
-        if flat ~= 0 or mult ~= 0 then
-            -- Capitalize statName
-            local displayStat = statName:gsub("^%l", string.upper)
-            local sign = flat >= 0 and "+" or ""
-            local totalMult = 1 + mult
-            local str = string.format("%s = %s%g * %g", displayStat, sign, flat, totalMult)
-            table.insert(strings, str)
+        
+        local displayStat = statName:gsub("^%l", string.upper)
+        if flat ~= 0 then
+            local sign = flat > 0 and "+" or ""
+            table.insert(strings, string.format("%s = %s%g", displayStat, sign, flat))
+        end
+        if mult ~= 0 then
+            local sign = mult > 0 and "+" or ""
+            table.insert(strings, string.format("%s = %s%g%%", displayStat, sign, mult * 100))
         end
     end
     return strings
