@@ -7,6 +7,7 @@ local enemy = require("Enemies.Enemy")
 local RewardSystem = require("Game.RewardSystem")
 local WaveSpawner = require("Game.WaveSpawner")
 local InputHandler = require("Game.InputHandler")
+local Inventory = require("Game.Inventory")
 local MainTurret = require("Buildings.Turrets.MainTurret")
 local EffectManager = require("Game.StatusEffects.EffectManager")
 
@@ -26,13 +27,17 @@ function game:load(saveData)
         self.objects = {} -- Table to hold game objects
         self.score = 0 -- Initialize score
         self.xp = 0 -- Initialize XP
-        self.money = 0 -- Initialize money
+        self.money = 5000 -- Initialize money
         self.wave = 0 -- Initialize wave
         self.base = Base:new({game = self})
         self.rewardSystem = RewardSystem:new(self)
         self.WaveSpawner = WaveSpawner:new({game = self})
         self.inputHandler = InputHandler:new(self)
-        self.state = "startup" -- Current game state: "startup", "wave", "placing", "reward", "gameover"
+        self.state = "startup" -- Current game state: "startup", "wave", "gameover"
+        self.inputMode = "idle"
+        self.rewardCost = 50
+        self.autoStartWave = false
+        self.inventory = Inventory:new(self)
         self.globalEffectManager = EffectManager:new() -- Global manager with no owner
         local damageBuff = {
             name = "Damage Buff",
@@ -40,7 +45,16 @@ function game:load(saveData)
             description = "Increases damage by 10%",
             duration = math.huge,
         }
+        local fireRateDebuff = {
+            name = "Fire Rate Debuff",
+            statModifiers = {fireRate = {mult = -0.1}},
+            description = "Decreases fire rate by 10%",
+            duration = math.huge,
+        }
         self.globalEffectManager:applyEffect(damageBuff)
+        self.globalEffectManager:applyEffect(damageBuff)
+        self.globalEffectManager:applyEffect(damageBuff)
+        self.globalEffectManager:applyEffect(fireRateDebuff)
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
@@ -55,8 +69,7 @@ function game:load(saveData)
     local centerCol = math.ceil(gridWidth / 2)
 
     self:newBuilding(self.mainTurret, (centerRow - 1) * gridWidth + centerCol)
-    --self:newBuilding(PoisonTurret:new({game = self}), 32) -- Place a PoisonTurret in the top-left corner for testing
-
+    
 end
 
 function game:newBuilding(building, slot)
@@ -112,26 +125,28 @@ function game:update(dt)
         self:setState("gameover")
         return
     end
+
+    if self.rewardSystem and self.rewardSystem.isActive then return end
+
     if self:isState("startup") then
         
     end
-    -- Check if wave is complete and transition to reward state
+    -- Check if wave is complete and transition to preparing state
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
-        self:setState("reward")
-        self.rewardSystem:activate()
-    end
-    
-    -- Check if reward phase is over and go to preparing state
-    if self:isState("reward") and not self.rewardSystem.isActive then
         self:setState("preparing")
     end
     
     -- Check if in preparing state and enter key pressed to start wave
     if self:isState("preparing") then
-        -- Wave start is handled by InputHandler when enter key is pressed
+        if self.autoStartWave and self.WaveSpawner.waveState == "idle" then
+            self:recalculateAllBuffs() -- Recalculate all buffs before wave starts
+            self.WaveSpawner:startNextWave()
+            self:setState("wave")
+        end
     end
 
     -- Update input handler
+    self.inventory:update(dt)
     self.inputHandler:update(dt)
 
     -- Update game objects continuously (time doesn't freeze during rewards or placement)
@@ -153,9 +168,10 @@ function game:update(dt)
     self:takeOutTheTrash() -- remove references to destroyed objects
 end
 
-function game:placeBuilding(building)
-    self:setState("placing")
+function game:placeBuilding(building, sourceReward)
+    self.inputMode = "placing"
     self.blueprint = building:new({game = self})
+    self.blueprint.rewardCard = sourceReward
 end
 
 function game:setState(newState)
@@ -190,7 +206,7 @@ function game:draw()
     end
 
     -- Draw building preview directly at mouse position (using its own draw method)
-    if self:isState("placing") and self.blueprint then
+    if self.inputMode == "placing" and self.blueprint then
         --self.blueprint.x, self.blueprint.y = self.inputHandler.mouseX, self.inputHandler.mouseY
         self.blueprint.isPreview = true
         self.blueprint:draw(self.inputHandler.mouseX, self.inputHandler.mouseY)
@@ -202,13 +218,15 @@ function game:draw()
     
     -- Draw building tooltips on top of everything else (except UI)
     local hovered = self.inputHandler.hoveredBuilding
-    if hovered and hovered.showEffects and hovered.drawTooltip then
+    if hovered and hovered.showEffects and hovered.effectManager and hovered.effectManager.drawTooltip then
         local tipX, tipY = hovered.x, hovered.y
         if hovered.getCenterPosition then
             tipX, tipY = hovered:getCenterPosition()
         end
-        hovered:drawTooltip(tipX, tipY)
+        hovered.effectManager:drawTooltip(tipX, tipY)
     end
+    
+    self.inventory:draw()
     
     -- Draw reward system on top of everything
     if self.rewardSystem then
@@ -221,6 +239,14 @@ function game:draw()
         love.graphics.setColor(1, 1, 1, 0.5)
         love.graphics.printf("Press Enter to Start Wave ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
     end
+    
+    -- Draw reward UI prompt
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("Press 'R' to Buy Reward ($" .. (self.rewardCost or 0) .. ")", 0, 10, love.graphics.getWidth(), "center")
+    
+    -- Draw Auto-Start toggle UI prompt
+    local autoText = self.autoStartWave and "ON" or "OFF"
+    love.graphics.printf("Press 'A' for Auto-Start: " .. autoText, 0, 25, love.graphics.getWidth(), "center")
 end
 
 

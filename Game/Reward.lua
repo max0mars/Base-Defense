@@ -55,7 +55,7 @@ function Reward:draw(x, y, width, height, isSelected)
     local color = self:getRarityColor()
     
     -- Draw background with rarity color border
-    love.graphics.setColor(0.1, 0.1, 0.1, 0.8)
+    love.graphics.setColor(0.1, 0.1, 0.1, 1.0) -- Opaque
     love.graphics.rectangle("fill", x, y, width, height)
     
     -- Draw rarity border
@@ -63,17 +63,21 @@ function Reward:draw(x, y, width, height, isSelected)
     --love.graphics.setLineWidth(isSelected and 4 or 2)
     love.graphics.rectangle("line", x, y, width, height)
     
+    local topPadding = math.floor(height * 0.15)
+    
     -- Draw name
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(self.name, x + 5, y + 60, width - 10, "center")
+    love.graphics.printf(self.name, x + 5, y + topPadding, width - 10, "center")
     
     -- Draw rarity
     love.graphics.setColor(color[1], color[2], color[3], 1.0)
-    love.graphics.printf(string.upper(self.rarity), x + 5, y + 80, width - 10, "center")
+    love.graphics.printf(string.upper(self.rarity), x + 5, y + topPadding + (height > 120 and 20 or 40), width - 10, "center")
     
     -- Draw description
-    love.graphics.setColor(0.8, 0.8, 0.8, 1.0)
-    love.graphics.printf(self.description, x + 5, y + 100, width - 10, "left")
+    if height > 120 then
+        love.graphics.setColor(0.8, 0.8, 0.8, 1.0)
+        love.graphics.printf(self.description, x + 5, y + topPadding + 45, width - 10, "left")
+    end
     --love.graphics.setLineWidth(1)
 end
 

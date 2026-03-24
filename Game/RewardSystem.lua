@@ -60,10 +60,9 @@ function RewardSystem:selectReward(index)
     if reward then
         --print("Selected reward: " .. reward.name)
         if reward.type == "building" then
-            self.game:placeBuilding(reward.building)
+            self.game:placeBuilding(reward.building, reward)
         elseif reward.type == "upgrade" then
             reward:execute(self.game)
-            self.game:setState("preparing")
         end
     end    
     self.isActive = false

@@ -114,6 +114,15 @@ function Turret:fire(args)
 end
 
 function Turret:update(dt)
+    -- Do not acquire targets or shoot while the player is setting the firing arc
+    if self.game.inputMode == "aiming" and self.game.inputHandler.selectedBuilding == self then
+        if self.firingArc then
+            self.rotation = self.firingArc.direction
+            self.targetRotation = self.firingArc.direction
+        end
+        return
+    end
+
     self.cooldown = self.cooldown - dt
     self:getTargetArc()
     if self.target then
@@ -154,81 +163,6 @@ function Turret:draw(drawx, drawy)
     )
     love.graphics.setLineWidth(1) -- Reset line width to default
     --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
-end
-
-function Turret:getTooltipStrings()
-    local strings = {}
-    if not self.effectManager then return strings end
-    
-    local nameMap = {}
-    local flatMap = {}
-    local multMap = {}
-    
-    local function processEffects(em)
-        for _, effect in ipairs(em.activeEffects) do
-            if effect.statModifiers then
-                for statName, mod in pairs(effect.statModifiers) do
-                    nameMap[statName] = true
-                    flatMap[statName] = (flatMap[statName] or 0) + (mod.add or mod.additive or 0)
-                    multMap[statName] = (multMap[statName] or 0) + (mod.mult or mod.multiplier or 0)
-                end
-            end
-        end
-        if em.parent then processEffects(em.parent) end
-    end
-    
-    processEffects(self.effectManager)
-    
-    for statName, _ in pairs(nameMap) do
-        local flat = flatMap[statName] or 0
-        local mult = multMap[statName] or 0
-        if flat ~= 0 or mult ~= 0 then
-            -- Capitalize statName
-            local displayStat = statName:gsub("^%l", string.upper)
-            local sign = flat >= 0 and "+" or ""
-            local totalMult = 1 + mult
-            local str = string.format("%s = %s%g * %g", displayStat, sign, flat, totalMult)
-            table.insert(strings, str)
-        end
-    end
-    return strings
-end
-
-function Turret:drawTooltip(drawx, drawy)
-    local strings = self:getTooltipStrings()
-    if #strings == 0 then return end
-    
-    local font = love.graphics.getFont()
-    local lineHeight = font:getHeight()
-    local padding = 5
-    local boxHeight = padding * 2 + #strings * lineHeight
-    
-    local maxWidth = 0
-    for _, str in ipairs(strings) do
-        local w = font:getWidth(str)
-        if w > maxWidth then maxWidth = w end
-    end
-    local boxWidth = maxWidth + padding * 2
-    
-    local tipX = drawx - boxWidth / 2
-    local tipY = drawy - 30 - boxHeight -- 30 pixels above gives room for health bar
-    
-    -- Ensure it doesn't go off the left side (or right side)
-    if tipX < 5 then
-        tipX = 5
-    elseif tipX + boxWidth > love.graphics.getWidth() - 5 then
-        tipX = love.graphics.getWidth() - 5 - boxWidth
-    end
-    
-    local r, g, b, a = love.graphics.getColor()
-    love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
-    love.graphics.rectangle("fill", tipX, tipY, boxWidth, boxHeight)
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    for i, str in ipairs(strings) do
-        love.graphics.print(str, tipX + padding, tipY + padding + (i - 1) * lineHeight)
-    end
-    love.graphics.setColor(r, g, b, a)
 end
 
 function Turret:drawFiringArc(drawx, drawy, alpha)

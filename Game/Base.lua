@@ -43,7 +43,8 @@ function Base:new(config)
         cellSize = config.buildGrid.cellSize or 25,
         width = config.buildGrid.width,
         height = config.buildGrid.height,
-        buildings = {}
+        buildings = {},
+        unlocked = {}
     }
     return obj
 end
@@ -56,11 +57,17 @@ function Base:draw()
         for j = 1, self.buildGrid.height do
             local slot = (j - 1) * self.buildGrid.width + i
             if not self.buildGrid.buildings[slot] then
-                love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
+                if not self.buildGrid.unlocked[slot] then
+                    love.graphics.setColor(0.1, 0.1, 0.1, 0.6)
+                    love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+                    love.graphics.setColor(0.5, 0.2, 0.2, 0.6) -- faint red outline
+                else
+                    love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
+                end
                 
                 -- Check if this slot should be highlighted
                 local shouldHighlight = false
-                if self.game:isState("placing") and self.selectedSlots then
+                if self.game.inputMode == "placing" and self.selectedSlots then
                     -- Highlight multiple slots during placement
                     for _, selectedSlot in ipairs(self.selectedSlots) do
                         if selectedSlot == slot then
@@ -83,7 +90,7 @@ function Base:draw()
     end
     
     -- Draw yellow highlights for selected slots
-    if self.game:isState("placing") and self.selectedSlots then
+    if self.game.inputMode == "placing" and self.selectedSlots then
         love.graphics.setColor(1, 1, 0, 1) -- Yellow color for selected slots
         for _, slot in ipairs(self.selectedSlots) do
             local i = ((slot - 1) % self.buildGrid.width) + 1
@@ -98,7 +105,7 @@ function Base:draw()
     end
     
     -- Draw red outlines for invalid slots
-    if self.game:isState("placing") and self.invalidSlots then
+    if self.game.inputMode == "placing" and self.invalidSlots then
         love.graphics.setColor(1, 0, 0, 1) -- Red color for invalid slots
         love.graphics.setLineWidth(2)
         for _, slot in ipairs(self.invalidSlots) do
@@ -113,7 +120,7 @@ function Base:draw()
     end
     
     -- Draw green outlines for buff-affected slots
-    if self.game:isState("placing") and self.affectedSlots then
+    if self.game.inputMode == "placing" and self.affectedSlots then
         love.graphics.setColor(0, 1, 0, 1) -- Green color for affected slots
         love.graphics.setLineWidth(2)
         for _, slot in ipairs(self.affectedSlots) do
@@ -123,7 +130,7 @@ function Base:draw()
         end
         love.graphics.setLineWidth(1) -- Reset line width
     end
-    if self.game:isState("placing") then
+    if self.game.inputMode == "placing" then
         self.game.blueprint:draw(self.game.inputHandler.mouseX, self.game.inputHandler.mouseY)
     end
     -- Draw green outline for buff building hover/selection slots
@@ -140,6 +147,21 @@ function Base:draw()
 
     for _, building in pairs(self.buildGrid.buildings) do
         building:draw()
+    end
+    
+    if self.hoverTooltip then
+        love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
+        local font = love.graphics.getFont()
+        local tw = font:getWidth(self.hoverTooltip.text)
+        local th = font:getHeight()
+        love.graphics.rectangle("fill", self.hoverTooltip.x, self.hoverTooltip.y, tw + 10, th + 10)
+        
+        if self.game.money >= self.hoverTooltip.cost then
+            love.graphics.setColor(0, 1, 0, 1)
+        else
+            love.graphics.setColor(1, 0, 0, 1)
+        end
+        love.graphics.print(self.hoverTooltip.text, self.hoverTooltip.x + 5, self.hoverTooltip.y + 5)
     end
 end
 
@@ -164,6 +186,7 @@ function Base:addBuilding(building, anchorSlot)
     -- Occupy all slots
     for _, slot in ipairs(finalSlots) do
         self.buildGrid.buildings[slot] = building
+        self.buildGrid.unlocked[slot] = true
     end
     
     building.x, building.y = building:getX() + building.buildGrid.cellSize/2, building:getY() + building.buildGrid.cellSize/2
@@ -196,6 +219,19 @@ end
 
 function Base:getBuildingAtSlot(slot)
     return self.buildGrid.buildings[slot]
+end
+
+function Base:getSlotPrice(slot)
+    local width = self.buildGrid.width
+    local height = self.buildGrid.height
+    local centerX = width / 2
+    local centerY = height / 2
+    
+    local gridX = ((slot - 1) % width) + 1
+    local gridY = math.ceil(slot / width)
+    
+    local distance = math.abs(gridX - centerX) + math.abs(gridY - centerY)
+    return math.floor(10 + distance * 15)
 end
 
 return Base

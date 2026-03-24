@@ -15,7 +15,13 @@ end
 function InputHandler:update(dt)
     local game = self.game
     
+    if self.game.base then
+        self.game.base.hoverTooltip = nil
+    end
+
     self.mouseX, self.mouseY = love.mouse.getPosition()
+    
+
     
     -- Handle space key hold for showing all firing arcs
     local showAllArcs = love.keyboard.isDown("space")
@@ -32,8 +38,8 @@ function InputHandler:update(dt)
     
     self:handleBuildingHover()
     
-    -- Update selected turret's firing arc direction during preparation phase
-    if game:isState("preparing") and self.selectedBuilding and self.selectedBuilding.firingArc then
+    -- Update selected turret's firing arc direction during preparation phase or when aiming after placement
+    if (game:isState("preparing") or game.inputMode == "aiming") and self.selectedBuilding and self.selectedBuilding.firingArc then
         local dx = self.mouseX - self.selectedBuilding.x
         local dy = self.mouseY - self.selectedBuilding.y
         local angleToMouse = math.atan2(dy, dx)
@@ -46,9 +52,19 @@ function InputHandler:update(dt)
         self.selectedBuilding.firingArc.direction = angleToMouse
     end
     
-    -- Only handle building slot hover when placing
-    if game:isState("placing") then
-        self:handleBuildingSlotHover()
+    if game.inventory.hoveredCardIndex then
+        local base = game.base
+        base.selectedSlots = nil
+        base.invalidSlots = nil
+        base.affectedSlots = nil
+        base.selectedSlot = nil
+    else
+        -- Only handle building slot hover when placing
+        if game.inputMode == "placing" then
+            self:handleBuildingSlotHover()
+        elseif game.inputMode == "idle" then
+            self:handleLockedSlotHover()
+        end
     end
 
     self:handleButtonHold()
@@ -143,7 +159,7 @@ function InputHandler:handleBuildingSlotHover()
         local anchorSlot = (gridY - 1) * buildGrid.width + gridX
         
         -- If placing, show all slots the building would occupy
-        if game:isState("placing") and game.blueprint then
+        if game.inputMode == "placing" and game.blueprint then
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
             local invalidSlots = game.blueprint:getInvalidSlotsFromPattern(anchorSlot, base.buildGrid)
             
@@ -155,6 +171,18 @@ function InputHandler:handleBuildingSlotHover()
                 -- Valid placement - show yellow highlights
                 base.selectedSlots = slotsToOccupy
                 base.invalidSlots = nil
+                
+                -- Calculate cost of locked slots
+                local totalCost = 0
+                for _, s in ipairs(slotsToOccupy) do
+                    if not base.buildGrid.unlocked[s] then
+                        totalCost = totalCost + base:getSlotPrice(s)
+                    end
+                end
+                
+                if totalCost > 0 then
+                    base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot(s) and place building? ($" .. totalCost .. ")", cost = totalCost}
+                end
             end
             
             -- If placing a buff building, also show affected slots in green (only if placement is valid)
@@ -177,6 +205,23 @@ function InputHandler:handleBuildingSlotHover()
     end
 end
 
+function InputHandler:handleLockedSlotHover()
+    local base = self.game.base
+    local buildGrid = base.buildGrid
+    
+    local gridX = math.floor(self.mouseX / buildGrid.cellSize) + 1
+    local gridY = math.floor((self.mouseY - buildGrid.y) / buildGrid.cellSize) + 1
+    
+    if gridX >= 1 and gridX <= buildGrid.width and
+       gridY >= 1 and gridY <= buildGrid.height then
+        local anchorSlot = (gridY - 1) * buildGrid.width + gridX
+        if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] then
+            local cost = base:getSlotPrice(anchorSlot)
+            base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot? ($" .. cost .. ")", cost = cost}
+        end
+    end
+end
+
 function InputHandler:mousepressed(x, y, button)
     local game = self.game
     local rewardSystem = game.rewardSystem
@@ -184,12 +229,26 @@ function InputHandler:mousepressed(x, y, button)
     local mainTurret = game.mainTurret
     
     -- Handle reward system input first
+    local rewardActive = rewardSystem and rewardSystem.isActive
     if rewardSystem then
         rewardSystem:mousepressed(x, y, button)
     end
+    if rewardActive then return end
+    
+    -- Check inventory UI click first
+    if game.inventory:mousepressed(x, y, button) then
+        return
+    end
+    
+    -- Handle aiming after placement
+    if game.inputMode == "aiming" and button == 1 then
+        game.inputMode = "idle"
+        self:clearSelection()
+        return
+    end
     
     -- Handle building placement
-    if game:isState("placing") and button == 1 then
+    if game.inputMode == "placing" and button == 1 then
         local buildGrid = base.buildGrid
         local gridX = math.floor(x / buildGrid.cellSize) + 1
         local gridY = math.floor((y - buildGrid.y) / buildGrid.cellSize) + 1
@@ -200,8 +259,36 @@ function InputHandler:mousepressed(x, y, button)
             -- Check if all required slots are available
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
             if base:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
-                game:newBuilding(game.blueprint, anchorSlot)
-                game:setState("preparing")
+            
+                local totalCost = 0
+                for _, s in ipairs(slotsToOccupy) do
+                    if not base.buildGrid.unlocked[s] then
+                        totalCost = totalCost + base:getSlotPrice(s)
+                    end
+                end
+                
+                if totalCost > 0 then
+                    if game.money >= totalCost then
+                        game.money = game.money - totalCost
+                        for _, s in ipairs(slotsToOccupy) do
+                            base.buildGrid.unlocked[s] = true
+                        end
+                    else
+                        print("Cannot place building: Not enough money to unlock slots!")
+                        return
+                    end
+                end
+            
+                local placedBuilding = game.blueprint
+                game:newBuilding(placedBuilding, anchorSlot)
+                
+                if placedBuilding:isType("turret") then
+                    game.inputMode = "aiming"
+                    self:selectBuilding(placedBuilding)
+                else
+                    game.inputMode = "idle"
+                end
+                
                 game.blueprint = nil
                 game:recalculateAllBuffs()
             else
@@ -209,6 +296,26 @@ function InputHandler:mousepressed(x, y, button)
             end
         end
         return -- Don't process turret selection during building placement
+    end
+    
+    -- Handle single slot unlocking
+    if (game.inputMode == "idle" or game:isState("preparing")) and button == 1 then
+        local buildGrid = base.buildGrid
+        local gridX = math.floor(x / buildGrid.cellSize) + 1
+        local gridY = math.floor((y - buildGrid.y) / buildGrid.cellSize) + 1
+        if gridX >= 1 and gridX <= buildGrid.width and gridY >= 1 and gridY <= buildGrid.height then
+            local anchorSlot = (gridY - 1) * buildGrid.width + gridX
+            if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] then
+                local cost = base:getSlotPrice(anchorSlot)
+                if game.money >= cost then
+                    game.money = game.money - cost
+                    buildGrid.unlocked[anchorSlot] = true
+                else
+                    print("Not enough money to unlock slot!")
+                end
+                return -- Stop propagation so we don't select a building or shoot
+            end
+        end
     end
     
     -- Handle building selection and other mouse interactions
@@ -283,12 +390,16 @@ end
 
 function InputHandler:keypressed(key)
     local game = self.game
-    -- local rewardSystem = game.rewardSystem
-    
-    -- -- Handle reward system input first
-    -- if rewardSystem then
-    --     rewardSystem:keypressed(key)
-    -- end
+
+    if key == "r" then
+        if game.money >= game.rewardCost and not game.rewardSystem.isActive and game.inputMode == "idle" then
+            game.money = game.money - game.rewardCost
+            game.rewardCost = game.rewardCost + 25
+            game.rewardSystem:activate()
+        end
+    elseif key == "a" then
+        game.autoStartWave = not game.autoStartWave
+    end
     
     -- Handle turret target reset
     if key == "space" then

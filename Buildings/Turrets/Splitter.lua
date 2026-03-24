@@ -26,7 +26,7 @@ default = {
 }
 
 function Splitter:new(config)
-    error("Splitter turret is deprecated. Use base Turret class instead.")
+    error("Splitter turret is deprecated")
     for key, value in pairs(default) do
         config[key] = config[key] or value
     end
