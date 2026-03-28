@@ -1,5 +1,5 @@
 local Pathfinder = {
-    safetyMargin = 1 -- Safety margin as a percentage of cellSize (0.0 to 0.5)
+    safetyMargin = 0.5 -- Safety margin as a percentage of cellSize (0.0 to 0.5)
 }
 
 -- Min-Heap for A* Open Set

@@ -37,6 +37,13 @@ RewardIndex.Rewards = {
         type = "building",
         building = require("Buildings.Turrets.AutoCannon")
     },
+    x = {
+        name = "Fence",
+        description = "Block Enemies",
+        building = require("Buildings.Battlefield.Blocker"),
+        rarity = "common",
+        type = "uncommon"
+    }
 }   
 
 return RewardIndex

@@ -1,16 +1,18 @@
 local game = {}
 game.__index = game
 
-local Base = require("Game.Base")
+local Base = require("Game.Core.Base")
 local collision = require("Physics.collisionSystem_brute")
 local enemy = require("Enemies.Enemy")
-local RewardSystem = require("Game.RewardSystem")
-local WaveSpawner = require("Game.WaveSpawner")
-local InputHandler = require("Game.InputHandler")
-local Inventory = require("Game.Inventory")
+local RewardSystem = require("Game.Rewards.RewardSystem")
+local WaveSpawner = require("Game.Spawning.WaveSpawner")
+local InputHandler = require("Game.Input.InputHandler")
+local Inventory = require("Game.Inventory.Inventory")
 local MainTurret = require("Buildings.Turrets.MainTurret")
 local EffectManager = require("Game.StatusEffects.EffectManager")
-local BattlefieldGrid = require("Game.BattlefieldGrid")
+local BattlefieldGrid = require("Game.Core.BattlefieldGrid")
+local WaveDirector = require("Game.Spawning.WaveDirector")
+local GUIManager = require("Game.GUI.GUIManager")
 
 
 local ground = {
@@ -28,18 +30,20 @@ function game:load(saveData)
         self.objects = {} -- Table to hold game objects
         self.score = 0 -- Initialize score
         self.xp = 0 -- Initialize XP
-        self.money = 12340918520 -- Initialize money
+        self.money = 75 -- Initialize money
         self.wave = 0 -- Initialize wave
         self.base = Base:new({game = self})
         self.battlefieldGrid = BattlefieldGrid:new(self)
         self.rewardSystem = RewardSystem:new(self)
         self.WaveSpawner = WaveSpawner:new({game = self})
+        self.waveDirector = WaveDirector:new(self)
         self.inputHandler = InputHandler:new(self)
         self.state = "startup" -- Current game state: "startup", "wave", "gameover"
         self.inputMode = "idle"
         self.rewardCost = 50
         self.autoStartWave = false
         self.inventory = Inventory:new(self)
+        self.gui = GUIManager:new(self)
         self.globalEffectManager = EffectManager:new() -- Global manager with no owner
     end
     
@@ -54,8 +58,11 @@ function game:load(saveData)
     local centerRow = math.ceil(gridHeight / 2)
     local centerCol = math.ceil(gridWidth / 2)
 
-    self:newBuilding(self.mainTurret, (centerRow - 1) * gridWidth + centerCol)
+    local centerSlot = (centerRow - 1) * gridWidth + centerCol
+    self:newBuilding(self.mainTurret, centerSlot)
+    self.base.buildGrid.unlocked[centerSlot] = true -- Starting visibility anchor
     
+    love.mouse.setVisible(false) -- Hide the system cursor
 end
 
 function game:newBuilding(building, slot)
@@ -150,6 +157,7 @@ function game:update(dt)
     collision:bruteforceByType(self.objects, "bullet", "enemy")
     self.WaveSpawner:update(dt)
     self.globalEffectManager:update(dt)
+    self.gui:update(dt)
     
     self:takeOutTheTrash() -- remove references to destroyed objects
 end
@@ -210,82 +218,20 @@ function game:draw()
     -- Reset color at end of draw to be safe
     love.graphics.setColor(1, 1, 1, 1)
     
-    if self.inputHandler.destructionTarget then
-        local target = self.inputHandler.destructionTarget
-        
-        local occupiedSlots = target:getSlotsFromPattern(target.slot)
-        local buildGrid = target.buildGrid
-        love.graphics.setColor(1, 0, 0, 0.4)
-        for _, slot in ipairs(occupiedSlots) do
-            local i = ((slot - 1) % buildGrid.width) + 1
-            local j = math.ceil(slot / buildGrid.width)
-            local sx = buildGrid.x + (i - 1) * buildGrid.cellSize
-            local sy = buildGrid.y + (j - 1) * buildGrid.cellSize
-            love.graphics.rectangle("fill", sx, sy, buildGrid.cellSize, buildGrid.cellSize)
-        end
-        love.graphics.setColor(1, 1, 1, 1)
-        
-        local tipX, tipY = target.x, target.y
-        if target.getCenterPosition then tipX, tipY = target:getCenterPosition() end
-        
-        local boxW, boxH = 220, 80
-        local cx = math.floor(tipX - boxW / 2)
-        local cy = math.floor(tipY - boxH - 40)
-        
-        if cx < 5 then 
-            cx = 5 
-        elseif cx + boxW > love.graphics.getWidth() - 5 then
-            cx = love.graphics.getWidth() - 5 - boxW
-        end
-        
-        love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
-        love.graphics.rectangle("fill", cx, cy, boxW, boxH)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("Do you want to destroy this building?", cx + 10, cy + 10, boxW - 20, "center")
-        
-        local btnW, btnH = 80, 25
-        local btnX = math.floor(cx + boxW / 2 - btnW / 2)
-        local btnY = math.floor(cy + 45)
-        
-        love.graphics.setColor(0.8, 0.2, 0.2, 1)
-        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("CONFIRM", btnX, btnY + 5, btnW, "center")
-        
-        self.inputHandler.confirmRect = {x = btnX, y = btnY, w = btnW, h = btnH}
-    else
-        -- Draw building tooltips on top of everything else (except UI)
-        local hovered = self.inputHandler.hoveredBuilding
-        if hovered and hovered.showEffects and hovered.effectManager and hovered.effectManager.drawTooltip then
-            local tipX, tipY = hovered.x, hovered.y
-            if hovered.getCenterPosition then
-                tipX, tipY = hovered:getCenterPosition()
-            end
-            hovered.effectManager:drawTooltip(tipX, tipY)
-        end
-    end
-    
-    self.inventory:draw()
+    -- Draw UI (on top of world)
+    self.gui:draw()
     
     -- Draw reward system on top of everything
     if self.rewardSystem then
         self.rewardSystem:draw()
     end
-    if self:isState("startup") then
-        love.graphics.setColor(1, 1, 1, 0.5)
-        love.graphics.printf("Aim the main turret with mouse. Click to shoot. Other Turrets will fight on their own. Hit Enter to Continue. ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
-    elseif self:isState("preparing") then
-        love.graphics.setColor(1, 1, 1, 0.5)
-        love.graphics.printf("Press Enter to Start Wave ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
-    end
-    
-    -- Draw reward UI prompt
+
+    -- Draw custom cursor (Red X)
+    local mx, my = love.mouse.getPosition()
+    local halfSize = 10
+    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.circle("fill", mx, my, 3, 5)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Press 'R' to Buy Reward ($" .. (self.rewardCost or 0) .. ")", 0, 10, love.graphics.getWidth(), "center")
-    
-    -- Draw Auto-Start toggle UI prompt
-    local autoText = self.autoStartWave and "ON" or "OFF"
-    love.graphics.printf("Press 'A' for Auto-Start: " .. autoText, 0, 25, love.graphics.getWidth(), "center")
 end
 
 

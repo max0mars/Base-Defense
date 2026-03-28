@@ -6,7 +6,7 @@ local scene = require("Scenes.scene") -- Import the base scene class
 setmetatable(game_scene, { __index = scene })
 
 local time_mul = 1
-local game = require("Game.GameManager") -- Import the game module
+local game = require("Game.Core.GameManager") -- Import the game module
 
 function game_scene:load()
     time_mul = 1 -- game starts frozen
@@ -45,13 +45,13 @@ function game_scene:draw()
     end
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print("Money: " .. game.money, 10, 10)
-    love.graphics.print("Time Multiplier: " .. string.format("%.1f", time_mul) .. "x", 10, 30)
-    love.graphics.print("Wave: " .. game.wave, 10, 50)
-    love.graphics.print("Game State: " .. game.state, 10, 70)
-    love.graphics.print("Wave State: " .. game.WaveSpawner.waveState, 200, 10)
-    love.graphics.print("Selected Turret: " .. (game.inputHandler.selectedTurret and game.inputHandler.selectedTurret.id or "None"), 200, 30)
-    love.graphics.print("Spawn Rate: " .. game.WaveSpawner.spawnRate, 200, 50)
-    love.graphics.print("Debug (F3): " .. tostring(game.debugMode or false), 200, 70)
+    --love.graphics.print("Time Multiplier: " .. string.format("%.1f", time_mul) .. "x", 10, 30)
+    love.graphics.print("Wave: " .. game.wave, 10, 30)
+    --love.graphics.print("Game State: " .. game.state, 10, 70)
+    --love.graphics.print("Wave State: " .. game.WaveSpawner.waveState, 200, 10)
+    --love.graphics.print("Selected Turret: " .. (game.inputHandler.selectedTurret and game.inputHandler.selectedTurret.id or "None"), 200, 30)
+    --love.graphics.print("Spawn Rate: " .. game.WaveSpawner.spawnRate, 200, 50)
+    love.graphics.print("Debug: " .. tostring(game.debugMode or false), 10, 50)
 end
 
 function game_scene:keypressed(key)

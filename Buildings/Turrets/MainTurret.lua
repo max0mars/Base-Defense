@@ -1,4 +1,5 @@
 local Turret = require("Buildings.Turrets.Turret")
+local HitscanBullet = require("Bullets.HitscanBullet")
 
 local MainTurret = setmetatable({}, Turret)
 MainTurret.__index = MainTurret
@@ -6,11 +7,12 @@ MainTurret.__index = MainTurret
 local default = {
     types = { turret = true, mainTurret = true },
     turnSpeed = math.huge,
-    fireRate = 2, -- Hz (was 0.2s delay)
+    fireRate = 4, -- Hz (was 0.2s delay)
     damage = 100000,      -- More damage than regular turret
     bulletSpeed = 800, -- Faster bullets
     range = math.huge,
     barrel = 0,
+    bulletType = HitscanBullet,
     -- Define shape as relative coordinates instead of absolute slots
     shapePattern = {
         {0, 0}, {1, 0},  -- Top row: anchor + right
@@ -28,12 +30,26 @@ function MainTurret:new(config)
     config.firingArc = nil
     
     local t = setmetatable(Turret.new(self, config), { __index = self })
+    
+    -- Sync logical position (x, y) with the center if we have a slot,
+    -- otherwise Turret.new already handles base initialization.
+    if t.slot then
+        local cx, cy = t:getCenterPosition()
+        t.x, t.y = cx, cy
+    end
+    
     return t
 end
 
 function MainTurret:getCenterPosition()
-    -- Calculate center position for 2x2 turret
-    local anchorSlot = self:getAnchorSlot()
+    -- If the building is not yet placed (e.g. during placement preview), 
+    -- the slot will be nil. Use raw x, y (mouse coords) in this case.
+    if not self.slot then
+        return self.x, self.y
+    end
+
+    -- Calculate center position for 2x2 turret in grid
+    local anchorSlot = self.slot
     local anchorX = ((anchorSlot - 1) % self.buildGrid.width) * self.buildGrid.cellSize + self.buildGrid.x
     local anchorY = (math.ceil(anchorSlot / self.buildGrid.width) - 1) * self.buildGrid.cellSize + self.buildGrid.y
     
@@ -57,10 +73,17 @@ end
 
 function MainTurret:PlayerClick(targetX, targetY)
     -- Only fire during wave state
-    if not self.game:isState("wave") and not self.game:isState("startup") then
-        return false -- Not in wave state
-    end
+    -- Prevent firing if clicking on the base
+    local base = self.game.base
+    local bx1 = base.x - base.w / 2
+    local bx2 = base.x + base.w / 2
+    local by1 = base.y - base.h / 2
+    local by2 = base.y + base.h / 2
     
+    if targetX >= bx1 and targetX <= bx2 and targetY >= by1 and targetY <= by2 then
+        return false -- Clicked on base
+    end
+
     -- Fire directly at specified coordinates if not on cooldown
     if self.cooldown <= 0 then
         local currentFireRate = self:getStat("fireRate")

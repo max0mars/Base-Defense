@@ -112,6 +112,33 @@ function building:getY()
     return y
 end
 
+function building:getCenterPosition()
+    if not self.slot then
+        return self.x, self.y
+    end
+
+    -- Calculate bounding box of all occupied slots
+    local slots = self:getSlotsFromPattern(self.slot)
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+    
+    local grid = self.buildGrid
+    for _, s in ipairs(slots) do
+        local gx = ((s - 1) % grid.width) + 1
+        local gy = math.ceil(s / grid.width)
+        
+        local sx = grid.x + (gx - 1) * grid.cellSize
+        local sy = grid.y + (gy - 1) * grid.cellSize
+        
+        minX = math.min(minX, sx)
+        minY = math.min(minY, sy)
+        maxX = math.max(maxX, sx + grid.cellSize)
+        maxY = math.max(maxY, sy + grid.cellSize)
+    end
+    
+    return (minX + maxX) / 2, (minY + maxY) / 2
+end
+
 function building:occupiesSlot(slot)
     if not self.slot then return false end
     local slots = self:getSlotsFromPattern(self.slot)

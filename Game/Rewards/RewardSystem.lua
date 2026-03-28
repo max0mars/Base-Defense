@@ -1,9 +1,9 @@
 -- RewardSystem.lua - Main reward system that manages the pool and selection
-local Reward = require("Game.Reward")
+local Reward = require("Game.Rewards.Reward")
 
 local RewardSystem = {}
 RewardSystem.__index = RewardSystem
-local RewardIndex = require("Game.RewardIndex")
+local RewardIndex = require("Game.Rewards.RewardIndex")
 
 function RewardSystem:new(game)
     local system = setmetatable({}, self)
@@ -28,17 +28,17 @@ function RewardSystem:new(game)
 end
 
 function RewardSystem:initializeRewardPool()
-    -- for _, reward in pairs(RewardIndex.Rewards) do
-    --     table.insert(self.rewardPool, Reward:new(reward))
-    -- end
-    x = {
-        name = "Fence",
-        description = "Block Enemies",
-        building = require("Buildings.Battlefield.Blocker"),
-        rarity = "common",
-        type = "building"
-    }
-    table.insert(self.rewardPool, Reward:new(x))
+    for _, reward in pairs(RewardIndex.Rewards) do
+        table.insert(self.rewardPool, Reward:new(reward))
+    end
+    -- x = {
+    --     name = "Fence",
+    --     description = "Block Enemies",
+    --     building = require("Buildings.Battlefield.Blocker"),
+    --     rarity = "common",
+    --     type = "building"
+    -- }
+    -- table.insert(self.rewardPool, Reward:new(x))
 end
 
 function RewardSystem:activate()

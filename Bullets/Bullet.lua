@@ -60,9 +60,6 @@ end
 function Bullet:onHit(target)
     self.pierce = self.pierce - 1
     
-    print("damage dealt = " .. target:takeDamage(self.damage))
-    --print(target.id)
-    
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do
             target.effectManager:applyEffect(effectTemplate)

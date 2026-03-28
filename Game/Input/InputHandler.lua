@@ -199,6 +199,21 @@ function InputHandler:handleBuildingSlotHover()
                 invalidSlots = game.blueprint:getInvalidSlotsFromPattern(anchorSlot, buildGrid)
             end
             
+            -- Expansion Logic: Must be connected to visibility (except battlefield buildings)
+            if not isBattlefield then
+                local isConnected = false
+                for _, s in ipairs(slotsToOccupy) do
+                    if base:isSlotVisible(s) then
+                        isConnected = true
+                        break
+                    end
+                end
+                if not isConnected then
+                    -- If not connected, mark all slots as invalid to show red blueprint
+                    invalidSlots = slotsToOccupy
+                end
+            end
+            
             if isBattlefield then
                 local baseGrid = base.buildGrid
                 for _, s in ipairs(slotsToOccupy) do
@@ -261,7 +276,8 @@ function InputHandler:handleLockedSlotHover()
     if gridX >= 1 and gridX <= buildGrid.width and
        gridY >= 1 and gridY <= buildGrid.height then
         local anchorSlot = (gridY - 1) * buildGrid.width + gridX
-        if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] then
+        -- Expansion Logic: Only allow interaction if visible
+        if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] and base:isSlotVisible(anchorSlot) then
             local cost = base:getSlotPrice(anchorSlot)
             base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot? ($" .. cost .. ")", cost = cost}
         end
@@ -270,10 +286,17 @@ end
 
 function InputHandler:mousepressed(x, y, button)
     local game = self.game
+    
+    -- Check GUI consumption first
+    if game.gui:mousepressed(x, y, button) then
+        return
+    end
+    
     local rewardSystem = game.rewardSystem
     local base = game.base
     local mainTurret = game.mainTurret
     
+    -- Reward system check (if not consumed by GUIManager)
     local rewardActive = rewardSystem and rewardSystem.isActive
     if rewardSystem then
         rewardSystem:mousepressed(x, y, button)
@@ -297,27 +320,9 @@ function InputHandler:mousepressed(x, y, button)
         return
     end
 
+    -- Destruction handled by GUI, but we can still cancel here if needed
     if self.destructionTarget and button == 1 then
-        if self.confirmRect then
-            if x >= self.confirmRect.x and x <= self.confirmRect.x + self.confirmRect.w and
-               y >= self.confirmRect.y and y <= self.confirmRect.y + self.confirmRect.h then
-                if self.destructionTarget:isType("battlefield") and game.battlefieldGrid then
-                    game.battlefieldGrid:removeBuilding(self.destructionTarget)
-                end
-                self.destructionTarget:remove()
-                self.destructionTarget = nil
-                self.confirmRect = nil
-                game:recalculateAllBuffs()
-                return
-            end
-        end
         self.destructionTarget = nil
-        self.confirmRect = nil
-    end
-    
-    -- Check inventory UI click first
-    if game.inventory:mousepressed(x, y, button) then
-        return
     end
     
     -- Handle aiming after placement
@@ -398,7 +403,8 @@ function InputHandler:mousepressed(x, y, button)
         local gridY = math.floor((y - buildGrid.y) / buildGrid.cellSize) + 1
         if gridX >= 1 and gridX <= buildGrid.width and gridY >= 1 and gridY <= buildGrid.height then
             local anchorSlot = (gridY - 1) * buildGrid.width + gridX
-            if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] then
+            -- Expansion Logic: Only allow click-to-unlock if visible
+            if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] and base:isSlotVisible(anchorSlot) then
                 local cost = base:getSlotPrice(anchorSlot)
                 if game.money >= cost then
                     game.money = game.money - cost

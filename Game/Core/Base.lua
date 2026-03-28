@@ -56,35 +56,45 @@ function Base:draw()
     for i = 1, self.buildGrid.width do
         for j = 1, self.buildGrid.height do
             local slot = (j - 1) * self.buildGrid.width + i
-            if not self.buildGrid.buildings[slot] then
-                if not self.buildGrid.unlocked[slot] then
-                    love.graphics.setColor(0.1, 0.1, 0.1, 0.6)
-                    love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
-                    love.graphics.setColor(0.5, 0.2, 0.2, 0.6) -- faint red outline
-                else
-                    love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
-                end
-                
-                -- Check if this slot should be highlighted
-                local shouldHighlight = false
-                if self.game.inputMode == "placing" and self.selectedSlots then
-                    -- Highlight multiple slots during placement
-                    for _, selectedSlot in ipairs(self.selectedSlots) do
-                        if selectedSlot == slot then
-                            shouldHighlight = true
-                            break
+            
+            -- Fog of War: Only draw if visible
+            if self:isSlotVisible(slot) then
+                if not self.buildGrid.buildings[slot] then
+                    if not self.buildGrid.unlocked[slot] then
+                        love.graphics.setColor(0.1, 0.1, 0.1, 0.6)
+                        love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+                        
+                        -- Color logic: Green if affordable, Red if locked and expensive
+                        local price = self:getSlotPrice(slot)
+                        if self.game.money >= price then
+                            love.graphics.setColor(0.2, 0.5, 0.2, 0.6) -- faint green
+                        else
+                            love.graphics.setColor(0.5, 0.2, 0.2, 0.6) -- faint red
                         end
+                    else
+                        love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
                     end
-                elseif self.selectedSlot == slot then
-                    shouldHighlight = true
+                    
+                    -- Check if this slot should be highlighted
+                    local shouldHighlight = false
+                    if self.game.inputMode == "placing" and self.selectedSlots then
+                        for _, selectedSlot in ipairs(self.selectedSlots) do
+                            if selectedSlot == slot then
+                                shouldHighlight = true
+                                break
+                            end
+                        end
+                    elseif self.selectedSlot == slot then
+                        shouldHighlight = true
+                    end
+                    
+                    if shouldHighlight then
+                        self.drawlast = {slot, i, j}
+                    end
+                    
+                    love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+                    --love.graphics.print(slot, self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize)
                 end
-                
-                if shouldHighlight then
-                    self.drawlast = {slot, i, j}
-                end
-                
-                love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
-                love.graphics.print(slot, self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize)
             end
         end
     end
@@ -249,6 +259,36 @@ function Base:getSlotPrice(slot)
     
     local distance = dx + dy
     return math.floor(10 + (distance * distance) * 15)
+end
+
+function Base:getNeighbors(slot)
+    local width = self.buildGrid.width
+    local height = self.buildGrid.height
+    local neighbors = {}
+    
+    local gx = ((slot - 1) % width) + 1
+    local gy = math.ceil(slot / width)
+    
+    if gy > 1 then table.insert(neighbors, slot - width) end -- Up
+    if gy < height then table.insert(neighbors, slot + width) end -- Down
+    if gx > 1 then table.insert(neighbors, slot - 1) end -- Left
+    if gx < width then table.insert(neighbors, slot + 1) end -- Right
+    
+    return neighbors
+end
+
+function Base:isSlotVisible(slot)
+    -- A slot is visible if it is unlocked OR adjacent to an unlocked slot
+    if self.buildGrid.unlocked[slot] then return true end
+    
+    local neighbors = self:getNeighbors(slot)
+    for _, n in ipairs(neighbors) do
+        if self.buildGrid.unlocked[n] then
+            return true
+        end
+    end
+    
+    return false
 end
 
 return Base

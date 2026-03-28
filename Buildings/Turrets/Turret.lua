@@ -101,7 +101,6 @@ function Turret:fire(args)
         targetX = args and args.targetX or nil,
         targetY = args and args.targetY or nil,
     }
-
     -- If args has extra keys, override config
     if args then
         for k, v in pairs(args) do
@@ -140,29 +139,31 @@ function Turret:update(dt)
 end
 
 function Turret:draw(drawx, drawy)
-    drawx = drawx or self.x
-    drawy = drawy or self.y
+    local cx, cy = drawx or self.x, drawy or self.y
+    -- If no override provided, default to the building's logical center
+    if not drawx and not drawy then
+        cx, cy = self:getCenterPosition()
+    end
+
     -- Draw firing arc if showArc flag is set
     if self.showArc then
-        self:drawFiringArc(drawx, drawy, 0.4)
+        self:drawFiringArc(cx, cy, 0.4)
     end
     
     love.graphics.setColor(self.color)
-    -- love.graphics.rectangle("fill", x * 25, y * 25, 25, 25)
     -- Draw turret mount
-    --love.graphics.setColor(0, 0, 1)
-    love.graphics.circle("fill", drawx, drawy, 8)
+    love.graphics.circle("fill", cx, cy, 8)
 
     -- Draw barrel
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setLineWidth(3) -- Set barrel thickness
+    love.graphics.setLineWidth(3)
     love.graphics.line(
-        drawx, drawy,
-        drawx + math.cos(self.rotation) * self.barrel,
-        drawy + math.sin(self.rotation) * self.barrel
+        cx, cy,
+        cx + math.cos(self.rotation) * self.barrel,
+        cy + math.sin(self.rotation) * self.barrel
     )
-    love.graphics.setLineWidth(1) -- Reset line width to default
-    --love.graphics.printf("Rotation: " .. self.rotation, self.x - 40, self.y - 40, 200, "center")
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Turret:drawFiringArc(drawx, drawy, alpha)
@@ -300,29 +301,26 @@ function Turret:isInFiringArc(target)
 end
 
 function Turret:getFirePoint()
-    return self.x + math.cos(self.rotation) * self.barrel, self.y + math.sin(self.rotation) * self.barrel
+    local cx, cy = self:getCenterPosition()
+    return cx + math.cos(self.rotation) * self.barrel, cy + math.sin(self.rotation) * self.barrel
 end
 
 function Turret:lookAt(x, y, dt)
-
-    local dx = x - self.x
-    local dy = y - self.y
-    local target_angle = math.atan(dy / dx)
-    if dx < 0 then -- for quadrants 3,4
-        target_angle = math.pi + target_angle
-    else
-        if dy < 0 then -- ensures angle is always positive (0 - 2pi)
-            target_angle = 2 * math.pi + target_angle
-        end
+    local cx, cy = self:getCenterPosition()
+    local dx = x - cx
+    local dy = y - cy
+    self.targetRotation = math.atan2(dy, dx)
+    
+    -- Normalize targetRotation to [0, 2π]
+    if self.targetRotation < 0 then
+        self.targetRotation = self.targetRotation + 2 * math.pi
     end
 
-
-    self.targetRotation = target_angle
     if self.turnSpeed > 10 then
         self.rotation = self.targetRotation
         return
     end
-    local angle = target_angle - self.rotation
+    local angle = self.targetRotation - self.rotation
     local sign = 1
     if angle < 0 then -- convert the angle to a positive
         sign = -1
@@ -334,7 +332,7 @@ function Turret:lookAt(x, y, dt)
     end
 
     if math.abs(angle) < self.turnSpeed * dt then -- angle is too small
-        self.rotation = target_angle -- Snap to target rotation
+        self.rotation = self.targetRotation -- Snap to target rotation
         return 0
     end
 
