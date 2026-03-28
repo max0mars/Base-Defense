@@ -4,7 +4,7 @@ local Blocker = setmetatable({}, Building)
 Blocker.__index = Blocker
 
 local default = {
-    types = { building = true, battlefield = true },
+    types = { battlefield = true },
     --shape = "rectangle",
     color = {0.8, 0.4, 0.1, 1},
     hp = 1000,

@@ -1,7 +1,7 @@
 local building = require("Buildings.Building")
 local bullet = require("Bullets.Bullet")
 
-Turret = setmetatable({}, building)
+Turret = setmetatable({}, { __index = building })
 Turret.__index = Turret
 
 local default = {
@@ -42,8 +42,12 @@ function Turret:new(config)
             error("firingArc.angle is required when providing custom firingArc")
         end
     end
-    
+    for key in pairs(default.types) do
+        config.types[key] = true
+    end
     local t = setmetatable(building:new(config), { __index = self }) -- Create a new object with the base properties
+    
+    
     t.rotation = config.rotation
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
     t.turnSpeed = config.turnSpeed

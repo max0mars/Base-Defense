@@ -1,7 +1,11 @@
 local obj = require("Classes.object")
 
-local building = setmetatable({}, obj)
+local building = setmetatable({}, { __index = obj })
 building.__index = building
+
+local default = {
+    types = { building = true },
+}
 
 function building:new(config)
     if(not config.types) then
@@ -15,8 +19,10 @@ function building:new(config)
     if(not config.game) then
         error("Game reference is required")
     end
+    for key in pairs(default.types) do
+        config.types[key] = true
+    end
     local b = setmetatable(obj:new(config), {__index = self})
-    
     -- shapePattern is now required - defines building shape as {x,y} coordinate offsets
     if not config.shapePattern then
         config.shapePattern = {{0,0}}
@@ -24,7 +30,11 @@ function building:new(config)
     end
     b.shapePattern = config.shapePattern
     
-    b.buildGrid = config.game.base.buildGrid
+    if config.game and config.game.base then
+        b.buildGrid = config.game.base.buildGrid
+    else
+        b.buildGrid = config.buildGrid -- Fallback for test mocks
+    end
     return b
 end
 

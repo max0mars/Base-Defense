@@ -36,6 +36,11 @@ function object:new(config)
             obj.types[config.types] = true
         end
     end
+
+    -- Support transition from tag to types
+    if config.tag then
+        obj.types[config.tag] = true
+    end
     -- Support transition from tag to types
     if config.tag then
         obj.types[config.tag] = true
