@@ -75,8 +75,14 @@ function BattlefieldGrid:updateReservations(slotsToOccupy, radius, amount)
 end
 
 function BattlefieldGrid:recalculatePaths()
-    -- Placeholder for flow field updating
-    print("recalculatePaths trigger: Flow fields updated.")
+    if not self.game then return end
+    for _, obj in ipairs(self.game.objects) do
+        if obj:isType("enemy") and not obj.destroyed then
+            if obj.recalculatePath then
+                obj:recalculatePath()
+            end
+        end
+    end
 end
 
 function BattlefieldGrid:draw()

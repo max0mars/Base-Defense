@@ -484,6 +484,10 @@ end
 function InputHandler:keypressed(key)
     local game = self.game
 
+    if key == "1" then
+        game.debugMode = not game.debugMode
+    end
+
     if key == "r" then
         if game.money >= game.rewardCost and not game.rewardSystem.isActive and game.inputMode == "idle" then
             game.money = game.money - game.rewardCost

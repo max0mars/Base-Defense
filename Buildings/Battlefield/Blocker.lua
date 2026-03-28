@@ -12,7 +12,7 @@ local default = {
     noBuildRadius = 1,
     cost = 50,
     shapePattern = {
-        {0, -1}, {0, 0}, {0, 1}
+        {0, -2}, {0, -1}, {0, 0}, {0, 1}, {0, 2}
     },
 }
 

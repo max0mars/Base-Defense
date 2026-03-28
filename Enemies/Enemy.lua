@@ -1,4 +1,5 @@
 local living_object = require("Classes.living_object")
+local Navigators = require("Physics.Navigators")
 local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
 
@@ -26,18 +27,31 @@ function Enemy:new(config)
     local obj = living_object:new(config)
     setmetatable(obj, { __index = self })
     obj.target = obj.game.base.x + obj.game.base.w / 2 + (obj.size or obj.w/2)
+    
+    local navType = config.navigator or "GridNavigator"
+    obj.navigator = Navigators[navType]:new(obj, obj.game)
+    
     return obj
 end
 
 function Enemy:update(dt)
     if self.destroyed then return end
-    local currentSpeed = self:getStat("speed")
-    self.x = self.x - (currentSpeed * dt)
+    
+    if self.navigator then
+        self.navigator:update(dt)
+    end
+    
     if self.x < self.target then
         self.game.base:takeDamage(self:getStat("damage")) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
     self.effectManager:update(dt) -- Update status effects
+end
+
+function Enemy:recalculatePath()
+    if self.navigator and self.navigator.recalculate then
+        self.navigator:recalculate()
+    end
 end
 
 function Enemy:getVelocity()
@@ -66,6 +80,34 @@ function Enemy:checkBaseCollision()
         return true
     end
     return false
+end
+
+function Enemy:draw()
+    living_object.draw(self)
+    
+    if self.game.debugMode and self.navigator and self.navigator.path then
+        love.graphics.setColor(0, 1, 0, 0.5) -- Green transparent line for path
+        love.graphics.setLineWidth(2)
+        local path = self.navigator.path
+        local startIdx = math.max(1, self.navigator.currentNodeIndex - 1)
+        
+        if startIdx <= #path then
+            local prevX, prevY = self.x, self.y
+            for i = self.navigator.currentNodeIndex, #path do
+                local node = path[i]
+                -- World position of node center
+                local wx = self.game.battlefieldGrid.x + (node.x - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
+                local wy = self.game.battlefieldGrid.y + (node.y - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
+                
+                -- Offset perpendicular to segment is NOT drawn in the path line (the line is the raw path)
+                -- but the FIRST point should start from the enemy's world position
+                love.graphics.line(prevX, prevY, wx, wy)
+                prevX, prevY = wx, wy
+            end
+        end
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setLineWidth(1)
+    end
 end
 
 return Enemy

@@ -95,10 +95,14 @@ function WaveSpawner:update(dt)
             end
             self.spawntimer = self.spawntimer - dt
             if self.spawntimer < 0 then -- Adjust the spawn rate as needed
+                local grid = self.game.battlefieldGrid
+                local randomRow = math.random(1, grid.height)
+                local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
+                
                 config = {
                     game = self.game,
                     x = 800,
-                    y = math.random(110, 490)
+                    y = startY
                 }
                 index = math.random(1, #self.waveEnemies)
                 reference = self.waveEnemies[index]
