@@ -28,9 +28,17 @@ function RewardSystem:new(game)
 end
 
 function RewardSystem:initializeRewardPool()
-    for _, reward in pairs(RewardIndex.Rewards) do
-        table.insert(self.rewardPool, Reward:new(reward))
-    end
+    -- for _, reward in pairs(RewardIndex.Rewards) do
+    --     table.insert(self.rewardPool, Reward:new(reward))
+    -- end
+    x = {
+        name = "Fence",
+        description = "Block Enemies",
+        building = require("Buildings.Battlefield.Blocker"),
+        rarity = "common",
+        type = "building"
+    }
+    table.insert(self.rewardPool, Reward:new(x))
 end
 
 function RewardSystem:activate()

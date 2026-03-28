@@ -164,35 +164,73 @@ function InputHandler:isMouseOverBuilding(building)
 end
 
 function InputHandler:handleBuildingSlotHover()
-    local base = self.game.base
-    local buildGrid = base.buildGrid
     local game = self.game
+    local base = game.base
+    local isBattlefield = game.blueprint and game.blueprint:isType("battlefield")
+    local buildGrid = isBattlefield and game.battlefieldGrid or base.buildGrid
     
-    local gridX = math.floor(self.mouseX / buildGrid.cellSize) + 1
+    if game.blueprint then
+        game.blueprint.buildGrid = buildGrid
+    end
+    
+    local gridX = math.floor((self.mouseX - buildGrid.x) / buildGrid.cellSize) + 1
     local gridY = math.floor((self.mouseY - buildGrid.y) / buildGrid.cellSize) + 1
     
+    base.selectedSlot = nil
+    base.selectedSlots = nil
+    base.invalidSlots = nil
+    base.affectedSlots = nil
+    if game.battlefieldGrid then
+        game.battlefieldGrid.selectedSlot = nil
+        game.battlefieldGrid.selectedSlots = nil
+        game.battlefieldGrid.invalidSlots = nil
+    end
+
+    local activeStateBox = isBattlefield and game.battlefieldGrid or base
+
     if gridX >= 1 and gridX <= buildGrid.width and
        gridY >= 1 and gridY <= buildGrid.height then
         local anchorSlot = (gridY - 1) * buildGrid.width + gridX
         
-        -- If placing, show all slots the building would occupy
         if game.inputMode == "placing" and game.blueprint then
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
-            local invalidSlots = game.blueprint:getInvalidSlotsFromPattern(anchorSlot, base.buildGrid)
+            local invalidSlots = {}
+            if game.blueprint.getInvalidSlotsFromPattern then
+                invalidSlots = game.blueprint:getInvalidSlotsFromPattern(anchorSlot, buildGrid)
+            end
+            
+            if isBattlefield then
+                local baseGrid = base.buildGrid
+                for _, s in ipairs(slotsToOccupy) do
+                    local i = ((s - 1) % buildGrid.width) + 1
+                    local j = math.ceil(s / buildGrid.width)
+                    local px = buildGrid.x + (i - 1) * buildGrid.cellSize
+                    local py = buildGrid.y + (j - 1) * buildGrid.cellSize
+                    
+                    local margin = 3 * buildGrid.cellSize
+                    local left = baseGrid.x - margin
+                    local right = baseGrid.x + baseGrid.width * baseGrid.cellSize + margin
+                    local top = baseGrid.y - margin
+                    local bottom = baseGrid.y + baseGrid.height * baseGrid.cellSize + margin
+                    
+                    local inBase = px >= left and px < right and py >= top and py < bottom
+                                   
+                    if (buildGrid.noBuildZones[s] and buildGrid.noBuildZones[s] > 0) or buildGrid.buildings[s] or inBase then
+                        table.insert(invalidSlots, s)
+                    end
+                end
+            end
             
             if #invalidSlots > 0 then
-                -- Invalid placement - show ALL building slots as red
-                base.selectedSlots = nil
-                base.invalidSlots = slotsToOccupy -- Show all slots the building would occupy as invalid
+                activeStateBox.selectedSlots = nil
+                activeStateBox.invalidSlots = slotsToOccupy -- Show all slots the building would occupy as invalid
             else
-                -- Valid placement - show yellow highlights
-                base.selectedSlots = slotsToOccupy
-                base.invalidSlots = nil
+                activeStateBox.selectedSlots = slotsToOccupy
+                activeStateBox.invalidSlots = nil
                 
-                -- Calculate cost of locked slots
                 local totalCost = 0
                 for _, s in ipairs(slotsToOccupy) do
-                    if not base.buildGrid.unlocked[s] then
+                    if not buildGrid.unlocked[s] and not isBattlefield then
                         totalCost = totalCost + base:getSlotPrice(s)
                     end
                 end
@@ -202,23 +240,14 @@ function InputHandler:handleBuildingSlotHover()
                 end
             end
             
-            -- If placing a buff building, also show affected slots in green (only if placement is valid)
-            if game.blueprint.getAffectedSlotsFromAnchor and #invalidSlots == 0 then
+            if not isBattlefield and game.blueprint.getAffectedSlotsFromAnchor and #invalidSlots == 0 then
                 base.affectedSlots = game.blueprint:getAffectedSlotsFromAnchor(anchorSlot)
             else
                 base.affectedSlots = nil
             end
         else
-            base.selectedSlot = anchorSlot
-            base.selectedSlots = nil
-            base.affectedSlots = nil
-            base.invalidSlots = nil
+            activeStateBox.selectedSlot = anchorSlot
         end
-    else
-        base.selectedSlot = nil
-        base.selectedSlots = nil
-        base.affectedSlots = nil
-        base.invalidSlots = nil
     end
 end
 
@@ -254,7 +283,7 @@ function InputHandler:mousepressed(x, y, button)
     if button == 2 then
         local clickedTarget = false
         for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive")) and not obj:isType("mainTurret") and not obj.destroyed then
+            if (obj:isType("turret") or obj:isType("passive") or obj:isType("battlefield")) and not obj:isType("mainTurret") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     self.destructionTarget = obj
                     clickedTarget = true
@@ -272,6 +301,9 @@ function InputHandler:mousepressed(x, y, button)
         if self.confirmRect then
             if x >= self.confirmRect.x and x <= self.confirmRect.x + self.confirmRect.w and
                y >= self.confirmRect.y and y <= self.confirmRect.y + self.confirmRect.h then
+                if self.destructionTarget:isType("battlefield") and game.battlefieldGrid then
+                    game.battlefieldGrid:removeBuilding(self.destructionTarget)
+                end
                 self.destructionTarget:remove()
                 self.destructionTarget = nil
                 self.confirmRect = nil
@@ -298,8 +330,11 @@ function InputHandler:mousepressed(x, y, button)
     
     -- Handle building placement
     if game.inputMode == "placing" and button == 1 then
-        local buildGrid = base.buildGrid
-        local gridX = math.floor(x / buildGrid.cellSize) + 1
+        local isBattlefield = game.blueprint and game.blueprint:isType("battlefield")
+        local buildGrid = isBattlefield and game.battlefieldGrid or base.buildGrid
+        local activeStateBox = isBattlefield and game.battlefieldGrid or base
+
+        local gridX = math.floor((x - buildGrid.x) / buildGrid.cellSize) + 1
         local gridY = math.floor((y - buildGrid.y) / buildGrid.cellSize) + 1
         if gridX >= 1 and gridX <= buildGrid.width and
            gridY >= 1 and gridY <= buildGrid.height then
@@ -307,11 +342,11 @@ function InputHandler:mousepressed(x, y, button)
             
             -- Check if all required slots are available
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
-            if base:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
+            if activeStateBox:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
             
                 local totalCost = 0
                 for _, s in ipairs(slotsToOccupy) do
-                    if not base.buildGrid.unlocked[s] then
+                    if not buildGrid.unlocked[s] and not isBattlefield then
                         totalCost = totalCost + base:getSlotPrice(s)
                     end
                 end
@@ -320,7 +355,7 @@ function InputHandler:mousepressed(x, y, button)
                     if game.money >= totalCost then
                         game.money = game.money - totalCost
                         for _, s in ipairs(slotsToOccupy) do
-                            base.buildGrid.unlocked[s] = true
+                            buildGrid.unlocked[s] = true
                         end
                     else
                         print("Cannot place building: Not enough money to unlock slots!")
@@ -329,7 +364,16 @@ function InputHandler:mousepressed(x, y, button)
                 end
             
                 local placedBuilding = game.blueprint
-                game:newBuilding(placedBuilding, anchorSlot)
+                placedBuilding.buildGrid = buildGrid
+                if isBattlefield then
+                    placedBuilding.slot = anchorSlot
+                    placedBuilding.slotsOccupied = placedBuilding:getSlotsFromPattern(anchorSlot)
+                    placedBuilding.x, placedBuilding.y = placedBuilding:getX() + buildGrid.cellSize/2, placedBuilding:getY() + buildGrid.cellSize/2
+                    game.battlefieldGrid:addBuilding(placedBuilding, anchorSlot)
+                    game:addObject(placedBuilding)
+                else
+                    game:newBuilding(placedBuilding, anchorSlot)
+                end
                 
                 if placedBuilding:isType("turret") then
                     game.inputMode = "aiming"

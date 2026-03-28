@@ -12,9 +12,9 @@ local default = {
         duration = math.huge,
     },
     affectedSlots = {{1, 0}, {-1, 0}}, -- Array of slots that this buff affects
-    shapePattern = {
-        {0, 0}
-    },
+    -- shapePattern = {
+    --     {0, 0}
+    -- },
     --dark green color (normalized to 0-1 range for Love2D)
     color = {21/255, 71/255, 52/255},
 }

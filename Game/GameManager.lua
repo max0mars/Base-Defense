@@ -10,6 +10,7 @@ local InputHandler = require("Game.InputHandler")
 local Inventory = require("Game.Inventory")
 local MainTurret = require("Buildings.Turrets.MainTurret")
 local EffectManager = require("Game.StatusEffects.EffectManager")
+local BattlefieldGrid = require("Game.BattlefieldGrid")
 
 
 local ground = {
@@ -27,9 +28,10 @@ function game:load(saveData)
         self.objects = {} -- Table to hold game objects
         self.score = 0 -- Initialize score
         self.xp = 0 -- Initialize XP
-        self.money = 0 -- Initialize money
+        self.money = 12340918520 -- Initialize money
         self.wave = 0 -- Initialize wave
         self.base = Base:new({game = self})
+        self.battlefieldGrid = BattlefieldGrid:new(self)
         self.rewardSystem = RewardSystem:new(self)
         self.WaveSpawner = WaveSpawner:new({game = self})
         self.inputHandler = InputHandler:new(self)
@@ -174,6 +176,9 @@ local wave = 1
 function game:draw()
     healthyboys = {}
     ground:draw() -- Draw the ground
+    if self.battlefieldGrid then
+        self.battlefieldGrid:draw()
+    end
     for _, obj in ipairs(self.objects) do
         if not obj.destroyed and obj.draw then
             obj:draw() -- Draw each object if it has a draw method
