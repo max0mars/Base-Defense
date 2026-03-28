@@ -277,6 +277,15 @@ function Base:getNeighbors(slot)
     return neighbors
 end
 
+function Base:clearSelection()
+    self.selectedSlots = nil
+    self.invalidSlots = nil
+    self.affectedSlots = nil
+    self.hoveredSlots = nil
+    self.buffHoverSlots = nil
+    self.selectionColor = nil
+end
+
 function Base:isSlotVisible(slot)
     -- A slot is visible if it is unlocked OR adjacent to an unlocked slot
     if self.buildGrid.unlocked[slot] then return true end

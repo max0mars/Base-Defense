@@ -45,7 +45,15 @@ function game:load(saveData)
         self.autoStartWave = false
         self.inventory = Inventory:new(self)
         self.gui = GUIManager:new(self)
-        self.globalEffectManager = EffectManager:new() -- Global manager with no owner
+        self.playerEffectManager = EffectManager:new() -- Global player manager
+        self.enemyEffectManager = EffectManager:new()  -- Global enemy manager
+        local effect = {
+            name = "speed Buff",
+            statModifiers = {speed = {mult = 1.5}},
+            description = "Increases speed by 150%",
+            duration = math.huge,
+        }
+        self.enemyEffectManager:applyEffect(effect)
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
@@ -157,7 +165,8 @@ function game:update(dt)
     -- end
     collision:bruteforceByType(self.objects, "bullet", "enemy")
     self.WaveSpawner:update(dt)
-    self.globalEffectManager:update(dt)
+    self.playerEffectManager:update(dt)
+    self.enemyEffectManager:update(dt)
     self.gui:update(dt)
     
     self:takeOutTheTrash() -- remove references to destroyed objects
@@ -208,6 +217,14 @@ function game:draw()
         end
     end
 
+    
+
+    -- Reset color at end of draw to be safe
+    love.graphics.setColor(1, 1, 1, 1)
+    
+    -- Draw UI (on top of world)
+    self.gui:draw()
+    
     -- Draw building preview directly at mouse position (using its own draw method)
     if self.inputMode == "placing" and self.blueprint then
         --self.blueprint.x, self.blueprint.y = self.inputHandler.mouseX, self.inputHandler.mouseY
@@ -216,12 +233,6 @@ function game:draw()
         self.blueprint.isPreview = false
     end
 
-    -- Reset color at end of draw to be safe
-    love.graphics.setColor(1, 1, 1, 1)
-    
-    -- Draw UI (on top of world)
-    self.gui:draw()
-    
     -- Draw reward system on top of everything
     if self.rewardSystem then
         self.rewardSystem:draw()

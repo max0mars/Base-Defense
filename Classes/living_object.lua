@@ -3,7 +3,15 @@ local object = require("Classes.object")
 local living_object = setmetatable({}, object)
 living_object.__index = living_object
 
+local default = {
+    types = { living_object = true },
+}
+
 function living_object:new(config)
+    if not config.types then config.types = {} end
+    for key, value in pairs(default.types) do
+        config.types[key] = true
+    end
     config.effectManager = true
     local obj = object:new(config)
     setmetatable(obj, { __index = self })

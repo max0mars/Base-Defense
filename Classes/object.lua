@@ -47,8 +47,8 @@ function object:new(config)
     end
     if config.effectManager then
         obj.effectManager = EffectManager:new(obj) -- Initialize EffectManager if config provided
-        if obj.game and obj.game.globalEffectManager then
-            obj.effectManager.parent = obj.game.globalEffectManager
+        if obj.game and obj.game.playerEffectManager then
+            obj.effectManager.parent = obj.game.playerEffectManager
         end
     end
     if config.hitbox then

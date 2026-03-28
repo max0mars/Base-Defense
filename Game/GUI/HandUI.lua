@@ -107,7 +107,9 @@ function HandUI:mousepressed(x, y, button)
             self.game.inventory:add(self.game.blueprint)
             self.game.blueprint = nil
             self.game.inputMode = "idle"
-            self.game.base:clearSelection()
+            if self.game.base.clearSelection then
+                self.game.base:clearSelection()
+            end
             return true
         elseif self.hoveredIndex then
             self.game.blueprint = table.remove(self.game.inventory.items, self.hoveredIndex)

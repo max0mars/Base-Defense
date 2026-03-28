@@ -7,14 +7,18 @@ local default = {
     hp = 25, -- Set health for speeder
     maxHp = 25,
     color = {0, 1, 0, 1}, -- Default color for basic enemies
-    types = { enemy = true},
+    types = { speeder = true },
     size = 15,
     reward = 15
 }
 
 function speeder:new(config)
+    if not config.types then config.types = {} end
     for key, value in pairs(default) do
-        config[key] = value
+        config[key] = config[key] or value
+    end
+    for key in pairs(default.types) do
+        config.types[key] = true
     end
     local instance = Enemy:new(config)
     setmetatable(instance, speeder)

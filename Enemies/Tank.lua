@@ -7,14 +7,18 @@ local default = {
     hp = 2000, -- Set health for tank
     maxHp = 2000,
     color = {1, 1, 0, 1}, -- Default color for basic enemies
-    types = { enemy = true},
+    types = { tank = true },
     size = 45,
     reward = 100
 }
 
 function tank:new(config)
+    if not config.types then config.types = {} end
     for key, value in pairs(default) do
-        config[key] = value
+        config[key] = config[key] or value
+    end
+    for key in pairs(default.types) do
+        config.types[key] = true
     end
     local instance = Enemy:new(config)
     setmetatable(instance, tank)

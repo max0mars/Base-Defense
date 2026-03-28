@@ -13,7 +13,7 @@ local Stats = {
     hp = 100, -- Default health for basic enemies
     maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
-    types = { enemy = true}, -- Using Multi-Type system
+    types = { enemy = true }, -- Using Multi-Type system
     effectManager = true, -- Enemies have a effectManager by default
 }   
 
@@ -22,9 +22,19 @@ function Enemy:new(config)
     for key, value in pairs(Stats) do
         config[key] = config[key] or value -- Use default values if not provided
     end
+    
+    if not config.types then config.types = {} end
+    for key in pairs(Stats.types) do
+        config.types[key] = true
+    end
+    
     config.w = config.w or config.size
     config.h = config.h or config.size
     local obj = living_object:new(config)
+    -- Override default parent to point to enemy manager
+    if obj.effectManager and obj.game.enemyEffectManager then
+        obj.effectManager.parent = obj.game.enemyEffectManager
+    end
     setmetatable(obj, { __index = self })
     obj.target = obj.game.base.x + obj.game.base.w / 2 + (obj.size or obj.w/2)
     
