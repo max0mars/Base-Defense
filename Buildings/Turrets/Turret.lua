@@ -126,8 +126,8 @@ function Turret:update(dt)
     self.cooldown = self.cooldown - dt
     self:getTargetArc()
     if self.target then
-        --local x, y = self:getTargetLeadPosition()
-        local x, y = self.target.x, self.target.y
+        local x, y = self:getTargetLeadPosition()
+        --local x, y = self.target.x, self.target.y
         self:lookAt(x, y, dt) -- Aim at the target's lead position
         if self.cooldown <= 0 then
             local currentFireRate = self:getStat("fireRate")

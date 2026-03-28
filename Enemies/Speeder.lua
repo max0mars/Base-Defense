@@ -8,7 +8,8 @@ local default = {
     maxHp = 25,
     color = {0, 1, 0, 1}, -- Default color for basic enemies
     types = { enemy = true},
-    size = 15
+    size = 15,
+    reward = 15
 }
 
 function speeder:new(config)

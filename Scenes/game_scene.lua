@@ -50,7 +50,7 @@ function game_scene:draw()
     love.graphics.print("Game State: " .. game.state, 10, 70)
     love.graphics.print("Wave State: " .. game.WaveSpawner.waveState, 200, 10)
     love.graphics.print("Selected Turret: " .. (game.inputHandler.selectedTurret and game.inputHandler.selectedTurret.id or "None"), 200, 30)
-
+    love.graphics.print("Spawn Rate: " .. game.WaveSpawner.spawnRate, 200, 50)
 end
 
 function game_scene:keypressed(key)

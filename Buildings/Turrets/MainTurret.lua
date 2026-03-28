@@ -79,13 +79,14 @@ function MainTurret:PlayerClick(targetX, targetY)
     return false -- Still on cooldown
 end
 
-function MainTurret:drawReloadBar(centerX, centerY)
+function MainTurret:drawReloadBar()
     -- Only show reload bar if reloading
     if self.cooldown > 0 then
+        local centerX, centerY = self:getCenterPosition()
         local barWidth = 40  -- Wider for 2x2 turret
         local barHeight = 6   -- Taller for 2x2 turret
-        local barX = (centerX or self.x) - barWidth/2
-        local barY = (centerY or self.y) - 30  -- Position higher above the larger turret
+        local barX = centerX - barWidth/2
+        local barY = centerY - 30  -- Position higher above the larger turret
         
         local currentFireRate = self:getStat("fireRate")
         local reloadProgress = 0
@@ -126,9 +127,6 @@ function MainTurret:draw()
         centerY + math.sin(self.rotation) * 30
     )
     love.graphics.setLineWidth(1) -- Reset line width
-    
-    -- Draw reload bar positioned above the centered turret
-    self:drawReloadBar(centerX, centerY)
     
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)

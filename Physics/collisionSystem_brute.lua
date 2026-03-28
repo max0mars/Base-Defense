@@ -183,6 +183,7 @@ function collision:checkCollision(obj1, obj2)
     local a = obj1:getHitbox()
     local b = obj2:getHitbox()
     if not a or not b then
+        return false
     end
     return self:rectRect(a, b) -- only rectangle-rectangle collision implemented
     -- if a.type == "circle" and b.type == "circle" then
@@ -273,38 +274,46 @@ end
 function collision:rayRect(a, b)
     local x1, y1 = a.x1, a.y1
     local x2, y2 = a.x2, a.y2
-    local rx, ry, rw, rh = b:getX(), b:getY(), b:getWidth(), b:getHeight()
+    
+    local hitbox = b:getHitbox()
+    if not hitbox then return false end
+    
+    local rx, ry, rw, rh = hitbox:getX(), hitbox:getY(), hitbox:getWidth(), hitbox:getHeight()
 
     local dx = x2 - x1
     local dy = y2 - y1
 
-    local tmin = -math.huge
-    local tmax = math.huge
+    local tmin = 0
+    local tmax = 1
 
-    local function test(p, d, min, max)
-    if math.abs(d) < 0.0001 then
-        if p < min or p > max then return false, nil, nil end
-        return true, -math.huge, math.huge
+    -- X-axis intersection
+    if math.abs(dx) < 0.0001 then
+        if x1 < rx - rw/2 or x1 > rx + rw/2 then return false end
     else
-        local t1 = (min - p) / d
-        local t2 = (max - p) / d
+        local t1 = (rx - rw/2 - x1) / dx
+        local t2 = (rx + rw/2 - x1) / dx
         if t1 > t2 then t1, t2 = t2, t1 end
-        return true, t1, t2
+        tmin = math.max(tmin, t1)
+        tmax = math.min(tmax, t2)
     end
+
+    -- Y-axis intersection
+    if math.abs(dy) < 0.0001 then
+        if y1 < ry - rh/2 or y1 > ry + rh/2 then return false end
+    else
+        local t1 = (ry - rh/2 - y1) / dy
+        local t2 = (ry + rh/2 - y1) / dy
+        if t1 > t2 then t1, t2 = t2, t1 end
+        tmin = math.max(tmin, t1)
+        tmax = math.min(tmax, t2)
     end
 
-    local hitX, t1x, t2x = test(x1, dx, rx - w/2, rx + w/2)
-    if not hitX then return false end
+    if tmin > tmax or tmax < 0 or tmin > 1 then
+        return false
+    end
 
-    local hitY, t1y, t2y = test(y1, dy, ry - h/2, ry + h/2)
-    if not hitY then return false end
-
-    tmin = math.max(t1x, t1y)
-    tmax = math.min(t2x, t2y)
-
-    if tmax < 0 or tmin > tmax or tmin > 1 then return false end
-
-    return true
+    -- Return true and the entry point t
+    return true, tmin
 end
 
 function collision:checkCollisionsRay(obj, ray, typeName)

@@ -68,6 +68,7 @@ function WaveSpawner:update(dt)
         -- Initialize wave if just activated
         if not self.waveInitialized then
             self.game.wave = self.game.wave + 1
+            self.spawnRate = 0.5 * (0.95 ^ (self.game.wave))
             self.waveEnemies = {}
             self.waveInitialized = true
 

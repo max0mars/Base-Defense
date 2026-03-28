@@ -27,7 +27,7 @@ function game:load(saveData)
         self.objects = {} -- Table to hold game objects
         self.score = 0 -- Initialize score
         self.xp = 0 -- Initialize XP
-        self.money = 5000 -- Initialize money
+        self.money = 0 -- Initialize money
         self.wave = 0 -- Initialize wave
         self.base = Base:new({game = self})
         self.rewardSystem = RewardSystem:new(self)
@@ -177,15 +177,20 @@ function game:draw()
     for _, obj in ipairs(self.objects) do
         if not obj.destroyed and obj.draw then
             obj:draw() -- Draw each object if it has a draw method
-            if obj.drawHealthBar then
+            if obj.drawHealthBar or obj.drawReloadBar then
                 table.insert(healthyboys, obj)
             end
         end
     end
     for _, obj in ipairs(healthyboys) do
-        obj:drawHealthBar() -- Draw health bars for living objects
+        if obj.drawHealthBar then
+            obj:drawHealthBar() -- Draw health bars for living objects
+        end
         if obj.effectManager then
             obj.effectManager:drawStatusEffects() -- Draw status effects for living objects
+        end
+        if obj.drawReloadBar then
+            obj:drawReloadBar()
         end
     end
 

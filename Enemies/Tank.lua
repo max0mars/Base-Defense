@@ -8,7 +8,8 @@ local default = {
     maxHp = 2000,
     color = {1, 1, 0, 1}, -- Default color for basic enemies
     types = { enemy = true},
-    size = 45
+    size = 45,
+    reward = 100
 }
 
 function tank:new(config)
