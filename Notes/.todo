@@ -1,6 +1,10 @@
 # CURRENT TASKS
 
-Money system
+Reward system
+- Make sure pools actually measure rarity when choosing upgrades
+- 'luck' stat that makes more rare upgrades more likely
+- generic RewardPool.lua class to use for the different pools
+- When selecting random rewards, ensure the same reward doesn't appear more than once
 
 ## Testing
 

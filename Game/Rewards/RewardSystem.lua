@@ -3,7 +3,7 @@ local Reward = require("Game.Rewards.Reward")
 
 local RewardSystem = {}
 RewardSystem.__index = RewardSystem
-local RewardIndex = require("Game.Rewards.RewardIndex")
+local RewardIndex = require("Game.Rewards.NormalRewardIndex")
 
 function RewardSystem:new(game)
     local system = setmetatable({}, self)
