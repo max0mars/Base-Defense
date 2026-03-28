@@ -13,6 +13,7 @@ local EffectManager = require("Game.StatusEffects.EffectManager")
 local BattlefieldGrid = require("Game.Core.BattlefieldGrid")
 local WaveDirector = require("Game.Spawning.WaveDirector")
 local GUIManager = require("Game.GUI.GUIManager")
+local SpecialUpgradeManager = require("Game.Rewards.SpecialUpgradeManager")
 
 
 local ground = {
@@ -45,15 +46,10 @@ function game:load(saveData)
         self.autoStartWave = false
         self.inventory = Inventory:new(self)
         self.gui = GUIManager:new(self)
+        self.specialWaveInterval = 5 -- How many waves per special upgrade
         self.playerEffectManager = EffectManager:new() -- Global player manager
         self.enemyEffectManager = EffectManager:new()  -- Global enemy manager
-        local effect = {
-            name = "speed Buff",
-            statModifiers = {speed = {mult = 1.5}},
-            description = "Increases speed by 150%",
-            duration = math.huge,
-        }
-        self.enemyEffectManager:applyEffect(effect)
+        self.specialUpgradeManager = SpecialUpgradeManager:new(self)
     end
     
     collision:setGrid(800, 600, 32) -- Set collision grid size
@@ -88,7 +84,8 @@ function game:addMoney(amount)
 end
 
 function game:isRewardSystemActive()
-    return self.rewardSystem and self.rewardSystem.isActive
+    return (self.rewardSystem and self.rewardSystem.isActive) or 
+           (self.specialUpgradeManager and self.specialUpgradeManager.isActive)
 end
 
 function game:addObject(obj)
@@ -129,17 +126,23 @@ function game:update(dt)
     end
 
     if self.rewardSystem and self.rewardSystem.isActive then return end
+    if self.specialUpgradeManager and self.specialUpgradeManager.isActive then return end
 
     if self:isState("startup") then
         
     end
-    -- Check if wave is complete and transition to preparing state
+    -- Check if wave is complete and transition
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
+        if self.wave % self.specialWaveInterval == 0 then
+            self.specialUpgradeManager:activate()
+        end
         self:setState("preparing")
     end
     
     -- Check if in preparing state and enter key pressed to start wave
     if self:isState("preparing") then
+        if self:isRewardSystemActive() then return end
+        
         if self.autoStartWave and self.WaveSpawner.waveState == "idle" then
             self:recalculateAllBuffs() -- Recalculate all buffs before wave starts
             self.WaveSpawner:startNextWave()
@@ -168,6 +171,10 @@ function game:update(dt)
     self.playerEffectManager:update(dt)
     self.enemyEffectManager:update(dt)
     self.gui:update(dt)
+    
+    if self.specialUpgradeManager and self.specialUpgradeManager.isActive then
+        -- We can add specific update logic for special upgrades here if needed
+    end
     
     self:takeOutTheTrash() -- remove references to destroyed objects
 end
@@ -234,8 +241,12 @@ function game:draw()
     end
 
     -- Draw reward system on top of everything
-    if self.rewardSystem then
+    if self.rewardSystem and self.rewardSystem.isActive then
         self.rewardSystem:draw()
+    end
+    
+    if self.specialUpgradeManager and self.specialUpgradeManager.isActive then
+        self.specialUpgradeManager:draw()
     end
 
     -- Draw custom cursor (Red X)

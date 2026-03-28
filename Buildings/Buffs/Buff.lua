@@ -8,7 +8,7 @@ local default = {
     effect = {
         name = "Damage Buff",
         statModifiers = {damage = {mult = 0.2}},
-        description = "Increases damage by 20%",
+        --description = "Increases damage by 20%",
         duration = math.huge,
     },
     affectedSlots = {{1, 0}, {-1, 0}}, -- Array of slots that this buff affects

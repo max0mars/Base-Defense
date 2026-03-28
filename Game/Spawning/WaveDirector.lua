@@ -10,8 +10,8 @@ function WaveDirector:new(game)
 end
 
 function WaveDirector:getBudgetForWave(waveNumber)
-    return 150
-    --return 30 + (waveNumber-1)*25
+    --return 150
+    return 30 + (waveNumber-1)*25
 end
 
 function WaveDirector:generateWaveList(waveNumber)

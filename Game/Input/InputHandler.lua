@@ -292,16 +292,19 @@ function InputHandler:mousepressed(x, y, button)
         return
     end
     
-    local rewardSystem = game.rewardSystem
+    -- Reward system check (if not consumed by GUIManager)
+    if game.rewardSystem and game.rewardSystem.isActive then
+        game.rewardSystem:mousepressed(x, y, button)
+        return
+    end
+    
+    if game.specialUpgradeManager and game.specialUpgradeManager.isActive then
+        game.specialUpgradeManager:mousepressed(x, y, button)
+        return
+    end
+    
     local base = game.base
     local mainTurret = game.mainTurret
-    
-    -- Reward system check (if not consumed by GUIManager)
-    local rewardActive = rewardSystem and rewardSystem.isActive
-    if rewardSystem then
-        rewardSystem:mousepressed(x, y, button)
-    end
-    if rewardActive then return end
     
     if button == 2 then
         local clickedTarget = false

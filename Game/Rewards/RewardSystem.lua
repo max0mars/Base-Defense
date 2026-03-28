@@ -56,8 +56,8 @@ function RewardSystem:selectReward(index)
         --print("Selected reward: " .. reward.name)
         if reward.type == "building" then
             self.game:placeBuilding(reward.building, reward)
-        elseif reward.type == "upgrade" then
-            reward:execute(self.game)
+        else
+            error("Invalid reward type: " .. reward.type)
         end
     end    
     self.isActive = false

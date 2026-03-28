@@ -22,6 +22,13 @@ local RewardIndex = {
             description = "High fire rate, low damage, shorter range.",
             type = "building",
             building = require("Buildings.Turrets.AutoCannon")
+        },
+        {
+            id = "fence",
+            name = "Fence",
+            description = "Block Enemies",
+            building = require("Buildings.Battlefield.Blocker"),
+            type = "building"
         }
     },
     rare = {
@@ -43,13 +50,7 @@ local RewardIndex = {
         }
     },
     legendary = {
-        {
-            id = "fence",
-            name = "Fence",
-            description = "Block Enemies",
-            building = require("Buildings.Battlefield.Blocker"),
-            type = "building"
-        }
+        
     }
 }
 

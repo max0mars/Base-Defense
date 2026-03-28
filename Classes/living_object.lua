@@ -64,6 +64,11 @@ function living_object:takeDamage(amount, damageType)
         damageType = "physical" -- Default damage type
     end
     local damageTaken = 0
+    local damageMult = 1
+    if(damageType == "physical") then
+        damageMult = 1 - self.armour
+    end
+    amount = amount * damageMult
     if(amount >= self.hp) then
         damageTaken = self.hp
         self.hp = 0

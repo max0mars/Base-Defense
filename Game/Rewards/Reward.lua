@@ -12,6 +12,8 @@ function Reward:new(config)
     reward.rarity = config.rarity or "common" -- common, uncommon, rare, epic, legendary
     reward.type = config.type or "upgrade" -- upgrade, building, etc.
     reward.building = config.building or nil -- Reference to building class if type is building
+    reward.id = config.id or nil -- Unique identifier
+    reward.effect = config.effect or nil -- Table for Status Effects
     
     -- Rarity colors for visual representation
     reward.rarityColors = {
