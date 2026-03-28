@@ -31,6 +31,7 @@ function game:load(saveData)
         self.score = 0 -- Initialize score
         self.xp = 0 -- Initialize XP
         self.money = 75 -- Initialize money
+        self.luck = 1  -- Default Luck level (1-10)
         self.wave = 0 -- Initialize wave
         self.base = Base:new({game = self})
         self.battlefieldGrid = BattlefieldGrid:new(self)

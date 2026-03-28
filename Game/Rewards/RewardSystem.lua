@@ -4,14 +4,18 @@ local Reward = require("Game.Rewards.Reward")
 local RewardSystem = {}
 RewardSystem.__index = RewardSystem
 local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local RewardPool = require("Game.Rewards.RewardPool")
+local Reward = require("Game.Rewards.Reward")
 
 function RewardSystem:new(game)
-    local system = setmetatable({}, self)
+    local system = setmetatable({
+        game = game,
+        isActive = false,
+        rewardPool = {}, -- current choices being presented
+        poolLogic = RewardPool:new(RewardIndex)
+    }, self)
     
-    system.game = game
-    system.rewardPool = {}
     system.currentChoices = {}
-    system.isActive = false
     system.selectedIndex = 1
     
     -- UI Properties
@@ -28,39 +32,22 @@ function RewardSystem:new(game)
 end
 
 function RewardSystem:initializeRewardPool()
-    for _, reward in pairs(RewardIndex.Rewards) do
-        table.insert(self.rewardPool, Reward:new(reward))
+    self.rewardPool = {} -- Clear previous
+    local luck = self.game.luck or 1
+    local choices = self.poolLogic:generateChoices(3, luck)
+    
+    for _, rewardData in ipairs(choices) do
+        table.insert(self.rewardPool, Reward:new(rewardData))
     end
-    -- x = {
-    --     name = "Fence",
-    --     description = "Block Enemies",
-    --     building = require("Buildings.Battlefield.Blocker"),
-    --     rarity = "common",
-    --     type = "building"
-    -- }
-    -- table.insert(self.rewardPool, Reward:new(x))
 end
 
 function RewardSystem:activate()
     self.isActive = true
     self.selectedIndex = 1
-    self:generateChoices()
+    self:initializeRewardPool()
+    self.currentChoices = self.rewardPool
 end
 
-function RewardSystem:generateChoices()
-    self.currentChoices = {}
-    local poolSize = #self.rewardPool
-    
-    -- Randomly select 3 unique rewards from the pool
-    local selectedIndices = {}
-    while #self.currentChoices < 3 do
-        local index = love.math.random(1, poolSize)
-        selectedIndices[index] = true
-        local reward = self.rewardPool[index]
-        table.insert(self.currentChoices, reward)
-        --print("Added reward to choices: " .. reward.name)
-    end
-end
 
 function RewardSystem:selectReward(index)
     if not self.isActive then return end

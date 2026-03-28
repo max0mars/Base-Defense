@@ -19,7 +19,8 @@ function building:new(config)
     
     -- shapePattern is now required - defines building shape as {x,y} coordinate offsets
     if not config.shapePattern then
-        error("shapePattern is required for all buildings. Define as array of {x,y} coordinates with {0,0} as anchor.")
+        config.shapePattern = {{0,0}}
+        --error("shapePattern is required for all buildings. Define as array of {x,y} coordinates with {0,0} as anchor.")
     end
     b.shapePattern = config.shapePattern
     

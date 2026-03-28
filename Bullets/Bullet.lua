@@ -59,6 +59,7 @@ end
 
 function Bullet:onHit(target)
     self.pierce = self.pierce - 1
+    target:takeDamage(self.damage)
     
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do

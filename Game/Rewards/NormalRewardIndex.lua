@@ -1,49 +1,56 @@
-local RewardIndex = {}
-RewardIndex.__index = RewardIndex
-
-RewardIndex.Rewards = {
-    basicturret = {
-        name = "Basic Turret",
-        description = "Pew Pew",
-        building = require("Buildings.Turrets.Turret"),
-        rarity = "common",
-        type = "building"
+local RewardIndex = {
+    common = {
+        {
+            id = "basicturret",
+            name = "Basic Turret",
+            description = "Pew Pew",
+            building = require("Buildings.Turrets.Turret"),
+            type = "building"
+        },
+        {
+            id = "ammoCache",
+            name = "Ammo Cache",
+            description = "Increase turret damage by 20%",
+            type = "building",
+            building = require("Buildings.Buffs.Buff")
+        },
     },
-    ammoCache = {
-        name = "Ammo Cache",
-        description = "Increase turret damage by 20%",
-        rarity = "common",
-        type = "building",
-        building = require("Buildings.Buffs.Buff")
+    uncommon = {
+        {
+            id = "autoCannon",
+            name = "Auto Cannon",
+            description = "High fire rate, low damage, shorter range.",
+            type = "building",
+            building = require("Buildings.Turrets.AutoCannon")
+        }
     },
-    poisonTurret = {
-        name = "Poison Turret",
-        description = "Bullets apply poison effect",
-        rarity = "rare",
-        type = "building",
-        building = require("Buildings.Turrets.PoisonTurret")
+    rare = {
+        {
+            id = "poisonTurret",
+            name = "Poison Turret",
+            description = "Bullets apply poison effect",
+            type = "building",
+            building = require("Buildings.Turrets.PoisonTurret")
+        }
     },
-    sniper = {
-        name = "Sniper Turret",
-        description = "High damage, slow fire rate, massive range.",
-        rarity = "uncommon",
-        type = "building",
-        building = require("Buildings.Turrets.Sniper")
+    epic = {
+        {
+            id = "sniper",
+            name = "Sniper Turret",
+            description = "High damage, slow fire rate, massive range.",
+            type = "building",
+            building = require("Buildings.Turrets.Sniper")
+        }
     },
-    autoCannon = {
-        name = "Auto Cannon",
-        description = "High fire rate, low damage, shorter range.",
-        rarity = "uncommon",
-        type = "building",
-        building = require("Buildings.Turrets.AutoCannon")
-    },
-    x = {
-        name = "Fence",
-        description = "Block Enemies",
-        building = require("Buildings.Battlefield.Blocker"),
-        rarity = "common",
-        type = "uncommon"
+    legendary = {
+        {
+            id = "fence",
+            name = "Fence",
+            description = "Block Enemies",
+            building = require("Buildings.Battlefield.Blocker"),
+            type = "building"
+        }
     }
-}   
+}
 
 return RewardIndex

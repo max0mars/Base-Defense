@@ -2,6 +2,7 @@ local test_scene = {}
 test_scene.__index = test_scene
 local scene = require("Scenes.scene")
 local EffectManager = require("Game.StatusEffects.EffectManager")
+local RewardPool = require("Game.Rewards.RewardPool")
 
 setmetatable(test_scene, { __index = scene })
 
@@ -129,6 +130,57 @@ function test_scene:load()
         print("  SUCCESS: Global hook successfully fired from local event trigger.")
     else
         print("  FAILED: Event failed to bubble up to parent manager.")
+    end
+
+    print("\n" .. string.rep("=", 60))
+    print("REWARD POOL STATISTICAL TEST")
+    print(string.rep("=", 60))
+
+    -- Create test Reward Index
+    local testIndex = {
+        common = { {id="c1"}, {id="c2"}, {id="c3"}, {id="c4"}, {id="c5"} },
+        uncommon = { {id="u1"}, {id="u2"}, {id="u3"}, {id="u4"} },
+        rare = { {id="r1"}, {id="r2"}, {id="r3"}, {id="r4"}, {id="r5"} },
+        epic = { {id="e1"}, {id="e2"}, {id="e3"}, {id="e4"}, {id="e5"} },
+        legendary = { {id="l1"}, {id="l2"}, {id="l3"} }
+    }
+    
+    local pool = RewardPool:new(testIndex)
+    local sampleSize = 1000
+    local rarities = {"common", "uncommon", "rare", "epic", "legendary"}
+
+    print(string.format("%-4s | %-12s | %-12s | %-12s | %-12s | %-12s", "LUCK", "COMMON", "UNCOMMON", "RARE", "EPIC", "LEG"))
+    print(string.format("%-4s | %-12s | %-12s | %-12s | %-12s | %-12s", "", "Exp / Obs", "Exp / Obs", "Exp / Obs", "Exp / Obs", "Exp / Obs"))
+    print(string.rep("-", 75))
+
+    for luckLevel = 1, 10 do
+        local stats = { common=0, uncommon=0, rare=0, epic=0, legendary=0 }
+        
+        for i = 1, sampleSize do
+            local choices = pool:generateChoices(3, luckLevel)
+            for _, choice in ipairs(choices) do
+                stats[choice.rarity] = stats[choice.rarity] + 1
+            end
+        end
+
+        local total = sampleSize * 3
+        local expected = pool.LuckTable[luckLevel]
+        
+        local function fmt(rarity)
+            local obs = (stats[rarity] / total) * 100
+            local exp = expected[rarity] or 0
+            return string.format("%d / %.1f", exp, obs)
+        end
+
+        local row = string.format("%-4d | %-12s | %-12s | %-12s | %-12s | %-12s", 
+            luckLevel,
+            fmt("common"),
+            fmt("uncommon"),
+            fmt("rare"),
+            fmt("epic"),
+            fmt("legendary")
+        )
+        print(row)
     end
 
     print("\n" .. string.rep("=", 60))
