@@ -14,6 +14,20 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Buffs.Buff")
         },
+        {
+            id = "autoCannon",
+            name = "Auto Cannon",
+            description = "High fire rate, low damage, shorter range.",
+            type = "building",
+            building = require("Buildings.Turrets.AutoCannon")
+        },
+        {
+            id = "fence",
+            name = "Fence",
+            description = "Block Enemies",
+            building = require("Buildings.Battlefield.Blocker"),
+            type = "building"
+        },
     },
     uncommon = {
         {
