@@ -6,7 +6,7 @@ Sniper.__index = Sniper
 
 local default = {
     fireRate = 0.5, -- 1 shot every 2 seconds
-    damage = 150,    -- High damage
+    damage = 100,    -- High damage
     --bulletSpeed = 1200, -- Very fast bullet
     range = 1000,   -- Huge range coverage
     types = { turret = true },
