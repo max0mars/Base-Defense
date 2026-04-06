@@ -183,9 +183,9 @@ function Base:addBuilding(building, anchorSlot)
     -- Generate slots that the building will occupy
     local slotsToOccupy = building:getSlotsFromPattern(anchorSlot)
     
-    -- Check if all required slots are available
+    -- Check if all required slots are available (unoccupied and visible)
     if not self:areSlotsAvailable(building, slotsToOccupy, anchorSlot) then
-        error("One or more required slots are already occupied")
+        error("One or more required slots are already occupied or currently hidden!")
     end
     
     -- Set building's anchor slot and calculate final occupied slots
@@ -203,15 +203,27 @@ function Base:addBuilding(building, anchorSlot)
 end
 
 function Base:areSlotsAvailable(building, slotsToCheck, anchorSlot)
+    -- Check for occupancy and bounds
     for _, slot in ipairs(slotsToCheck) do
         if slot < 1 or slot > (self.buildGrid.width * self.buildGrid.height) or self.buildGrid.buildings[slot] then
             return false
         end
     end
+    
     if not building:isFullyInsideGrid(slotsToCheck) then
         return false
     end
-    return true
+
+    -- Expansion Logic: At least one slot must be visible (unlocked or adjacent to unlocked)
+    local isConnected = false
+    for _, s in ipairs(slotsToCheck) do
+        if self:isSlotVisible(s) then
+            isConnected = true
+            break
+        end
+    end
+    
+    return isConnected
 end
 
 function Base:adjustSlotsToAnchor(slotsPattern, anchorSlot)

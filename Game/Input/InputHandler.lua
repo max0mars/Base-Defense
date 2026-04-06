@@ -199,17 +199,9 @@ function InputHandler:handleBuildingSlotHover()
                 invalidSlots = game.blueprint:getInvalidSlotsFromPattern(anchorSlot, buildGrid)
             end
             
-            -- Expansion Logic: Must be connected to visibility (except battlefield buildings)
+            -- Expansion/Availability Logic: Must be valid and connected to visibility
             if not isBattlefield then
-                local isConnected = false
-                for _, s in ipairs(slotsToOccupy) do
-                    if base:isSlotVisible(s) then
-                        isConnected = true
-                        break
-                    end
-                end
-                if not isConnected then
-                    -- If not connected, mark all slots as invalid to show red blueprint
+                if not base:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
                     invalidSlots = slotsToOccupy
                 end
             end
