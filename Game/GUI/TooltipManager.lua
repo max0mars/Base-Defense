@@ -33,10 +33,7 @@ function TooltipManager:draw()
     end
     
     -- Draw startup and preparation messages
-    if game:isState("startup") then
-        love.graphics.setColor(1, 1, 1, 0.5)
-        love.graphics.printf("Aim the main turret with mouse. Click to shoot. Other Turrets will fight on their own. Hit Enter to Continue. ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
-    elseif game:isState("preparing") then
+    if game:isState("preparing") then
         love.graphics.setColor(1, 1, 1, 0.5)
         love.graphics.printf("Press Enter to Start Wave ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
     end

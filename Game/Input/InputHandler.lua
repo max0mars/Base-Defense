@@ -490,13 +490,9 @@ function InputHandler:keypressed(key)
     end
 
     if key == "r" then
-        if game.money >= game.rewardCost and not game.rewardSystem.isActive and game.inputMode == "idle" then
-            game.money = game.money - game.rewardCost
-            --game.rewardCost = math.floor(game.rewardCost + 25) * 1.15
-            game.rewardSystem:activate()
-        end
-    elseif key == "a" then
-        game.autoStartWave = not game.autoStartWave
+        game:attemptPurchaseReward()
+    -- elseif key == "a" then
+    --     game.autoStartWave = not game.autoStartWave
     end
     
     -- Handle turret target reset

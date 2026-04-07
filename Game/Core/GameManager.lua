@@ -356,7 +356,6 @@ function game:isState(checkState)   return self.state == checkState end
 function game:attemptPurchaseReward()
     if self.money >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
         self.money = self.money - self.rewardCost
-        self.rewardCost = math.floor(self.rewardCost + 25) * 1.15
         self.rewardSystem:activate()
         return true
     end
