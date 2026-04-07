@@ -11,7 +11,7 @@ end
 
 function WaveDirector:getBudgetForWave(waveNumber)
     --return 150
-    return 30 + (waveNumber-1)*25
+    return 30 + (waveNumber-1)*25 + (waveNumber-1)^2 * 2
 end
 
 function WaveDirector:generateWaveList(waveNumber)

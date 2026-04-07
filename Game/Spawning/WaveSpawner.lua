@@ -4,7 +4,7 @@ local WaveSpawner = {}
 WaveSpawner.__index = WaveSpawner
 
 local default = {
-    spawnRate = 0.5,
+    spawnRate = 0.2,
     spawntimer = 0,
     waveList = {}, -- Buffer of enemy classes to spawn
     waveInitialized = false,
