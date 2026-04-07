@@ -150,7 +150,30 @@ function Pathfinder.findGroundPath(startX, startY, goalX, game)
             local path = {}
             local temp = current
             while temp do
-                table.insert(path, 1, {x = temp.x, y = temp.y})
+                local node = {x = temp.x, y = temp.y}
+                
+                -- Analyze spatial context (Open Zone vs Corridor)
+                local walkableCount = 0
+                for dy = -1, 1 do
+                    for dx = -1, 1 do
+                        if not (dx == 0 and dy == 0) then
+                            local nx, ny = node.x + dx, node.y + dy
+                            if nx >= 1 and nx <= game.battlefieldGrid.width and 
+                               ny >= 1 and ny <= game.battlefieldGrid.height and 
+                               not isBlocked(nx, ny, game) then
+                                walkableCount = walkableCount + 1
+                            end
+                        end
+                    end
+                end
+                
+                if walkableCount > 7 then
+                    node.isOpenZone = true
+                elseif walkableCount <= 4 then
+                    node.isCorridor = true
+                end
+
+                table.insert(path, 1, node)
                 temp = cameFrom[temp.x .. "," .. temp.y]
             end
             return Pathfinder.simplifyPath(path, game)
