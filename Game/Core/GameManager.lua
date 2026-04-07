@@ -27,17 +27,45 @@ local EffectManager      = require("Game.StatusEffects.EffectManager")
 local MainTurret         = require("Buildings.Turrets.MainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
+local DeathAnimation     = require("Graphics.Animations.DeathAnimation")
 
 -- -----------------------------------------------------------------------------
--- Environment Data
+-- Scene Draw Data
 -- -----------------------------------------------------------------------------
 local ground = {
     x = 0,
     y = 100,
     w = 800,
     h = 400,
-    color = {love.math.colorFromBytes(30, 82, 12)}
+    color = {love.math.colorFromBytes(0, 0, 0)}
 }
+function ground:draw()
+    love.graphics.setColor(self.color)
+    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+end
+
+local topScreen = {
+    x = 0,
+    y = 0,
+    w = 800,
+    h = 100,
+    color = {love.math.colorFromBytes(0, 255, 0)}
+}
+function topScreen:draw()
+    love.graphics.setColor(self.color)
+    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+end
+local bottomScreen = {
+    x = 0,
+    y = 500,
+    w = 800,
+    h = 100,
+    color = {love.math.colorFromBytes(0, 0, 255)}
+}
+function bottomScreen:draw()
+    love.graphics.setColor(self.color)
+    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+end
 
 -- -----------------------------------------------------------------------------
 -- Initialization
@@ -51,7 +79,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.money        = 75
+        self.money        = 0
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         
@@ -69,7 +97,7 @@ function game:load(saveData)
         self.specialUpgradeManager = SpecialUpgradeMgr:new(self)
         
         -- Configuration
-        self.rewardCost           = 50
+        self.rewardCost           = 2
         self.autoStartWave        = false
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.inputMode            = "idle"
@@ -77,6 +105,9 @@ function game:load(saveData)
         -- Global Status Effect Managers
         self.playerEffectManager = EffectManager:new() 
         self.enemyEffectManager  = EffectManager:new()
+
+        -- Animation Pool
+        self.animations = {}
     end
     
     -- Setup Physics/Collision
@@ -85,6 +116,8 @@ function game:load(saveData)
     -- World Setup
     self:addObject(self.base)
     self.ground = ground
+    self.topScreen = topScreen
+    self.bottomScreen = bottomScreen
     
     -- Spawn Starting Turret in the center of the build grid
     self.mainTurret = MainTurret:new({game = self})
@@ -138,6 +171,15 @@ end
 -- -----------------------------------------------------------------------------
 
 function game:update(dt)
+    -- Update Animations with cleanup
+    for i = #self.animations, 1, -1 do
+        local anim = self.animations[i]
+        anim:update(dt)
+        if anim.destroyed then
+            table.remove(self.animations, i)
+        end
+    end
+
     -- Global Loss Condition
     if self.base.hp <= 0 then
         self:setState("gameover")
@@ -152,6 +194,7 @@ function game:update(dt)
 
     -- State Transitions: Wave Completion
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
+        self:waveComplete()
         if self.wave % self.specialWaveInterval == 0 then
             self.specialUpgradeManager:activate()
         end
@@ -196,6 +239,9 @@ function game:draw()
 
     -- 1. Environment & Grid
     self.ground:draw()
+    self.topScreen:draw()
+    self.bottomScreen:draw()
+    
     if self.battlefieldGrid then
         self.battlefieldGrid:draw()
     end
@@ -220,7 +266,12 @@ function game:draw()
 
     love.graphics.setColor(1, 1, 1, 1)
     
-    -- 4. UI & Placement Previews
+    -- 4. Animations (Drawn over entities but under UI)
+    for _, anim in ipairs(self.animations) do
+        anim:draw()
+    end
+
+    -- 5. UI & Placement Previews
     self.gui:draw()
     
     if self.inputMode == "placing" and self.blueprint then
@@ -228,8 +279,6 @@ function game:draw()
         self.blueprint:draw(self.inputHandler.mouseX, self.inputHandler.mouseY)
         self.blueprint.isPreview = false
     end
-
-    -- 5. Modals (Topmost)
     if self.rewardSystem and self.rewardSystem.isActive then
         self.rewardSystem:draw()
     end
@@ -251,6 +300,22 @@ end
 
 function game:addXP(amount)    self.xp = self.xp + amount end
 function game:addMoney(amount) self.money = self.money + amount end
+function game:interest()
+    self:addMoney(math.floor(self.money * 0.1))
+end
+function game:waveComplete()
+    self:interest()
+    self:addMoney(3)
+end
+
+function game:spawnDeathAnimation(color, size, x, y)
+    table.insert(self.animations, DeathAnimation:new(color, size, x, y))
+end
+
+function game:EnemyDied(enemy)
+    self:addXP(enemy.reward)
+    self:spawnDeathAnimation(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
+end
 
 function game:isRewardSystemActive()
     return (self.rewardSystem and self.rewardSystem.isActive) or 
@@ -270,9 +335,6 @@ function game:isState(checkState)   return self.state == checkState end
 -- -----------------------------------------------------------------------------
 -- Ground Object Implementation
 -- -----------------------------------------------------------------------------
-function ground:draw()
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
-end
+
 
 return game

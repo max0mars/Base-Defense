@@ -51,11 +51,12 @@ end
 
 function GUIManager:drawHUD()
     local game = self.game
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(0, 0, 0, 1)
     
     -- Wave info
-    love.graphics.printf("Wave: " .. game.wave, 0, 10, love.graphics.getWidth() - 20, "right")
-    
+    love.graphics.printf("Wave: " .. game.wave, 0, 10, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Money: " .. game.money, 0, 30, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Score: " .. game.xp, 0, 50, love.graphics.getWidth() - 20, "left")
     -- Reward and Auto-start
     love.graphics.printf("Press 'R' to Buy Reward ($" .. (game.rewardCost or 0) .. ")", 0, 10, love.graphics.getWidth(), "center")
     local autoText = game.autoStartWave and "ON" or "OFF"
@@ -77,5 +78,8 @@ function GUIManager:mousepressed(x, y, button)
     
     return false
 end
+
+
+
 
 return GUIManager

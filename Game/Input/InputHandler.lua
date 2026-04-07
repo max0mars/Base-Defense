@@ -130,8 +130,8 @@ function InputHandler:handleButtonHold()
     if self.fireDelay > 0 then return end
     
     -- Prevent firing if mouse is over the inventory area (bottom 100 pixels)
-    local invHeight = 100
-    if self.mouseY >= love.graphics.getHeight() - invHeight then return end
+    -- local invHeight = 100
+    -- if self.mouseY >= love.graphics.getHeight() - invHeight then return end
 
     if love.mouse.isDown(1) then
         -- Handle left mouse button hold actions here
@@ -492,7 +492,7 @@ function InputHandler:keypressed(key)
     if key == "r" then
         if game.money >= game.rewardCost and not game.rewardSystem.isActive and game.inputMode == "idle" then
             game.money = game.money - game.rewardCost
-            game.rewardCost = math.floor(game.rewardCost + 25) * 1.15
+            --game.rewardCost = math.floor(game.rewardCost + 25) * 1.15
             game.rewardSystem:activate()
         end
     elseif key == "a" then

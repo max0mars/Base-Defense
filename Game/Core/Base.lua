@@ -244,33 +244,34 @@ function Base:getBuildingAtSlot(slot)
 end
 
 function Base:getSlotPrice(slot)
-    local width = self.buildGrid.width
-    local height = self.buildGrid.height
+    return 1
+    -- local width = self.buildGrid.width
+    -- local height = self.buildGrid.height
     
-    -- Center 2x2 area coordinates (assuming 1-based indexing)
-    local cx1, cx2 = width / 2, width / 2 + 1
-    local cy1, cy2 = height / 2, height / 2 + 1
+    -- -- Center 2x2 area coordinates (assuming 1-based indexing)
+    -- local cx1, cx2 = width / 2, width / 2 + 1
+    -- local cy1, cy2 = height / 2, height / 2 + 1
     
-    local gridX = ((slot - 1) % width) + 1
-    local gridY = math.ceil(slot / width)
+    -- local gridX = ((slot - 1) % width) + 1
+    -- local gridY = math.ceil(slot / width)
     
-    -- Distance to the nearest part of the 2x2 center
-    local dx = 0
-    if gridX < cx1 then 
-        dx = cx1 - gridX 
-    elseif gridX > cx2 then 
-        dx = gridX - cx2 
-    end
+    -- -- Distance to the nearest part of the 2x2 center
+    -- local dx = 0
+    -- if gridX < cx1 then 
+    --     dx = cx1 - gridX 
+    -- elseif gridX > cx2 then 
+    --     dx = gridX - cx2 
+    -- end
     
-    local dy = 0
-    if gridY < cy1 then     
-        dy = cy1 - gridY 
-    elseif gridY > cy2 then 
-        dy = gridY - cy2 
-    end
+    -- local dy = 0
+    -- if gridY < cy1 then     
+    --     dy = cy1 - gridY 
+    -- elseif gridY > cy2 then 
+    --     dy = gridY - cy2 
+    -- end
     
-    local distance = dx + dy
-    return math.floor(10 + (distance * distance) * 15)
+    -- local distance = dx + dy
+    -- return math.floor(10 + (distance * distance) * 15)
 end
 
 function Base:getNeighbors(slot)
