@@ -42,7 +42,38 @@ function Enemy:new(config)
     local navType = config.navigator or "GridNavigator"
     obj.navigator = Navigators[navType]:new(obj, obj.game)
     
+    obj:_createGlowCanvas()
+    
     return obj
+end
+
+function Enemy:_createGlowCanvas()
+    local padding = 12
+    local cw = self.w + padding * 2
+    local ch = self.h + padding * 2
+    
+    -- Create canvas and render the glowing outline
+    self.canvas = love.graphics.newCanvas(cw, ch)
+    love.graphics.setCanvas(self.canvas)
+    love.graphics.clear()
+    
+    local r, g, b, a = unpack(self.color or {1, 0, 0, 1})
+    
+    -- Draw glow layers (static)
+    for i = 6, 1, -1 do
+        local alpha = 0.05 * (1 - i/7)
+        love.graphics.setColor(r, g, b, alpha)
+        love.graphics.setLineWidth(i * 3)
+        love.graphics.rectangle("line", padding, padding, self.w, self.h)
+    end
+    
+    -- Main crisp outline
+    love.graphics.setColor(r, g, b, 1)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", padding, padding, self.w, self.h)
+    
+    love.graphics.setCanvas()
+    self.canvasPadding = padding
 end
 
 function Enemy:update(dt)
@@ -78,7 +109,7 @@ function Enemy:onCollision(obj)
 end
 
 function Enemy:died()
-    self.game:addMoney(self.reward) -- Give XP to the game when the enemy dies
+    self.game:EnemyDied(self) -- tell game manager I dead
     self:destroy() -- Call the destroy method from the base living_object
 end
 
@@ -94,7 +125,11 @@ function Enemy:checkBaseCollision()
 end
 
 function Enemy:draw()
-    living_object.draw(self)
+    -- Draw the pre-rendered glowing canvas
+    if self.canvas then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(self.canvas, self.x - self.w/2 - self.canvasPadding, self.y - self.h/2 - self.canvasPadding)
+    end
     
     if self.game.debugMode and self.navigator and self.navigator.path then
         love.graphics.setColor(0, 1, 0, 0.5) -- Green transparent line for path
