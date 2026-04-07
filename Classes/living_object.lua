@@ -17,6 +17,7 @@ function living_object:new(config)
     setmetatable(obj, { __index = self })
     obj.hp = config.hp
     obj.maxhp = config.maxHp or config.hp -- Store the maximum health
+    obj.armour = config.armour or 0
     return obj
 end
 
@@ -66,7 +67,7 @@ function living_object:takeDamage(amount, damageType)
     local damageTaken = 0
     local damageMult = 1
     if(damageType == "physical") then
-        damageMult = 1 - self.armour
+        damageMult = 1 - (self.armour or 0)
     end
     amount = amount * damageMult
     if(amount >= self.hp) then

@@ -8,7 +8,7 @@ local Stats = {
     damage = 10,
     reward = 25,
     armour = 0,
-    size = 25, -- Default size for basic enemies
+    size = 15, -- Default size for basic enemies
     shape = "rectangle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies
     hp = 100, -- Default health for basic enemies
@@ -41,6 +41,9 @@ function Enemy:new(config)
     
     local navType = config.navigator or "GridNavigator"
     obj.navigator = Navigators[navType]:new(obj, obj.game)
+    
+    -- Hybrid Separation Initial State
+    obj.currentSeparationStrength = 0 -- 0=Line, 1=Spread
     
     obj:_createGlowCanvas()
     
@@ -81,6 +84,26 @@ function Enemy:update(dt)
     
     if self.navigator then
         self.navigator:update(dt)
+        
+        -- Adaptive Separation Engine (Lerp currentSeparationStrength)
+        if self.game.useHybridSeparation and self.navigator.path then
+            local targetNode = self.navigator.path[self.navigator.currentNodeIndex]
+            local targetStrength = 0
+            
+            if targetNode and targetNode.isOpenZone then
+                targetStrength = 1
+            elseif targetNode and targetNode.isCorridor then
+                targetStrength = 0
+            end
+            
+            -- Smooth transition over 0.5s (lerp)
+            local lerpSpeed = 2 -- Matches 0.5s transition (1 / 0.5)
+            if self.currentSeparationStrength < targetStrength then
+                self.currentSeparationStrength = math.min(targetStrength, self.currentSeparationStrength + lerpSpeed * dt)
+            elseif self.currentSeparationStrength > targetStrength then
+                self.currentSeparationStrength = math.max(targetStrength, self.currentSeparationStrength - lerpSpeed * dt)
+            end
+        end
     end
     
     if self.x < self.target then

@@ -101,6 +101,7 @@ function game:load(saveData)
         self.autoStartWave        = false
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.inputMode            = "idle"
+        self.useHybridSeparation  = true
         
         -- Global Status Effect Managers
         self.playerEffectManager = EffectManager:new() 
@@ -300,6 +301,21 @@ end
 
 function game:addXP(amount)    self.xp = self.xp + amount end
 function game:addMoney(amount) self.money = self.money + amount end
+
+function game:getEnemyDensity(x, y, radius)
+    local count = 0
+    local r2 = radius * radius
+    for _, obj in ipairs(self.objects) do
+        if obj:isType("enemy") and not obj.destroyed then
+            local dx = obj.x - x
+            local dy = obj.y - y
+            if dx*dx + dy*dy < r2 then
+                count = count + 1
+            end
+        end
+    end
+    return count
+end
 function game:interest()
     self:addMoney(math.floor(self.money * 0.1))
 end
@@ -336,5 +352,15 @@ function game:isState(checkState)   return self.state == checkState end
 -- Ground Object Implementation
 -- -----------------------------------------------------------------------------
 
+
+function game:attemptPurchaseReward()
+    if self.money >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
+        self.money = self.money - self.rewardCost
+        self.rewardCost = math.floor(self.rewardCost + 25) * 1.15
+        self.rewardSystem:activate()
+        return true
+    end
+    return false
+end
 
 return game

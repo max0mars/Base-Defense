@@ -21,27 +21,27 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Turrets.AutoCannon")
         },
-        {
-            id = "fence",
-            name = "Fence",
-            description = "Block Enemies",
-            building = require("Buildings.Battlefield.Blocker"),
-            type = "building"
-        },
     },
     uncommon = {
         {
-            id = "autoCannon",
-            name = "Auto Cannon",
-            description = "High fire rate, low damage, shorter range.",
+            id = "heavygun",
+            name = "Heavy Gun",
+            description = "High damage, slow fire rate",
             type = "building",
-            building = require("Buildings.Turrets.AutoCannon")
+            building = require("Buildings.Turrets.HeavyGun")
         },
         {
-            id = "fence",
-            name = "Fence",
+            id = "smallfence",
+            name = "Small Fence",
             description = "Block Enemies",
-            building = require("Buildings.Battlefield.Blocker"),
+            building = require("Buildings.Blockers.SmallFence"),
+            type = "building"
+        },
+        {
+            id = "smallbox",
+            name = "Small Box",
+            description = "Block Enemies",
+            building = require("Buildings.Blockers.SmallBox"),
             type = "building"
         }
     },
