@@ -59,7 +59,7 @@ function ConfirmationUI:mousepressed(x, y, button)
         if x >= self.confirmRect.x and x <= self.confirmRect.x + self.confirmRect.w and
            y >= self.confirmRect.y and y <= self.confirmRect.y + self.confirmRect.h then
             
-            if self.target:isType("battlefield") and self.game.battlefieldGrid then
+            if self.target:isType("blocker") and self.game.battlefieldGrid then
                 self.game.battlefieldGrid:removeBuilding(self.target)
             end
             

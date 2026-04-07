@@ -166,7 +166,7 @@ end
 function InputHandler:handleBuildingSlotHover()
     local game = self.game
     local base = game.base
-    local isBattlefield = game.blueprint and game.blueprint:isType("battlefield")
+    local isBattlefield = game.blueprint and game.blueprint:isType("blocker")
     local buildGrid = isBattlefield and game.battlefieldGrid or base.buildGrid
     
     if game.blueprint then

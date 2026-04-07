@@ -9,9 +9,9 @@ RewardPool.LuckTable = {
     [4]  = { common = 50, uncommon = 30, rare = 12, epic = 6,  legendary = 2 },
     [5]  = { common = 40, uncommon = 30, rare = 15, epic = 10, legendary = 5 },
     [6]  = { common = 30, uncommon = 30, rare = 20, epic = 15, legendary = 5 },
-    [7]  = { common = 25, uncommon = 25, rare = 25, epic = 15, legendary = 10 },
-    [8]  = { common = 20, uncommon = 25, rare = 25, epic = 20, legendary = 10 },
-    [9]  = { common = 15, uncommon = 20, rare = 25, epic = 25, legendary = 15 },
+    [7]  = { common = 24, uncommon = 25, rare = 25, epic = 15, legendary = 6 },
+    [8]  = { common = 22, uncommon = 25, rare = 25, epic = 20, legendary = 8 },
+    [9]  = { common = 15, uncommon = 25, rare = 25, epic = 25, legendary = 10 },
     [10] = { common = 10, uncommon = 20, rare = 30, epic = 25, legendary = 15 }
 }
 
@@ -102,6 +102,36 @@ function RewardPool:getRandomRewardFromTier(rarity, excludedIds)
     end
     
     return nil
+end
+
+function RewardPool:getLuckProbabilities(luckLevel)
+    luckLevel = math.max(1, math.min(10, math.floor(luckLevel or 1)))
+    local weights = self.LuckTable[luckLevel]
+    local totalWeight = 0
+    for _, w in pairs(weights) do totalWeight = totalWeight + w end
+    
+    local probs = {}
+    local rarityColors = {
+        common = {1, 1, 1},
+        uncommon = {0.2, 0.8, 0.2},
+        rare = {0.2, 0.4, 1},
+        epic = {0.7, 0.2, 1},
+        legendary = {1, 0.7, 0}
+    }
+    
+    -- Iterate in display order (Reverse probability order usually looks nice)
+    for i = #self.RarityOrder, 1, -1 do
+        local rarity = self.RarityOrder[i]
+        local w = weights[rarity]
+        if w > 0 then
+            table.insert(probs, {
+                rarity = rarity:sub(1,1):upper() .. rarity:sub(2),
+                percent = (w / totalWeight) * 100,
+                color = rarityColors[rarity]
+            })
+        end
+    end
+    return probs
 end
 
 return RewardPool

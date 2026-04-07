@@ -5,7 +5,8 @@ function TooltipManager:new(game)
     local obj = setmetatable({
         game = game,
         hoveredBuilding = nil,
-        hoverTooltip = nil
+        hoverTooltip = nil,
+        rarityProbs = nil
     }, self)
     return obj
 end
@@ -37,6 +38,12 @@ function TooltipManager:draw()
         love.graphics.setColor(1, 1, 1, 0.5)
         love.graphics.printf("Press Enter to Start Wave ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
     end
+
+    -- Draw rarity probabilities tooltip
+    if self.rarityProbs then
+        local mx, my = love.mouse.getPosition()
+        self:drawRarityTooltip(mx + 15, my + 15, self.rarityProbs)
+    end
 end
 
 function TooltipManager:drawSimpleTooltip(x, y, text, cost)
@@ -52,6 +59,26 @@ function TooltipManager:drawSimpleTooltip(x, y, text, cost)
         love.graphics.setColor(1, 0, 0, 1)
     end
     love.graphics.print(text, x + 5, y + 5)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+function TooltipManager:drawRarityTooltip(x, y, probs)
+    local padding = 12
+    local lineHeight = 22
+    local width = 160
+    local height = (#probs * lineHeight) + padding * 2
+    
+    -- Draw shadow/background
+    love.graphics.setColor(0, 0, 0, 0.9)
+    love.graphics.rectangle("fill", x, y, width, height, 6)
+    love.graphics.setColor(1, 1, 1, 0.4)
+    love.graphics.rectangle("line", x, y, width, height, 6)
+    
+    for i, p in ipairs(probs) do
+        love.graphics.setColor(p.color)
+        local text = string.format("%s: %.0f%%", p.rarity, p.percent)
+        love.graphics.print(text, x + padding, y + padding + (i-1) * lineHeight)
+    end
     love.graphics.setColor(1, 1, 1, 1)
 end
 

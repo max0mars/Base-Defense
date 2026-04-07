@@ -4,15 +4,15 @@ local HeavyGun = setmetatable({}, { __index = Turret })
 HeavyGun.__index = HeavyGun
 
 local default = {
-    fireRate = 0.7,   -- 5 shots per second
-    damage = 50,     -- Low damage per shot
+    fireRate = 0.5,   -- 
+    damage = 65,     -- Low damage per shot
     bulletSpeed = 500, 
     types = { turret = true },
     color = {0.8, 0.8, 0.2, 1}, -- Gold
     firingArc = {
         direction = 0,    -- Firing arc facing direction in radians
         minRange = 0,     -- Minimum firing range
-        angle = math.pi/4   -- Firing arc angle size in radians
+        angle = math.pi/8   -- Firing arc angle size in radians
     }
 }
 

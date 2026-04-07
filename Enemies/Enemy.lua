@@ -8,7 +8,7 @@ local Stats = {
     damage = 10,
     reward = 25,
     armour = 0,
-    size = 15, -- Default size for basic enemies
+    size = 20, -- Default size for basic enemies
     shape = "rectangle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies
     hp = 100, -- Default health for basic enemies
@@ -37,7 +37,7 @@ function Enemy:new(config)
         obj.effectManager.parent = obj.game.enemyEffectManager
     end
     setmetatable(obj, { __index = self })
-    obj.target = obj.game.base.x + obj.game.base.w / 2
+    obj.target = obj.game.base.x + obj.game.base.w / 2 + (obj.size or obj.w / 2)
     
     local navType = config.navigator or "GridNavigator"
     obj.navigator = Navigators[navType]:new(obj, obj.game)
@@ -137,7 +137,7 @@ function Enemy:died()
 end
 
 function Enemy:getTargetPos()
-    self.target = self.game.base.x + self.game.base.w / 2
+    self.target = self.game.base.x + self.game.base.w / 2 + (self.size or self.w / 2)
 end
 
 function Enemy:checkBaseCollision()

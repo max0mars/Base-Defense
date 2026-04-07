@@ -22,6 +22,7 @@ local default = {
         buildings = {}
     },
     selectedSlot = nil,
+    outlineThickness = 4,
 }
 
 function Base:new(config)
@@ -49,10 +50,13 @@ function Base:new(config)
     return obj
 end
 
-function Base:draw()
-    love.graphics.setColor(self.color or {1, 1, 1, 1})
-    love.graphics.rectangle("fill", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
+function Base:update(dt)
+    if self.effectManager then
+        self.effectManager:update(dt)
+    end
+end
 
+function Base:draw()
     for i = 1, self.buildGrid.width do
         for j = 1, self.buildGrid.height do
             local slot = (j - 1) * self.buildGrid.width + i
@@ -155,10 +159,29 @@ function Base:draw()
         love.graphics.setLineWidth(1) -- Reset line width
     end
 
+    -- Draw glowing green outline
+    local pulse = (math.sin(self.game.pulseTimer * self.game.oscillationSpeed) + 1) / 2 -- Range 0 to 1
+    local r, g, b = 0.2, 1, 0.2 -- Green glow
+    
+    -- Draw multiple layers for glow effect
+    for i = 4, 1, -1 do
+        local alpha = (0.25 * (1 - i/5)) * (0.6 + pulse * 0.4)
+        local width = self.outlineThickness + i * 3 + pulse * 6
+        love.graphics.setLineWidth(width)
+        love.graphics.setColor(r, g, b, alpha)
+        love.graphics.rectangle("line", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
+    end
+    
+    -- Main crisp outline
+    love.graphics.setLineWidth(self.outlineThickness)
+    love.graphics.setColor(r, g, b, 0.9 + pulse * 0.1)
+    love.graphics.rectangle("line", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
+    love.graphics.setLineWidth(1)
+
     for _, building in pairs(self.buildGrid.buildings) do
         building:draw()
     end
-    
+
     if self.hoverTooltip then
         love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
         local font = love.graphics.getFont()

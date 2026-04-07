@@ -5,7 +5,7 @@ fence.__index = fence
 
 local default = {
     shapePattern = {
-        {-1, 0}, {0, 0}, {1, 0}
+        {0, -1}, {0, 0}, {0, 1}
     },
 }
 

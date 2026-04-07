@@ -9,6 +9,8 @@ local default = {
     damage = 5,
     color = {0.5, 1, 0.5, 1}, -- Greenish color to indicate poison effect
     types = { poison = true },
+    dps = 15,
+    duration = 4
 }
 
 function PoisonTurret:new(config)

@@ -63,7 +63,7 @@ function Bullet:onHit(target)
     
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do
-            target.effectManager:applyEffect(effectTemplate)
+            target.effectManager:applyEffect(effectTemplate, self.source)
         end
         target.effectManager:triggerEvent("onHit", self)
     end

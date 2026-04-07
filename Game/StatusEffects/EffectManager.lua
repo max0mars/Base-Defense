@@ -27,7 +27,7 @@ function EffectManager:incrementVersion()
     self.isDirty = true
 end
 
-function EffectManager:applyEffect(effectTemplate)
+function EffectManager:applyEffect(effectTemplate, source)
     local effect = {}
     for k, v in pairs(effectTemplate) do
         effect[k] = v
@@ -45,7 +45,7 @@ function EffectManager:applyEffect(effectTemplate)
         self.effectCounts[name] = currentStacks + 1
         self:incrementVersion()
         if effect.onApply then
-            effect:onApply(self.owner)
+            effect:onApply(self.owner, source)
         end
     end
 end

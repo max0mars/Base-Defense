@@ -6,7 +6,7 @@ local default = {
     speed = 120, -- Set speed for speeder
     hp = 25, -- Set health for speeder
     maxHp = 25,
-    color = {0, 1, 0, 1}, -- Default color for basic enemies
+    color = {0.8, 1, 0, 1}, -- Default color for basic enemies
     types = { speeder = true },
     size = 15,
     reward = 15

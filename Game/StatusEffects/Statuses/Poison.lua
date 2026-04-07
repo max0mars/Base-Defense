@@ -5,8 +5,8 @@ Poison.__index = Poison
 local default = {
     name = "poison",
     duration = 5, -- Duration in seconds
-    damagePerSecond = 10, -- Damage dealt per second
-    maxStacks = 3, -- Maximum number of stacks for this effect
+    dps = 10, -- Damage dealt per second
+    --maxStacks = 3, -- Maximum number of stacks for this effect
 }
 
 function Poison:new(config)
@@ -18,9 +18,16 @@ function Poison:new(config)
     return setmetatable(effect, Poison)
 end
 
+function Poison:onApply(target, source)
+    -- This sets the final values once, purely at the time of application.
+    if source and source.getStat then
+        self.dps = source:getStat("dps") or self.dps
+        self.duration = source:getStat("duration") or self.duration
+    end
+end
+
 function Poison:onUpdate(dt, target)
-    local damage = self.damagePerSecond * dt
-    target:takeDamage(damage, "poison")
+    target:takeDamage(self.dps * dt, "poison")
 end
 
 return Poison

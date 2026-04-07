@@ -49,22 +49,52 @@ local topScreen = {
     y = 0,
     w = 800,
     h = 100,
-    color = {love.math.colorFromBytes(0, 255, 0)}
+    color = {love.math.colorFromBytes(255, 0, 0)},
+    thickness = 4
 }
 function topScreen:draw()
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+    local pulse = (math.sin(game.pulseTimer * game.oscillationSpeed) + 1) / 2
+    local r, g, b = self.color[1], self.color[2], self.color[3]
+    
+    -- Glow layers
+    for i = 3, 1, -1 do
+        local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
+        local width = self.thickness + i * 4 + pulse * 8
+        love.graphics.setLineWidth(width)
+        love.graphics.setColor(r, g, b, alpha)
+        love.graphics.line(self.x, self.y + self.h, self.x + self.w, self.y + self.h)
+    end
+    
+    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
+    love.graphics.setLineWidth(self.thickness)
+    love.graphics.line(self.x, self.y + self.h, self.x + self.w, self.y + self.h)
+    love.graphics.setLineWidth(1)
 end
 local bottomScreen = {
     x = 0,
     y = 500,
     w = 800,
     h = 100,
-    color = {love.math.colorFromBytes(0, 0, 255)}
+    color = {love.math.colorFromBytes(255, 0, 0)},
+    thickness = 4
 }
 function bottomScreen:draw()
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+    local pulse = (math.sin(game.pulseTimer * game.oscillationSpeed) + 1) / 2
+    local r, g, b = self.color[1], self.color[2], self.color[3]
+    
+    -- Glow layers
+    for i = 3, 1, -1 do
+        local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
+        local width = self.thickness + i * 4 + pulse * 8
+        love.graphics.setLineWidth(width)
+        love.graphics.setColor(r, g, b, alpha)
+        love.graphics.line(self.x, self.y, self.x + self.w, self.y)
+    end
+    
+    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
+    love.graphics.setLineWidth(self.thickness)
+    love.graphics.line(self.x, self.y, self.x + self.w, self.y)
+    love.graphics.setLineWidth(1)
 end
 
 -- -----------------------------------------------------------------------------
@@ -79,7 +109,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.money        = 0
+        self.money        = 50
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         
@@ -102,10 +132,13 @@ function game:load(saveData)
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.inputMode            = "idle"
         self.useHybridSeparation  = true
+        self.pulseTimer           = 0
+        self.oscillationSpeed     = 1
         
         -- Global Status Effect Managers
         self.playerEffectManager = EffectManager:new() 
         self.enemyEffectManager  = EffectManager:new()
+        self.luckCosts           = {3, 5, 8, 12, 15, 20, 25, 30, 40, 50}
 
         -- Animation Pool
         self.animations = {}
@@ -172,6 +205,8 @@ end
 -- -----------------------------------------------------------------------------
 
 function game:update(dt)
+    self.pulseTimer = self.pulseTimer + dt
+    if self:isState("gameover") then return end
     -- Update Animations with cleanup
     for i = #self.animations, 1, -1 do
         local anim = self.animations[i]
@@ -352,6 +387,21 @@ function game:isState(checkState)   return self.state == checkState end
 -- Ground Object Implementation
 -- -----------------------------------------------------------------------------
 
+
+function game:getLuckCost()
+    if self.luck >= 10 then return nil end
+    return self.luckCosts[self.luck]
+end
+
+function game:buyLuck()
+    local cost = self:getLuckCost()
+    if cost and self.money >= cost and self.luck < 10 and self.inputMode == "idle" then
+        self.money = self.money - cost
+        self.luck = self.luck + 1
+        return true
+    end
+    return false
+end
 
 function game:attemptPurchaseReward()
     if self.money >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then

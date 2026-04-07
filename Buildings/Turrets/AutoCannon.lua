@@ -5,7 +5,7 @@ AutoCannon.__index = AutoCannon
 
 local default = {
     fireRate = 5,   -- 5 shots per second
-    damage = 5,     -- Low damage per shot
+    damage = 7,     -- Low damage per shot
     bulletSpeed = 500, 
     range = 350,    -- Shorter range than standard
     types = { turret = true },
