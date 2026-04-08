@@ -73,9 +73,14 @@ function Bullet:onHit(target)
     
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do
-            target.effectManager:applyEffect(effectTemplate, self)
+            if effectTemplate.isIndependent then
+                if effectTemplate.trigger then
+                    effectTemplate:trigger(target, self)
+                end
+            else
+                target.effectManager:applyEffect(effectTemplate, self)
+            end
         end
-        target.effectManager:triggerEvent("onHit", self)
     end
     
     if self.pierce <= 0 then

@@ -88,8 +88,16 @@ function object:isType(typeName)
     return self.types and self.types[typeName] == true
 end
 
-function object:getStat(statName)
-    local baseValue = self.baseStats and self.baseStats[statName] or self[statName]
+function object:getStat(statName, baseValueOverride)
+    local baseValue = baseValueOverride
+    if baseValue == nil then
+        baseValue = (self.baseStats and self.baseStats[statName]) or self[statName]
+    end
+    
+    if baseValue == nil then
+        error("Object does not have stat " .. statName .. " and no override was provided")
+    end
+
     if self.effectManager and self.effectManager.getStat then
         return self.effectManager:getStat(statName, baseValue)
     end

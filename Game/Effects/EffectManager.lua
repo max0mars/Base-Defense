@@ -34,6 +34,13 @@ function EffectManager:applyEffect(effectTemplate, source)
     end
     setmetatable(effect, getmetatable(effectTemplate) or effectTemplate)
 
+    if effect.isIndependent then
+        if effect.onApply then
+            effect:onApply(self.owner, source)
+        end
+        return
+    end
+
     local name = effect.name
     local currentStacks = self.effectCounts[name] or 0
     local maxStacks = effect.maxStacks or math.huge
@@ -134,6 +141,10 @@ function EffectManager:triggerEvent(eventName, ...)
 end
 
 function EffectManager:getStat(statName, baseValue)
+    if baseValue == nil then
+        error("EffectManager:getStat called with nil baseValue for stat " .. statName)
+    end
+    
     local parentVersionChanged = (self.parent and self.parent.version > self.lastParentVersion)
     if self.isDirty or parentVersionChanged then
         self.cache = {}

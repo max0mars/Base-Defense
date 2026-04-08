@@ -4,7 +4,8 @@ IndependantEffect.__index = IndependantEffect
 
 local default = {
     name = "Independant Effect", -- Name of the status effect
-    duration = 5, -- Duration in seconds
+    duration = nil, -- No duration for independent effects
+    isIndependent = true, -- Marks this as an independent effect
     onTrigger = nil, -- Function to call when the effect is triggered
 }
 
