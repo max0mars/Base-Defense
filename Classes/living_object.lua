@@ -74,7 +74,7 @@ function living_object:takeDamage(amount, damageType)
     end
 
     amount = amount * damageMult
-    if amount > 0 then
+    if amount > 1 then
         self.game:spawnDamageNumber(amount, self.x, self.y, damageType)
     end
 

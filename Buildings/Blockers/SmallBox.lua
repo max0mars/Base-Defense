@@ -15,8 +15,9 @@ function box:new(config)
         config[key] = config[key] or value
     end
     
-    local obj = setmetatable(Building.new(self, config), { __index = self })
+    local obj = setmetatable(Blocker.new(self, config), { __index = self })
     return obj
 end
 
-return Blocker
+return box
+

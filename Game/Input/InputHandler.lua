@@ -301,7 +301,7 @@ function InputHandler:mousepressed(x, y, button)
     if button == 2 then
         local clickedTarget = false
         for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive") or obj:isType("battlefield")) and not obj:isType("mainTurret") and not obj.destroyed then
+            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainTurret") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     self.destructionTarget = obj
                     clickedTarget = true
@@ -330,7 +330,7 @@ function InputHandler:mousepressed(x, y, button)
     
     -- Handle building placement
     if game.inputMode == "placing" and button == 1 then
-        local isBattlefield = game.blueprint and game.blueprint:isType("battlefield")
+        local isBattlefield = game.blueprint and game.blueprint:isType("blocker")
         local buildGrid = isBattlefield and game.battlefieldGrid or base.buildGrid
         local activeStateBox = isBattlefield and game.battlefieldGrid or base
 
