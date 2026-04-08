@@ -4,75 +4,47 @@ local bullet = require("Bullets.Bullet")
 Turret = setmetatable({}, { __index = building })
 Turret.__index = Turret
 
-local default = {
-    types = { turret = true },
-    rotation = 0,
-    turnSpeed = math.huge,
-    fireRate = 1,
-    damage = 20,
-    bulletSpeed = 400,
-    range = 600,
-    barrel = 0,
-    firingArc = {
-        direction = 0,    -- Firing arc facing direction in radians
-        minRange = 0,     -- Minimum firing range
-        angle = math.pi/8   -- Firing arc angle size in radians
-    },
-    shapePattern = {{0, 0}},
-    color = {1, 1, 1, 1}
-}
-
 function Turret:new(config)
-    config = config or {}
-    for key, value in pairs(default) do
-        config[key] = config[key] or value
+    if not config then
+        error("Developer Error: Turret:new called with nil config.")
+    end
+
+    local required = {"name", "rotation", "turnSpeed", "fireRate", "damage", "bulletSpeed", "range", "barrel", "firingArc", "shapePattern", "color"}
+    for _, key in ipairs(required) do
+        if config[key] == nil then
+            error("Developer Error: Turret [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
+        end
+    end
+
+    -- Nested validation for firingArc
+    local arcRequired = {"direction", "minRange", "angle"}
+    for _, key in ipairs(arcRequired) do
+        if config.firingArc[key] == nil then
+            error("Developer Error: Turret [" .. (config.name or "Unknown") .. "] is missing 'firingArc." .. key .. "' in config.")
+        end
     end
     
     config.effectManager = true
     
-    -- Ensure firingArc has no missing values
-    if config.firingArc then
-        if not config.firingArc.direction then
-            error("firingArc.direction is required when providing custom firingArc")
-        end
-        if not config.firingArc.minRange then
-            error("firingArc.minRange is required when providing custom firingArc")
-        end
-        if not config.firingArc.angle then
-            error("firingArc.angle is required when providing custom firingArc")
-        end
-    end
-    for key in pairs(default.types) do
-        config.types[key] = true
-    end
-    local t = setmetatable(building:new(config), { __index = self }) -- Create a new object with the base properties
+    local t = setmetatable(building:new(config), { __index = self }) 
     
-    
-    t.rotation = config.rotation
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
-    t.turnSpeed = config.turnSpeed
-    t.fireRate = config.fireRate
     t.bulletType = config.bulletType or bullet
     t.cooldown = 0 -- Cooldown timer for firing
-    t.hitEffects = {} -- Table to store hit effects
-    t.damage = config.damage
+    --t.hitEffects = config.hitEffects or {} -- Table to store hit effects
     t.target = nil  -- Target to auto aim at
-    t.bulletSpeed = config.bulletSpeed
-    t.range = config.range
-    t.barrel = config.barrel
+    
+    -- Re-structure firingArc for internal use
     t.firingArc = {
         direction = config.firingArc.direction,
         minRange = config.firingArc.minRange,
         maxRange = config.range,
         angle = config.firingArc.angle
     }
+    
     t.showArc = false -- Flag to show firing arc
     t.selected = false -- Flag to show if turret is selected
     
-    -- Buff system is now handled by the EffectManager.
-    -- self:getStat("statName") will return cached stats transparently.
-    
-    --t.x, t.y = 0, 0
     return t
 end
 

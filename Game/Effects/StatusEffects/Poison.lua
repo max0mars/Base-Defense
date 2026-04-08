@@ -2,18 +2,18 @@ local StatusEffect = require("Game.Effects.StatusEffects.StatusEffect")
 local Poison = setmetatable({}, StatusEffect)
 Poison.__index = Poison
 
-local default = {
-    name = "poison",
-    duration = 5, -- Duration in seconds
-    dps = 10, -- Damage dealt per second
-    --maxStacks = 3, -- Maximum number of stacks for this effect
-}
-
 function Poison:new(config)
-    config = config or {}
-    for key, value in pairs(default) do
-        config[key] = config[key] or value
+    if not config then
+        error("Developer Error: Poison effect called with nil config.")
     end
+
+    local required = {"name", "duration", "dps", "maxStacks"}
+    for _, key in ipairs(required) do
+        if config[key] == nil then
+            error("Developer Error: Poison [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
+        end
+    end
+
     local effect = StatusEffect:new(config)
     return setmetatable(effect, Poison)
 end

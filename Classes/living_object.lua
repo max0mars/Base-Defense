@@ -16,13 +16,13 @@ function living_object:new(config)
     local obj = object:new(config)
     setmetatable(obj, { __index = self })
     obj.hp = config.hp
-    obj.maxhp = config.maxHp or config.hp -- Store the maximum health
+    obj.maxHp = config.maxHp or config.hp -- Store the maximum health
     obj.armour = config.armour or 0
     return obj
 end
 
 function living_object:drawHealthBar()
-    if self.hp < self.maxhp then
+    if self.hp < self:getStat("maxHp") then
         self:_drawHealthBar()
     end
 end
@@ -45,7 +45,7 @@ function living_object:_drawHealthBar()
     local barY = self.y - 20 - yOffset -- Adjust this offset as needed
 
     -- Calculate health percentage
-    local healthPercent = self.hp / self.maxhp
+    local healthPercent = self.hp / self:getStat("maxHp")
 
     -- Draw background (red)
     love.graphics.setColor(0.8, 0.2, 0.2, 0.8)

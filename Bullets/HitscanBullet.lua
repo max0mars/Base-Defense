@@ -6,23 +6,28 @@ local HitscanBullet = setmetatable({}, object)
 HitscanBullet.__index = HitscanBullet
 
 function HitscanBullet:new(config)
+    if not config then
+        error("Developer Error: HitscanBullet:new called with nil config.")
+    end
+
+    local required = {"name", "range", "damage", "maxLifespan", "color"}
+    for _, key in ipairs(required) do
+        if config[key] == nil then
+            error("Developer Error: HitscanBullet [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
+        end
+    end
+
     local obj = setmetatable(object:new(config), { __index = self })
     
-    obj.x = config.x
-    obj.y = config.y
-    obj.angle = config.angle
-    obj.range = config.range or 800
-    obj.damage = config.damage or 10
-    obj.hitEffects = config.hitEffects or {}
     obj.source = config.source
-    obj.maxLifespan = 0.3
     obj.lifespan = obj.maxLifespan
     obj.tags = config.tags or {"bullet"}
     obj.damageType = config.damageType or "normal"
+    obj.hitEffects = config.hitEffects or {}
     
     -- Hitscan endpoint logic
-    local x2 = config.targetX or obj.x + math.cos(obj.angle) * obj.range
-    local y2 = config.targetY or obj.y + math.sin(obj.angle) * obj.range
+    local x2 = config.targetX or obj.x + math.cos(obj.angle) * obj:getStat("range")
+    local y2 = config.targetY or obj.y + math.sin(obj.angle) * obj:getStat("range")
     
     local ray = {
         x1 = obj.x, y1 = obj.y,
@@ -58,16 +63,10 @@ function HitscanBullet:new(config)
     return obj
 end
 
-function HitscanBullet:getStat(statName)
-    if self[statName] then return self[statName] end
-    if self.source and self.source.getStat then
-        return self.source:getStat(statName)
-    end
-    return 10 -- default if not found
-end
+
 
 function HitscanBullet:onHit(target)
-    target:takeDamage(self.damage, self.damageType)
+    target:takeDamage(self:getStat("damage"), self.damageType)
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do
             target.effectManager:applyEffect(effectTemplate, self)

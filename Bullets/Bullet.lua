@@ -4,23 +4,18 @@ local object = require("Classes.object")
 Bullet = setmetatable({}, object)
 Bullet.__index = Bullet
 
-local stats = {
-    speed = 400, -- Speed of the bullet
-    damage = 10, -- Damage dealt by the bullet
-    pierce = 1, -- Number of enemies the bullet can pierce
-    hitEffects = {}, -- Effects to apply on hit
-    lifespan = 5, -- Lifespan of the bullet in seconds
-    types = { bullet = true }, -- Multi-Type classification
-    hitbox = true, -- Bullets have hitboxes
-    shape = "rectangle",
-    w = 4,
-    h = 4,
-}
-
 function Bullet:new(config)
-    for key, value in pairs(stats) do
-        config[key] = config[key] or value -- Use default values if not provided
+    if not config then
+        error("Developer Error: Bullet:new called with nil config.")
     end
+
+    local required = {"name", "speed", "damage", "pierce", "lifespan", "w", "h", "shape"}
+    for _, key in ipairs(required) do
+        if config[key] == nil then
+            error("Developer Error: Bullet [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
+        end
+    end
+
     if(config.source == nil) then error("Bullet has no source??? Where did it come from then??? (set config.source when creating bullet)") end
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
@@ -28,16 +23,11 @@ function Bullet:new(config)
     b.tags = config.tags or {} -- Initialize tags table
     b.source = config.source -- Track bullet source for stat calculation
     b.damageType = config.damageType or "normal"
+    b.hitEffects = config.hitEffects or {}
     return b
 end
 
-function Bullet:getStat(statName)
-    if self[statName] then return self[statName] end
-    if self.source and self.source.getStat then
-        return self.source:getStat(statName)
-    end
-    return stats[statName]
-end
+
 
 
 function Bullet:update(dt)
@@ -55,8 +45,8 @@ function Bullet:update(dt)
     local oldX, oldY = self.x, self.y
     
     -- Calculate new position
-    self.x = self.x + math.cos(self.angle) * self.speed * dt
-    self.y = self.y + math.sin(self.angle) * self.speed * dt
+    self.x = self.x + math.cos(self.angle) * self:getStat("speed") * dt
+    self.y = self.y + math.sin(self.angle) * self:getStat("speed") * dt
 end
 
 function Bullet:onCollision(obj)
@@ -69,7 +59,7 @@ end
 
 function Bullet:onHit(target)
     self.pierce = self.pierce - 1
-    target:takeDamage(self.damage, self.damageType)
+    target:takeDamage(self:getStat("damage"), self.damageType)
     
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do

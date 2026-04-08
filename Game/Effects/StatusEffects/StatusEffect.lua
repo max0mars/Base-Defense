@@ -1,21 +1,18 @@
 local StatusEffect = {}
 StatusEffect.__index = StatusEffect
 
-default = {
-    name = "Status Effect", -- Name of the status effect
-    duration = 5, -- Duration in seconds
-    onApply = nil, -- Function to call when the effect is applied
-    onUpdate = nil, -- Function to call every update while the effect is active
-    onExpire = nil, -- Function to call when the effect expires
-    maxStacks = math.huge, -- Maximum number of stacks for this effect
-    source = nil, -- The source of the effect (e.g., the entity that applied it)
-}
-
 function StatusEffect:new(config)
-    config = config or {}
-    for key, value in pairs(default) do
-        config[key] = config[key] or value
+    if not config then
+        error("Developer Error: StatusEffect:new called with nil config.")
     end
+
+    local required = {"name", "duration", "maxStacks"}
+    for _, key in ipairs(required) do
+        if config[key] == nil then
+            error("Developer Error: StatusEffect [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
+        end
+    end
+
     local instance = setmetatable({}, StatusEffect)
     for k, v in pairs(config) do 
         instance[k] = v

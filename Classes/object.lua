@@ -88,20 +88,15 @@ function object:isType(typeName)
     return self.types and self.types[typeName] == true
 end
 
-function object:getStat(statName, baseValueOverride)
-    local baseValue = baseValueOverride
-    if baseValue == nil then
-        baseValue = (self.baseStats and self.baseStats[statName]) or self[statName]
-    end
-    
-    if baseValue == nil then
-        error("Object does not have stat " .. statName .. " and no override was provided")
+function object:getStat(statName)
+    if self[statName] == nil then
+        error("Developer Error: Object [" .. (self.name or "Unknown") .. "] is missing the '" .. statName .. "' stat. All stats accessed via getStat must be explicitly defined in the class (even if set to 0) to ensure modifiers are applied correctly.")
     end
 
     if self.effectManager and self.effectManager.getStat then
-        return self.effectManager:getStat(statName, baseValue)
+        return self.effectManager:getStat(statName, self[statName])
     end
-    return baseValue
+    return self[statName]
 end
 
 -- function object:getSize()
