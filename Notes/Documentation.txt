@@ -89,8 +89,6 @@ Wave Control:
 - WaveSpawner:startNextWave() activates wave from idle state
 
 
-
-
 *Not Implemented Yet*
 ADVANCED SWARM TARGETING system
 - all enemies have a variable called incoming damage

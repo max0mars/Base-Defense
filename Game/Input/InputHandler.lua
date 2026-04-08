@@ -489,6 +489,10 @@ function InputHandler:keypressed(key)
         game.debugMode = not game.debugMode
     end
 
+    if key == "0" then
+        game:toggleDamageNumbers()
+    end
+
     if key == "r" then
         game:attemptPurchaseReward()
     -- elseif key == "a" then
@@ -506,6 +510,11 @@ function InputHandler:keypressed(key)
             game:recalculateAllBuffs() -- Recalculate all buffs before wave starts
             game.WaveSpawner:startNextWave()
             game:setState("wave")
+        end
+    elseif key == "tab" then
+        -- Toggle autofire
+        if game.mainTurret then
+            game.mainTurret.autofire = not game.mainTurret.autofire
         end
     end
     

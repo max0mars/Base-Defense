@@ -27,8 +27,18 @@ function Bullet:new(config)
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
     b.tags = config.tags or {} -- Initialize tags table
     b.source = config.source -- Track bullet source for stat calculation
+    b.damageType = config.damageType or "normal"
     return b
 end
+
+function Bullet:getStat(statName)
+    if self[statName] then return self[statName] end
+    if self.source and self.source.getStat then
+        return self.source:getStat(statName)
+    end
+    return stats[statName]
+end
+
 
 function Bullet:update(dt)
     if self.destroyed then return end
@@ -59,11 +69,11 @@ end
 
 function Bullet:onHit(target)
     self.pierce = self.pierce - 1
-    target:takeDamage(self.damage)
+    target:takeDamage(self.damage, self.damageType)
     
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do
-            target.effectManager:applyEffect(effectTemplate, self.source)
+            target.effectManager:applyEffect(effectTemplate, self)
         end
         target.effectManager:triggerEvent("onHit", self)
     end

@@ -1,5 +1,5 @@
 local hitbox = require("Physics.hitbox") -- Import the hitbox module
-local EffectManager = require("Game.StatusEffects.EffectManager") -- Import the EffectManager module
+local EffectManager = require("Game.Effects.EffectManager") -- Import the EffectManager module
 
 local object = {
     id_count = 0, -- Unique identifier for the object

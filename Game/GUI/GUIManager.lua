@@ -122,6 +122,9 @@ function GUIManager:drawHUD()
     love.graphics.printf("Money: " .. game.money, 240, 40, love.graphics.getWidth() - 20, "left")
     love.graphics.printf("Score: " .. game.xp, 240, 60, love.graphics.getWidth() - 20, "left")
 
+    love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("AutoFire: " .. (game.autoFire and "On" or "Off"), 600, 40, love.graphics.getWidth() - 20, "left")
+
     if game:isState("startup") then
         love.graphics.setColor(1, 1, 1, 1)
         local y = 150

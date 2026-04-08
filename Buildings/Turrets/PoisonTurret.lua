@@ -1,5 +1,5 @@
 local Turret = require("Buildings.Turrets.Turret")
-local PoisonEffect = require("Game.StatusEffects.Statuses.Poison")
+local PoisonEffect = require("Game.Effects.StatusEffects.Poison")
 
 local PoisonTurret = setmetatable({}, { __index = Turret })
 PoisonTurret.__index = PoisonTurret

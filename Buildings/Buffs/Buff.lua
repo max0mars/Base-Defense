@@ -11,7 +11,7 @@ local default = {
         --description = "Increases damage by 20%",
         duration = math.huge,
     },
-    affectedSlots = {{1, 0}, {-1, 0}}, -- Array of slots that this buff affects
+    affectedSlots = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}}, -- Array of slots that this buff affects
     -- shapePattern = {
     --     {0, 0}
     -- },

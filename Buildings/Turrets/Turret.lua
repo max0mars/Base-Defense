@@ -83,7 +83,6 @@ end
 function Turret:fire(args)
     local offset = 0 --love.math.random() * self.spread * 2 - self.spread
     local x, y
-    
     -- Use provided position or default to fire point
     if args and args.fireX and args.fireY then
         x, y = args.fireX, args.fireY

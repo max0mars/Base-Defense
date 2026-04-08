@@ -62,15 +62,24 @@ end
 
 function living_object:takeDamage(amount, damageType)
     if damageType == nil then
-        damageType = "physical" -- Default damage type
+        damageType = "normal" -- Default damage type
     end
     local damageTaken = 0
-    local damageMult = 1
-    if(damageType == "physical") then
-        damageMult = 1 - (self.armour or 0)
+    local damageMult = 1   
+
+    if self.affinities then
+        if self.affinities[damageType] then
+            damageMult = self.affinities[damageType]
+        end
     end
+
     amount = amount * damageMult
+    if amount > 0 then
+        self.game:spawnDamageNumber(amount, self.x, self.y, damageType)
+    end
+
     if(amount >= self.hp) then
+
         damageTaken = self.hp
         self.hp = 0
     else

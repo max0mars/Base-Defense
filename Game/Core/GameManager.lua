@@ -21,13 +21,14 @@ local WaveDirector       = require("Game.Spawning.WaveDirector")
 local RewardSystem       = require("Game.Rewards.RewardSystem")
 local SpecialUpgradeMgr  = require("Game.Rewards.SpecialUpgradeManager")
 local Inventory          = require("Game.Inventory.Inventory")
-local EffectManager      = require("Game.StatusEffects.EffectManager")
+local EffectManager      = require("Game.Effects.EffectManager")
 
 -- Entities & UI
 local MainTurret         = require("Buildings.Turrets.MainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local DeathAnimation     = require("Graphics.Animations.DeathAnimation")
+local DamageNumber       = require("Graphics.Animations.DamageNumber")
 
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
@@ -139,6 +140,7 @@ function game:load(saveData)
         self.playerEffectManager = EffectManager:new() 
         self.enemyEffectManager  = EffectManager:new()
         self.luckCosts           = {3, 5, 8, 12, 15, 20, 25, 30, 40, 50}
+        self.showDamageNumbers   = true
 
         -- Animation Pool
         self.animations = {}
@@ -366,6 +368,16 @@ end
 function game:EnemyDied(enemy)
     self:addXP(enemy.reward)
     self:spawnDeathAnimation(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
+end
+
+function game:spawnDamageNumber(amount, x, y, damageType)
+    if self.showDamageNumbers then
+        table.insert(self.animations, DamageNumber:new(amount, x, y, damageType))
+    end
+end
+
+function game:toggleDamageNumbers()
+    self.showDamageNumbers = not self.showDamageNumbers
 end
 
 function game:isRewardSystemActive()

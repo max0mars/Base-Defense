@@ -1,4 +1,4 @@
-local StatusEffect = require("Game.StatusEffects.StatusEffect")
+local StatusEffect = require("Game.Effects.StatusEffects.StatusEffect")
 local Poison = setmetatable({}, StatusEffect)
 Poison.__index = Poison
 

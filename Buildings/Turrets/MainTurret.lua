@@ -1,5 +1,5 @@
 local Turret = require("Buildings.Turrets.Turret")
-local HitscanBullet = require("Bullets.HitscanBullet")
+local Laser = require("Bullets.Laser")
 
 local MainTurret = setmetatable({}, Turret)
 MainTurret.__index = MainTurret
@@ -11,14 +11,16 @@ local default = {
     damage = 65,      -- More damage than regular turret
     bulletSpeed = 800, -- Faster bullets
     range = math.huge,
-    barrel = 0,
-    bulletType = HitscanBullet,
+    size = 18,
+    barrel = 10,
+    bulletType = Laser,
     -- Define shape as relative coordinates instead of absolute slots
     shapePattern = {
         {0, 0}, {1, 0},  -- Top row: anchor + right
         {0, 1}, {1, 1}   -- Bottom row: down + down-right
     },
-    color = {1, 0.5, 0, 1} -- Orange color to distinguish from regular turrets
+    color = {0.3, 0.3, 0.3, 1}, -- Orange color to distinguish from regular turrets
+    autofire = false
 }
 
 function MainTurret:new(config)
@@ -64,14 +66,14 @@ function MainTurret:update(dt)
     -- Simple player-controlled logic - no targeting, no firing arc checks
     self.cooldown = self.cooldown - dt
     
-    -- Only aim at mouse position during wave state
-    --if self.game:isState("wave") then
+    -- Handle autofire
+    if self.autofire and self.game:isState("wave") then
         local mx, my = love.mouse.getPosition()
-        self:lookAt(mx, my, dt)
-    --end
+        self:PlayerClick(mx, my)
+    end
 end
 
-function MainTurret:PlayerClick(targetX, targetY)
+function MainTurret:PlayerClick(tX, tY)
     -- Only fire during wave state
     -- Prevent firing if clicking on the base
     local base = self.game.base
@@ -80,7 +82,7 @@ function MainTurret:PlayerClick(targetX, targetY)
     local by1 = base.y - base.h / 2
     local by2 = base.y + base.h / 2
     
-    if targetX >= bx1 and targetX <= bx2 and targetY >= by1 and targetY <= by2 then
+    if tX >= bx1 and tX <= bx2 and tY >= by1 and tY <= by2 then
         return false -- Clicked on base
     end
 
@@ -88,12 +90,12 @@ function MainTurret:PlayerClick(targetX, targetY)
     if self.cooldown <= 0 then
         local currentFireRate = self:getStat("fireRate")
         if currentFireRate > 0 then
-            local centerX, centerY = self:getCenterPosition()
+            local fX, fY = self:getFirePoint()
             self:fire({
-                targetX = targetX, 
-                targetY = targetY,
-                fireX = centerX,
-                fireY = centerY
+                targetX = tX, 
+                targetY = tY,
+                fireX = fX,
+                fireY = fY
             })
             self.cooldown = 1 / currentFireRate
             return true -- Successfully fired
@@ -134,25 +136,44 @@ end
 function MainTurret:draw()
     -- Get center position for 2x2 turret
     local centerX, centerY = self:getCenterPosition()
-    
     -- Draw without firing arc since MainTurret doesn't use them
     love.graphics.setColor(self.color)
     
     -- Draw larger turret mount to fit 2x2 area
-    love.graphics.circle("fill", centerX, centerY, 18)
+    love.graphics.rectangle("line", centerX - self.size, centerY - self.size, self.size * 2, self.size * 2)
 
     -- Draw larger barrel
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setLineWidth(6) -- Much thicker barrel for 2x2 turret
+    love.graphics.setLineWidth(2) -- Much thicker barrel for 2x2 turret
     love.graphics.line(
-        centerX, centerY,
-        centerX + math.cos(self.rotation) * 30,
-        centerY + math.sin(self.rotation) * 30
+        centerX- 10, centerY+5,
+        centerX, --+ math.cos(self.rotation) * self.barrel,
+        centerY - self.barrel --math.sin(self.rotation) * self.barrel
     )
+
+    love.graphics.line(
+        centerX+10, centerY+5,
+        centerX, --+ math.cos(self.rotation) * self.barrel,
+        centerY - self.barrel --math.sin(self.rotation) * self.barrel
+    )
+
+    love.graphics.line(
+        centerX, centerY+5,
+        centerX, --+ math.cos(self.rotation) * self.barrel,
+        centerY - self.barrel --math.sin(self.rotation) * self.barrel
+    )
+
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle("fill", centerX, centerY - self.barrel, 4)
     love.graphics.setLineWidth(1) -- Reset line width
     
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+function MainTurret:getFirePoint()
+    local centerX, centerY = self:getCenterPosition()
+    return centerX, centerY - self.barrel
 end
 
 -- Override methods that shouldn't be used by MainTurret

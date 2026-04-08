@@ -8,19 +8,19 @@ local RewardIndex = {
             type = "building"
         },
         {
-            id = "ammoCache",
-            name = "Ammo Cache",
-            description = "Increase turret damage by 20%",
-            type = "building",
-            building = require("Buildings.Buffs.Buff")
-        },
-        {
             id = "autoCannon",
             name = "Auto Cannon",
             description = "High fire rate, low damage, shorter range.",
             type = "building",
             building = require("Buildings.Turrets.AutoCannon")
         },
+        {
+            id = "smallbox",
+            name = "Small Box",
+            description = "Block Enemies",
+            building = require("Buildings.Blockers.SmallBox"),
+            type = "building"
+        }
     },
     uncommon = {
         {
@@ -31,6 +31,13 @@ local RewardIndex = {
             building = require("Buildings.Turrets.HeavyGun")
         },
         {
+            id = "splitter",
+            name = "Splitter",
+            description = "Bullets split into multiple smaller projectiles upon hitting an enemy.",
+            type = "building",
+            building = require("Buildings.Turrets.Splitter")
+        },
+        {
             id = "smallfence",
             name = "Small Fence",
             description = "Block Enemies",
@@ -38,12 +45,12 @@ local RewardIndex = {
             type = "building"
         },
         {
-            id = "smallbox",
-            name = "Small Box",
-            description = "Block Enemies",
-            building = require("Buildings.Blockers.SmallBox"),
-            type = "building"
-        }
+            id = "ammoCache",
+            name = "Ammo Cache",
+            description = "Increase turret damage by 20%",
+            type = "building",
+            building = require("Buildings.Buffs.Buff")
+        },
     },
     rare = {
         {

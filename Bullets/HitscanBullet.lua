@@ -1,5 +1,6 @@
 local object = require("Classes.object")
 local collision = require("Physics.collisionSystem_brute")
+local DeathAnimation = require("Graphics.Animations.DeathAnimation")
 
 local HitscanBullet = setmetatable({}, object)
 HitscanBullet.__index = HitscanBullet
@@ -14,13 +15,14 @@ function HitscanBullet:new(config)
     obj.damage = config.damage or 10
     obj.hitEffects = config.hitEffects or {}
     obj.source = config.source
-    obj.lifespan = 0.1
-    obj.maxLifespan = 0.1
+    obj.maxLifespan = 0.3
+    obj.lifespan = obj.maxLifespan
     obj.tags = config.tags or {"bullet"}
+    obj.damageType = config.damageType or "normal"
     
     -- Hitscan endpoint logic
-    local x2 = obj.x + math.cos(obj.angle) * obj.range
-    local y2 = obj.y + math.sin(obj.angle) * obj.range
+    local x2 = config.targetX or obj.x + math.cos(obj.angle) * obj.range
+    local y2 = config.targetY or obj.y + math.sin(obj.angle) * obj.range
     
     local ray = {
         x1 = obj.x, y1 = obj.y,
@@ -51,15 +53,24 @@ function HitscanBullet:new(config)
         obj:onHit(closestEnemy)
     end
     
+    table.insert(obj.game.animations, DeathAnimation:new(obj.color, 8, obj.endpoint.x, obj.endpoint.y))
+
     return obj
 end
 
+function HitscanBullet:getStat(statName)
+    if self[statName] then return self[statName] end
+    if self.source and self.source.getStat then
+        return self.source:getStat(statName)
+    end
+    return 10 -- default if not found
+end
+
 function HitscanBullet:onHit(target)
-    target:takeDamage(self.damage)
-    
+    target:takeDamage(self.damage, self.damageType)
     if target.effectManager then
         for _, effectTemplate in ipairs(self.hitEffects) do
-            target.effectManager:applyEffect(effectTemplate)
+            target.effectManager:applyEffect(effectTemplate, self)
         end
         target.effectManager:triggerEvent("onHit", self)
     end
@@ -74,15 +85,10 @@ end
 
 function HitscanBullet:draw()
     local alpha = self.lifespan / self.maxLifespan
-    love.graphics.setColor(1, 0.9, 0.3, alpha)
+    love.graphics.setColor(self.color[1], self.color[2], self.color[3], alpha)
     love.graphics.setLineWidth(2)
     love.graphics.line(self.x, self.y, self.endpoint.x, self.endpoint.y)
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
 end
-
-function HitscanBullet:isType(t)
-    return t == "bullet" or t == "hitscan"
-end
-
 return HitscanBullet

@@ -124,12 +124,12 @@ function Enemy:getVelocity()
     return -currentSpeed, 0 -- Enemies move left by default
 end
 
-function Enemy:onCollision(obj)
-    if obj:isType('base') then
-        obj:takeDamage(self:getStat("damage"))
-        self:died() -- Destroy enemy on collision with base
-    end
-end
+-- function Enemy:onCollision(obj)
+--     if obj:isType('base') then
+--         obj:takeDamage(self:getStat("damage"))
+--         self:died() -- Destroy enemy on collision with base
+--     end
+-- end
 
 function Enemy:died()
     self.game:EnemyDied(self) -- tell game manager I dead

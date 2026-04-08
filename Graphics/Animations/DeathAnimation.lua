@@ -22,8 +22,8 @@ function DeathAnimation:new(color, size, x, y)
         local shard = {
             offX = love.math.random(-obj.size/4, obj.size/4),
             offY = love.math.random(-obj.size/4, obj.size/4),
-            velX = love.math.random(-150, 150),
-            velY = love.math.random(-150, 150),
+            velX = love.math.random(-6*obj.size, 6*obj.size),
+            velY = love.math.random(-6*obj.size, 6*obj.size),
             angle = love.math.random() * math.pi * 2,
             rotSpeed = love.math.random(-10, 10),
             size = (0.1 + love.math.random() * 0.2) * obj.size
