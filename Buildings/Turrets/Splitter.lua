@@ -30,6 +30,9 @@ Splitter.template = {
     damageType = "normal",
     pierce = 1,
     lifespan = 3,
+    bulletW = 6, 
+    bulletH = 6, 
+    bulletShape = "rectangle"
 }
 
 function Splitter:new(config)

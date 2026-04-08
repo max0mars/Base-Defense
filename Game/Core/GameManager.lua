@@ -281,7 +281,7 @@ function game:draw()
     self.bottomScreen:draw()
     
     if self.battlefieldGrid then
-        self.battlefieldGrid:draw()
+        self.battlefieldGrid:drawGrid()
     end
 
     -- 2. Entities
@@ -307,6 +307,12 @@ function game:draw()
     -- 4. Animations (Drawn over entities but under UI)
     for _, anim in ipairs(self.animations) do
         anim:draw()
+    end
+
+    if self.inputMode == "placing" or self.debugMode then
+        if self.battlefieldGrid then
+            self.battlefieldGrid:drawOverlays()
+        end
     end
 
     -- 5. UI & Placement Previews

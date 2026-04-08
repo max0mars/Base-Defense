@@ -27,7 +27,8 @@ Sniper.template = {
     lifespan = 0.3,
     maxLifespan = 0.3, -- Hitscan specific
     bulletW = 1, 
-    bulletH = 1, 
+    bulletH = 1,
+    bulletShape = "ray",
     hitEffects = {}
 }
 

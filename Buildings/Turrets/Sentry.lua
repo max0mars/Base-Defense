@@ -11,7 +11,7 @@ Sentry.template = {
     rotation = 0,
     turnSpeed = math.huge,
     fireRate = 1,
-    range = 600,
+    range = 500,
     barrel = 15,
     color = {1, 1, 1, 1},
     types = { turret = true, sentry = true },
@@ -19,14 +19,14 @@ Sentry.template = {
     firingArc = {
         direction = 0,
         minRange = 0,
-        angle = math.pi/4
+        angle = math.pi/6
     },
     
     -- Bullet properties (now flat)
     bulletName = "Sentry Bullet",
     bulletSpeed = 400,
     damageType = "normal",
-    damage = 20, 
+    damage = 15, 
     pierce = 1,
     lifespan = 3,
     bulletW = 4,

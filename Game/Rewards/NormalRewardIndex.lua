@@ -20,6 +20,13 @@ local RewardIndex = {
             description = "Block Enemies",
             building = require("Buildings.Blockers.SmallBox"),
             type = "building"
+        },
+        {
+            id = "slottedBlocker",
+            name = "Slotted Blocker",
+            description = "Block Enemies and allow turrets to be placed on it",
+            building = require("Buildings.Blockers.SlottedBlocker"),
+            type = "building"
         }
     },
     uncommon = {

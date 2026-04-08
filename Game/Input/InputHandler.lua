@@ -163,15 +163,37 @@ function InputHandler:isMouseOverBuilding(building)
     return false
 end
 
+function InputHandler:isMouseOverGrid(grid)
+    if not grid then return false end
+    return self.mouseX >= grid.x and self.mouseX < grid.x + grid.width * grid.cellSize and
+           self.mouseY >= grid.y and self.mouseY < grid.y + grid.height * grid.cellSize
+end
+
 function InputHandler:handleBuildingSlotHover()
     local game = self.game
     local base = game.base
-    local isBattlefield = game.blueprint and game.blueprint:isType("blocker")
-    local buildGrid = isBattlefield and game.battlefieldGrid or base.buildGrid
     
-    if game.blueprint then
-        game.blueprint.buildGrid = buildGrid
+    if not game.blueprint then return end
+    
+    local hoverBattlefield = self:isMouseOverGrid(game.battlefieldGrid)
+    local isBlocker = game.blueprint:isType("blocker")
+    
+    -- Pick the grid: Blockers always use battlefield. Turrets use battlefield ONLY if hovering over it.
+    local buildGrid = base.buildGrid -- Default
+    local isBattlefield = false
+
+    if isBlocker then
+        buildGrid = game.battlefieldGrid
+        isBattlefield = true
+    elseif game.blueprint:isType("turret") and hoverBattlefield then
+        -- Only use battlefield if NOT hovering over the base grid (prioritize base)
+        if not self:isMouseOverGrid(base.buildGrid) then
+            buildGrid = game.battlefieldGrid
+            isBattlefield = true
+        end
     end
+    
+    game.blueprint.buildGrid = buildGrid
     
     local gridX = math.floor((self.mouseX - buildGrid.x) / buildGrid.cellSize) + 1
     local gridY = math.floor((self.mouseY - buildGrid.y) / buildGrid.cellSize) + 1
@@ -192,45 +214,18 @@ function InputHandler:handleBuildingSlotHover()
        gridY >= 1 and gridY <= buildGrid.height then
         local anchorSlot = (gridY - 1) * buildGrid.width + gridX
         
-        if game.inputMode == "placing" and game.blueprint then
+        if game.inputMode == "placing" then
+            local invalidSlots = {} -- Defined early to avoid nil errors later
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
-            local invalidSlots = {}
-            if game.blueprint.getInvalidSlotsFromPattern then
-                invalidSlots = game.blueprint:getInvalidSlotsFromPattern(anchorSlot, buildGrid)
-            end
             
-            -- Expansion/Availability Logic: Must be valid and connected to visibility
-            if not isBattlefield then
-                if not base:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
-                    invalidSlots = slotsToOccupy
-                end
-            end
-            
-            if isBattlefield then
-                local baseGrid = base.buildGrid
-                for _, s in ipairs(slotsToOccupy) do
-                    local i = ((s - 1) % buildGrid.width) + 1
-                    local j = math.ceil(s / buildGrid.width)
-                    local px = buildGrid.x + (i - 1) * buildGrid.cellSize
-                    local py = buildGrid.y + (j - 1) * buildGrid.cellSize
-                    
-                    local margin = 3 * buildGrid.cellSize
-                    local left = baseGrid.x - margin
-                    local right = baseGrid.x + baseGrid.width * baseGrid.cellSize + margin
-                    local top = baseGrid.y - margin
-                    local bottom = baseGrid.y + baseGrid.height * baseGrid.cellSize + margin
-                    
-                    local inBase = px >= left and px < right and py >= top and py < bottom
-                                   
-                    if (buildGrid.noBuildZones[s] and buildGrid.noBuildZones[s] > 0) or buildGrid.buildings[s] or inBase then
-                        table.insert(invalidSlots, s)
-                    end
-                end
+            -- Validation: Use the grid's own logic to check for obstacles/locking
+            if not activeStateBox:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
+                invalidSlots = slotsToOccupy
             end
             
             if #invalidSlots > 0 then
                 activeStateBox.selectedSlots = nil
-                activeStateBox.invalidSlots = slotsToOccupy -- Show all slots the building would occupy as invalid
+                activeStateBox.invalidSlots = slotsToOccupy
             else
                 activeStateBox.selectedSlots = slotsToOccupy
                 activeStateBox.invalidSlots = nil
@@ -330,8 +325,20 @@ function InputHandler:mousepressed(x, y, button)
     
     -- Handle building placement
     if game.inputMode == "placing" and button == 1 then
-        local isBattlefield = game.blueprint and game.blueprint:isType("blocker")
-        local buildGrid = isBattlefield and game.battlefieldGrid or base.buildGrid
+        local hoverBattlefield = self:isMouseOverGrid(game.battlefieldGrid)
+        local isBlocker = game.blueprint:isType("blocker")
+        
+        local buildGrid = base.buildGrid
+        local isBattlefield = false
+        if isBlocker then
+            buildGrid = game.battlefieldGrid
+            isBattlefield = true
+        elseif game.blueprint:isType("turret") and hoverBattlefield then
+            if not self:isMouseOverGrid(base.buildGrid) then
+                buildGrid = game.battlefieldGrid
+                isBattlefield = true
+            end
+        end
         local activeStateBox = isBattlefield and game.battlefieldGrid or base
 
         local gridX = math.floor((x - buildGrid.x) / buildGrid.cellSize) + 1

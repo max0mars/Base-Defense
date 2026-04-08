@@ -13,7 +13,7 @@ function Poison:new(config)
         end
     end
 
-    -- local instance = setmetatable({}, Poison)
+    local instance = setmetatable({}, Poison)
     -- for k, v in pairs(config) do 
     --     instance[k] = v
     -- end
