@@ -60,9 +60,19 @@ function living_object:_drawHealthBar()
     love.graphics.rectangle("line", barX, barY, width, height)
 end
 
+local damageTypes = {
+    normal = 1,
+    poison = 1,
+    armourPiercing = 1,
+    trueDamage = 1,
+    fire = 1,
+    explosive = 1,
+    electric = 1,
+    energy = 1
+}
 function living_object:takeDamage(amount, damageType)
-    if damageType == nil then
-        damageType = "normal" -- Default damage type
+    if damageTypes[damageType] == nil then
+        error("Developer Error: Invalid damage type: " .. damageType)
     end
     local damageTaken = 0
     local damageMult = 1   

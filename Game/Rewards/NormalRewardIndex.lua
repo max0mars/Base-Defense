@@ -1,10 +1,10 @@
 local RewardIndex = {
     common = {
         {
-            id = "basicturret",
-            name = "Basic Turret",
-            description = "Pew Pew",
-            building = require("Buildings.Turrets.Turret"),
+            id = "sentry",
+            name = "Sentry",
+            description = "Basic defensive turret. Balanced speed and damage.",
+            building = require("Buildings.Turrets.Sentry"),
             type = "building"
         },
         {

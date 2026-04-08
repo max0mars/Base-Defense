@@ -1,62 +1,61 @@
-local IndependantEffect = require("Game.Effects.IndependantEffects.IndependantEffect")
 local Bullet = require("Bullets.Bullet")
-local Split = setmetatable({}, { __index = IndependantEffect })
+
+local Split = {}
 Split.__index = Split
 
-local default = {
-    name = "split",
-    isIndependent = true,
-}
-
 function Split:new(config)
-    config = config or {}
-    for key, value in pairs(default) do
-        config[key] = config[key] or value
+    local instance = setmetatable({}, Split)
+    for k, v in pairs(config or {}) do
+        instance[k] = v
     end
-    local effect = IndependantEffect:new(config)
-    return setmetatable(effect, Split)
+    -- Essential identification
+    instance.name = instance.name or "split"
+    instance.isIndependent = true
+    return instance
 end
 
 function Split:trigger(target, sourceBullet)
     -- sourceBullet is the bullet instance that hit the target
     -- target is the enemy hit
     
-    local _splitamount = 3
-    local _spread = 0.8
-    local _damage = 5
+    local _splitamount = sourceBullet:getStat("splitamount") 
+    local _spread = sourceBullet:getStat("spread") 
+    local _damage = sourceBullet:getStat("splitDamage") 
     
-    -- Try to get stats from the bullet or source turret
-    if sourceBullet.getStat then
-        _splitamount = sourceBullet:getStat("splitamount") or _splitamount
-        _spread = sourceBullet:getStat("spread") or _spread
-        _damage = sourceBullet:getStat("splitDamage") or _damage
-    end
+    -- Inherited properties that should propagate to shards
+    local _speed = sourceBullet:getStat("bulletSpeed")
+    local _pierce = sourceBullet:getStat("pierce")
+    local _lifespan = sourceBullet:getStat("lifespan")
 
     for i = 1, _splitamount do
         -- Calculate angles for shards
         local angle = sourceBullet.angle + (i * _spread) - (_spread * (_splitamount + 1) / 2)
         
         local splitBulletConfig = {
-            x = target.x, -- Spawn at enemy position
+            name = (sourceBullet.name or "Bullet") .. " Shard",
+            x = target.x,
             y = target.y,
             angle = angle,
-            hitCache = {},
-            damage = _damage * 0.3, -- Shards deal 30% damage
+            bulletSpeed = _speed * 0.8, -- Shards are slightly slower
+            damage = _damage,
+            pierce = 1, -- Shards typically don't pierce
+            lifespan = _lifespan * 0.5, -- Shards have shorter life
+            w = 3, h = 3, shape = "rectangle", -- Smaller shards
             game = sourceBullet.game,
             source = sourceBullet.source,
             damageType = sourceBullet.damageType,
+            hitCache = {},
         }
         
-        -- Copy hit cache from the original bullet
+        -- Individual hit cache management
         if sourceBullet.hitCache then
             for k, v in pairs(sourceBullet.hitCache) do
                 splitBulletConfig.hitCache[k] = v
             end
         end
-        -- Ensure shards don't hit the target that just generated them
+        -- Prevent shards from immediate re-collision with the same target
         splitBulletConfig.hitCache[target:getID()] = true
         
-        -- Add to game
         sourceBullet.game:addObject(Bullet:new(splitBulletConfig))
     end
 end

@@ -10,7 +10,7 @@ function HitscanBullet:new(config)
         error("Developer Error: HitscanBullet:new called with nil config.")
     end
 
-    local required = {"name", "range", "damage", "maxLifespan", "color"}
+    local required = {"name", "damage", "maxLifespan", "color"} -- removed "range"
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: HitscanBullet [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
@@ -26,8 +26,8 @@ function HitscanBullet:new(config)
     obj.hitEffects = config.hitEffects or {}
     
     -- Hitscan endpoint logic
-    local x2 = config.targetX or obj.x + math.cos(obj.angle) * obj:getStat("range")
-    local y2 = config.targetY or obj.y + math.sin(obj.angle) * obj:getStat("range")
+    local x2 = config.targetX --or obj.x + math.cos(obj.angle) * obj:getStat("range")
+    local y2 = config.targetY --or obj.y + math.sin(obj.angle) * obj:getStat("range")
     
     local ray = {
         x1 = obj.x, y1 = obj.y,

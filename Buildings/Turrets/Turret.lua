@@ -63,16 +63,24 @@ function Turret:fire(args)
     end
 
     local config = {
+        name = self:getStat("bulletName"),
         x = x,
         y = y,
         angle = self.rotation + offset, -- Add spread to the angle
-        speed = self:getStat("bulletSpeed"), -- Speed of the bullet
+        bulletSpeed = self:getStat("bulletSpeed"), -- Speed of the bullet
         damage = self:getStat("damage"), -- Damage dealt by the bullet
-        hitEffects = self.hitEffects, -- Effects to apply on hit
+        pierce = self:getStat("pierce"),
+        lifespan = self:getStat("lifespan"),
+        damageType = self:getStat("damageType"),
+        w = self.bulletW,
+        h = self.bulletH,
+        shape = self.bulletShape,
+        hitbox = true,
+        hitEffects = self.hitEffects or {}, -- Effects to apply on hit
         game = self.game, -- Reference to the game object
-        sourceId = self.id, -- Track which turret fired this bullet
         source = self,
         tags = {"bullet"},
+        types = { bullet = true },
         targetX = args and args.targetX or nil,
         targetY = args and args.targetY or nil,
     }

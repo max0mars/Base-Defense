@@ -9,7 +9,7 @@ function Bullet:new(config)
         error("Developer Error: Bullet:new called with nil config.")
     end
 
-    local required = {"name", "speed", "damage", "pierce", "lifespan", "w", "h", "shape"}
+    local required = {"name", "bulletSpeed", "damage", "pierce", "lifespan", "w", "h", "shape"}
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: Bullet [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
@@ -45,8 +45,8 @@ function Bullet:update(dt)
     local oldX, oldY = self.x, self.y
     
     -- Calculate new position
-    self.x = self.x + math.cos(self.angle) * self:getStat("speed") * dt
-    self.y = self.y + math.sin(self.angle) * self:getStat("speed") * dt
+    self.x = self.x + math.cos(self.angle) * self:getStat("bulletSpeed") * dt
+    self.y = self.y + math.sin(self.angle) * self:getStat("bulletSpeed") * dt
 end
 
 function Bullet:onCollision(obj)

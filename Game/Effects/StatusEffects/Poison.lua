@@ -1,5 +1,4 @@
-local StatusEffect = require("Game.Effects.StatusEffects.StatusEffect")
-local Poison = setmetatable({}, StatusEffect)
+local Poison = {}
 Poison.__index = Poison
 
 function Poison:new(config)
@@ -7,27 +6,34 @@ function Poison:new(config)
         error("Developer Error: Poison effect called with nil config.")
     end
 
-    local required = {"name", "duration", "dps", "maxStacks"}
+    local required = {"duration", "dps_poison", "maxStacks"}
     for _, key in ipairs(required) do
         if config[key] == nil then
-            error("Developer Error: Poison [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
+            error("Developer Error: Poison is missing the '" .. key .. "' field in config.")
         end
     end
 
-    local effect = StatusEffect:new(config)
-    return setmetatable(effect, Poison)
+    -- local instance = setmetatable({}, Poison)
+    -- for k, v in pairs(config) do 
+    --     instance[k] = v
+    -- end
+
+    -- Ensure we have a name for the EffectManager stacking and icons
+    instance.name = config.name or "poison"
+    
+    return instance
 end
 
 function Poison:onApply(target, source)
     -- This sets the final values once, purely at the time of application.
     if source and source.getStat then
-        self.dps = source:getStat("dps") or self.dps
-        self.duration = source:getStat("duration") or self.duration
+        self.dps_poison = source:getStat("dps_poison")
+        self.duration = source:getStat("duration")
     end
 end
 
 function Poison:onUpdate(dt, target)
-    target:takeDamage(self.dps * dt, "poison")
+    target:takeDamage(self.dps_poison * dt, "poison")
 end
 
 return Poison

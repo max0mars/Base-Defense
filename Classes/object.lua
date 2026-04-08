@@ -93,7 +93,8 @@ function object:getStat(statName)
         error("Developer Error: Object [" .. (self.name or "Unknown") .. "] is missing the '" .. statName .. "' stat. All stats accessed via getStat must be explicitly defined in the class (even if set to 0) to ensure modifiers are applied correctly.")
     end
 
-    if self.effectManager and self.effectManager.getStat then
+    -- Only numeric stats can be modified by the EffectManager
+    if type(self[statName]) == "number" and self.effectManager and self.effectManager.getStat then
         return self.effectManager:getStat(statName, self[statName])
     end
     return self[statName]

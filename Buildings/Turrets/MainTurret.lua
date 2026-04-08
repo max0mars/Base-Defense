@@ -5,16 +5,14 @@ local Utils = require("Classes.Utils")
 local MainTurret = setmetatable({}, { __index = Turret })
 MainTurret.__index = MainTurret
 
--- Source of Truth: All stats for the Main Turret
+-- Source of Truth: Flat table
 MainTurret.template = {
     name = "Main Turret",
     size = 20,
     rotation = 0,
     turnSpeed = math.huge,
     fireRate = 0.5,
-    bulletSpeed = 800,
-    damage = 65,
-    range = 2000, -- Replacing math.huge with a large finite number for range calculation
+    range = 2000,
     barrel = 10,
     color = {0.3, 0.3, 0.3, 1},
     types = { turret = true, mainTurret = true },
@@ -22,28 +20,25 @@ MainTurret.template = {
         {0, 0}, {1, 0},
         {0, 1}, {1, 1}
     },
-    -- MainTurret doesn't traditionally use arcs, but the base class requires it
     firingArc = { 
         direction = 0, 
         minRange = 0, 
-        angle = math.pi * 2 -- 360 degree arc
+        angle = math.pi * 2 
     },
     
-    -- Sub-stats for its bullets
-    bulletStats = {
-        name = "Heavy Laser",
-        speed = 0, -- Laser is hitscan
-        damage = 65,
-        pierce = 1,
-        range = 0,
-        lifespan = 0.5,
-        maxLifespan = 0.5,
-        w = 4, h = 4,
-        shape = "rectangle",
-        damageType = "energy",
-        color = {0, 0, 1, 1},
-        hitEffects = {}
-    }
+    -- Bullet Properties (Hitscan)
+    bulletName = "Heavy Laser",
+    bulletColor = {0, 0, 1},
+    bulletSpeed = 0,
+    damage = 65,
+    pierce = 1,
+    lifespan = 0.5,
+    maxLifespan = 0.5,
+    bulletW = 4, 
+    bulletH = 4,
+    damageType = "energy",
+    bulletShape = "ray",
+    hitEffects = {}
 }
 
 function MainTurret:new(config)
@@ -55,9 +50,6 @@ function MainTurret:new(config)
         end
     end
     
-    -- Sync bullet stats
-    baseConfig.bulletSpeed = baseConfig.bulletStats.speed
-    baseConfig.damage = baseConfig.bulletStats.damage
     baseConfig.bulletType = HitscanBullet
     
     local t = Turret:new(baseConfig)
@@ -65,7 +57,6 @@ function MainTurret:new(config)
     
     t.autofire = baseConfig.autofire or false
     
-    -- Sync logical position (x, y) with the center if we have a slot
     if t.slot then
         local cx, cy = t:getCenterPosition()
         t.x, t.y = cx, cy
@@ -114,18 +105,13 @@ function MainTurret:PlayerClick(tX, tY)
         if currentFireRate > 0 then
             local fX, fY = self:getFirePoint()
             
-            -- Prepare bullet config from our source of truth
-            local bConfig = Utils.deepCopy(self.template.bulletStats)
-            bConfig.x = fX
-            bConfig.y = fY
-            bConfig.targetX = tX
-            bConfig.targetY = tY
-            bConfig.game = self.game
-            bConfig.source = self
-            bConfig.angle = math.atan2(tY - fY, tX - fX)
-            
-            -- Handle fire logic
-            self:fire(bConfig)
+            -- Because we flattened, we can just pass self properties to fire
+            self:fire({
+                targetX = tX, 
+                targetY = tY,
+                fireX = fX,
+                fireY = fY
+            })
             self.cooldown = 1 / currentFireRate
             return true
         end
@@ -133,12 +119,15 @@ function MainTurret:PlayerClick(tX, tY)
     return false
 end
 
-function MainTurret:fire(bConfig)
-     -- Note: In the base Turret, fire() creates its own config. 
-     -- For MainTurret we might want to override or ensure base Turret fire() is compatible.
-     -- Actually, Turret:fire(args) uses args to override its internal config.
-     -- But we want a CLEAN injection.
-     self.game:addObject(self.bulletType:new(bConfig))
+function MainTurret:fire(args)
+     -- In MainTurret, we want to ensure we pass the correct angle to the bullet
+     -- since it doesn't rotate automatically like regular turrets
+     local fX, fY = self:getFirePoint()
+     local angle = math.atan2(args.targetY - fY, args.targetX - fX)
+     args.angle = angle
+     args.maxLifespan = self:getStat("maxLifespan")
+     args.color = self:getStat("bulletColor")
+     Turret.fire(self, args)
 end
 
 function MainTurret:drawReloadBar()
