@@ -107,7 +107,7 @@ function Enemy:update(dt)
     end
     
     if self.x < self.target then
-        self.game.base:takeDamage(self:getStat("damage")) -- Damage the base if the enemy reaches it
+        self.game.base:takeDamage(self:getStat("damage"), "normal") -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
     self.effectManager:update(dt) -- Update status effects

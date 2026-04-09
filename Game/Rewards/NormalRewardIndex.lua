@@ -21,19 +21,19 @@ local RewardIndex = {
             building = require("Buildings.Blockers.SmallBox"),
             type = "building"
         },
+    },
+    uncommon = {
         {
             id = "slottedBlocker",
             name = "Slotted Blocker",
             description = "Block Enemies and allow turrets to be placed on it",
             building = require("Buildings.Blockers.SlottedBlocker"),
             type = "building"
-        }
-    },
-    uncommon = {
+        },
         {
             id = "heavygun",
             name = "Heavy Gun",
-            description = "High damage, slow fire rate",
+            description = "Piercing bullets, slow fire rate",
             type = "building",
             building = require("Buildings.Turrets.HeavyGun")
         },
@@ -72,7 +72,7 @@ local RewardIndex = {
         {
             id = "sniper",
             name = "Sniper Turret",
-            description = "High damage, slow fire rate, massive range.",
+            description = "High damage, long range.",
             type = "building",
             building = require("Buildings.Turrets.Sniper")
         }

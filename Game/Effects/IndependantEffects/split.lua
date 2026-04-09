@@ -41,6 +41,8 @@ function Split:trigger(target, sourceBullet)
             pierce = 1, -- Shards typically don't pierce
             lifespan = _lifespan * 0.5, -- Shards have shorter life
             w = 3, h = 3, shape = "rectangle", -- Smaller shards
+            hitbox = true, -- REQUIRED for collision
+            types = { bullet = true }, -- REQUIRED for collision system lookup
             game = sourceBullet.game,
             source = sourceBullet.source,
             damageType = sourceBullet.damageType,

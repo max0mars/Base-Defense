@@ -19,11 +19,12 @@ Sniper.template = {
     types = { turret = true, sniper = true },
     
     -- Bullet Properties (Hitscan)
-    bulletName = "Railgun Shot",
+    bulletName = "Sniper Shot",
+    bulletColor = {1, 1, 1},
     bulletSpeed = 0, 
     damage = 100,
-    damageType = "armourPiercing",
-    pierce = 5,
+    damageType = "normal",
+    pierce = 1,
     lifespan = 0.3,
     maxLifespan = 0.3, -- Hitscan specific
     bulletW = 1, 
@@ -46,6 +47,12 @@ function Sniper:new(config)
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
     return t
+end
+
+function Sniper:fire(args)
+    args.maxLifespan = self:getStat("maxLifespan")
+    args.color = self:getStat("bulletColor")
+    Turret.fire(self, args)
 end
 
 return Sniper

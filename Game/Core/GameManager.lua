@@ -233,9 +233,9 @@ function game:update(dt)
     -- State Transitions: Wave Completion
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
         self:waveComplete()
-        if self.wave % self.specialWaveInterval == 0 then
-            self.specialUpgradeManager:activate()
-        end
+        -- if self.wave % self.specialWaveInterval == 0 then
+        --     self.specialUpgradeManager:activate()
+        -- end
         self:setState("preparing")
     end
     

@@ -23,7 +23,7 @@ HeavyGun.template = {
     -- Bullet Properties
     bulletName = "Heavy Shell",
     bulletSpeed = 500,
-    damage = 65,
+    damage = 70,
     damageType = "normal",
     pierce = 3,
     lifespan = 4,
