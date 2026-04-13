@@ -59,7 +59,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.money        = 100000
+        self.money        = 0
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         

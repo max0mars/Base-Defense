@@ -1,0 +1,27 @@
+Reward Index Tracking
+Sorted by Rarity
+
+Common
+- Sentry [Buildings.Turrets.Sentry]: Basic defensive turret. Balanced speed and damage.
+- Heavy Gun [Buildings.Turrets.HeavyGun]: High damage, slow fire rate.
+- Auto Cannon [Buildings.Turrets.AutoCannon]: High fire rate, low damage, shorter range.
+- Small Box [Buildings.Blockers.SmallBox]: Block Enemies.
+
+Uncommon
+- Slotted Blocker [Buildings.Blockers.SlottedBlocker]: Block Enemies and allow turrets to be placed on it.
+- Splitter [Buildings.Turrets.Splitter]: Bullets split into multiple smaller projectiles upon hitting an enemy.
+- Small Fence [Buildings.Blockers.SmallFence]: Block Enemies.
+- Ammo Cache [Buildings.Buffs.Buff]: Increase turret damage by 20%.
+- Shatter Rounds [Buildings.Buffs.ShardBullets]: Bullets shatter into multiple smaller projectiles upon hitting an enemy.
+
+Rare
+- Poison Turret [Buildings.Turrets.PoisonTurret]: Bullets apply poison effect.
+- Lobber [Buildings.Turrets.Lobber]: Shoots explosive projectiles in an arc.
+- Poison Coating [Buildings.Buffs.PoisonTotem]: Bullets apply poison effect.
+
+Epic
+- Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.
+- Explosive Bullets [Buildings.Buffs.ExplosiveTotem]: Bullets explode on impact.
+
+Legendary
+- *No rewards currently defined in this tier.*

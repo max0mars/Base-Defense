@@ -6,14 +6,14 @@ RewardSystem.__index = RewardSystem
 local RewardIndex = require("Game.Rewards.NormalRewardIndex")
 local TestingIndex = require("Game.Rewards.TestingRewardIndex")
 local RewardPool = require("Game.Rewards.RewardPool")
-local Reward = require("Game.Rewards.Reward")
+--local Reward = require("Game.Rewards.Reward")
 
 function RewardSystem:new(game)
     local system = setmetatable({
         game = game,
         isActive = false,
         rewardPool = {}, -- current choices being presented
-        poolLogic = RewardPool:new(TestingIndex)
+        poolLogic = RewardPool:new(RewardIndex)
     }, self)
     
     system.currentChoices = {}

@@ -8,6 +8,13 @@ local RewardIndex = {
             type = "building"
         },
         {
+            id = "heavygun",
+            name = "Heavy Gun",
+            description = "High damage, slow fire rate.",
+            type = "building",
+            building = require("Buildings.Turrets.HeavyGun")
+        },
+        {
             id = "autoCannon",
             name = "Auto Cannon",
             description = "High fire rate, low damage, shorter range.",
@@ -31,13 +38,6 @@ local RewardIndex = {
             type = "building"
         },
         {
-            id = "heavygun",
-            name = "Heavy Gun",
-            description = "Piercing bullets, slow fire rate",
-            type = "building",
-            building = require("Buildings.Turrets.HeavyGun")
-        },
-        {
             id = "splitter",
             name = "Splitter",
             description = "Bullets split into multiple smaller projectiles upon hitting an enemy.",
@@ -58,6 +58,13 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Buffs.Buff")
         },
+        {
+            id = "shatterRounds",
+            name = "Shatter Rounds",
+            description = "Bullets shatter into multiple smaller projectiles upon hitting an enemy.",
+            type = "building",
+            building = require("Buildings.Buffs.ShardBullets")
+        },
     },
     rare = {
         {
@@ -66,6 +73,20 @@ local RewardIndex = {
             description = "Bullets apply poison effect",
             type = "building",
             building = require("Buildings.Turrets.PoisonTurret")
+        },
+        {
+            id = "lobber",
+            name = "Lobber",
+            description = "Shoots explosive projectiles in an arc.",
+            type = "building",
+            building = require("Buildings.Turrets.Lobber")
+        },
+        {
+            id = "poisonCoating",
+            name = "Poison Coating",
+            description = "Bullets apply poison effect.",
+            type = "building",
+            building = require("Buildings.Buffs.PoisonTotem")
         }
     },
     epic = {
@@ -75,6 +96,13 @@ local RewardIndex = {
             description = "High damage, long range.",
             type = "building",
             building = require("Buildings.Turrets.Sniper")
+        },
+        {
+            id = "explosiveBullets",
+            name = "Explosive Bullets",
+            description = "Bullets explode on impact.",
+            type = "building",
+            building = require("Buildings.Buffs.ExplosiveTotem")
         }
     },
     legendary = {
