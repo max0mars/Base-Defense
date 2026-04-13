@@ -221,6 +221,7 @@ function EffectManager:getTooltipStrings()
     local flatMap = {}
     local multMap = {}
     local maxMap = {}
+    local seenAbilities = {}
     
     local function processEffects(em)
         for _, effect in ipairs(em.activeEffects) do
@@ -235,9 +236,12 @@ function EffectManager:getTooltipStrings()
                 end
             end
             if effect.grantedHitEffect then
-                local abilityName = effect.grantedHitEffect.name or "Ability"
-                abilityName = abilityName:gsub("^%l", string.upper)
-                table.insert(strings, string.format("%s on Hit", abilityName))
+                local rawName = effect.grantedHitEffect.name or "Ability"
+                if not seenAbilities[rawName] then
+                    local abilityName = rawName:gsub("^%l", string.upper)
+                    table.insert(strings, string.format("%s on Hit", abilityName))
+                    seenAbilities[rawName] = true
+                end
             end
         end
         if em.parent then processEffects(em.parent) end

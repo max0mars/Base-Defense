@@ -9,6 +9,7 @@ local typeColors = {
     poison = {0.3, 1, 0.3, 1},
     energy = {0.3, 0.6, 1, 1},
     crit = {1, 0.8, 0.2, 1},
+    explosive = {1, 0.5, 0, 1}
 }
 
 function DamageNumber:new(amount, x, y, damageType)

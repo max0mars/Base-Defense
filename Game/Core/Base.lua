@@ -65,15 +65,15 @@ function Base:draw()
             if self:isSlotVisible(slot) then
                 if not self.buildGrid.buildings[slot] then
                     if not self.buildGrid.unlocked[slot] then
-                        love.graphics.setColor(0.1, 0.1, 0.1, 0.6)
+                        love.graphics.setColor(0.1, 0.1, 0.1)
                         love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
                         
                         -- Color logic: Green if affordable, Red if locked and expensive
                         local price = self:getSlotPrice(slot)
                         if self.game.money >= price then
-                            love.graphics.setColor(0.2, 0.5, 0.2) -- faint green
+                            love.graphics.setColor(0, 0.5, 0) -- faint green
                         else
-                            love.graphics.setColor(0.5, 0.2, 0.2) -- faint red
+                            love.graphics.setColor(0.5, 0, 0) -- faint red
                         end
                         
                         -- Draw $ symbol in the center of locked but visible slots

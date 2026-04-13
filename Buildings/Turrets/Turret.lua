@@ -87,17 +87,31 @@ function Turret:fire(args)
     end
 
     local currentHitEffects = {}
+    local seenEffects = {}
+
     if self.hitEffects then
-        for _, e in ipairs(self.hitEffects) do table.insert(currentHitEffects, e) end
+        for _, e in ipairs(self.hitEffects) do 
+            table.insert(currentHitEffects, e) 
+            if e.name then seenEffects[e.name] = true end
+        end
     end
     
     -- Dynamically collect hit effects from current status effects (buffs/totems)
+    -- Use a seen map to prevent duplicate payloads (e.g. from multiple Explosive Totems)
     if self.effectManager then
-        for _, effect in ipairs(self.effectManager.activeEffects) do
-            if effect.grantedHitEffect then
-                table.insert(currentHitEffects, effect.grantedHitEffect)
+        local function collectUnique(em)
+            for _, effect in ipairs(em.activeEffects) do
+                if effect.grantedHitEffect then
+                    local ge = effect.grantedHitEffect
+                    if not seenEffects[ge.name] then
+                        table.insert(currentHitEffects, ge)
+                        if ge.name then seenEffects[ge.name] = true end
+                    end
+                end
             end
+            if em.parent then collectUnique(em.parent) end
         end
+        collectUnique(self.effectManager)
     end
 
     local config = {

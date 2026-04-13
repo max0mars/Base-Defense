@@ -56,8 +56,17 @@ function Explosion:trigger(target, source)
     local r2 = radius * radius
     for _, obj in ipairs(game.objects) do
         if obj:isType("enemy") and not obj.destroyed then
-            local dx = obj.x - x
-            local dy = obj.y - y
+            -- Find the closest point on the enemy's rectangle to the explosion center
+            -- This ensures large enemies are hit correctly by considering their dimensions
+            local halfW = (obj.w or 0) / 2
+            local halfH = (obj.h or 0) / 2
+            
+            local closestX = math.max(obj.x - halfW, math.min(x, obj.x + halfW))
+            local closestY = math.max(obj.y - halfH, math.min(y, obj.y + halfH))
+            
+            local dx = x - closestX
+            local dy = y - closestY
+            
             if (dx*dx + dy*dy) <= r2 then
                 -- Apply damage
                 obj:takeDamage(damage, "explosive")

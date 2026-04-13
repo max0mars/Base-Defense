@@ -7,7 +7,7 @@ ExplosiveTotem.__index = ExplosiveTotem
 local default = {
     name = "Explosive Totem",
     types = { passive = true, totem = true, explosive = true },
-    affectedSlots = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}, -- Affects adjacent turrets in a cross pattern
+    affectedSlots = {{1, 0}}, -- Affects adjacent turrets in a cross pattern
     color = {1, 0.4, 0, 1}, -- Vibrant neon orange
     
     -- Configuration used to initialize the Explosion independent effect
@@ -32,7 +32,7 @@ function ExplosiveTotem:new(config)
         statModifiers = {
             -- Sets the explosion parameters for turrets that don't have them,
             -- or upgrades them for turrets that do.
-            radius = {max = 65},
+            radius = {max = 35, hidden = true},
             --explosionDamage = {max = 25, hidden = true},
             explosion_from_damage = {max = 0.5, hidden = true}
         }
