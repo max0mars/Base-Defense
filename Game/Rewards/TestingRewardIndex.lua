@@ -15,10 +15,10 @@ local RewardIndex = {
             type = "building"
         },
         {
-            id = "shardBullets",
-            name = "Shard Bullets",
-            description = "Causes the turret in front to fire splintering rounds that burst into shards on impact.",
-            building = require("Buildings.Buffs.ShardBullets"),
+            id = "ExplosiveTotem",
+            name = "Explosive Rounds",
+            description = "Causes the turret in front to fire explosive rounds.",
+            building = require("Buildings.Buffs.ExplosiveTotem"),
             type = "building"
         },
     },

@@ -49,15 +49,18 @@ function Splitter:new(config)
     
     local instance = Turret:new(baseConfig)
     setmetatable(instance, Splitter)
+    
+    -- Add inherent stats via a hidden buff
+    instance.effectManager:applyEffect({
+        name = "Inherent Splitting",
+        statModifiers = {
+            splitamount = {max = 3, hidden = true},
+            spread = {max = 0.1, hidden = true},
+            splitDamage = {max = 25, hidden = true}
+        }
+    })
+    
     return instance
-end
-
-function Splitter:fire(args)
-    args = args or {}
-    args.spread = self:getStat("spread")
-    args.splitamount = self:getStat("splitamount")
-    args.splitDamage = self:getStat("splitDamage")
-    Turret.fire(self, args)
 end
 
 return Splitter

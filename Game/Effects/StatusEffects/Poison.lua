@@ -6,7 +6,7 @@ function Poison:new(config)
         error("Developer Error: Poison effect called with nil config.")
     end
 
-    local required = {"duration", "dps_poison", "maxStacks"}
+    local required = {"duration_poison", "dps_poison", "maxStacks"}
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: Poison is missing the '" .. key .. "' field in config.")
@@ -35,7 +35,7 @@ function Poison:onApply(target, source)
         if mult > 0 then
             -- Scale dps_poison based on the bullet's damage
             self.dps_poison = source:getStat("damage") * mult
-            print("Applied Poison with " .. self.dps_poison .. " dps")
+            print("applied poison with " .. self.dps_poison .. " dps")
         else
             -- Fall back to flat dps_poison
             pcall(function()
@@ -44,7 +44,7 @@ function Poison:onApply(target, source)
         end
         
         pcall(function()
-            self.duration = source:getStat("duration")
+            self.duration_poison = source:getStat("duration_poison")
         end)
     end
 end

@@ -1,6 +1,7 @@
 local Turret = require("Buildings.Turrets.Turret")
 local Utils = require("Classes.Utils")
 local LobberBullet = require("Bullets.LobberBullet")
+local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
 
 local Lobber = setmetatable({}, { __index = Turret })
 Lobber.__index = Lobber
@@ -11,7 +12,7 @@ Lobber.template = {
     size = 15,
     rotation = 0,
     turnSpeed = math.huge,
-    fireRate = 1,
+    fireRate = 0.4,
     range = 500,
     barrel = 15,
     color = {1, 1, 1, 1},
@@ -24,16 +25,19 @@ Lobber.template = {
     },
     
     -- Bullet properties (now flat)
-    bulletName = "Lobber Bullet",
+    bulletName = "Lobber Shell",
     bulletSpeed = 400,
-    damageType = "normal",
-    damage = 15, 
+    damageType = "explosive",
+    damage = 50, 
+    canDirectHit = false,
     pierce = 1,
     lifespan = 3,
-    bulletW = 4,
-    bulletH = 4,
+    bulletW = 6,
+    bulletH = 6,
     bulletShape = "rectangle",
-    hitEffects = {}
+    hitEffects = {
+        ExplosionEffect:new({explosionDamage = 0, radius = 0}) -- 0 values here because they will flow from the bullet/turret
+    }
 }
 
 function Lobber:new(config)
@@ -47,6 +51,16 @@ function Lobber:new(config)
     baseConfig.bulletType = LobberBullet
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
+    
+    -- Add inherent stats via a hidden buff
+    t.effectManager:applyEffect({
+        name = "Inherent Explosion",
+        statModifiers = {
+            radius = {max = 50, hidden = true},
+            explosion_from_damage = {max = 1, hidden = true}
+        }
+    })
+    
     return t
 end
 

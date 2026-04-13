@@ -68,7 +68,8 @@ function Split:trigger(target, sourceBullet)
             splitamount = sourceBullet:getStat("splitamount"),
             spread = sourceBullet:getStat("spread"),
             splitDamage = sourceBullet:getStat("splitDamage"),
-            splitDamage_from_damage = sourceBullet:getStat("splitDamage_from_damage")
+            splitDamage_from_damage = sourceBullet:getStat("splitDamage_from_damage"),
+            canDirectHit = true
         }
 
         -- Propagate hit effects (but skip ourselves to avoid infinite recursion)

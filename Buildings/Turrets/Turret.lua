@@ -53,12 +53,21 @@ function Turret:new(config)
     t.bulletH = config.bulletH or 4
     t.bulletShape = config.bulletShape or "rectangle"
     t.damageType = config.damageType or "normal"
+    -- Effect Stats (All disabled by default, enabled via buffs/turret-specific logic)
+    t.dps_poison = 0
+    t.duration_poison = 0
+    t.poison_from_damage = 0
+    t.maxStacks = 0
+    t.splitamount = 0
+    t.spread = 0
+    t.splitDamage = 0
+    t.splitDamage_from_damage = 0
+    t.radius = config.radius or 0
+    t.explosionDamage = config.explosionDamage or 0
+    t.explosion_from_damage = config.explosion_from_damage or 0
     
-    -- Splintering Stats (Defaults for potential buffs)
-    t.splitamount = config.splitamount or 0
-    t.spread = config.spread or 0
-    t.splitDamage = config.splitDamage or 0
-    t.splitDamage_from_damage = config.splitDamage_from_damage or 0
+    t.canDirectHit = config.canDirectHit
+    if t.canDirectHit == nil then t.canDirectHit = true end
     
     return t
 end
@@ -109,10 +118,16 @@ function Turret:fire(args)
         hitEffects = currentHitEffects, -- Effects to apply on hit
         poison_from_damage = self:getStat("poison_from_damage"),
         dps_poison = self:getStat("dps_poison"),
+        duration_poison = self:getStat("duration_poison"),
+        maxStacks = self:getStat("maxStacks"),
         splitamount = self:getStat("splitamount"),
         spread = self:getStat("spread"),
         splitDamage = self:getStat("splitDamage"),
         splitDamage_from_damage = self:getStat("splitDamage_from_damage"),
+        radius = self:getStat("radius"),
+        explosionDamage = self:getStat("explosionDamage"),
+        explosion_from_damage = self:getStat("explosion_from_damage"),
+        canDirectHit = self:getStat("canDirectHit"),
         game = self.game, -- Reference to the game object
         source = self,
         tags = {"bullet"},

@@ -71,10 +71,19 @@ function Base:draw()
                         -- Color logic: Green if affordable, Red if locked and expensive
                         local price = self:getSlotPrice(slot)
                         if self.game.money >= price then
-                            love.graphics.setColor(0.2, 0.5, 0.2, 0.6) -- faint green
+                            love.graphics.setColor(0.2, 0.5, 0.2) -- faint green
                         else
-                            love.graphics.setColor(0.5, 0.2, 0.2, 0.6) -- faint red
+                            love.graphics.setColor(0.5, 0.2, 0.2) -- faint red
                         end
+                        
+                        -- Draw $ symbol in the center of locked but visible slots
+                        local font = love.graphics.getFont()
+                        local char = "$"
+                        local charW = font:getWidth(char)
+                        local charH = font:getHeight()
+                        love.graphics.print(char, 
+                            self.buildGrid.x + (i - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charW)/2, 
+                            self.buildGrid.y + (j - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charH)/2 - 2)
                     else
                         love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
                     end

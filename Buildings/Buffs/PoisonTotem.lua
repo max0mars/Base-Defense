@@ -13,7 +13,7 @@ local default = {
     -- Properties for the poison effect granted to cannons
     poisonConfig = {
         name = "poison",
-        duration = 3,
+        duration_poison = 3,
         dps_poison = 10,
         maxStacks = math.huge
     }

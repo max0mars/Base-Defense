@@ -27,20 +27,22 @@ function Bullet:new(config)
     b.displayLifespan = config.displayLifespan or 0.1
 
 
-    -- Poison
+    -- Effect Stats
     b.poison_from_damage = config.poison_from_damage or 0
     b.dps_poison = config.dps_poison or 0
-
-    -- Split
+    b.duration_poison = config.duration_poison or 0
+    b.maxStacks = config.maxStacks or 0
     b.splitamount = config.splitamount or 0
     b.spread = config.spread or 0
     b.splitDamage = config.splitDamage or 0
     b.splitDamage_from_damage = config.splitDamage_from_damage or 0
+    b.radius = config.radius or 0
+    b.explosionDamage = config.explosionDamage or 0
+    b.explosion_from_damage = config.explosion_from_damage or 0
+    b.canDirectHit = config.canDirectHit
+    if b.canDirectHit == nil then b.canDirectHit = true end
     return b
 end
-
-
-
 
 function Bullet:update(dt)
     if self.destroyed then return end
@@ -73,26 +75,40 @@ function Bullet:onHit(target)
     -- Visual Feedback
     self.game:spawnParticleExplosion(self.color, 8, self.x, self.y)
 
+    -- Immediately mark target as hit in the cache (regardless of damage)
     if target then 
-        target:takeDamage(self:getStat("damage"), self.damageType)
+        self.hitCache[target:getID()] = true
     end
-    
-    self.pierce = self.pierce - 1
 
+    -- 1. Trigger Independent Effects (The Payload)
+    -- These trigger regardless of canDirectHit
     if self.hitEffects then
         for _, effectTemplate in ipairs(self.hitEffects) do
             if effectTemplate.isIndependent then
                 if effectTemplate.trigger then
                     effectTemplate:trigger(target, self)
-                elseif effectTemplate.onApply and target and target.effectManager then
-                    target.effectManager:applyEffect(effectTemplate, self)
                 end
-            elseif target and target.effectManager then
-                target.effectManager:applyEffect(effectTemplate, self)
             end
         end
     end
     
+    -- 2. Conditional Direct Impact (Contact Damage & Status Effects)
+    if self:getStat("canDirectHit") then
+        if target then 
+            target:takeDamage(self:getStat("damage"), self.damageType)
+        end
+
+        -- Apply non-independent status effects (Poison, Fire, etc.)
+        if self.hitEffects then
+            for _, effectTemplate in ipairs(self.hitEffects) do
+                if not effectTemplate.isIndependent and target and target.effectManager then
+                    target.effectManager:applyEffect(effectTemplate, self)
+                end
+            end
+        end
+    end
+
+    self.pierce = self.pierce - 1
     if self.pierce <= 0 then
         self:died()
     end

@@ -28,6 +28,7 @@ local MainTurret         = require("Buildings.Turrets.MainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
+local CircleFade       = require("Graphics.Animations.CircleFade")
 local DamageNumber       = require("Graphics.Animations.DamageNumber")
 
 -- -----------------------------------------------------------------------------
@@ -313,6 +314,10 @@ end
 
 function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)
     table.insert(self.animations, ParticleExplosion:new(color, size, x, y, lifetime, numParticles))
+end
+
+function game:spawnCircleFade(x, y, radius, color, duration)
+    table.insert(self.animations, CircleFade:new(x, y, radius, color, duration))
 end
 
 function game:EnemyDied(enemy)
