@@ -108,12 +108,13 @@ function Turret:update(dt)
     self.cooldown = self.cooldown - dt
     self:getTargetArc()
     if self.target then
-        local x, y = self:getTargetLeadPosition()
-        --local x, y = self.target.x, self.target.y
+        local x, y = self.target.x, self.target.y
         self:lookAt(x, y, dt) -- Aim at the target's lead position
         if self.cooldown <= 0 then
             local currentFireRate = self:getStat("fireRate")
             if currentFireRate > 0 then
+                x, y = self:getTargetLeadPosition()
+                self:lookAt(x, y, dt)
                 self:fire({targetX = x, targetY = y})
                 self.cooldown = 1 / currentFireRate
             end
@@ -330,43 +331,39 @@ end
 
 
 function Turret:getTargetLeadPosition()
+    if not self.target then return self.x, self.y end
+    
+    local tof
+    local cx, cy = self:getCenterPosition()
 
-    local x = self.x
-    local y = self.y
-    local targetx = self.target.x
-    local targety = self.target.y
-    local pSpeed = self:getStat("bulletSpeed")
-    local targetvx = self.target:getVelocity() -- Assuming the target has a method to get its velocity
-    local targetvy = 0 -- Assuming enemies move horizontally
-
-    local dx = targetx - x
-    local dy = targety - y
-
-    local a = targetvx^2 + targetvy^2 - pSpeed^2
-    local b = 2 * (dx * targetvx + dy * targetvy)
-    local c = dx^2 + dy^2
-
-    local disc = b^2 - 4 * a * c
-    if disc < 0 or math.abs(a) < 0.0001 then
-        return targetx, targety -- No lead angle, just aim directly at the target
+    -- Check if bullet type specifies a custom flight time calculation
+    if self.bulletType and self.bulletType.getTOF then
+        tof = self.bulletType:getTOF(self, self.target)
+    else
+        local bulletSpeed = self:getStat("bulletSpeed")
+        if bulletSpeed <= 0 then return self.target.x, self.target.y end
+        
+        local dx = self.target.x - cx
+        local dy = self.target.y - cy
+        local initialDist = math.sqrt(dx*dx + dy*dy)
+        tof = initialDist / bulletSpeed
     end
-
-    local sqrt_disc = math.sqrt(disc)
-    local t1 = (-b + sqrt_disc) / (2 * a)
-    local t2 = (-b - sqrt_disc) / (2 * a)
-
-    local t = math.min(t1, t2)
-    if t < 0 then
-        t = math.max(t1, t2) -- Use the positive time if available
+    
+    -- Predict
+    local leadX, leadY = self.target:getFuturePosition(tof)
+    
+    -- Iterative Refinement (only needed for bullets with dynamic flight times)
+    if not (self.bulletType and self.bulletType.getTOF) then
+        local dx2 = leadX - cx
+        local dy2 = leadY - cy
+        local dist2 = math.sqrt(dx2*dx2 + dy2*dy2)
+        local bulletSpeed = self:getStat("bulletSpeed")
+        local tof2 = dist2 / bulletSpeed
+        
+        leadX, leadY = self.target:getFuturePosition(tof2)
     end
-    if t < 0 then
-        return targetx, targety -- If no valid time, aim directly at the target
-    end
-
-    local lead_x = targetx + targetvx * t
-    local lead_y = targety + targetvy * t
-
-    return lead_x, lead_y -- Return the position to aim at
+    
+    return leadX, leadY
 end
 
 function Turret:clearAllBuffs()

@@ -58,16 +58,21 @@ function Bullet:onCollision(obj)
 end
 
 function Bullet:onHit(target)
-    self.pierce = self.pierce - 1
-    target:takeDamage(self:getStat("damage"), self.damageType)
+    if target then 
+        target:takeDamage(self:getStat("damage"), self.damageType)
+    end
     
-    if target.effectManager then
+    self.pierce = self.pierce - 1
+
+    if self.hitEffects then
         for _, effectTemplate in ipairs(self.hitEffects) do
             if effectTemplate.isIndependent then
                 if effectTemplate.trigger then
                     effectTemplate:trigger(target, self)
+                elseif effectTemplate.onApply and target and target.effectManager then
+                    target.effectManager:applyEffect(effectTemplate, self)
                 end
-            else
+            elseif target and target.effectManager then
                 target.effectManager:applyEffect(effectTemplate, self)
             end
         end

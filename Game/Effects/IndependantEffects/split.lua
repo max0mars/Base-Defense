@@ -31,10 +31,14 @@ function Split:trigger(target, sourceBullet)
         -- Calculate angles for shards
         local angle = sourceBullet.angle + (i * _spread) - (_spread * (_splitamount + 1) / 2)
         
+        -- Use target position if available, otherwise use source bullet position (ground hit)
+        local spawnX = target and target.x or sourceBullet.x
+        local spawnY = target and target.y or sourceBullet.y
+
         local splitBulletConfig = {
             name = (sourceBullet.name or "Bullet") .. " Shard",
-            x = target.x,
-            y = target.y,
+            x = spawnX,
+            y = spawnY,
             angle = angle,
             bulletSpeed = _speed * 0.8, -- Shards are slightly slower
             damage = _damage,
@@ -55,8 +59,11 @@ function Split:trigger(target, sourceBullet)
                 splitBulletConfig.hitCache[k] = v
             end
         end
+        
         -- Prevent shards from immediate re-collision with the same target
-        splitBulletConfig.hitCache[target:getID()] = true
+        if target then
+            splitBulletConfig.hitCache[target:getID()] = true
+        end
         
         sourceBullet.game:addObject(Bullet:new(splitBulletConfig))
     end
