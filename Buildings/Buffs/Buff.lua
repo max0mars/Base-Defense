@@ -98,7 +98,7 @@ end
 
 function Buff:applyBuffs()
     -- Apply this buff to all turrets in affected slots using the EffectManager
-    if not self.slot then return end
+    if not self.slot or self.destroyed then return end
     
     local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
     local base = self.game.base
