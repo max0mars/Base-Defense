@@ -1,8 +1,7 @@
-local object = require("Classes.object")
+local bullet = require("Bullets.Bullet")
 local collision = require("Physics.collisionSystem_brute")
-local DeathAnimation = require("Graphics.Animations.DeathAnimation")
 
-local HitscanBullet = setmetatable({}, object)
+local HitscanBullet = setmetatable({}, bullet)
 HitscanBullet.__index = HitscanBullet
 
 function HitscanBullet:new(config)
@@ -17,23 +16,29 @@ function HitscanBullet:new(config)
         end
     end
 
-    local obj = setmetatable(object:new(config), { __index = self })
+    -- Hitscan-specific defaults to satisfy Bullet:new requirements
+    config.bulletSpeed = config.bulletSpeed or 0
+    config.pierce = config.pierce or 1
+    config.w = config.w or 1
+    config.h = config.h or 1
+    config.shape = config.shape or "line"
+    config.lifespan = config.maxLifespan or config.lifespan or 0.1
+
+    local obj = bullet:new(config)
+    setmetatable(obj, self)
     
-    obj.source = config.source
-    obj.lifespan = obj.maxLifespan
-    obj.tags = config.tags or {"bullet"}
-    obj.damageType = config.damageType or "normal"
-    obj.hitEffects = config.hitEffects or {}
+    obj.maxLifespan = obj.lifespan
+    obj.endpoint = { x = obj.x, y = obj.y }
     
     -- Hitscan endpoint logic
-    local x2 = config.targetX --or obj.x + math.cos(obj.angle) * obj:getStat("range")
-    local y2 = config.targetY --or obj.y + math.sin(obj.angle) * obj:getStat("range")
+    local x2 = config.targetX or obj.x
+    local y2 = config.targetY or obj.y
     
     local ray = {
         x1 = obj.x, y1 = obj.y,
         x2 = x2, y2 = y2,
         getHitbox = function(s) return s end,
-        isType = function() return false end -- Rays aren't themselves types usually
+        isType = function() return false end
     }
     
     local closestT = 1
@@ -54,24 +59,30 @@ function HitscanBullet:new(config)
         y = obj.y + (y2 - obj.y) * closestT
     }
     
+    -- Process the hit immediately
     if closestEnemy then
         obj:onHit(closestEnemy)
+    else 
+        obj:onHit(nil)
     end
     
-    table.insert(obj.game.animations, DeathAnimation:new(obj.color, 8, obj.endpoint.x, obj.endpoint.y))
-
     return obj
 end
 
-
-
 function HitscanBullet:onHit(target)
-    target:takeDamage(self:getStat("damage"), self.damageType)
-    if target.effectManager then
-        for _, effectTemplate in ipairs(self.hitEffects) do
-            target.effectManager:applyEffect(effectTemplate, self)
-        end
-        target.effectManager:triggerEvent("onHit", self)
+    -- Temporarily move to endpoint for the particle explosion at the point of impact
+    local oldX, oldY = self.x, self.y
+    self.x, self.y = self.endpoint.x, self.endpoint.y
+    
+    -- Call base Bullet onHit for damage and effect propagation
+    bullet.onHit(self, target)
+    
+    -- Restore position for line drawing
+    self.x, self.y = oldX, oldY
+    
+    -- Hitscan bullets should persist for their trail duration despite hitting something
+    if self.lifespan > 0 then
+        self.destroyed = false
     end
 end
 
@@ -90,4 +101,5 @@ function HitscanBullet:draw()
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
 end
+
 return HitscanBullet

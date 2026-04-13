@@ -58,6 +58,9 @@ function Bullet:onCollision(obj)
 end
 
 function Bullet:onHit(target)
+    -- Visual Feedback
+    self.game:spawnParticleExplosion(self.color, 8, self.x, self.y)
+
     if target then 
         target:takeDamage(self:getStat("damage"), self.damageType)
     end
