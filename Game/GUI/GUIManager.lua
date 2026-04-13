@@ -75,18 +75,27 @@ function GUIManager:update(dt)
 end
 
 function GUIManager:draw()
+    -- Global HUD (Score, Money, Wave) and Masks
+    self:drawHUD()
+    
+    -- UI elements on top of masks
     self.hand:draw()
     self.confirmation:draw() -- Draw prompts above hand
     self.tooltips:draw()     -- Draw tips above everything
-    
-    -- Global HUD (Score, Money, Wave)
-    self:drawHUD()
 end
 
 function GUIManager:drawHUD()
     local game = self.game
 
-    -- 1. Draw Luck Offering Button
+    -- 0. Draw Black Masks to hide gameplay behind HUD
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.rectangle("fill", 0, 0, 800, 100)   -- Top frame
+    love.graphics.rectangle("fill", 0, 500, 800, 100) -- Bottom frame
+    
+    -- 1. Draw glowing borders (moved from GameManager)
+    self:drawBorders()
+
+    -- 2. Draw Luck Offering Button
     local currentCost = game:getLuckCost()
     local canAffordLuck = currentCost and game.money >= currentCost
     local luckMaxed = game.luck >= 10
@@ -184,6 +193,40 @@ function GUIManager:drawHUD()
     
     
     -- Money and Score (optional addition if needed)
+end
+
+function GUIManager:drawBorders()
+    local game = self.game
+    local pulse = (math.sin(game.pulseTimer * (game.oscillationSpeed or 1)) + 1) / 2
+    local r, g, b = 1, 0, 0 -- Red glow
+    local thickness = 4
+    local width, height = love.graphics.getWidth(), love.graphics.getHeight()
+    
+    -- Top Border Line (at y=100)
+    for i = 3, 1, -1 do
+        local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
+        local glowWidth = thickness + i * 4 + pulse * 8
+        love.graphics.setLineWidth(glowWidth)
+        love.graphics.setColor(r, g, b, alpha)
+        love.graphics.line(0, 100, width, 100)
+    end
+    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
+    love.graphics.setLineWidth(thickness)
+    love.graphics.line(0, 100, width, 100)
+    
+    -- Bottom Border Line (at y=500)
+    for i = 3, 1, -1 do
+        local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
+        local glowWidth = thickness + i * 4 + pulse * 8
+        love.graphics.setLineWidth(glowWidth)
+        love.graphics.setColor(r, g, b, alpha)
+        love.graphics.line(0, 500, width, 500)
+    end
+    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
+    love.graphics.setLineWidth(thickness)
+    love.graphics.line(0, 500, width, 500)
+    
+    love.graphics.setLineWidth(1)
 end
 
 function GUIManager:mousepressed(x, y, button)

@@ -45,58 +45,6 @@ function ground:draw()
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 end
 
-local topScreen = {
-    x = 0,
-    y = 0,
-    w = 800,
-    h = 100,
-    color = {love.math.colorFromBytes(255, 0, 0)},
-    thickness = 4
-}
-function topScreen:draw()
-    local pulse = (math.sin(game.pulseTimer * game.oscillationSpeed) + 1) / 2
-    local r, g, b = self.color[1], self.color[2], self.color[3]
-    
-    -- Glow layers
-    for i = 3, 1, -1 do
-        local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
-        local width = self.thickness + i * 4 + pulse * 8
-        love.graphics.setLineWidth(width)
-        love.graphics.setColor(r, g, b, alpha)
-        love.graphics.line(self.x, self.y + self.h, self.x + self.w, self.y + self.h)
-    end
-    
-    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
-    love.graphics.setLineWidth(self.thickness)
-    love.graphics.line(self.x, self.y + self.h, self.x + self.w, self.y + self.h)
-    love.graphics.setLineWidth(1)
-end
-local bottomScreen = {
-    x = 0,
-    y = 500,
-    w = 800,
-    h = 100,
-    color = {love.math.colorFromBytes(255, 0, 0)},
-    thickness = 4
-}
-function bottomScreen:draw()
-    local pulse = (math.sin(game.pulseTimer * game.oscillationSpeed) + 1) / 2
-    local r, g, b = self.color[1], self.color[2], self.color[3]
-    
-    -- Glow layers
-    for i = 3, 1, -1 do
-        local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
-        local width = self.thickness + i * 4 + pulse * 8
-        love.graphics.setLineWidth(width)
-        love.graphics.setColor(r, g, b, alpha)
-        love.graphics.line(self.x, self.y, self.x + self.w, self.y)
-    end
-    
-    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
-    love.graphics.setLineWidth(self.thickness)
-    love.graphics.line(self.x, self.y, self.x + self.w, self.y)
-    love.graphics.setLineWidth(1)
-end
 
 -- -----------------------------------------------------------------------------
 -- Initialization
@@ -152,8 +100,6 @@ function game:load(saveData)
     -- World Setup
     self:addObject(self.base)
     self.ground = ground
-    self.topScreen = topScreen
-    self.bottomScreen = bottomScreen
     
     -- Spawn Starting Turret in the center of the build grid
     self.mainTurret = MainTurret:new({game = self})
@@ -277,8 +223,6 @@ function game:draw()
 
     -- 1. Environment & Grid
     self.ground:draw()
-    self.topScreen:draw()
-    self.bottomScreen:draw()
     
     if self.battlefieldGrid then
         self.battlefieldGrid:drawGrid()
