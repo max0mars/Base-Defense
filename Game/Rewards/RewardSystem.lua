@@ -4,6 +4,7 @@ local Reward = require("Game.Rewards.Reward")
 local RewardSystem = {}
 RewardSystem.__index = RewardSystem
 local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local TestingIndex = require("Game.Rewards.TestingRewardIndex")
 local RewardPool = require("Game.Rewards.RewardPool")
 local Reward = require("Game.Rewards.Reward")
 
@@ -12,7 +13,7 @@ function RewardSystem:new(game)
         game = game,
         isActive = false,
         rewardPool = {}, -- current choices being presented
-        poolLogic = RewardPool:new(RewardIndex)
+        poolLogic = RewardPool:new(TestingIndex)
     }, self)
     
     system.currentChoices = {}
