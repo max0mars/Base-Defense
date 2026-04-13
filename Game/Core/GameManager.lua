@@ -27,7 +27,7 @@ local EffectManager      = require("Game.Effects.EffectManager")
 local MainTurret         = require("Buildings.Turrets.MainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
-local DeathAnimation     = require("Graphics.Animations.DeathAnimation")
+local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
 local DamageNumber       = require("Graphics.Animations.DamageNumber")
 
 -- -----------------------------------------------------------------------------
@@ -135,7 +135,7 @@ function game:recalculateAllBuffs()
     end
     
     for _, obj in ipairs(self.objects) do
-        if obj.applyBuffs then obj:applyBuffs() end
+        if obj.applyBuffs and not obj.destroyed then obj:applyBuffs() end
     end
 end
 
@@ -311,13 +311,13 @@ function game:waveComplete()
     self:addMoney(3)
 end
 
-function game:spawnDeathAnimation(color, size, x, y)
-    table.insert(self.animations, DeathAnimation:new(color, size, x, y))
+function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)
+    table.insert(self.animations, ParticleExplosion:new(color, size, x, y, lifetime, numParticles))
 end
 
 function game:EnemyDied(enemy)
     self:addXP(enemy.reward)
-    self:spawnDeathAnimation(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
+    self:spawnParticleExplosion(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
 end
 
 function game:spawnDamageNumber(amount, x, y, damageType)

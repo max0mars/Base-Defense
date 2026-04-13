@@ -8,7 +8,7 @@ scene_manager.scenes.test = require("Scenes.test_scene")
 scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to menu_scene
 
 function love.load()
-    love.window.setTitle("Enemy and Base Example")
+    love.window.setTitle("Base Defense")
     love.window.setMode(800, 600, { resizable = false, vsync = true })
     math.randomseed( os.time() )
     love.graphics.setDefaultFilter("nearest", "nearest")

@@ -157,28 +157,10 @@ function EffectManager:getStat(statName, baseValue)
     if self.cache[statName] then
         return self.cache[statName]
     end
-
-    local multiplierSum = 0.0
-    local additiveSum = 0.0
-
-    -- Local effects
-    for i = 1, #self.activeEffects do
-        local effect = self.activeEffects[i]
-        if effect.statModifiers and effect.statModifiers[statName] then
-            local mod = effect.statModifiers[statName]
-            multiplierSum = multiplierSum + (mod.mult or mod.multiplier or 0)
-            additiveSum = additiveSum + (mod.add or mod.additive or 0)
-        end
-    end
-
-    -- Parent effects
-    if self.parent then
-        local pMult, pAdd = self.parent:_getModifierSums(statName)
-        multiplierSum = multiplierSum + pMult
-        additiveSum = additiveSum + pAdd
-    end
     
-    local finalValue = (baseValue + additiveSum) * (1 + multiplierSum)
+    local multiplierSum, additiveSum, maxValue = self:_getModifierSums(statName)
+    
+    local finalValue = (baseValue + additiveSum + maxValue) * (1 + multiplierSum)
     self.cache[statName] = finalValue
     return finalValue
 end
@@ -187,6 +169,7 @@ end
 function EffectManager:_getModifierSums(statName, damageTags)
     local multiplierSum = 0.0
     local additiveSum = 0.0
+    local maxValue = 0.0
 
     for i = 1, #self.activeEffects do
         local effect = self.activeEffects[i]
@@ -210,22 +193,26 @@ function EffectManager:_getModifierSums(statName, damageTags)
             if applies then
                 multiplierSum = multiplierSum + (mod.mult or mod.multiplier or 0)
                 additiveSum = additiveSum + (mod.add or mod.additive or 0)
+                if mod.max then
+                    maxValue = math.max(maxValue, mod.max)
+                end
             end
         end
     end
 
     if self.parent then
-        local pMult, pAdd = self.parent:_getModifierSums(statName, damageTags)
+        local pMult, pAdd, pMax = self.parent:_getModifierSums(statName, damageTags)
         multiplierSum = multiplierSum + pMult
         additiveSum = additiveSum + pAdd
+        maxValue = math.max(maxValue, pMax)
     end
 
-    return multiplierSum, additiveSum
+    return multiplierSum, additiveSum, maxValue
 end
 
 function EffectManager:getDamage(baseValue, damageTags)
-    local mult, add = self:_getModifierSums("damage", damageTags)
-    return (baseValue + add) * (1 + mult)
+    local mult, add, max = self:_getModifierSums("damage", damageTags)
+    return (baseValue + add + max) * (1 + mult)
 end
 
 function EffectManager:getTooltipStrings()
@@ -233,15 +220,24 @@ function EffectManager:getTooltipStrings()
     local nameMap = {}
     local flatMap = {}
     local multMap = {}
+    local maxMap = {}
     
     local function processEffects(em)
         for _, effect in ipairs(em.activeEffects) do
             if effect.statModifiers then
                 for statName, mod in pairs(effect.statModifiers) do
-                    nameMap[statName] = true
-                    flatMap[statName] = (flatMap[statName] or 0) + (mod.add or mod.additive or 0)
-                    multMap[statName] = (multMap[statName] or 0) + (mod.mult or mod.multiplier or 0)
+                    if not mod.hidden then
+                        nameMap[statName] = true
+                        flatMap[statName] = (flatMap[statName] or 0) + (mod.add or mod.additive or 0)
+                        multMap[statName] = (multMap[statName] or 0) + (mod.mult or mod.multiplier or 0)
+                        maxMap[statName] = math.max(maxMap[statName] or 0, mod.max or 0)
+                    end
                 end
+            end
+            if effect.grantedHitEffect then
+                local abilityName = effect.grantedHitEffect.name or "Ability"
+                abilityName = abilityName:gsub("^%l", string.upper)
+                table.insert(strings, string.format("%s on Hit", abilityName))
             end
         end
         if em.parent then processEffects(em.parent) end
@@ -250,7 +246,7 @@ function EffectManager:getTooltipStrings()
     processEffects(self)
     
     for statName, _ in pairs(nameMap) do
-        local flat = flatMap[statName] or 0
+        local flat = (flatMap[statName] or 0) + (maxMap[statName] or 0)
         local mult = multMap[statName] or 0
         
         local displayStat = statName:gsub("^%l", string.upper)

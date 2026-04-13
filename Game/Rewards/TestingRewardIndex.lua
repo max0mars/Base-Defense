@@ -7,19 +7,14 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Lobber"),
             type = "building"
         },
-    },
-    uncommon = {
         {
-            id = "slottedBlocker",
-            name = "Slotted Blocker",
-            description = "Block Enemies and allow turrets to be placed on it",
-            building = require("Buildings.Blockers.SlottedBlocker"),
+            id = "poisonTotem",
+            name = "Poison Totem",
+            description = "Coats the turret in front with deadly toxins, adding Poison on-hit.",
+            building = require("Buildings.Buffs.PoisonTotem"),
             type = "building"
         },
     },
-    rare = {},
-    epic = {},
-    legendary = {}
 }
 
 return RewardIndex

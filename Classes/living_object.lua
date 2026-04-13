@@ -36,13 +36,13 @@ function living_object:_drawHealthBar()
         height = self.size
     else 
         width = self.w
-        height = 10 -- Fixed height for rectangle health bar
+        height = math.max(self.h/4, 3) -- Fixed height for rectangle health bar
         yOffset = self.h / 2
     end
 
     -- Position the health bar above the enemy
     local barX = self.x - width/2
-    local barY = self.y - 20 - yOffset -- Adjust this offset as needed
+    local barY = self.y - height - 2 - yOffset -- Adjust this offset as needed
 
     -- Calculate health percentage
     local healthPercent = self.hp / self:getStat("maxHp")

@@ -42,8 +42,16 @@ function Turret:new(config)
         angle = config.firingArc.angle
     }
     
-    t.showArc = false -- Flag to show firing arc
-    t.selected = false -- Flag to show if turret is selected
+    t.color = config.color
+    t.poison_from_damage = config.poison_from_damage or 0
+    t.dps_poison = config.dps_poison or 0
+    t.bulletName = config.bulletName or "Bullet"
+    t.lifespan = config.lifespan or 1
+    t.pierce = config.pierce or 1
+    t.bulletW = config.bulletW or 4
+    t.bulletH = config.bulletH or 4
+    t.bulletShape = config.bulletShape or "rectangle"
+    t.damageType = config.damageType or "normal"
     
     return t
 end
@@ -62,6 +70,20 @@ function Turret:fire(args)
         x, y = self:getFirePoint()
     end
 
+    local currentHitEffects = {}
+    if self.hitEffects then
+        for _, e in ipairs(self.hitEffects) do table.insert(currentHitEffects, e) end
+    end
+    
+    -- Dynamically collect hit effects from current status effects (buffs/totems)
+    if self.effectManager then
+        for _, effect in ipairs(self.effectManager.activeEffects) do
+            if effect.grantedHitEffect then
+                table.insert(currentHitEffects, effect.grantedHitEffect)
+            end
+        end
+    end
+
     local config = {
         name = self:getStat("bulletName"),
         x = x,
@@ -76,7 +98,9 @@ function Turret:fire(args)
         h = self.bulletH,
         shape = self.bulletShape,
         hitbox = true,
-        hitEffects = self.hitEffects or {}, -- Effects to apply on hit
+        hitEffects = currentHitEffects, -- Effects to apply on hit
+        poison_from_damage = self:getStat("poison_from_damage"),
+        dps_poison = self:getStat("dps_poison"),
         game = self.game, -- Reference to the game object
         source = self,
         tags = {"bullet"},
