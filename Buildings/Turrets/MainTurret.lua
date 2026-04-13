@@ -29,11 +29,14 @@ MainTurret.template = {
     -- Bullet Properties (Hitscan)
     bulletName = "Heavy Laser",
     bulletColor = {0, 0, 1},
-    bulletSpeed = 0,
+    -- Bullet Properties (Hitscan)
+    bulletName = "Heavy Laser",
+    bulletColor = {0, 0, 1},
+    bulletSpeed = 400,
     damage = 45,
     pierce = 1,
-    lifespan = 0.5,
-    maxLifespan = 0.5,
+    lifespan = 1, -- logical flight time (unused but requires default)
+    displayLifespan = 0.5, -- How long the laser stays on screen
     bulletW = 4, 
     bulletH = 4,
     damageType = "energy",
@@ -125,7 +128,7 @@ function MainTurret:fire(args)
      local fX, fY = self:getFirePoint()
      local angle = math.atan2(args.targetY - fY, args.targetX - fX)
      args.angle = angle
-     args.maxLifespan = self:getStat("maxLifespan")
+     args.displayLifespan = self:getStat("displayLifespan")
      args.color = self:getStat("bulletColor")
      Turret.fire(self, args)
 end

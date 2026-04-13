@@ -9,7 +9,7 @@ function HitscanBullet:new(config)
         error("Developer Error: HitscanBullet:new called with nil config.")
     end
 
-    local required = {"name", "damage", "maxLifespan", "color"} -- removed "range"
+    local required = {"name", "damage", "displayLifespan", "color"} -- removed "range"
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: HitscanBullet [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
@@ -22,12 +22,14 @@ function HitscanBullet:new(config)
     config.w = config.w or 1
     config.h = config.h or 1
     config.shape = config.shape or "line"
-    config.lifespan = config.maxLifespan or config.lifespan or 0.1
-
+    config.displayLifespan = config.displayLifespan or 0.1
+    config.lifespan = config.displayLifespan -- technical lifespan for base class
+    
     local obj = bullet:new(config)
     setmetatable(obj, self)
     
-    obj.maxLifespan = obj.lifespan
+    obj.displayLifespan = config.displayLifespan
+    obj.maxDisplayLifespan = config.displayLifespan
     obj.endpoint = { x = obj.x, y = obj.y }
     
     -- Hitscan endpoint logic
@@ -81,20 +83,20 @@ function HitscanBullet:onHit(target)
     self.x, self.y = oldX, oldY
     
     -- Hitscan bullets should persist for their trail duration despite hitting something
-    if self.lifespan > 0 then
+    if self.displayLifespan > 0 then
         self.destroyed = false
     end
 end
 
 function HitscanBullet:update(dt)
-    self.lifespan = self.lifespan - dt
-    if self.lifespan <= 0 then
+    self.displayLifespan = self.displayLifespan - dt
+    if self.displayLifespan <= 0 then
         self.destroyed = true
     end
 end
 
 function HitscanBullet:draw()
-    local alpha = self.lifespan / self.maxLifespan
+    local alpha = self.displayLifespan / self.maxDisplayLifespan
     love.graphics.setColor(self.color[1], self.color[2], self.color[3], alpha)
     love.graphics.setLineWidth(2)
     love.graphics.line(self.x, self.y, self.endpoint.x, self.endpoint.y)

@@ -35,6 +35,7 @@ function Poison:onApply(target, source)
         if mult > 0 then
             -- Scale dps_poison based on the bullet's damage
             self.dps_poison = source:getStat("damage") * mult
+            print("Applied Poison with " .. self.dps_poison .. " dps")
         else
             -- Fall back to flat dps_poison
             pcall(function()

@@ -14,6 +14,13 @@ local RewardIndex = {
             building = require("Buildings.Buffs.PoisonTotem"),
             type = "building"
         },
+        {
+            id = "shardBullets",
+            name = "Shard Bullets",
+            description = "Causes the turret in front to fire splintering rounds that burst into shards on impact.",
+            building = require("Buildings.Buffs.ShardBullets"),
+            type = "building"
+        },
     },
 }
 

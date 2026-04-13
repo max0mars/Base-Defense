@@ -13,9 +13,9 @@ local default = {
     -- Properties for the poison effect granted to cannons
     poisonConfig = {
         name = "poison",
-        duration = 4,
+        duration = 3,
         dps_poison = 10,
-        maxStacks = 5
+        maxStacks = math.huge
     }
 }
 
@@ -32,7 +32,7 @@ function PoisonTotem:new(config)
         grantedHitEffect = PoisonEffect:new(config.poisonConfig),
         duration = math.huge,
         statModifiers = {
-            poison_from_damage = {max = 0.2, hidden = true} -- 20% of bullet damage becomes Poison DPS (Non-stacking)
+            poison_from_damage = {max = 0.4, hidden = true} -- 20% of bullet damage becomes Poison DPS (Non-stacking)
         }
     }
     

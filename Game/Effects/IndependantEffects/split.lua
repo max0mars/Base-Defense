@@ -1,4 +1,5 @@
 local Bullet = require("Bullets.Bullet")
+local Utils = require("Classes.Utils")
 
 local Split = {}
 Split.__index = Split
@@ -20,12 +21,19 @@ function Split:trigger(target, sourceBullet)
     
     local _splitamount = sourceBullet:getStat("splitamount") 
     local _spread = sourceBullet:getStat("spread") 
-    local _damage = sourceBullet:getStat("splitDamage") 
     
-    -- Inherited properties that should propagate to shards
-    local _speed = sourceBullet:getStat("bulletSpeed")
-    local _pierce = sourceBullet:getStat("pierce")
-    local _lifespan = sourceBullet:getStat("lifespan")
+    -- local _damage = 0
+    -- local mult = sourceBullet:getStat("splitDamage_from_damage")
+    -- if mult > 0 then
+    --     _damage = sourceBullet:getStat("damage") * mult
+    -- else
+    --     _damage = sourceBullet:getStat("splitDamage")
+    -- end
+    
+    -- -- Inherited properties that should propagate to shards
+    -- local _speed = sourceBullet:getStat("bulletSpeed")
+    -- local _pierce = sourceBullet:getStat("pierce")
+    -- local _lifespan = sourceBullet:getStat("lifespan")
 
     for i = 1, _splitamount do
         -- Calculate angles for shards
@@ -40,18 +48,37 @@ function Split:trigger(target, sourceBullet)
             x = spawnX,
             y = spawnY,
             angle = angle,
-            bulletSpeed = _speed * 0.8, -- Shards are slightly slower
-            damage = _damage,
-            pierce = 1, -- Shards typically don't pierce
-            lifespan = _lifespan * 0.5, -- Shards have shorter life
-            w = 3, h = 3, shape = "rectangle", -- Smaller shards
-            hitbox = true, -- REQUIRED for collision
-            types = { bullet = true }, -- REQUIRED for collision system lookup
+            bulletSpeed = sourceBullet:getStat("bulletSpeed") * 0.7, 
+            damage = sourceBullet:getStat("damage") * 0.4,
+            pierce = 1,
+            lifespan = sourceBullet:getStat("lifespan") * 0.5,
+            displayLifespan = sourceBullet:getStat("displayLifespan") or 0.1,
+            w = 3, h = 3, shape = "rectangle",
+            hitbox = true,
+            types = { bullet = true },
             game = sourceBullet.game,
             source = sourceBullet.source,
             damageType = sourceBullet.damageType,
             hitCache = {},
+            hitEffects = {}, -- We will populate this next
+            
+            -- Pass along all relevant scaling stats
+            poison_from_damage = sourceBullet:getStat("poison_from_damage"),
+            dps_poison = sourceBullet:getStat("dps_poison"),
+            splitamount = sourceBullet:getStat("splitamount"),
+            spread = sourceBullet:getStat("spread"),
+            splitDamage = sourceBullet:getStat("splitDamage"),
+            splitDamage_from_damage = sourceBullet:getStat("splitDamage_from_damage")
         }
+
+        -- Propagate hit effects (but skip ourselves to avoid infinite recursion)
+        if sourceBullet.hitEffects then
+            for _, effect in ipairs(sourceBullet.hitEffects) do
+                if effect ~= self then
+                    table.insert(splitBulletConfig.hitEffects, effect)
+                end
+            end
+        end
         
         -- Individual hit cache management
         if sourceBullet.hitCache then

@@ -24,8 +24,18 @@ function Bullet:new(config)
     b.source = config.source -- Track bullet source for stat calculation
     b.damageType = config.damageType or "normal"
     b.hitEffects = config.hitEffects or {}
+    b.displayLifespan = config.displayLifespan or 0.1
+
+
+    -- Poison
     b.poison_from_damage = config.poison_from_damage or 0
     b.dps_poison = config.dps_poison or 0
+
+    -- Split
+    b.splitamount = config.splitamount or 0
+    b.spread = config.spread or 0
+    b.splitDamage = config.splitDamage or 0
+    b.splitDamage_from_damage = config.splitDamage_from_damage or 0
     return b
 end
 

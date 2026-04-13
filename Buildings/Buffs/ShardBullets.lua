@@ -1,0 +1,43 @@
+local Buff = require("Buildings.Buffs.Buff")
+local SplitEffect = require("Game.Effects.IndependantEffects.split")
+
+local ShardBullets = setmetatable({}, Buff)
+ShardBullets.__index = ShardBullets
+
+local default = {
+    name = "Shard Bullets",
+    types = { passive = true, totem = true, shard = true },
+    affectedSlots = {{1, 0}}, -- Only affects building directly in front
+    color = {0.3, 0.3, 0.8, 1}, -- Steel blue for sharding
+    
+    -- Properties for the split effect identification
+    splitConfig = {
+        name = "split",
+    }
+}
+
+function ShardBullets:new(config)
+    config = config or {}
+    for key, value in pairs(default) do
+        config[key] = config[key] or value
+    end
+    
+    -- Create the effect that the Totem applies to the turret
+    -- This effect now adds stats that tell the split effect to scale with damage
+    config.effect = {
+        name = "Sharding Bullets",
+        grantedHitEffect = SplitEffect:new(config.splitConfig),
+        duration = math.huge,
+        statModifiers = {
+            splitamount = {add = 2, hidden = true},
+            spread = {max = math.pi/8, hidden = true},
+            splitDamage_from_damage = {max = 0.5, hidden = true}
+        }
+    }
+    
+    local obj = Buff:new(config)
+    setmetatable(obj, self)
+    return obj
+end
+
+return ShardBullets

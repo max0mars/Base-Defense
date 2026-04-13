@@ -15,4 +15,8 @@ function Utils.deepCopy(orig)
     return copy
 end
 
+function Utils.defaults(obj)
+    
+end
+
 return Utils

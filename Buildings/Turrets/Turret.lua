@@ -47,11 +47,18 @@ function Turret:new(config)
     t.dps_poison = config.dps_poison or 0
     t.bulletName = config.bulletName or "Bullet"
     t.lifespan = config.lifespan or 1
+    t.displayLifespan = config.displayLifespan or 0.1
     t.pierce = config.pierce or 1
     t.bulletW = config.bulletW or 4
     t.bulletH = config.bulletH or 4
     t.bulletShape = config.bulletShape or "rectangle"
     t.damageType = config.damageType or "normal"
+    
+    -- Splintering Stats (Defaults for potential buffs)
+    t.splitamount = config.splitamount or 0
+    t.spread = config.spread or 0
+    t.splitDamage = config.splitDamage or 0
+    t.splitDamage_from_damage = config.splitDamage_from_damage or 0
     
     return t
 end
@@ -93,6 +100,7 @@ function Turret:fire(args)
         damage = self:getStat("damage"), -- Damage dealt by the bullet
         pierce = self:getStat("pierce"),
         lifespan = self:getStat("lifespan"),
+        displayLifespan = self:getStat("displayLifespan"),
         damageType = self:getStat("damageType"),
         w = self.bulletW,
         h = self.bulletH,
@@ -101,6 +109,10 @@ function Turret:fire(args)
         hitEffects = currentHitEffects, -- Effects to apply on hit
         poison_from_damage = self:getStat("poison_from_damage"),
         dps_poison = self:getStat("dps_poison"),
+        splitamount = self:getStat("splitamount"),
+        spread = self:getStat("spread"),
+        splitDamage = self:getStat("splitDamage"),
+        splitDamage_from_damage = self:getStat("splitDamage_from_damage"),
         game = self.game, -- Reference to the game object
         source = self,
         tags = {"bullet"},
