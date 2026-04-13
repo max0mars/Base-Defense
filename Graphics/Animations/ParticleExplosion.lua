@@ -1,24 +1,24 @@
--- DeathAnimation.lua
--- A visual feedback system for enemy deaths consisting of expanding square outlines.
+-- ParticleExplosion.lua
+-- A generic particle explosion effect for deaths, impacts, and transitions.
 
-local DeathAnimation = {}
-DeathAnimation.__index = DeathAnimation
+local ParticleExplosion = {}
+ParticleExplosion.__index = ParticleExplosion
 
-function DeathAnimation:new(color, size, x, y)
+function ParticleExplosion:new(color, size, x, y, lifetime, numParticles)
     local obj = setmetatable({}, self)
     
     obj.color = color or {1, 1, 1}
     obj.x = x
     obj.y = y
     obj.size = size or 25
-    obj.lifetime = 0.6
-    obj.maxLifetime = 0.6
+    obj.maxLifetime = lifetime or 0.6
+    obj.lifetime = obj.maxLifetime
     obj.destroyed = false
     
     obj.shards = {}
-    local numShards = love.math.random(8, 12)
+    local n = numParticles or love.math.random(8, 12)
     
-    for i = 1, numShards do
+    for i = 1, n do
         local shard = {
             offX = love.math.random(-obj.size/4, obj.size/4),
             offY = love.math.random(-obj.size/4, obj.size/4),
@@ -34,7 +34,7 @@ function DeathAnimation:new(color, size, x, y)
     return obj
 end
 
-function DeathAnimation:update(dt)
+function ParticleExplosion:update(dt)
     self.lifetime = self.lifetime - dt
     if self.lifetime <= 0 then
         self.destroyed = true
@@ -48,7 +48,7 @@ function DeathAnimation:update(dt)
     end
 end
 
-function DeathAnimation:draw()
+function ParticleExplosion:draw()
     local alpha = self.lifetime / self.maxLifetime
     local r, g, b = unpack(self.color)
     
@@ -66,4 +66,4 @@ function DeathAnimation:draw()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-return DeathAnimation
+return ParticleExplosion
