@@ -113,6 +113,86 @@ function Enemy:update(dt)
     self.effectManager:update(dt) -- Update status effects
 end
 
+function Enemy:getFuturePosition(time)
+    local speed = self:getStat("speed")
+    local distToTravel = speed * time
+    if distToTravel <= 0 then return self.x, self.y end
+
+    local nav = self.navigator
+    -- If it's a DirectNavigator or no path
+    if not nav or not nav.path or #nav.path == 0 then
+        -- Direct horizontal movement towards target
+        local dx = self.target - self.x
+        local d = math.abs(dx)
+        if d > 0 then
+            local dir = dx / d
+            if distToTravel >= d then
+                return self.target, self.y
+            else
+                return self.x + dir * distToTravel, self.y
+            end
+        else
+            return self.x, self.y
+        end
+    end
+
+    local currentX, currentY = self.x, self.y
+    local remainingDist = distToTravel
+
+    -- Current target (already has offset applied in Navigator:calculateNodeTarget)
+    local tx, ty = nav.tx, nav.ty
+    if tx and ty then
+        local dx = tx - currentX
+        local dy = ty - currentY
+        local d = math.sqrt(dx*dx + dy*dy)
+        if d > 0 then
+            if remainingDist <= d then
+                return currentX + (dx/d) * remainingDist, currentY + (dy/d) * remainingDist
+            end
+            remainingDist = remainingDist - d
+            currentX, currentY = tx, ty
+        end
+    end
+
+    -- Future nodes
+    for i = (nav.currentNodeIndex or 1) + 1, #nav.path do
+        local prevNode = nav.path[i-1]
+        local currNode = nav.path[i]
+        
+        -- World position of node center
+        local bx = self.game.battlefieldGrid.x + (currNode.x - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
+        local by = self.game.battlefieldGrid.y + (currNode.y - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
+        
+        -- Apply perpendicular offset (replicates GridNavigator:calculateNodeTarget logic)
+        if nav.perpendicularOffset then
+             local pdx = currNode.x - prevNode.x
+             local pdy = currNode.y - prevNode.y
+             local mag = math.sqrt(pdx*pdx + pdy*pdy)
+             if mag > 0 then
+                 local px = -pdy / mag
+                 local py = pdx / mag
+                 bx = bx + px * nav.perpendicularOffset
+                 by = by + py * nav.perpendicularOffset
+             end
+        end
+        
+        local dx = bx - currentX
+        local dy = by - currentY
+        local d = math.sqrt(dx*dx + dy*dy)
+        
+        if d > 0 then
+            if remainingDist <= d then
+                return currentX + (dx/d) * remainingDist, currentY + (dy/d) * remainingDist
+            end
+            remainingDist = remainingDist - d
+            currentX, currentY = bx, by
+        end
+    end
+
+    -- Return the final path node position (reaches the base)
+    return currentX, currentY
+end
+
 function Enemy:recalculatePath()
     if self.navigator and self.navigator.recalculate then
         self.navigator:recalculate()
