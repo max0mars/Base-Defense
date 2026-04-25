@@ -61,7 +61,7 @@ function WaveSpawner:update(dt)
                 local enemyClass = table.remove(self.waveList, 1)
                 local spawnConfig = {
                     game = self.game,
-                    x = 800,
+                    x = self.game.ground.w,
                     y = startY
                 }
                 self.game:addObject(enemyClass:new(spawnConfig))

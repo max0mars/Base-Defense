@@ -51,32 +51,39 @@ function Enemy:new(config)
 end
 
 function Enemy:_createGlowCanvas()
-    local padding = 12
+    self._glowPadding = 12
+    self._useCanvas = false
+end
+
+function Enemy:_ensureGlowCanvas()
+    if self._useCanvas then return end
+
+    local padding = self._glowPadding
     local cw = self.w + padding * 2
     local ch = self.h + padding * 2
-    
-    -- Create canvas and render the glowing outline
+
+    local prevCanvas = love.graphics.getCanvas()
+
     self.canvas = love.graphics.newCanvas(cw, ch)
     love.graphics.setCanvas(self.canvas)
     love.graphics.clear()
-    
+
     local r, g, b, a = unpack(self.color or {1, 0, 0, 1})
-    
-    -- Draw glow layers (static)
+
     for i = 6, 1, -1 do
         local alpha = 0.05 * (1 - i/7)
         love.graphics.setColor(r, g, b, alpha)
         love.graphics.setLineWidth(i * 3)
         love.graphics.rectangle("line", padding, padding, self.w, self.h)
     end
-    
-    -- Main crisp outline
+
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", padding, padding, self.w, self.h)
-    
-    love.graphics.setCanvas()
+
+    love.graphics.setCanvas(prevCanvas)
     self.canvasPadding = padding
+    self._useCanvas = true
 end
 
 function Enemy:update(dt)
@@ -228,6 +235,9 @@ function Enemy:checkBaseCollision()
 end
 
 function Enemy:draw()
+    -- Lazily create canvas on first draw (inside Push's rendering context)
+    self:_ensureGlowCanvas()
+
     -- Draw the pre-rendered glowing canvas
     if self.canvas then
         love.graphics.setColor(1, 1, 1, 1)

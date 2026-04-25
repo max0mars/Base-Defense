@@ -2,6 +2,7 @@ local HandUI = require("Game.GUI.HandUI")
 local TooltipManager = require("Game.GUI.TooltipManager")
 local ConfirmationUI = require("Game.GUI.ConfirmationUI")
 local GameText = require("Game.GUI.GameText")
+local push = require("Libraries.push")
 
 local GUIManager = {}
 GUIManager.__index = GUIManager
@@ -26,7 +27,7 @@ function GUIManager:isConsumingInput(x, y)
     if game.rewardSystem and game.rewardSystem.isActive then return true end
     
     -- Bottom card area (only if active or placing)
-    if y >= love.graphics.getHeight() - 100 then return true end
+    if y >= push:getHeight() - 100 then return true end
     
     -- Confirmation prompt
     if self.confirmation.active then
@@ -61,10 +62,11 @@ function GUIManager:update(dt)
     self.confirmation:update(dt)
 
     -- Handle Info Button Hover
-    local mx, my = love.mouse.getPosition()
+    local mx, my = push:toGame(love.mouse.getPosition())
+    if not mx or not my then return end
     local hoverInfo = mx >= self.infoButton.x and mx <= self.infoButton.x + self.infoButton.w and
                       my >= self.infoButton.y and my <= self.infoButton.y + self.infoButton.h
-    
+
     if hoverInfo and not self.game.rewardSystem.isActive then
         if not self.tooltips.rarityProbs then
             self.tooltips.rarityProbs = self.game.rewardSystem.poolLogic:getLuckProbabilities(self.game.luck)
@@ -89,19 +91,23 @@ function GUIManager:drawHUD()
 
     -- 0. Draw Black Masks to hide gameplay behind HUD
     love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.rectangle("fill", 0, 0, 800, 100)   -- Top frame
-    love.graphics.rectangle("fill", 0, 500, 800, 100) -- Bottom frame
-    
+    love.graphics.rectangle("fill", 0, 0, push:getWidth(), 100)   -- Top frame
+    love.graphics.rectangle("fill", 0, 500, push:getWidth(), 100) -- Bottom frame
+
     -- 1. Draw glowing borders (moved from GameManager)
     self:drawBorders()
+
+    -- Get mouse position once for all hover checks
+    local mx, my = push:toGame(love.mouse.getPosition())
+    mx = mx or -1
+    my = my or -1
 
     -- 2. Draw Luck Offering Button
     local currentCost = game:getLuckCost()
     local canAffordLuck = currentCost and game.money >= currentCost
     local luckMaxed = game.luck >= 10
     local luckEnabled = not luckMaxed and game.inputMode == "idle"
-    
-    local mx, my = love.mouse.getPosition()
+
     local isLuckHovered = mx >= self.luckButton.x and mx <= self.luckButton.x + self.luckButton.w and
                          my >= self.luckButton.y and my <= self.luckButton.y + self.luckButton.h
     
@@ -127,31 +133,30 @@ function GUIManager:drawHUD()
     love.graphics.setColor(0, 255, 0, 1)
     
     -- Wave info
-    love.graphics.printf("Wave: " .. game.wave, 240, 20, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("Money: " .. game.money, 240, 40, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("Score: " .. game.xp, 240, 60, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Wave: " .. game.wave, 240, 20, push:getWidth() - 20, "left")
+    love.graphics.printf("Money: " .. game.money, 240, 40, push:getWidth() - 20, "left")
+    love.graphics.printf("Score: " .. game.xp, 240, 60, push:getWidth() - 20, "left")
 
-    love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("AutoFire: " .. (game.autoFire and "On" or "Off"), 600, 40, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, push:getWidth() - 20, "left")
+    love.graphics.printf("AutoFire: " .. (game.autoFire and "On" or "Off"), 600, 40, push:getWidth() - 20, "left")
 
     if game:isState("startup") then
         love.graphics.setColor(1, 1, 1, 1)
         local y = 150
         for i, lineSet in ipairs(GameText.IntroText) do
             local text = lineSet[1]
-            love.graphics.printf(text, 90, y, love.graphics.getWidth() - 100, "center")
+            love.graphics.printf(text, 90, y, push:getWidth() - 100, "center")
             
             -- Estimate lines based on width (very rough approximation for height offset)
             local font = love.graphics.getFont()
-            local _, lines = font:getWrap(text, love.graphics.getWidth() - 100)
+            local _, lines = font:getWrap(text, push:getWidth() - 100)
             y = y + (#lines * 16) + 10 -- 16 line height + 10 padding
         end
-        love.graphics.printf("Press Enter to Start", 0, y + 30, love.graphics.getWidth(), "center")
+        love.graphics.printf("Press Enter to Start", 0, y + 30, push:getWidth(), "center")
     end
 
     -- Reward and Auto-start
     -- Draw Buy Button
-    local mx, my = love.mouse.getPosition()
     local isHovered = mx >= self.buyButton.x and mx <= self.buyButton.x + self.buyButton.w and
                       my >= self.buyButton.y and my <= self.buyButton.y + self.buyButton.h
     
@@ -178,7 +183,6 @@ function GUIManager:drawHUD()
     love.graphics.printf(btnText, self.buyButton.x, self.buyButton.y + 7, self.buyButton.w, "center")
     
     -- Draw Info Button
-    local mx, my = love.mouse.getPosition()
     local hoverInfo = mx >= self.infoButton.x and mx <= self.infoButton.x + self.infoButton.w and
                       my >= self.infoButton.y and my <= self.infoButton.y + self.infoButton.h
     
@@ -200,7 +204,7 @@ function GUIManager:drawBorders()
     local pulse = (math.sin(game.pulseTimer * (game.oscillationSpeed or 1)) + 1) / 2
     local r, g, b = 1, 0, 0 -- Red glow
     local thickness = 4
-    local width, height = love.graphics.getWidth(), love.graphics.getHeight()
+    local width, height = push:getWidth(), push:getHeight()
     
     -- Top Border Line (at y=100)
     for i = 3, 1, -1 do

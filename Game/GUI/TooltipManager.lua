@@ -1,3 +1,5 @@
+local push = require("Libraries.push")
+
 local TooltipManager = {}
 TooltipManager.__index = TooltipManager
 
@@ -36,13 +38,15 @@ function TooltipManager:draw()
     -- Draw startup and preparation messages
     if game:isState("preparing") then
         love.graphics.setColor(1, 1, 1, 0.5)
-        love.graphics.printf("Press Enter to Start Wave ", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
+        love.graphics.printf("Press Enter to Start Wave ", 0, push:getHeight() / 2 - 20, push:getWidth(), "center")
     end
 
     -- Draw rarity probabilities tooltip
     if self.rarityProbs then
-        local mx, my = love.mouse.getPosition()
-        self:drawRarityTooltip(mx + 15, my + 15, self.rarityProbs)
+        local mx, my = push:toGame(love.mouse.getPosition())
+        if mx and my then
+            self:drawRarityTooltip(mx + 15, my + 15, self.rarityProbs)
+        end
     end
 end
 

@@ -30,6 +30,7 @@ local enemy              = require("Enemies.Enemy") -- Note: Check if needed her
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
 local CircleFade       = require("Graphics.Animations.CircleFade")
 local DamageNumber       = require("Graphics.Animations.DamageNumber")
+local push             = require("Libraries.push")
 
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
@@ -37,10 +38,12 @@ local DamageNumber       = require("Graphics.Animations.DamageNumber")
 local ground = {
     x = 0,
     y = 100,
-    w = 800,
     h = 400,
     color = {love.math.colorFromBytes(0, 0, 0)}
 }
+function ground:init()
+    self.w = push:getWidth()
+end
 function ground:draw()
     love.graphics.setColor(self.color)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
@@ -96,9 +99,10 @@ function game:load(saveData)
     end
     
     -- Setup Physics/Collision
-    collision:setGrid(800, 600, 32)
-    
+    collision:setGrid(push:getWidth(), push:getHeight(), 32)
+
     -- World Setup
+    ground:init()
     self:addObject(self.base)
     self.ground = ground
     
@@ -277,10 +281,12 @@ function game:draw()
     end
 
     -- 6. Custom Cursor
-    local mx, my = love.mouse.getPosition()
-    love.graphics.setColor(1, 0, 0, 1)
-    love.graphics.circle("fill", mx, my, 3)
-    love.graphics.setColor(1, 1, 1, 1)
+    local mx, my = push:toGame(love.mouse.getPosition())
+    if mx and my then
+        love.graphics.setColor(1, 0, 0, 1)
+        love.graphics.circle("fill", mx, my, 3)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
 end
 
 -- -----------------------------------------------------------------------------
