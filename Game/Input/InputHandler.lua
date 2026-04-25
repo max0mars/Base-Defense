@@ -1,3 +1,5 @@
+local push = require("Libraries.push")
+
 local InputHandler = {}
 InputHandler.__index = InputHandler
 
@@ -22,10 +24,11 @@ function InputHandler:update(dt)
         self.game.base.hoverTooltip = nil
     end
 
-    self.mouseX, self.mouseY = love.mouse.getPosition()
-    
+    local mx, my = push:toGame(love.mouse.getPosition())
+    if mx and my then
+        self.mouseX, self.mouseY = mx, my
+    end
 
-    
     -- Handle space key hold for showing all firing arcs
     local showAllArcs = love.keyboard.isDown("space")
     for _, obj in ipairs(game.objects) do

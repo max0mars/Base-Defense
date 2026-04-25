@@ -1,3 +1,5 @@
+local push = require("Libraries.push")
+
 local EffectManager = {}
 EffectManager.__index = EffectManager
 
@@ -288,8 +290,8 @@ function EffectManager:drawTooltip(drawx, drawy)
     -- Ensure it doesn't go off the left side (or right side)
     if tipX < 5 then
         tipX = 5
-    elseif tipX + boxWidth > love.graphics.getWidth() - 5 then
-        tipX = love.graphics.getWidth() - 5 - boxWidth
+    elseif tipX + boxWidth > push:getWidth() - 5 then
+        tipX = push:getWidth() - 5 - boxWidth
     end
     
     local r, g, b, a = love.graphics.getColor()

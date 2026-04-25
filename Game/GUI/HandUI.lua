@@ -1,3 +1,5 @@
+local push = require("Libraries.push")
+
 local HandUI = {}
 HandUI.__index = HandUI
 
@@ -20,8 +22,8 @@ function HandUI:getCardArea()
     local spacing = math.min(60, 600 / inventorySize)
     if inventorySize == 1 then spacing = self.cardW end
     local totalWidth = (inventorySize - 1) * spacing + self.cardW
-    local startX = (love.graphics.getWidth() - totalWidth) / 2
-    local startY = love.graphics.getHeight() - self.cardH
+    local startX = (push:getWidth() - totalWidth) / 2
+    local startY = push:getHeight() - self.cardH
     
     return startX, startY, totalWidth, self.cardH, spacing
 end
@@ -32,9 +34,10 @@ function HandUI:update(dt)
         return 
     end
     
-    local mx, my = love.mouse.getPosition()
+    local mx, my = push:toGame(love.mouse.getPosition())
+    if not mx or not my then return end
     local startX, startY, totalWidth, totalHeight, spacing = self:getCardArea()
-    
+
     self.hoveredIndex = nil
     local inventory = self.game.inventory.items
     if startX and my >= startY then
@@ -94,15 +97,15 @@ end
 
 function HandUI:drawDropZone()
     love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.rectangle("fill", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), 100)
+    love.graphics.rectangle("fill", 0, push:getHeight() - 100, push:getWidth(), 100)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Click here to store building", 0, love.graphics.getHeight() - 55, love.graphics.getWidth(), "center")
+    love.graphics.printf("Click here to store building", 0, push:getHeight() - 55, push:getWidth(), "center")
 end
 
 function HandUI:mousepressed(x, y, button)
     if button ~= 1 then return false end
     
-    if y >= love.graphics.getHeight() - 100 then
+    if y >= push:getHeight() - 100 then
         if self.game.inputMode == "placing" then
             self.game.inventory:add(self.game.blueprint)
             self.game.blueprint = nil

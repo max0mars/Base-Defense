@@ -1,3 +1,5 @@
+local push = require("Libraries.push")
+
 local ConfirmationUI = {}
 ConfirmationUI.__index = ConfirmationUI
 
@@ -30,8 +32,8 @@ function ConfirmationUI:draw()
     
     -- Bound to screen
     if cx < 5 then cx = 5 
-    elseif cx + self.boxW > love.graphics.getWidth() - 5 then
-        cx = love.graphics.getWidth() - 5 - self.boxW
+    elseif cx + self.boxW > push:getWidth() - 5 then
+        cx = push:getWidth() - 5 - self.boxW
     end
     
     -- Draw box

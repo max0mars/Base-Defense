@@ -1,6 +1,7 @@
 local Turret = require("Buildings.Turrets.Turret")
-local HitscanBullet = require("Bullets.HitscanBullet")
+local RicochetBullet = require("Bullets.RicochetBullet")
 local Utils = require("Classes.Utils")
+local push = require("Libraries.push")
 
 local MainTurret = setmetatable({}, { __index = Turret })
 MainTurret.__index = MainTurret
@@ -26,21 +27,18 @@ MainTurret.template = {
         angle = math.pi * 2 
     },
     
-    -- Bullet Properties (Hitscan)
-    bulletName = "Heavy Laser",
-    bulletColor = {0, 0, 1},
-    -- Bullet Properties (Hitscan)
-    bulletName = "Heavy Laser",
-    bulletColor = {0, 0, 1},
-    bulletSpeed = 400,
+    -- Bullet Properties (Ricochet)
+    bulletName = "Ricochet Shot",
+    bulletColor = {0, 0.5, 1},
+    bulletSpeed = 600,
     damage = 40,
     pierce = 1,
-    lifespan = 1, -- logical flight time (unused but requires default)
-    displayLifespan = 0.5, -- How long the laser stays on screen
-    bulletW = 4, 
-    bulletH = 4,
+    lifespan = 5,
+    maxBounces = 3,
+    bulletW = 6,
+    bulletH = 6,
     damageType = "energy",
-    bulletShape = "ray",
+    bulletShape = "rectangle",
     hitEffects = {}
 }
 
@@ -53,7 +51,7 @@ function MainTurret:new(config)
         end
     end
     
-    baseConfig.bulletType = HitscanBullet
+    baseConfig.bulletType = RicochetBullet
     
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
@@ -87,8 +85,10 @@ function MainTurret:update(dt)
     self.cooldown = self.cooldown - dt
     
     if self.autofire and self.game:isState("wave") then
-        local mx, my = love.mouse.getPosition()
-        self:PlayerClick(mx, my)
+        local mx, my = push:toGame(love.mouse.getPosition())
+        if mx and my then
+            self:PlayerClick(mx, my)
+        end
     end
 end
 
@@ -123,13 +123,11 @@ function MainTurret:PlayerClick(tX, tY)
 end
 
 function MainTurret:fire(args)
-     -- In MainTurret, we want to ensure we pass the correct angle to the bullet
-     -- since it doesn't rotate automatically like regular turrets
      local fX, fY = self:getFirePoint()
      local angle = math.atan2(args.targetY - fY, args.targetX - fX)
      args.angle = angle
-     args.displayLifespan = self:getStat("displayLifespan")
      args.color = self:getStat("bulletColor")
+     args.maxBounces = self:getStat("maxBounces")
      Turret.fire(self, args)
 end
 

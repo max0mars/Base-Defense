@@ -1,3 +1,5 @@
+local push = require("Libraries.push")
+
 local BattlefieldGrid = {}
 BattlefieldGrid.__index = BattlefieldGrid
 
@@ -8,7 +10,7 @@ function BattlefieldGrid:new(game)
     obj.cellSize = 25
     obj.x = 0
     obj.y = 100
-    obj.width = math.floor(love.graphics.getWidth() / obj.cellSize)
+    obj.width = math.floor(push:getWidth() / obj.cellSize)
     obj.height = 16
     
     obj.buildings = {}

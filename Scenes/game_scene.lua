@@ -7,6 +7,7 @@ setmetatable(game_scene, { __index = scene })
 
 local time_mul = 1
 local game = require("Game.Core.GameManager") -- Import the game module
+local push = require("Libraries.push")
 
 function game_scene:load()
     time_mul = 1 -- game starts frozen
@@ -30,18 +31,18 @@ end
 function game_scene:draw()
     if self.gameover then
         love.graphics.setColor(0, 0, 0, 0.7) -- Semi-transparent black for game over overlay
-        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        love.graphics.rectangle("fill", 0, 0, push:getWidth(), push:getHeight())
         love.graphics.setColor(1, 0, 0) -- Red color for text
-        love.graphics.printf("Game Over", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
-        love.graphics.printf("Final Score: " .. game.xp, 0, love.graphics.getHeight() / 2 + 20, love.graphics.getWidth(), "center")
+        love.graphics.printf("Game Over", 0, push:getHeight() / 2 - 20, push:getWidth(), "center")
+        love.graphics.printf("Final Score: " .. game.xp, 0, push:getHeight() / 2 + 20, push:getWidth(), "center")
         return
     end
     game:draw()
     if paused == 1 then
         love.graphics.setColor(0, 0, 0, 0.5) -- Semi-transparent black for pause overlay
-        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        love.graphics.rectangle("fill", 0, 0, push:getWidth(), push:getHeight())
         love.graphics.setColor(1, 1, 1) -- Reset color for text
-        love.graphics.printf("Game Paused", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
+        love.graphics.printf("Game Paused", 0, push:getHeight() / 2 - 20, push:getWidth(), "center")
     end
     love.graphics.setColor(1, 1, 1, 1)
     -- love.graphics.print("Money: " .. game.money, 10, 10)

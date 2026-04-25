@@ -2,6 +2,7 @@ local RewardPool = require("Game.Rewards.RewardPool")
 local SpecialRewardIndex = require("Game.Rewards.SpecialRewardIndex")
 local EnemyRewardIndex = require("Game.Rewards.EnemyRewardIndex")
 local Reward = require("Game.Rewards.Reward")
+local push = require("Libraries.push")
 
 local SpecialUpgradeManager = {}
 SpecialUpgradeManager.__index = SpecialUpgradeManager
@@ -100,8 +101,8 @@ end
 function SpecialUpgradeManager:draw()
     if not self.isActive then return end
     
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
+    local screenW = push:getWidth()
+    local screenH = push:getHeight()
     
     -- Background
     love.graphics.setColor(0.1, 0, 0, 0.85) -- Darker, redder for "Devil's Bargain"
@@ -163,7 +164,7 @@ end
 function SpecialUpgradeManager:mousepressed(x, y, button)
     if not self.isActive or button ~= 1 then return end
     
-    local screenW = love.graphics.getWidth()
+    local screenW = push:getWidth()
     local totalW = (#self.currentPairs * self.cardWidth) + ((#self.currentPairs - 1) * self.cardSpacing)
     local startX = (screenW - totalW) / 2
     local startY = 150
