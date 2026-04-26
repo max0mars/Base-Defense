@@ -22,8 +22,8 @@ function Inventory:update(dt)
         local spacing = math.min(60, 600 / #self.items)
         if #self.items == 1 then spacing = cardW end
         local totalWidth = (#self.items - 1) * spacing + cardW
-        local startX = (love.graphics.getWidth() - totalWidth) / 2
-        local startY = love.graphics.getHeight() - cardH
+        local startX = (VIRTUAL_WIDTH - totalWidth) / 2
+        local startY = VIRTUAL_HEIGHT - cardH
         
         for i = #self.items, 1, -1 do
             local cardX = startX + (i - 1) * spacing
@@ -46,8 +46,8 @@ function Inventory:draw()
         local spacing = math.min(60, 600 / inventorySize)
         if inventorySize == 1 then spacing = cardW end
         local totalWidth = (inventorySize - 1) * spacing + cardW
-        local startX = (love.graphics.getWidth() - totalWidth) / 2
-        local startY = love.graphics.getHeight() - cardH
+        local startX = (VIRTUAL_WIDTH - totalWidth) / 2
+        local startY = VIRTUAL_HEIGHT - cardH
         
         for i, blueprint in ipairs(self.items) do
             if i ~= self.hoveredCardIndex then
@@ -95,10 +95,10 @@ function Inventory:draw()
     -- Storage Zone Hint and Grey Effect (drawn ON TOP of cards)
     if game.inputMode == "placing" then
         love.graphics.setColor(0, 0, 0, 0.5)
-        love.graphics.rectangle("fill", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), 100)
+        love.graphics.rectangle("fill", 0, VIRTUAL_HEIGHT - 100, VIRTUAL_WIDTH, 100)
         
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("Click here to store building", 0, love.graphics.getHeight() - 55, love.graphics.getWidth(), "center")
+        love.graphics.printf("Click here to store building", 0, VIRTUAL_HEIGHT - 55, VIRTUAL_WIDTH, "center")
     end
     
     love.graphics.setColor(1, 1, 1, 1)

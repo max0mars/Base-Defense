@@ -20,8 +20,8 @@ function HandUI:getCardArea()
     local spacing = math.min(60, 600 / inventorySize)
     if inventorySize == 1 then spacing = self.cardW end
     local totalWidth = (inventorySize - 1) * spacing + self.cardW
-    local startX = (love.graphics.getWidth() - totalWidth) / 2
-    local startY = love.graphics.getHeight() - self.cardH
+    local startX = (VIRTUAL_WIDTH - totalWidth) / 2
+    local startY = VIRTUAL_HEIGHT - self.cardH
     
     return startX, startY, totalWidth, self.cardH, spacing
 end
@@ -94,15 +94,15 @@ end
 
 function HandUI:drawDropZone()
     love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.rectangle("fill", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), 100)
+    love.graphics.rectangle("fill", 0, VIRTUAL_HEIGHT - 100, VIRTUAL_WIDTH, 100)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Click here to store building", 0, love.graphics.getHeight() - 55, love.graphics.getWidth(), "center")
+    love.graphics.printf("Click here to store building", 0, VIRTUAL_HEIGHT - 55, VIRTUAL_WIDTH, "center")
 end
 
 function HandUI:mousepressed(x, y, button)
     if button ~= 1 then return false end
     
-    if y >= love.graphics.getHeight() - 100 then
+    if y >= VIRTUAL_HEIGHT - 100 then
         if self.game.inputMode == "placing" then
             self.game.inventory:add(self.game.blueprint)
             self.game.blueprint = nil

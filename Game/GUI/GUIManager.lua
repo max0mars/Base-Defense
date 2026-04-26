@@ -26,7 +26,7 @@ function GUIManager:isConsumingInput(x, y)
     if game.rewardSystem and game.rewardSystem.isActive then return true end
     
     -- Bottom card area (only if active or placing)
-    if y >= love.graphics.getHeight() - 100 then return true end
+    if y >= VIRTUAL_HEIGHT - 100 then return true end
     
     -- Confirmation prompt
     if self.confirmation.active then
@@ -127,9 +127,9 @@ function GUIManager:drawHUD()
     love.graphics.setColor(0, 255, 0, 1)
     
     -- Wave info
-    love.graphics.printf("Wave: " .. game.wave, 10, 10, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("Tokens: " .. game.tokens, 10, 30, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("Score: " .. game.xp, 10, 50, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Wave: " .. game.wave, 10, 10, VIRTUAL_WIDTH - 20, "left")
+    love.graphics.printf("Tokens: " .. game.tokens, 10, 30, VIRTUAL_WIDTH - 20, "left")
+    love.graphics.printf("Score: " .. game.xp, 10, 50, VIRTUAL_WIDTH - 20, "left")
 
     -- Base Health Bar
     if game.base then
@@ -155,22 +155,22 @@ function GUIManager:drawHUD()
         love.graphics.print(text, barX + (barW - tw)/2, barY - 14)
     end
 
-    love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("AutoFire: " .. (game.autoFire and "On" or "Off"), 600, 40, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, VIRTUAL_WIDTH - 20, "left")
+    love.graphics.printf("AutoFire: " .. (game.autoFire and "On" or "Off"), 600, 40, VIRTUAL_WIDTH - 20, "left")
     
     if game:isState("startup") then
         love.graphics.setColor(1, 1, 1, 1)
         local y = 150
         for i, lineSet in ipairs(GameText.IntroText) do
             local text = lineSet[1]
-            love.graphics.printf(text, 90, y, love.graphics.getWidth() - 100, "center")
+            love.graphics.printf(text, 90, y, VIRTUAL_WIDTH - 100, "center")
             
             -- Estimate lines based on width (very rough approximation for height offset)
             local font = love.graphics.getFont()
-            local _, lines = font:getWrap(text, love.graphics.getWidth() - 100)
+            local _, lines = font:getWrap(text, VIRTUAL_WIDTH - 100)
             y = y + (#lines * 16) + 10 -- 16 line height + 10 padding
         end
-        love.graphics.printf("Press Enter to Start", 0, y + 30, love.graphics.getWidth(), "center")
+        love.graphics.printf("Press Enter to Start", 0, y + 30, VIRTUAL_WIDTH, "center")
     end
 
     -- Reward and Auto-start
@@ -224,7 +224,7 @@ function GUIManager:drawBorders()
     local pulse = (math.sin(game.pulseTimer * (game.oscillationSpeed or 1)) + 1) / 2
     local r, g, b = 1, 0, 0 -- Red glow
     local thickness = 4
-    local width, height = love.graphics.getWidth(), love.graphics.getHeight()
+    local width, height = VIRTUAL_WIDTH, VIRTUAL_HEIGHT
     
     -- Top Border Line (at y=100)
     for i = 3, 1, -1 do

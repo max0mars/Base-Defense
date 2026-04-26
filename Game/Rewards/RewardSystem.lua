@@ -82,12 +82,12 @@ function RewardSystem:draw()
     
     -- Draw background overlay
     love.graphics.setColor(0, 0, 0, 0.7)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
     
     -- Draw title
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Choose Your Reward", 0, 50, love.graphics.getWidth(), "center")
-    --love.graphics.printf("Use A/D or Arrow Keys to select, Enter/Space to confirm", 0, 80, love.graphics.getWidth(), "center")
+    love.graphics.printf("Choose Your Reward", 0, 50, VIRTUAL_WIDTH, "center")
+    --love.graphics.printf("Use A/D or Arrow Keys to select, Enter/Space to confirm", 0, 80, VIRTUAL_WIDTH, "center")
     
     -- Draw reward cards
     for i, reward in ipairs(self.currentChoices) do

@@ -100,8 +100,8 @@ end
 function SpecialUpgradeManager:draw()
     if not self.isActive then return end
     
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
+    local screenW = VIRTUAL_WIDTH
+    local screenH = VIRTUAL_HEIGHT
     
     -- Background
     love.graphics.setColor(0.1, 0, 0, 0.85) -- Darker, redder for "Devil's Bargain"
@@ -163,7 +163,7 @@ end
 function SpecialUpgradeManager:mousepressed(x, y, button)
     if not self.isActive or button ~= 1 then return end
     
-    local screenW = love.graphics.getWidth()
+    local screenW = VIRTUAL_WIDTH
     local totalW = (#self.currentPairs * self.cardWidth) + ((#self.currentPairs - 1) * self.cardSpacing)
     local startX = (screenW - totalW) / 2
     local startY = 150

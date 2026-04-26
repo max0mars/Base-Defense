@@ -30,18 +30,18 @@ end
 function game_scene:draw()
     if self.gameover then
         love.graphics.setColor(0, 0, 0, 0.7) -- Semi-transparent black for game over overlay
-        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
         love.graphics.setColor(1, 0, 0) -- Red color for text
-        love.graphics.printf("Game Over", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
-        love.graphics.printf("Final Score: " .. game.xp, 0, love.graphics.getHeight() / 2 + 20, love.graphics.getWidth(), "center")
+        love.graphics.printf("Game Over", 0, VIRTUAL_HEIGHT / 2 - 20, VIRTUAL_WIDTH, "center")
+        love.graphics.printf("Final Score: " .. game.xp, 0, VIRTUAL_HEIGHT / 2 + 20, VIRTUAL_WIDTH, "center")
         return
     end
     game:draw()
     if paused == 1 then
         love.graphics.setColor(0, 0, 0, 0.5) -- Semi-transparent black for pause overlay
-        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
         love.graphics.setColor(1, 1, 1) -- Reset color for text
-        love.graphics.printf("Game Paused", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
+        love.graphics.printf("Game Paused", 0, VIRTUAL_HEIGHT / 2 - 20, VIRTUAL_WIDTH, "center")
     end
     love.graphics.setColor(1, 1, 1, 1)
     -- love.graphics.print("Tokens: " .. game.tokens, 10, 10)

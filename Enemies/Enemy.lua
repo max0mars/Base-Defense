@@ -45,8 +45,6 @@ function Enemy:new(config)
     -- Hybrid Separation Initial State
     obj.currentSeparationStrength = 0 -- 0=Line, 1=Spread
     
-    obj:_createGlowCanvas()
-    
     return obj
 end
 
@@ -58,7 +56,7 @@ function Enemy:_createGlowCanvas()
     -- Create canvas and render the glowing outline
     self.canvas = love.graphics.newCanvas(cw, ch)
     love.graphics.setCanvas(self.canvas)
-    love.graphics.clear()
+    love.graphics.clear(0, 0, 0, 0)
     
     local r, g, b, a = unpack(self.color or {1, 0, 0, 1})
     
@@ -204,13 +202,6 @@ function Enemy:getVelocity()
     return -currentSpeed, 0 -- Enemies move left by default
 end
 
--- function Enemy:onCollision(obj)
---     if obj:isType('base') then
---         obj:takeDamage(self:getStat("damage"))
---         self:died() -- Destroy enemy on collision with base
---     end
--- end
-
 function Enemy:died()
     self.game:EnemyDied(self) -- tell game manager I dead
     self:destroy() -- Call the destroy method from the base living_object
@@ -228,11 +219,22 @@ function Enemy:checkBaseCollision()
 end
 
 function Enemy:draw()
-    -- Draw the pre-rendered glowing canvas
-    if self.canvas then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(self.canvas, self.x - self.w/2 - self.canvasPadding, self.y - self.h/2 - self.canvasPadding)
+    local r, g, b, a = unpack(self.color or {1, 0, 0, 1})
+    local drawX = self.x - self.w/2
+    local drawY = self.y - self.h/2
+    
+    -- Draw glow layers dynamically (no canvas needed)
+    for i = 6, 1, -1 do
+        local alpha = 0.05 * (1 - i/7)
+        love.graphics.setColor(r, g, b, alpha)
+        love.graphics.setLineWidth(i * 3)
+        love.graphics.rectangle("line", drawX, drawY, self.w, self.h)
     end
+    
+    -- Main crisp outline
+    love.graphics.setColor(r, g, b, 1)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", drawX, drawY, self.w, self.h)
     
     if self.game.debugMode and self.navigator and self.navigator.path then
         love.graphics.setColor(0, 1, 0, 0.5) -- Green transparent line for path
@@ -248,8 +250,6 @@ function Enemy:draw()
                 local wx = self.game.battlefieldGrid.x + (node.x - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
                 local wy = self.game.battlefieldGrid.y + (node.y - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
                 
-                -- Offset perpendicular to segment is NOT drawn in the path line (the line is the raw path)
-                -- but the FIRST point should start from the enemy's world position
                 love.graphics.line(prevX, prevY, wx, wy)
                 prevX, prevY = wx, wy
             end

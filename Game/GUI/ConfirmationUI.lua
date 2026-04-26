@@ -30,8 +30,8 @@ function ConfirmationUI:draw()
     
     -- Bound to screen
     if cx < 5 then cx = 5 
-    elseif cx + self.boxW > love.graphics.getWidth() - 5 then
-        cx = love.graphics.getWidth() - 5 - self.boxW
+    elseif cx + self.boxW > VIRTUAL_WIDTH - 5 then
+        cx = VIRTUAL_WIDTH - 5 - self.boxW
     end
     
     -- Draw box

@@ -8,7 +8,7 @@ function BattlefieldGrid:new(game)
     obj.cellSize = 25
     obj.x = 0
     obj.y = 100
-    obj.width = math.floor(love.graphics.getWidth() / obj.cellSize)
+    obj.width = math.floor(VIRTUAL_WIDTH / obj.cellSize)
     obj.height = 16
     
     obj.buildings = {}
