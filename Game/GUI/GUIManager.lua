@@ -12,9 +12,9 @@ function GUIManager:new(game)
         hand = HandUI:new(game),
         tooltips = TooltipManager:new(game),
         confirmation = ConfirmationUI:new(game),
-        buyButton = { x = 10, y = 50, w = 150, h = 30 },
-        infoButton = { x = 165, y = 50, w = 30, h = 30 },
-        luckButton = { x = 10, y = 10, w = 150, h = 30 }
+        buyButton = { x = 210, y = 50, w = 150, h = 30 },
+        infoButton = { x = 365, y = 50, w = 30, h = 30 },
+        luckButton = { x = 210, y = 10, w = 150, h = 30 }
     }, self)
     return obj
 end
@@ -75,7 +75,7 @@ function GUIManager:update(dt)
 end
 
 function GUIManager:draw()
-    -- Global HUD (Score, Money, Wave) and Masks
+    -- Global HUD (Score, Tokens, Wave) and Masks
     self:drawHUD()
     
     -- UI elements on top of masks
@@ -97,7 +97,7 @@ function GUIManager:drawHUD()
 
     -- 2. Draw Luck Offering Button
     local currentCost = game:getLuckCost()
-    local canAffordLuck = currentCost and game.money >= currentCost
+    local canAffordLuck = currentCost and game.tokens >= currentCost
     local luckMaxed = game.luck >= 10
     local luckEnabled = not luckMaxed and game.inputMode == "idle"
     
@@ -121,19 +121,43 @@ function GUIManager:drawHUD()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("line", self.luckButton.x, self.luckButton.y, self.luckButton.w, self.luckButton.h, 4)
     
-    local luckText = luckMaxed and "Max Luck" or "Luck Offering ($" .. currentCost .. ")"
+    local luckText = luckMaxed and "Max Luck" or "Luck Offering (" .. currentCost .. " Tokens)"
     love.graphics.printf(luckText, self.luckButton.x, self.luckButton.y + 7, self.luckButton.w, "center")
 
     love.graphics.setColor(0, 255, 0, 1)
     
     -- Wave info
-    love.graphics.printf("Wave: " .. game.wave, 240, 20, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("Money: " .. game.money, 240, 40, love.graphics.getWidth() - 20, "left")
-    love.graphics.printf("Score: " .. game.xp, 240, 60, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Wave: " .. game.wave, 10, 10, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Tokens: " .. game.tokens, 10, 30, love.graphics.getWidth() - 20, "left")
+    love.graphics.printf("Score: " .. game.xp, 10, 50, love.graphics.getWidth() - 20, "left")
+
+    -- Base Health Bar
+    if game.base then
+        local barX, barY, barW, barH = 10, 85, 150, 10
+        local healthPercent = game.base.hp / game.base:getStat("maxHp")
+        
+        -- Draw background
+        love.graphics.setColor(0.1, 0.1, 0.1, 1)
+        love.graphics.rectangle("fill", barX, barY, barW, barH, 2)
+        
+        -- Draw health
+        love.graphics.setColor(0.8, 0.2, 0.2, 1) -- Red for base health
+        love.graphics.rectangle("fill", barX, barY, barW * healthPercent, barH, 2)
+        
+        -- Draw border
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("line", barX, barY, barW, barH, 2)
+        
+        -- Add text
+        local font = love.graphics.getFont()
+        local text = string.format("Base HP: %d/%d", game.base.hp, game.base:getStat("maxHp"))
+        local tw = font:getWidth(text)
+        love.graphics.print(text, barX + (barW - tw)/2, barY - 14)
+    end
 
     love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, love.graphics.getWidth() - 20, "left")
     love.graphics.printf("AutoFire: " .. (game.autoFire and "On" or "Off"), 600, 40, love.graphics.getWidth() - 20, "left")
-
+    
     if game:isState("startup") then
         love.graphics.setColor(1, 1, 1, 1)
         local y = 150
@@ -155,7 +179,7 @@ function GUIManager:drawHUD()
     local isHovered = mx >= self.buyButton.x and mx <= self.buyButton.x + self.buyButton.w and
                       my >= self.buyButton.y and my <= self.buyButton.y + self.buyButton.h
     
-    local canAfford = game.money >= game.rewardCost
+    local canAfford = game.tokens >= game.rewardCost
     local isActive = game.rewardSystem.isActive
     local isIdle = game.inputMode == "idle"
     local enabled = not isActive and isIdle
@@ -174,7 +198,7 @@ function GUIManager:drawHUD()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("line", self.buyButton.x, self.buyButton.y, self.buyButton.w, self.buyButton.h, 4)
     
-    local btnText = "Buy Upgrade ($" .. math.floor(game.rewardCost) .. ")"
+    local btnText = "Buy Upgrade (" .. math.floor(game.rewardCost) .. " Tokens)"
     love.graphics.printf(btnText, self.buyButton.x, self.buyButton.y + 7, self.buyButton.w, "center")
     
     -- Draw Info Button
@@ -192,7 +216,7 @@ function GUIManager:drawHUD()
     love.graphics.printf("?", self.infoButton.x, self.infoButton.y + 7, self.infoButton.w, "center")
     
     
-    -- Money and Score (optional addition if needed)
+    -- Tokens and Score (optional addition if needed)
 end
 
 function GUIManager:drawBorders()

@@ -53,7 +53,7 @@ function TooltipManager:drawSimpleTooltip(x, y, text, cost)
     local th = font:getHeight()
     love.graphics.rectangle("fill", x, y, tw + 10, th + 10)
     
-    if self.game.money >= cost then
+    if self.game.tokens >= cost then
         love.graphics.setColor(0, 1, 0, 1)
     else
         love.graphics.setColor(1, 0, 0, 1)

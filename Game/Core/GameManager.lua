@@ -59,7 +59,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.money        = 0
+        self.tokens       = 0
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         
@@ -88,7 +88,7 @@ function game:load(saveData)
         -- Global Status Effect Managers
         self.playerEffectManager = EffectManager:new() 
         self.enemyEffectManager  = EffectManager:new()
-        self.luckCosts           = {3, 5, 8, 12, 15, 20, 25, 30, 40, 50}
+        self.luckCosts           = {1, 2, 3, 5, 10, 15, 20, 25, 30, 30}
         self.showDamageNumbers   = true
 
         -- Animation Pool
@@ -288,7 +288,7 @@ end
 -- -----------------------------------------------------------------------------
 
 function game:addXP(amount)    self.xp = self.xp + amount end
-function game:addMoney(amount) self.money = self.money + amount end
+function game:addTokens(amount) self.tokens = self.tokens + amount end
 
 function game:getEnemyDensity(x, y, radius)
     local count = 0
@@ -305,11 +305,11 @@ function game:getEnemyDensity(x, y, radius)
     return count
 end
 function game:interest()
-    self:addMoney(math.floor(self.money * 0.1))
+    self:addTokens(math.floor(self.tokens * 0.1))
 end
 function game:waveComplete()
     self:interest()
-    self:addMoney(3)
+    self:addTokens(3)
 end
 
 function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)
@@ -362,8 +362,8 @@ end
 
 function game:buyLuck()
     local cost = self:getLuckCost()
-    if cost and self.money >= cost and self.luck < 10 and self.inputMode == "idle" then
-        self.money = self.money - cost
+    if cost and self.tokens >= cost and self.luck < 10 and self.inputMode == "idle" then
+        self.tokens = self.tokens - cost
         self.luck = self.luck + 1
         return true
     end
@@ -371,8 +371,8 @@ function game:buyLuck()
 end
 
 function game:attemptPurchaseReward()
-    if self.money >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
-        self.money = self.money - self.rewardCost
+    if self.tokens >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
+        self.tokens = self.tokens - self.rewardCost
         self.rewardSystem:activate()
         return true
     end

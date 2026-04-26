@@ -238,7 +238,7 @@ function InputHandler:handleBuildingSlotHover()
                 end
                 
                 if totalCost > 0 then
-                    base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot(s) and place building? ($" .. totalCost .. ")", cost = totalCost}
+                    base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot(s) and place building? (" .. totalCost .. " Tokens)", cost = totalCost}
                 end
             end
             
@@ -266,7 +266,7 @@ function InputHandler:handleLockedSlotHover()
         -- Expansion Logic: Only allow interaction if visible
         if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] and base:isSlotVisible(anchorSlot) then
             local cost = base:getSlotPrice(anchorSlot)
-            base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot? ($" .. cost .. ")", cost = cost}
+            base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot? (" .. cost .. " Tokens)", cost = cost}
         end
     end
 end
@@ -359,13 +359,13 @@ function InputHandler:mousepressed(x, y, button)
                 end
                 
                 if totalCost > 0 then
-                    if game.money >= totalCost then
-                        game.money = game.money - totalCost
+                    if game.tokens >= totalCost then
+                        game.tokens = game.tokens - totalCost
                         for _, s in ipairs(slotsToOccupy) do
                             buildGrid.unlocked[s] = true
                         end
                     else
-                        print("Cannot place building: Not enough money to unlock slots!")
+                        print("Cannot place building: Not enough tokens to unlock slots!")
                         return
                     end
                 end
@@ -408,11 +408,11 @@ function InputHandler:mousepressed(x, y, button)
             -- Expansion Logic: Only allow click-to-unlock if visible
             if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] and base:isSlotVisible(anchorSlot) then
                 local cost = base:getSlotPrice(anchorSlot)
-                if game.money >= cost then
-                    game.money = game.money - cost
+                if game.tokens >= cost then
+                    game.tokens = game.tokens - cost
                     buildGrid.unlocked[anchorSlot] = true
                 else
-                    print("Not enough money to unlock slot!")
+                    print("Not enough tokens to unlock slot!")
                 end
                 return -- Stop propagation so we don't select a building or shoot
             end

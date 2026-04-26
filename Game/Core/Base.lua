@@ -70,7 +70,7 @@ function Base:draw()
                         
                         -- Color logic: Green if affordable, Red if locked and expensive
                         local price = self:getSlotPrice(slot)
-                        if self.game.money >= price then
+                        if self.game.tokens >= price then
                             love.graphics.setColor(0, 0.5, 0) -- faint green
                         else
                             love.graphics.setColor(0.5, 0, 0) -- faint red
@@ -78,7 +78,7 @@ function Base:draw()
                         
                         -- Draw $ symbol in the center of locked but visible slots
                         local font = love.graphics.getFont()
-                        local char = "$"
+                        local char = "T"
                         local charW = font:getWidth(char)
                         local charH = font:getHeight()
                         love.graphics.print(char, 
@@ -198,13 +198,17 @@ function Base:draw()
         local th = font:getHeight()
         love.graphics.rectangle("fill", self.hoverTooltip.x, self.hoverTooltip.y, tw + 10, th + 10)
         
-        if self.game.money >= self.hoverTooltip.cost then
+        if self.game.tokens >= self.hoverTooltip.cost then
             love.graphics.setColor(0, 1, 0, 1)
         else
             love.graphics.setColor(1, 0, 0, 1)
         end
         love.graphics.print(self.hoverTooltip.text, self.hoverTooltip.x + 5, self.hoverTooltip.y + 5)
     end
+end
+
+function Base:drawHealthBar()
+    -- Base health bar is handled by GUIManager HUD
 end
 
 function Base:addBuilding(building, anchorSlot)

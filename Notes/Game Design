@@ -1,8 +1,8 @@
 Defend a base against oncoming enemies
 place buildings on your base to defend
 
-earn cash for completing a Wave
-earn cash by defeating enemies to buy new upgrades
+earn tokens for completing a Wave
+earn tokens by defeating enemies to buy new upgrades
 
 upgrades can include:
 - stat upgrade (specific or global)
@@ -10,10 +10,10 @@ upgrades can include:
 - new building (place on base)
     - shooty turret
     - spawn unit turret
-    - passive turret (upgrade adjacent turrets, generate money, heal units, etc.)
+    - passive turret (upgrade adjacent turrets, generate tokens, heal units, etc.)
 
 BUIDLINGS:
-- chosing a building from upgrade gives you a supply of that building (from 1 to n). place buildings with money
+- chosing a building from upgrade gives you a supply of that building (from 1 to n). place buildings with tokens
 - some buildings are permanent and can't be moved
 - *CONSIDER* either selling buildings or destroying buildings. some can be sold, some can sell
 

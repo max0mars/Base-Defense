@@ -44,7 +44,7 @@ function game_scene:draw()
         love.graphics.printf("Game Paused", 0, love.graphics.getHeight() / 2 - 20, love.graphics.getWidth(), "center")
     end
     love.graphics.setColor(1, 1, 1, 1)
-    -- love.graphics.print("Money: " .. game.money, 10, 10)
+    -- love.graphics.print("Tokens: " .. game.tokens, 10, 10)
     -- --love.graphics.print("Time Multiplier: " .. string.format("%.1f", time_mul) .. "x", 10, 30)
     -- love.graphics.print("Wave: " .. game.wave, 10, 30)
     -- --love.graphics.print("Game State: " .. game.state, 10, 70)
