@@ -30,6 +30,12 @@ function M:mousepressed(x, y, button)
         M.current:mousepressed(x, y, button)
     end
 end
+
+function M:mousereleased(x, y, button)
+    if M.current.mousereleased then
+        M.current:mousereleased(x, y, button)
+    end
+end
  
 function M:keypressed(key)
     if M.current.keypressed then

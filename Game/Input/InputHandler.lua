@@ -12,6 +12,7 @@ function InputHandler:new(game)
     obj.destructionTarget = nil
     obj.confirmRect = nil
     obj.fireDelay = 0
+    obj.isMouseDown = false
     return obj
 end
 
@@ -133,7 +134,7 @@ function InputHandler:handleButtonHold()
     -- local invHeight = 100
     -- if self.mouseY >= love.graphics.getHeight() - invHeight then return end
 
-    if love.mouse.isDown(1) then
+    if self.isMouseDown then
         -- Handle left mouse button hold actions here
         mainTurret:PlayerClick(self.mouseX, self.mouseY)
     end
@@ -273,6 +274,7 @@ end
 
 function InputHandler:mousepressed(x, y, button)
     local game = self.game
+    if button == 1 then self.isMouseDown = true end
     
     -- Check GUI consumption first
     if game.gui:mousepressed(x, y, button) then
@@ -454,6 +456,10 @@ function InputHandler:mousepressed(x, y, button)
             self:clearSelection()
         end
     end
+end
+
+function InputHandler:mousereleased(x, y, button)
+    if button == 1 then self.isMouseDown = false end
 end
 
 function InputHandler:selectBuilding(building)

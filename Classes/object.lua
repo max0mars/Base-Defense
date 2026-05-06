@@ -46,10 +46,11 @@ function object:new(config)
         obj.types[config.tag] = true
     end
     if config.effectManager then
-        obj.effectManager = EffectManager:new(obj) -- Initialize EffectManager if config provided
+        obj.effectManager = EffectManager:new(obj, obj.game) -- Initialize EffectManager if config provided
         if obj.game and obj.game.playerEffectManager then
             obj.effectManager.parent = obj.game.playerEffectManager
         end
+        obj.effectManager:recalculateStats()
     end
     if config.hitbox then
         if not obj.w or not obj.h then
@@ -88,16 +89,17 @@ function object:isType(typeName)
     return self.types and self.types[typeName] == true
 end
 
-function object:getStat(statName)
-    if self[statName] == nil then
-        error("Developer Error: Object [" .. (self.name or "Unknown") .. "] is missing the '" .. statName .. "' stat. All stats accessed via getStat must be explicitly defined in the class (even if set to 0) to ensure modifiers are applied correctly.")
+function object:getStat(statName, defaultVal)
+    local baseValue = self[statName]
+    if baseValue == nil then
+        baseValue = defaultVal or 0
     end
 
     -- Only numeric stats can be modified by the EffectManager
-    if type(self[statName]) == "number" and self.effectManager and self.effectManager.getStat then
-        return self.effectManager:getStat(statName, self[statName])
+    if type(baseValue) == "number" and self.effectManager and self.effectManager.getStat then
+        return self.effectManager:getStat(statName, baseValue)
     end
-    return self[statName]
+    return baseValue
 end
 
 -- function object:getSize()

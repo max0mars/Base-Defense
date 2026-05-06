@@ -36,6 +36,9 @@ function Enemy:new(config)
     if obj.effectManager and obj.game.enemyEffectManager then
         obj.effectManager.parent = obj.game.enemyEffectManager
     end
+    if obj.effectManager then
+        obj.effectManager:recalculateStats()
+    end
     setmetatable(obj, { __index = self })
     obj.target = obj.game.base.x + obj.game.base.w / 2 + (obj.size or obj.w / 2)
     
@@ -105,7 +108,7 @@ function Enemy:update(dt)
     end
     
     if self.x < self.target then
-        self.game.base:takeDamage(self:getStat("damage"), "normal") -- Damage the base if the enemy reaches it
+        self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
     self.effectManager:update(dt) -- Update status effects

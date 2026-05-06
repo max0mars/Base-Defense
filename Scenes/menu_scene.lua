@@ -7,9 +7,8 @@ function menu_scene:load()
     -- Define resolution options
     self.resolutions = {
         { width = 800, height = 600, label = "800x600" },
-        { width = 1280, height = 720, label = "1280x720" },
-        { width = 1600, height = 900, label = "1600x900" },
-        { width = 1920, height = 1080, label = "1920x1080" },
+        { width = 1200, height = 900, label = "1200x900" },
+        { width = 1600, height = 1200, label = "1600x1200" },
         { label = "Toggle Fullscreen", fullscreen = true }
     }
     
@@ -43,8 +42,15 @@ function menu_scene:draw()
     
     -- Draw resolution buttons
     for _, btn in ipairs(self.buttons) do
+        local dw, dh = love.window.getDesktopDimensions()
+        local isTooBig = btn.data.width and (btn.data.width > dw or btn.data.height > dh)
+        
         -- Draw button background
-        love.graphics.setColor(0.3, 0.3, 0.3)
+        if isTooBig then
+            love.graphics.setColor(0.5, 0.2, 0.2) -- Reddish warning color
+        else
+            love.graphics.setColor(0.3, 0.3, 0.3)
+        end
         love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h)
         
         -- Draw button border
@@ -53,7 +59,9 @@ function menu_scene:draw()
         
         -- Draw button label
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(btn.data.label, btn.x, btn.y + (btn.h / 2) - 6, btn.w, "center")
+        local label = btn.data.label
+        if isTooBig then label = label .. " (!)" end
+        love.graphics.printf(label, btn.x, btn.y + (btn.h / 2) - 6, btn.w, "center")
     end
 end
 

@@ -26,6 +26,11 @@ function RewardSystem:new(game)
     system.startX = 100
     system.startY = 150
     
+    system.skipBtnW = 120
+    system.skipBtnH = 40
+    system.skipBtnX = VIRTUAL_WIDTH / 2 - system.skipBtnW / 2
+    system.skipBtnY = 400
+    
     -- Initialize the reward pool
     system:initializeRewardPool()
     
@@ -97,6 +102,22 @@ function RewardSystem:draw()
         
         reward:draw(x, y, self.cardWidth, self.cardHeight, isSelected)
     end
+
+    -- Draw skip button
+    local mx, my = love.mouse.getPosition()
+    local isSkipHovered = mx >= self.skipBtnX and mx <= self.skipBtnX + self.skipBtnW and
+                         my >= self.skipBtnY and my <= self.skipBtnY + self.skipBtnH
+    
+    if isSkipHovered then
+        love.graphics.setColor(0.4, 0.4, 0.4, 1)
+    else
+        love.graphics.setColor(0.3, 0.3, 0.3, 1)
+    end
+    love.graphics.rectangle("fill", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("line", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
+    love.graphics.printf("Skip", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
 end
 
 function RewardSystem:mousepressed(x, y, button)
@@ -110,8 +131,15 @@ function RewardSystem:mousepressed(x, y, button)
         if x >= cardX and x <= cardX + self.cardWidth and 
            y >= cardY and y <= cardY + self.cardHeight then
             self:selectReward(i)
-            break
+            return
         end
+    end
+
+    -- Check for skip button
+    if x >= self.skipBtnX and x <= self.skipBtnX + self.skipBtnW and
+       y >= self.skipBtnY and y <= self.skipBtnY + self.skipBtnH then
+        self.isActive = false
+        self.currentChoices = {}
     end
 end
 

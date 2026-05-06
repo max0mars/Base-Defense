@@ -17,10 +17,10 @@ function HandUI:getCardArea()
     if #inventory == 0 then return nil end
     
     local inventorySize = #inventory
-    local spacing = math.min(60, 600 / inventorySize)
+    local spacing = math.floor(math.min(60, 600 / inventorySize))
     if inventorySize == 1 then spacing = self.cardW end
     local totalWidth = (inventorySize - 1) * spacing + self.cardW
-    local startX = (VIRTUAL_WIDTH - totalWidth) / 2
+    local startX = math.floor((VIRTUAL_WIDTH - totalWidth) / 2)
     local startY = VIRTUAL_HEIGHT - self.cardH
     
     return startX, startY, totalWidth, self.cardH, spacing

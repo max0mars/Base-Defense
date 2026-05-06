@@ -21,14 +21,14 @@ Lobber.template = {
     firingArc = {
         direction = 0,
         minRange = 200,
-        angle = math.pi/3
+        angle = math.pi/6
     },
     
     -- Bullet properties (now flat)
     bulletName = "Lobber Shell",
     bulletSpeed = 400,
     damageType = "explosive",
-    damage = 50, 
+    damage = 35, 
     canDirectHit = false,
     pierce = 1,
     lifespan = 3,
@@ -56,7 +56,7 @@ function Lobber:new(config)
     t.effectManager:applyEffect({
         name = "Inherent Explosion",
         statModifiers = {
-            radius = {max = 50, hidden = true},
+            radius = {max = 30, hidden = true},
             explosion_from_damage = {max = 1, hidden = true}
         }
     })

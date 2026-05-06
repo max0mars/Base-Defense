@@ -441,7 +441,7 @@ function Turret:clearAllBuffs()
                 table.remove(self.effectManager.activeEffects, i)
             end
         end
-        self.effectManager:incrementVersion()
+        self.effectManager:recalculateStats()
     end
 end
 

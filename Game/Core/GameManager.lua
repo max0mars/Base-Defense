@@ -62,6 +62,7 @@ function game:load(saveData)
         self.tokens       = 0
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
+        self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
         
         -- Initialize Core Gameplay Systems
         self.base            = Base:new({game = self})
@@ -86,13 +87,14 @@ function game:load(saveData)
         self.oscillationSpeed     = 1
         
         -- Global Status Effect Managers
-        self.playerEffectManager = EffectManager:new() 
-        self.enemyEffectManager  = EffectManager:new()
+        self.playerEffectManager = EffectManager:new(nil, self) 
+        self.enemyEffectManager  = EffectManager:new(nil, self)
         self.luckCosts           = {1, 2, 3, 5, 10, 15, 20, 25, 30, 30}
         self.showDamageNumbers   = true
 
         -- Animation Pool
         self.animations = {}
+        self.time_mul = 1
     end
     
     -- Setup Physics/Collision
@@ -127,6 +129,9 @@ end
 
 function game:addObject(obj)
     table.insert(self.objects, obj)
+    if obj.isType and obj:isType("building") then
+        self:updateBuildingCounts()
+    end
 end
 
 --- Iterates through objects and reapplies buffs (e.g., when a buff building is placed/removed)
@@ -140,12 +145,37 @@ function game:recalculateAllBuffs()
     end
 end
 
+--- Tracks the number of buildings of each type and damage type
+function game:updateBuildingCounts()
+    self.buildingCounts = {}
+    for _, obj in ipairs(self.objects) do
+        if obj.isType and obj:isType("building") and not obj.destroyed then
+            if obj.types then
+                for bType, _ in pairs(obj.types) do
+                    self.buildingCounts[bType] = (self.buildingCounts[bType] or 0) + 1
+                end
+            end
+            if obj:isType("turret") then
+                local damageType = obj.damageType or "physical"
+                self.buildingCounts[damageType] = (self.buildingCounts[damageType] or 0) + 1
+            end
+        end
+    end
+end
+
 --- Cleanup: Removes objects marked as 'destroyed' from the master table
 function game:takeOutTheTrash()
+    local removedBuilding = false
     for i = #self.objects, 1, -1 do
         if self.objects[i].destroyed then
+            if self.objects[i]:isType("building") then
+                removedBuilding = true
+            end
             table.remove(self.objects, i)
         end
+    end
+    if removedBuilding then
+        self:updateBuildingCounts()
     end
 end
 
@@ -244,7 +274,7 @@ function game:draw()
     for _, obj in ipairs(healthyboys) do
         if obj.drawHealthBar then obj:drawHealthBar() end
         if obj.drawReloadBar then obj:drawReloadBar() end
-        if obj.effectManager then obj.effectManager:drawStatusEffects() end
+        if obj.drawStatusEffects then obj:drawStatusEffects() end
     end
 
     love.graphics.setColor(1, 1, 1, 1)

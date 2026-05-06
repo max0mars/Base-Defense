@@ -25,12 +25,8 @@ function Poison:new(config)
 end
 
 function Poison:onApply(target, source)
-    -- This sets the final values once, purely at the time of application.
-    -- We use pcall because some buildings (like MainTurret) might not have these stats natively,
-    -- in which case we fall back to the defaults provided during the effect's creation (e.g., from a Totem).
     if source and source.getStat then
-        local mult = 0
-        pcall(function() mult = source:getStat("poison_from_damage") end)
+        local mult = source:getStat("poison_from_damage")
         
         if mult > 0 then
             -- Scale dps_poison based on the bullet's damage
@@ -38,14 +34,10 @@ function Poison:onApply(target, source)
             print("applied poison with " .. self.dps_poison .. " dps")
         else
             -- Fall back to flat dps_poison
-            pcall(function()
-                self.dps_poison = source:getStat("dps_poison")
-            end)
+            self.dps_poison = source:getStat("dps_poison")
         end
         
-        pcall(function()
-            self.duration_poison = source:getStat("duration_poison")
-        end)
+        self.duration_poison = source:getStat("duration_poison")
     end
 end
 

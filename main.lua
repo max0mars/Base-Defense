@@ -11,7 +11,7 @@ function love.mouse.getPosition()
         local gx, gy = scalify:toGame(x, y)
         if not gx then gx = x < scalify._OFFSET.x and 0 or VIRTUAL_WIDTH end
         if not gy then gy = y < scalify._OFFSET.y and 0 or VIRTUAL_HEIGHT end
-        return gx, gy
+        return math.floor(gx), math.floor(gy)
     end
     return x, y
 end
@@ -26,9 +26,10 @@ scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to me
 
 function love.load()
     love.window.setTitle("Base Defense")
-    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true })
+    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true})
+    scalify:setBorderColor(0.1, 0.1, 0.1)
     math.randomseed( os.time() )
-    love.graphics.setDefaultFilter("nearest", "nearest")
+    love.graphics.setBlendMode("alpha", "alphamultiply")
     scene_manager:load() -- Load the initial scene
 end
 
@@ -43,13 +44,22 @@ function love.mousepressed(x, y, button)
     end
 end
 
+function love.mousereleased(x, y, button)
+    local virtualX, virtualY = scalify:toGame(x, y)
+    if virtualX and virtualY then
+        if scene_manager.mousereleased then scene_manager:mousereleased(virtualX, virtualY, button) end
+    else
+        if scene_manager.mousereleased then scene_manager:mousereleased(x, y, button) end
+    end
+end
+
 function love.update(dt)
     scene_manager:update(dt)
 end
 
 function love.draw()
     scalify:start()
-    love.graphics.clear(0, 0, 0) -- Clear the screen with a dark color
+    love.graphics.clear(.1, .1, .1) -- Clear the screen with a dark color
     scene_manager:draw() -- Draw the current scene
     scalify:finish()
 end

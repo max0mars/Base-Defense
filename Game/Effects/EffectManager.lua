@@ -1,30 +1,76 @@
 local EffectManager = {}
 EffectManager.__index = EffectManager
 
-local colors = {
+EffectManager.colors = {
     poison = {0.3, 1, 0.3, 1},
     -- add other effect colors here
 }
 
-function EffectManager:new(owner)
-    if(owner == nil) then
-        print("Warning: EffectManager created without an owner")
-    end
+function EffectManager:new(owner, game)
     local instance = setmetatable({}, EffectManager)
     instance.owner = owner
+    instance.game = game
     instance.activeEffects = {}
     instance.effectCounts = {}
-    instance.isDirty = true
-    instance.version = 0
     instance.parent = nil
-    instance.lastParentVersion = 0
-    instance.cache = {}
+    instance.currentModifiers = {}
+    instance.taggedModifiers = {} -- For damage tags
+    instance.tickerEffects = {}
     return instance
 end
 
-function EffectManager:incrementVersion()
-    self.version = self.version + 1
-    self.isDirty = true
+function EffectManager:recalculateStats()
+    self.currentModifiers = {}
+    self.taggedModifiers = {}
+    self.tickerEffects = {}
+    
+    local function processManager(em, isParent)
+        for _, effect in ipairs(em.activeEffects) do
+            -- Only collect tickers from local manager to avoid double-updates
+            if not isParent and (effect.onUpdate or effect.duration) then
+                table.insert(self.tickerEffects, effect)
+            end
+            
+            if effect.statModifiers then
+                for statName, mod in pairs(effect.statModifiers) do
+                    if effect.targetTags and #effect.targetTags > 0 then
+                        if not self.taggedModifiers[statName] then self.taggedModifiers[statName] = {} end
+                        table.insert(self.taggedModifiers[statName], {
+                            tags = effect.targetTags,
+                            add = mod.add or mod.additive or 0,
+                            mult = mod.mult or mod.multiplier or 0,
+                            max = mod.max or 0
+                        })
+                    else
+                        if not self.currentModifiers[statName] then
+                            self.currentModifiers[statName] = {add = 0, mult = 0, max = 0}
+                        end
+                        local m = self.currentModifiers[statName]
+                        m.add = m.add + (mod.add or mod.additive or 0)
+                        m.mult = m.mult + (mod.mult or mod.multiplier or 0)
+                        if mod.max then
+                            m.max = math.max(m.max, mod.max)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    processManager(self, false)
+    if self.parent then
+        processManager(self.parent, true)
+    end
+end
+
+function EffectManager:propagateRecalculation()
+    if self.game and self.game.objects then
+        for _, obj in ipairs(self.game.objects) do
+            if obj.effectManager then
+                obj.effectManager:recalculateStats()
+            end
+        end
+    end
 end
 
 function EffectManager:applyEffect(effectTemplate, source)
@@ -45,12 +91,13 @@ function EffectManager:applyEffect(effectTemplate, source)
     local currentStacks = self.effectCounts[name] or 0
     local maxStacks = effect.maxStacks or math.huge
 
-    if currentStacks >= maxStacks then
-        -- max stacks reached
-    else
+    if currentStacks < maxStacks then
         table.insert(self.activeEffects, effect)
         self.effectCounts[name] = currentStacks + 1
-        self:incrementVersion()
+        self:recalculateStats()
+        if not self.owner then
+            self:propagateRecalculation()
+        end
         if effect.onApply then
             effect:onApply(self.owner, source)
         end
@@ -59,8 +106,8 @@ end
 
 function EffectManager:update(dt)
     local changed = false
-    for i = #self.activeEffects, 1, -1 do
-        local effect = self.activeEffects[i]
+    for i = #self.tickerEffects, 1, -1 do
+        local effect = self.tickerEffects[i]
         if effect.onUpdate then
             effect:onUpdate(dt, self.owner)
         end
@@ -71,56 +118,36 @@ function EffectManager:update(dt)
                     effect:onExpire(self.owner)
                 end
                 self.effectCounts[effect.name] = (self.effectCounts[effect.name] or 1) - 1
-                table.remove(self.activeEffects, i)
+                -- Find and remove from activeEffects
+                for j = 1, #self.activeEffects do
+                    if self.activeEffects[j] == effect then
+                        table.remove(self.activeEffects, j)
+                        break
+                    end
+                end
                 changed = true
             end
         end
     end
     if changed then
-        self:incrementVersion()
+        self:recalculateStats()
+        if not self.owner then
+            self:propagateRecalculation()
+        end
     end
 end
 
--- Draws status effect icons (colored circles with stack numbers) above the owner's health bar
-function EffectManager:drawStatusEffects()
-    local iconSize = 4 -- constant size for all objects (4x smaller)
-    local spacing = 4   -- space between icons
-    -- Get health bar position and size from owner
-    if not self.owner or not self.owner.getHealthBarRect then return end
-    local x, y, width, height = self.owner:getHealthBarRect()
-    if not (x and y and width and height) then return end
-
-    local effectCount = 0
-    for name, count in pairs(self.effectCounts) do
-        if count > 0 then
-            effectCount = effectCount + 1
-        end
-    end
-    if effectCount == 0 then return end
-    local totalWidth = effectCount * iconSize + (effectCount-1) * spacing
-    local drawX = x + (width - totalWidth) / 2
-    local drawY = y - iconSize - 2 -- just above health bar
-
-    local i = 0
-    for name, count in pairs(self.effectCounts) do
-        if count > 0 then
-            local color = colors[name] or {1,1,1,1}
-            love.graphics.setColor(color)
-            love.graphics.circle("fill", drawX + i*(iconSize+spacing) + iconSize/2, drawY + iconSize/2, iconSize/2)
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.printf(tostring(count), drawX + i*(iconSize+spacing), drawY + 2, iconSize, "center")
-            i = i + 1
-        end
-    end
-    love.graphics.setColor(1,1,1,1)
-end
+-- Removed drawStatusEffects (moved to UI/LivingObject)
 
 function EffectManager:removeEffect(effect)
     for i = #self.activeEffects, 1, -1 do
         if self.activeEffects[i] == effect then
             self.effectCounts[effect.name] = (self.effectCounts[effect.name] or 1) - 1
             table.remove(self.activeEffects, i)
-            self:incrementVersion()
+            self:recalculateStats()
+            if not self.owner then
+                self:propagateRecalculation()
+            end
             break
         end
     end
@@ -141,77 +168,43 @@ function EffectManager:triggerEvent(eventName, ...)
 end
 
 function EffectManager:getStat(statName, baseValue)
-    if baseValue == nil then
-        error("EffectManager:getStat called with nil baseValue for stat " .. statName)
-    end
-    
-    local parentVersionChanged = (self.parent and self.parent.version > self.lastParentVersion)
-    if self.isDirty or parentVersionChanged then
-        self.cache = {}
-        self.isDirty = false
-        if self.parent then
-            self.lastParentVersion = self.parent.version
-        end
-    end
-    
-    if self.cache[statName] then
-        return self.cache[statName]
-    end
-    
-    local multiplierSum, additiveSum, maxValue = self:_getModifierSums(statName)
-    
-    local finalValue = (baseValue + additiveSum + maxValue) * (1 + multiplierSum)
-    self.cache[statName] = finalValue
-    return finalValue
-end
-
--- Helper for recursive summation without full finalValue calculation
-function EffectManager:_getModifierSums(statName, damageTags)
-    local multiplierSum = 0.0
-    local additiveSum = 0.0
-    local maxValue = 0.0
-
-    for i = 1, #self.activeEffects do
-        local effect = self.activeEffects[i]
-        local mod = effect.statModifiers and effect.statModifiers[statName]
-        if mod then
-            local applies = true
-            if statName == "damage" then
-                if effect.targetTags and #effect.targetTags > 0 then
-                    applies = false
-                    if damageTags then
-                        for _, tag in ipairs(damageTags) do
-                            for _, targetTag in ipairs(effect.targetTags) do
-                                if tag == targetTag then applies = true; break end
-                            end
-                            if applies then break end
-                        end
-                    end
-                end
-            end
-
-            if applies then
-                multiplierSum = multiplierSum + (mod.mult or mod.multiplier or 0)
-                additiveSum = additiveSum + (mod.add or mod.additive or 0)
-                if mod.max then
-                    maxValue = math.max(maxValue, mod.max)
-                end
-            end
-        end
-    end
-
-    if self.parent then
-        local pMult, pAdd, pMax = self.parent:_getModifierSums(statName, damageTags)
-        multiplierSum = multiplierSum + pMult
-        additiveSum = additiveSum + pAdd
-        maxValue = math.max(maxValue, pMax)
-    end
-
-    return multiplierSum, additiveSum, maxValue
+    local mod = self.currentModifiers[statName]
+    if not mod then return baseValue end
+    return (baseValue + mod.add + mod.max) * (1 + mod.mult)
 end
 
 function EffectManager:getDamage(baseValue, damageTags)
-    local mult, add, max = self:_getModifierSums("damage", damageTags)
+    local mult = 0
+    local add = 0
+    local max = 0
+
+    -- Global modifiers
+    local mod = self.currentModifiers["damage"]
+    if mod then
+        mult = mod.mult
+        add = mod.add
+        max = mod.max
+    end
+
+    -- Tagged modifiers
+    local tagged = self.taggedModifiers["damage"]
+    if tagged and damageTags then
+        for _, tMod in ipairs(tagged) do
+            local applies = false
+            for _, tag in ipairs(damageTags) do
+                for _, targetTag in ipairs(tMod.tags) do
+                    if tag == targetTag then applies = true; break end
+                end
+                if applies then break end
+            end
+            if applies then
+                mult = mult + tMod.mult
+                add = add + tMod.add
+                max = math.max(max, tMod.max)
+            end
+        end
+    end
+
     return (baseValue + add + max) * (1 + mult)
 end
 
@@ -266,41 +259,6 @@ function EffectManager:getTooltipStrings()
     return strings
 end
 
-function EffectManager:drawTooltip(drawx, drawy)
-    local strings = self:getTooltipStrings()
-    if #strings == 0 then return end
-    
-    local font = love.graphics.getFont()
-    local lineHeight = font:getHeight()
-    local padding = 5
-    local boxHeight = padding * 2 + #strings * lineHeight
-    
-    local maxWidth = 0
-    for _, str in ipairs(strings) do
-        local w = font:getWidth(str)
-        if w > maxWidth then maxWidth = w end
-    end
-    local boxWidth = maxWidth + padding * 2
-    
-    local tipX = drawx - boxWidth / 2
-    local tipY = drawy - 30 - boxHeight -- 30 pixels above gives room for health bar
-    
-    -- Ensure it doesn't go off the left side (or right side)
-    if tipX < 5 then
-        tipX = 5
-    elseif tipX + boxWidth > VIRTUAL_WIDTH - 5 then
-        tipX = VIRTUAL_WIDTH - 5 - boxWidth
-    end
-    
-    local r, g, b, a = love.graphics.getColor()
-    love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
-    love.graphics.rectangle("fill", tipX, tipY, boxWidth, boxHeight)
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    for i, str in ipairs(strings) do
-        love.graphics.print(str, tipX + padding, tipY + padding + (i - 1) * lineHeight)
-    end
-    love.graphics.setColor(r, g, b, a)
-end
+-- Removed drawTooltip (moved to TooltipManager)
 
 return EffectManager

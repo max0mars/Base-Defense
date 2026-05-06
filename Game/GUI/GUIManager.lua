@@ -152,11 +152,12 @@ function GUIManager:drawHUD()
         local font = love.graphics.getFont()
         local text = string.format("Base HP: %d/%d", game.base.hp, game.base:getStat("maxHp"))
         local tw = font:getWidth(text)
-        love.graphics.print(text, barX + (barW - tw)/2, barY - 14)
+        love.graphics.print(text, math.floor(barX + (barW - tw)/2), barY - 14)
     end
 
     love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, VIRTUAL_WIDTH - 20, "left")
-    love.graphics.printf("AutoFire: " .. (game.autoFire and "On" or "Off"), 600, 40, VIRTUAL_WIDTH - 20, "left")
+    love.graphics.printf("AutoFire: " .. (game.mainTurret and game.mainTurret.autofire and "On" or "Off"), 600, 40, VIRTUAL_WIDTH - 20, "left")
+    love.graphics.printf(string.format("Game Speed: %.1fx", game.time_mul), 600, 60, VIRTUAL_WIDTH - 20, "left")
     
     if game:isState("startup") then
         love.graphics.setColor(1, 1, 1, 1)

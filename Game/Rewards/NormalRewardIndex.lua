@@ -8,13 +8,6 @@ local RewardIndex = {
             type = "building"
         },
         {
-            id = "heavygun",
-            name = "Heavy Gun",
-            description = "High damage, slow fire rate.",
-            type = "building",
-            building = require("Buildings.Turrets.HeavyGun")
-        },
-        {
             id = "autoCannon",
             name = "Auto Cannon",
             description = "High fire rate, low damage, shorter range.",
@@ -36,6 +29,13 @@ local RewardIndex = {
             description = "Block Enemies and allow turrets to be placed on it",
             building = require("Buildings.Blockers.SlottedBlocker"),
             type = "building"
+        },
+        {
+            id = "heavygun",
+            name = "Heavy Gun",
+            description = "High damage, slow fire rate.",
+            type = "building",
+            building = require("Buildings.Turrets.HeavyGun")
         },
         {
             id = "splitter",
@@ -75,13 +75,6 @@ local RewardIndex = {
             building = require("Buildings.Turrets.PoisonTurret")
         },
         {
-            id = "lobber",
-            name = "Lobber",
-            description = "Shoots explosive projectiles in an arc.",
-            type = "building",
-            building = require("Buildings.Turrets.Lobber")
-        },
-        {
             id = "poisonCoating",
             name = "Poison Coating",
             description = "Bullets apply poison effect.",
@@ -96,6 +89,13 @@ local RewardIndex = {
             description = "High damage, long range.",
             type = "building",
             building = require("Buildings.Turrets.Sniper")
+        },
+        {
+            id = "lobber",
+            name = "Lobber",
+            description = "Shoots explosive projectiles in an arc.",
+            type = "building",
+            building = require("Buildings.Turrets.Lobber")
         },
         {
             id = "explosiveBullets",

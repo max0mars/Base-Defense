@@ -52,7 +52,7 @@ end
 
 -- UTILS --
 
-local function isBlocked(nx, ny, game)
+function Pathfinder.isBlocked(nx, ny, game)
     local bfGrid = game.battlefieldGrid
     local baseGrid = game.base.buildGrid
     local bfSlot = (ny - 1) * bfGrid.width + nx
@@ -70,6 +70,7 @@ local function isBlocked(nx, ny, game)
     end
     return false
 end
+
 
 local function hasLineOfSight(x1, y1, x2, y2, game)
     local bfGrid = game.battlefieldGrid
@@ -100,7 +101,7 @@ local function hasLineOfSight(x1, y1, x2, y2, game)
             -- BOUNDARY FIX: If a point is outside the screen, it's NOT blocked.
             -- Only return false if it's INSIDE the grid AND isBlocked.
             if gx >= 1 and gx <= bfGrid.width and gy >= 1 and gy <= bfGrid.height then
-                if isBlocked(gx, gy, game) then
+                if Pathfinder.isBlocked(gx, gy, game) then
                     return false
                 end
             end
@@ -160,7 +161,7 @@ function Pathfinder.findGroundPath(startX, startY, goalX, game)
                             local nx, ny = node.x + dx, node.y + dy
                             if nx >= 1 and nx <= game.battlefieldGrid.width and 
                                ny >= 1 and ny <= game.battlefieldGrid.height and 
-                               not isBlocked(nx, ny, game) then
+                               not Pathfinder.isBlocked(nx, ny, game) then
                                 walkableCount = walkableCount + 1
                             end
                         end
@@ -182,7 +183,7 @@ function Pathfinder.findGroundPath(startX, startY, goalX, game)
         local dirs = {{0,-1},{0,1},{-1,0},{1,0}}
         for _, d in ipairs(dirs) do
             local nx, ny = current.x + d[1], current.y + d[2]
-            if nx >= 1 and nx <= game.battlefieldGrid.width and ny >= 1 and ny <= game.battlefieldGrid.height and not isBlocked(nx, ny, game) then
+            if nx >= 1 and nx <= game.battlefieldGrid.width and ny >= 1 and ny <= game.battlefieldGrid.height and not Pathfinder.isBlocked(nx, ny, game) then
                 local tentative_g = gScore[current.x .. "," .. current.y] + 1
                 local key = nx .. "," .. ny
                 if not gScore[key] or tentative_g < gScore[key] then

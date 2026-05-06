@@ -70,7 +70,7 @@ local damageTypes = {
     electric = 1,
     energy = 1
 }
-function living_object:takeDamage(amount, damageType)
+function living_object:takeDamage(amount, damageType, hitX, hitY)
     if damageTypes[damageType] == nil then
         error("Developer Error: Invalid damage type: " .. damageType)
     end
@@ -85,7 +85,7 @@ function living_object:takeDamage(amount, damageType)
 
     amount = amount * damageMult
     if amount > 1 then
-        self.game:spawnDamageNumber(amount, self.x, self.y, damageType)
+        self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType)
     end
 
     if(amount >= self.hp) then
@@ -108,6 +108,41 @@ end
 
 function living_object:draw()
     object.draw(self) -- Call the base object's draw method
+end
+
+function living_object:drawStatusEffects()
+    if not self.effectManager then return end
+    
+    local iconSize = 4
+    local spacing = 4
+    local x, y, width, height = self:getHealthBarRect()
+    if not (x and y and width and height) then return end
+
+    local effectCount = 0
+    for name, count in pairs(self.effectManager.effectCounts) do
+        if count > 0 then
+            effectCount = effectCount + 1
+        end
+    end
+    if effectCount == 0 then return end
+    
+    local totalWidth = effectCount * iconSize + (effectCount-1) * spacing
+    local drawX = x + (width - totalWidth) / 2
+    local drawY = y - iconSize - 2
+
+    local i = 0
+    local EffectManager = require("Game.Effects.EffectManager")
+    for name, count in pairs(self.effectManager.effectCounts) do
+        if count > 0 then
+            local color = EffectManager.colors[name] or {1,1,1,1}
+            love.graphics.setColor(color)
+            love.graphics.circle("fill", drawX + i*(iconSize+spacing) + iconSize/2, drawY + iconSize/2, iconSize/2)
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.printf(tostring(count), drawX + i*(iconSize+spacing), drawY + 2, iconSize, "center")
+            i = i + 1
+        end
+    end
+    love.graphics.setColor(1,1,1,1)
 end
 
 function living_object:getHealthBarRect()

@@ -26,11 +26,39 @@ function TooltipManager:draw()
     
     -- Draw building effects/buff tooltips
     if self.hoveredBuilding and self.hoveredBuilding.showEffects and self.hoveredBuilding.effectManager then
-        local tipX, tipY = self.hoveredBuilding.x, self.hoveredBuilding.y
-        if self.hoveredBuilding.getCenterPosition then
-            tipX, tipY = self.hoveredBuilding:getCenterPosition()
+        local strings = self.hoveredBuilding.effectManager:getTooltipStrings()
+        if #strings > 0 then
+            local tipX, tipY = self.hoveredBuilding.x, self.hoveredBuilding.y
+            if self.hoveredBuilding.getCenterPosition then
+                tipX, tipY = self.hoveredBuilding:getCenterPosition()
+            end
+            
+            local font = love.graphics.getFont()
+            local lineHeight = font:getHeight()
+            local padding = 5
+            local boxHeight = padding * 2 + #strings * lineHeight
+            
+            local maxWidth = 0
+            for _, str in ipairs(strings) do
+                local w = font:getWidth(str)
+                if w > maxWidth then maxWidth = w end
+            end
+            local boxWidth = maxWidth + padding * 2
+            
+            local drawX = tipX - boxWidth / 2
+            local drawY = tipY - 30 - boxHeight
+            
+            if drawX < 5 then drawX = 5
+            elseif drawX + boxWidth > VIRTUAL_WIDTH - 5 then drawX = VIRTUAL_WIDTH - 5 - boxWidth end
+            
+            love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+            love.graphics.rectangle("fill", drawX, drawY, boxWidth, boxHeight)
+            
+            love.graphics.setColor(1, 1, 1, 1)
+            for i, str in ipairs(strings) do
+                love.graphics.print(str, drawX + padding, drawY + padding + (i - 1) * lineHeight)
+            end
         end
-        self.hoveredBuilding.effectManager:drawTooltip(tipX, tipY)
     end
     
     -- Draw startup and preparation messages

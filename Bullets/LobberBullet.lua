@@ -54,7 +54,7 @@ function LobberBullet:new(config)
             
             -- CRITICAL: Clear the EffectManager cache so that getStat returns the new adjusted speed
             if b.effectManager then
-                b.effectManager:incrementVersion()
+                b.effectManager:recalculateStats()
             end
         end
     end

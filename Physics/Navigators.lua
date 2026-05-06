@@ -157,8 +157,33 @@ function GridNavigator:update(dt)
                 end
             end
 
-            enemy.x = enemy.x + vx * currentSpeed * dt
-            enemy.y = enemy.y + vy * currentSpeed * dt
+            local nextX = enemy.x + vx * currentSpeed * dt
+            local nextY = enemy.y + vy * currentSpeed * dt
+            
+            local function checkCollision(nx, ny)
+                local cx = math.floor((nx - game.battlefieldGrid.x + 0.5) / game.battlefieldGrid.cellSize) + 1
+                local cy = math.floor((ny - game.battlefieldGrid.y + 0.5) / game.battlefieldGrid.cellSize) + 1
+                if cx >= 1 and cx <= game.battlefieldGrid.width and cy >= 1 and cy <= game.battlefieldGrid.height then
+                    return Pathfinder.isBlocked(cx, cy, game)
+                end
+                return false
+            end
+            
+            if checkCollision(enemy.x, enemy.y) then
+                -- If already inside a block, allow movement to escape
+                enemy.x = nextX
+                enemy.y = nextY
+            elseif not checkCollision(nextX, nextY) then
+                enemy.x = nextX
+                enemy.y = nextY
+            else
+                -- Try sliding along the wall
+                if not checkCollision(nextX, enemy.y) then
+                    enemy.x = nextX
+                elseif not checkCollision(enemy.x, nextY) then
+                    enemy.y = nextY
+                end
+            end
         end
     else
         -- Fallback to direct navigation or if no path found (blocked)

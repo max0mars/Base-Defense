@@ -5,16 +5,21 @@ game_scene.__index = game_scene
 local scene = require("Scenes.scene") -- Import the base scene class
 setmetatable(game_scene, { __index = scene })
 
-local time_mul = 1
 local game = require("Game.Core.GameManager") -- Import the game module
 
 function game_scene:load()
-    time_mul = 1 -- game starts frozen
     game:load()
+    game.time_mul = 1 -- game starts at normal speed
 end
 
 function game_scene:mousepressed(x, y, button)
     game.inputHandler:mousepressed(x, y, button) -- Route through InputHandler
+end
+
+function game_scene:mousereleased(x, y, button)
+    if game.inputHandler.mousereleased then
+        game.inputHandler:mousereleased(x, y, button)
+    end
 end
 
 function game_scene:update(dt)
@@ -24,7 +29,7 @@ function game_scene:update(dt)
     if paused == 1 then
         return -- Skip update if paused
     end
-    game:update(dt * time_mul) -- Update the game state with time multiplier
+    game:update(dt * game.time_mul) -- Update the game state with time multiplier
 end
 
 function game_scene:draw()
@@ -58,9 +63,9 @@ function game_scene:keypressed(key)
     if key == "p" then
         paused = paused == 1 and 0 or 1 -- Toggle pause
     elseif key == "+" or key == "=" then
-        time_mul = math.min(time_mul + 0.5, 5) -- Increase time multiplier up to 5x
+        game.time_mul = math.min(game.time_mul + 0.5, 5) -- Increase time multiplier up to 5x
     elseif key == "-" then
-        time_mul = math.max(time_mul - 0.5, 0) -- Decrease time multiplier down to 0x
+        game.time_mul = math.max(game.time_mul - 0.5, 0) -- Decrease time multiplier down to 0x
     else 
         game.inputHandler:keypressed(key) -- Route through InputHandler
     end
