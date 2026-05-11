@@ -196,15 +196,8 @@ function game:update(dt)
         return
     end
 
-    -- Update GUI first so it can handle hover/interaction even while paused
+    -- Update GUI (will receive dt=0 if game is frozen)
     self.gui:update(dt)
-
-    -- Pause update logic if a modal menu (Rewards/Mutation) is active
-    if (self.rewardSystem and self.rewardSystem.isActive) or 
-       (self.specialUpgradeManager and self.specialUpgradeManager.isActive) or
-       (self.gui.mutation and self.gui.mutation.isActive) then 
-        return 
-    end
 
     -- State Transitions: Wave Completion
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then

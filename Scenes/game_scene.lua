@@ -26,10 +26,19 @@ function game_scene:update(dt)
     if game:isState("gameover") then
         self.gameover = true
     end
-    if paused == 1 then
-        return -- Skip update if paused
+
+    local effectiveDt = dt * game.time_mul
+    
+    -- Freeze game if paused or a modal menu is active
+    if paused == 1 or 
+       (game.rewardSystem and game.rewardSystem.isActive) or 
+       (game.specialUpgradeManager and game.specialUpgradeManager.isActive) or
+       (game.gui.mutation and game.gui.mutation.isActive) or
+       (game.gui.confirmation and game.gui.confirmation.active) then
+        effectiveDt = 0
     end
-    game:update(dt * game.time_mul) -- Update the game state with time multiplier
+    
+    game:update(effectiveDt)
 end
 
 function game_scene:draw()
@@ -66,6 +75,12 @@ function game_scene:keypressed(key)
         game.time_mul = math.min(game.time_mul + 0.5, 5) -- Increase time multiplier up to 5x
     elseif key == "-" then
         game.time_mul = math.max(game.time_mul - 0.5, 0) -- Decrease time multiplier down to 0x
+    elseif key == "escape" then
+        game.gui.confirmation:activate(
+            "Do you want to quit?",
+            function() love.event.quit() end,
+            function() end
+        )
     else 
         game.inputHandler:keypressed(key) -- Route through InputHandler
     end

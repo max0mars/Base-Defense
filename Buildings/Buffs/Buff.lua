@@ -172,7 +172,8 @@ function Buff:applyBuffs()
                 end
                 
                 -- Append building ID to ensure multiple buildings of same type stack
-                effectToApply.name = (self.effect.name or "buff") .. "_" .. self.id
+                effectToApply.displayName = self.effect.name or "buff"
+                effectToApply.name = effectToApply.displayName .. "_" .. self.id
                 effectToApply.isBuffTotem = true
                 
                 target.effectManager:applyEffect(effectToApply)

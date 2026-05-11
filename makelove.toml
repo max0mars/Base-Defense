@@ -4,11 +4,11 @@ build_directory = "makelove-build"
 
 love_files = [
     "+**/*",
-    "-makelove-build/**",
-    "-makelove.toml",
-    "-.git/**",
-    "-Notes/**",
-    "-binaries/**",
+    "-**/makelove-build/**",
+    "-**/binaries/**",
+    "-**/.git/**",
+    "-**/Notes/**",
+    "-**/makelove.toml",
 ]
 
 [win64]

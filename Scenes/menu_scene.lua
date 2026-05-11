@@ -30,6 +30,12 @@ function menu_scene:load()
             data = res
         })
     end
+
+    self.confirmation = require("Game.GUI.ConfirmationUI"):new({inputHandler = {}})
+end
+
+function menu_scene:update(dt)
+    self.confirmation:update(dt)
 end
 
 function menu_scene:draw()
@@ -63,9 +69,15 @@ function menu_scene:draw()
         if isTooBig then label = label .. " (!)" end
         love.graphics.printf(label, btn.x, btn.y + (btn.h / 2) - 6, btn.w, "center")
     end
+
+    self.confirmation:draw()
 end
 
 function menu_scene:mousepressed(x, y, button)
+    if self.confirmation:mousepressed(x, y, button) then
+        return true
+    end
+
     if button == 1 then
         -- AABB collision detection for buttons
         for _, btn in ipairs(self.buttons) do
@@ -87,6 +99,12 @@ function menu_scene:keypressed(key)
         self.scene_manager.switch("game") -- Switch to the game scene when Enter is pressed
     elseif key == "t" then
         self.scene_manager.switch("test") -- Switch to the test scene when 't' is pressed
+    elseif key == "escape" then
+        self.confirmation:activate(
+            "Do you want to quit?",
+            function() love.event.quit() end,
+            function() end
+        )
     end
 end
 

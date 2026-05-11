@@ -228,6 +228,16 @@ function EffectManager:getTooltipStrings()
     
     local function processEffects(em)
         for _, effect in ipairs(em.activeEffects) do
+            local displayName = effect.displayName or effect.name
+            if displayName then
+                -- Strip trailing _ID if present and no explicit displayName
+                if not effect.displayName then
+                    displayName = displayName:gsub("_%d+$", "")
+                end
+            end
+
+            local isRepresented = false
+
             if effect.statModifiers then
                 for statName, mod in pairs(effect.statModifiers) do
                     if not mod.hidden then
@@ -235,28 +245,28 @@ function EffectManager:getTooltipStrings()
                         flatMap[statName] = (flatMap[statName] or 0) + (mod.add or mod.additive or 0)
                         multMap[statName] = (multMap[statName] or 0) + (mod.mult or mod.multiplier or 0)
                         maxMap[statName] = math.max(maxMap[statName] or 0, mod.max or 0)
+                        isRepresented = true
                     end
                 end
             end
+
             if effect.grantedHitEffect then
                 local rawName = effect.grantedHitEffect.name or "Ability"
-                if not seenAbilities[rawName] then
-                    local abilityName = rawName:gsub("^%l", string.upper)
-                    table.insert(strings, string.format("%s on Hit", abilityName))
-                    seenAbilities[rawName] = true
+                local abilityName = rawName:gsub("^%l", string.upper)
+                local abilityString = string.format("%s on Hit", abilityName)
+                
+                if not seenAbilities[abilityString] then
+                    table.insert(strings, abilityString)
+                    seenAbilities[abilityString] = true
                 end
+                isRepresented = true
             end
+
             -- Add generic named effects if not already shown via modifiers/abilities
-            if effect.name and not effect.hidden and not seenAbilities[effect.name] then
-                local nameFoundInStats = false
-                if effect.statModifiers then
-                    for k, _ in pairs(effect.statModifiers) do
-                        if nameMap[k] then nameFoundInStats = true; break end
-                    end
-                end
-                if not nameFoundInStats then
-                    table.insert(strings, effect.name)
-                    seenAbilities[effect.name] = true
+            if displayName and not effect.hidden and not isRepresented then
+                if not seenAbilities[displayName] then
+                    table.insert(strings, displayName)
+                    seenAbilities[displayName] = true
                 end
             end
         end

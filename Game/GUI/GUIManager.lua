@@ -127,7 +127,7 @@ function GUIManager:drawHUD()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("line", self.luckButton.x, self.luckButton.y, self.luckButton.w, self.luckButton.h, 4)
     
-    local luckText = luckMaxed and "Max Luck" or "Luck Offering (" .. currentCost .. " Tokens)"
+    local luckText = luckMaxed and "Max Luck" or "Luck Offering (" .. currentCost .. " T)"
     love.graphics.printf(luckText, self.luckButton.x, self.luckButton.y + 7, self.luckButton.w, "center")
 
     love.graphics.setColor(0, 255, 0, 1)
@@ -205,7 +205,7 @@ function GUIManager:drawHUD()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("line", self.buyButton.x, self.buyButton.y, self.buyButton.w, self.buyButton.h, 4)
     
-    local btnText = "Buy Upgrade (" .. math.floor(game.rewardCost) .. " Tokens)"
+    local btnText = "Buy Upgrade (" .. math.floor(game.rewardCost) .. " T)"
     love.graphics.printf(btnText, self.buyButton.x, self.buyButton.y + 7, self.buyButton.w, "center")
     
     -- Draw Info Button

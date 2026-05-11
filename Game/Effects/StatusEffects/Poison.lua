@@ -20,6 +20,7 @@ function Poison:new(config)
 
     -- Ensure we have a name for the EffectManager stacking and icons
     instance.name = config.name or ("poison")
+    instance.duration = config.duration_poison
     
     return instance
 end
@@ -33,11 +34,18 @@ function Poison:onApply(target, source)
             self.dps_poison = source:getStat("damage") * mult
             print("applied poison with " .. self.dps_poison .. " dps")
         else
-            -- Fall back to flat dps_poison
-            self.dps_poison = source:getStat("dps_poison")
+            -- Fall back to flat dps_poison from source if provided
+            local sourceDps = source:getStat("dps_poison")
+            if sourceDps > 0 then
+                self.dps_poison = sourceDps
+            end
         end
         
-        self.duration_poison = source:getStat("duration_poison")
+        local sourceDuration = source:getStat("duration_poison")
+        if sourceDuration > 0 then
+            self.duration_poison = sourceDuration
+        end
+        self.duration = self.duration_poison
     end
 end
 

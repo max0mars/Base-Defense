@@ -67,6 +67,6 @@ end
 function love.keypressed(key)
     scene_manager:keypressed(key) -- Handle key presses in the current scene
     if key == "escape" then
-        love.event.quit() -- Exit the game when Escape is pressed
+        -- Removed immediate quit. Scenes will handle escape to show confirmation.
     end
 end

@@ -42,10 +42,10 @@ function Guardian:update(dt)
     local radiusSq = self.auraRadius * self.auraRadius
     local auraEffectTemplate = {
         name = "GuardianAura",
-        duration = 0.2, -- Refreshable short duration
+        duration = 0.5, -- Refreshable short duration
         maxStacks = 1,
         statModifiers = {
-            damageReductionMultiplier = { mult = -0.2 }
+            damageReductionMultiplier = { mult = -0.25 }
         }
     }
 
@@ -78,12 +78,9 @@ function Guardian:grantShieldsToNearby()
     local candidates = {}
     for _, obj in ipairs(self.game.objects) do
         if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed then
-            -- Only target those that don't already have a full or better shield
-            if (obj.shield or 0) < 50 then
                 local dx = obj.x - self.x
                 local dy = obj.y - self.y
                 table.insert(candidates, {obj = obj, distSq = dx*dx + dy*dy})
-            end
         end
     end
     
