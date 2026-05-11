@@ -1,8 +1,11 @@
-name = "Base Defense"
-default_targets = ["win32", "win64"]
+name = "BaseDefense"
+default_targets = ["macos"] # win64 disabled due to local metadata error
 build_directory = "makelove-build"
 
 love_files = [
-    "::git-ls-tree::",
-    "-*/.*",
+    "+**/*",
+    "-makelove-build/**",
+    "-makelove.toml",
+    "-.git/**",
+    "-Notes/**",
 ]
