@@ -182,20 +182,6 @@ function StandardMainTurret:getFirePoint()
     return cx + math.cos(angle) * 20, cy + math.sin(angle) * 20
 end
 
-function StandardMainTurret:applyHitEffects(target)
-    -- Unstable Laser: 20% chance to apply Burn
-    if self.upgrades["unstable_laser"] and math.random() <= 0.20 then
-        if target.effectManager and target.effectManager.applyEffect then
-            target.effectManager:applyEffect(BurnEffect:new({
-                name = "burn",
-                duration_burn = 3,
-                dps_burn = 10,
-                maxStacks = 5
-            }), self) -- Pass self as source for stat scaling
-        end
-    end
-end
-
 function StandardMainTurret:fire(args)
      -- Ensure correct angle for hitscan/projectiles
      local fX, fY = self:getFirePoint()

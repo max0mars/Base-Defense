@@ -1,3 +1,4 @@
 # makelove build files
 makelove.toml
 makelove-build/
+binaries/

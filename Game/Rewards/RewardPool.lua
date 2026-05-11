@@ -3,16 +3,16 @@ RewardPool.__index = RewardPool
 
 -- Static Luck Table: Luck (1-10) -> {rarity -> weight}
 RewardPool.LuckTable = {
-    [1]  = { common = 80, uncommon = 15, rare = 5,  epic = 0,  legendary = 0 },
-    [2]  = { common = 70, uncommon = 20, rare = 8,  epic = 2,  legendary = 0 },
-    [3]  = { common = 60, uncommon = 25, rare = 10, epic = 4,  legendary = 1 },
-    [4]  = { common = 50, uncommon = 30, rare = 12, epic = 6,  legendary = 2 },
-    [5]  = { common = 40, uncommon = 30, rare = 15, epic = 10, legendary = 5 },
-    [6]  = { common = 30, uncommon = 30, rare = 20, epic = 15, legendary = 5 },
-    [7]  = { common = 24, uncommon = 25, rare = 25, epic = 15, legendary = 6 },
-    [8]  = { common = 22, uncommon = 25, rare = 25, epic = 20, legendary = 8 },
-    [9]  = { common = 15, uncommon = 25, rare = 25, epic = 25, legendary = 10 },
-    [10] = { common = 10, uncommon = 20, rare = 30, epic = 25, legendary = 15 }
+    [1]  = { common = 90, uncommon = 10, rare = 0,  epic = 0,  legendary = 0 },
+    [2]  = { common = 85, uncommon = 13, rare = 2,  epic = 0,  legendary = 0 },
+    [3]  = { common = 80, uncommon = 15, rare = 4,  epic = 1,  legendary = 0 },
+    [4]  = { common = 74, uncommon = 17, rare = 6,  epic = 2,  legendary = 1 },
+    [5]  = { common = 67, uncommon = 20, rare = 8,  epic = 4,  legendary = 1 },
+    [6]  = { common = 60, uncommon = 22, rare = 10, epic = 6,  legendary = 2 },
+    [7]  = { common = 50, uncommon = 25, rare = 12, epic = 10, legendary = 3 },
+    [8]  = { common = 40, uncommon = 25, rare = 15, epic = 15, legendary = 5 },
+    [9]  = { common = 30, uncommon = 25, rare = 20, epic = 20, legendary = 5 },
+    [10] = { common = 20, uncommon = 25, rare = 25, epic = 22, legendary = 8 }
 }
 
 -- Preferred rarity order for fallbacks

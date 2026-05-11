@@ -64,8 +64,7 @@ function RewardSystem:selectReward(index)
             self.game:placeBuilding(reward.building, reward)
         elseif reward.type == "main_upgrade" then
             if self.game.base and self.game.base.mainTurret then
-                self.game.base.mainTurret.upgrades[reward.id] = true
-                -- Optional: Visual feedback could be added here
+                self.game.base.mainTurret:applyUpgrade(reward)
             end
         else
             error("Invalid reward type: " .. reward.type)

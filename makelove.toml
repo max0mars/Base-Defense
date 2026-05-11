@@ -1,5 +1,5 @@
 name = "BaseDefense"
-default_targets = ["macos"] # win64 disabled due to local metadata error
+default_targets = ["macos", "win64"]
 build_directory = "makelove-build"
 
 love_files = [
@@ -8,4 +8,8 @@ love_files = [
     "-makelove.toml",
     "-.git/**",
     "-Notes/**",
+    "-binaries/**",
 ]
+
+[win64]
+love_binaries = "binaries/win64"

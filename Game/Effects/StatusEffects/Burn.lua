@@ -18,6 +18,7 @@ function Burn:new(config)
         instance[k] = v
     end
     instance.time = 0
+    instance.duration = config.duration_burn
 
     -- Ensure we have a name for the EffectManager stacking and icons
     instance.name = config.name or ("burn")
@@ -32,14 +33,15 @@ function Burn:onApply(target, source)
         if mult > 0 then
             -- Scale dps_burn based on the bullet's damage
             self.dps_burn = source:getStat("damage") * mult
-            print("applied burn with " .. self.dps_burn .. " dps")
-        else
-            -- Fall back to flat dps_burn
+        elseif source:getStat("dps_burn") > 0 then
+            -- Fall back to flat dps_burn from source if provided
             self.dps_burn = source:getStat("dps_burn")
         end
         
-        self.duration_burn = source:getStat("duration_burn")
-        -- The EffectManager handles the actual 'duration' countdown if we set it here
+        local sourceDuration = source:getStat("duration_burn")
+        if sourceDuration > 0 then
+            self.duration_burn = sourceDuration
+        end
         self.duration = self.duration_burn
     end
 end

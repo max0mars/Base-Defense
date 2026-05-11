@@ -22,19 +22,59 @@ end
 function MainTurret:getStat(statName, defaultVal)
     local val = Turret.getStat(self, statName, defaultVal)
     
-    -- Apply persistent upgrades
-    if self.upgrades then
-        if statName == "damage" and self.upgrades["low_power_operating"] then
-            val = val * 0.8 -- -20% damage
-        elseif statName == "fireRate" and self.upgrades["low_power_operating"] then
-            val = val * 1.5 -- +50% fire rate
-        elseif statName == "range" and self.upgrades["electric_field"] then
-            -- Set a baseline range of 400 for the electric field if the base range is massive
-            if val > 600 then val = 400 end
-        end
+    -- Special logic for Electric Field range capping
+    if statName == "range" and self.upgrades["electric_field"] then
+        if val > 600 then val = 400 end
     end
     
     return val
+end
+
+function MainTurret:applyUpgrade(reward)
+    if not reward or not reward.id then return end
+    
+    -- Track persistent flag for custom logic
+    self.upgrades[reward.id] = true
+    
+    if reward.id == "low_power_operating" then
+        -- Use built-in Effect System for stat changes
+        if self.effectManager then
+            self.effectManager:applyEffect({
+                name = "Low Power Operating",
+                statModifiers = {
+                    damage = { mult = -0.2 },
+                    fireRate = { mult = 0.5 }
+                }
+            })
+        end
+    elseif reward.id == "unstable_laser" then
+        -- Use built-in hitEffects system with proper naming for tooltips
+        local BurnEffect = require("Game.Effects.StatusEffects.Burn")
+        local burn = BurnEffect:new({
+            name = "burn",
+            duration_burn = 3,
+            dps_burn = 10,
+            maxStacks = 5
+        })
+        self:addHitEffect(burn)
+        
+        -- Apply an effect so it shows up in the tooltip
+        if self.effectManager then
+            self.effectManager:applyEffect({
+                name = "+Burn Chance"
+            })
+        end
+    elseif reward.id == "electric_field" then
+        -- Apply a named effect for the tooltip
+        if self.effectManager then
+            self.effectManager:applyEffect({
+                name = "Electric Field"
+            })
+        end
+    end
+    
+    -- Print confirmation
+    print("Main Turret Upgrade Applied: " .. reward.name)
 end
 
 function MainTurret:getCenterPosition()
@@ -139,7 +179,14 @@ function MainTurret:PlayerClick(tX, tY)
 end
 
 function MainTurret:applyHitEffects(target)
-    -- To be overridden by specific turrets
+    -- Apply standard hit effects from the turret's hitEffects table
+    if self.hitEffects then
+        for _, effectTemplate in ipairs(self.hitEffects) do
+            if target.effectManager and target.effectManager.applyEffect then
+                target.effectManager:applyEffect(effectTemplate, self)
+            end
+        end
+    end
 end
 
 function MainTurret:fire(args)

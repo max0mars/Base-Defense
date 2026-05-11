@@ -246,6 +246,19 @@ function EffectManager:getTooltipStrings()
                     seenAbilities[rawName] = true
                 end
             end
+            -- Add generic named effects if not already shown via modifiers/abilities
+            if effect.name and not effect.hidden and not seenAbilities[effect.name] then
+                local nameFoundInStats = false
+                if effect.statModifiers then
+                    for k, _ in pairs(effect.statModifiers) do
+                        if nameMap[k] then nameFoundInStats = true; break end
+                    end
+                end
+                if not nameFoundInStats then
+                    table.insert(strings, effect.name)
+                    seenAbilities[effect.name] = true
+                end
+            end
         end
         if em.parent then processEffects(em.parent) end
     end
