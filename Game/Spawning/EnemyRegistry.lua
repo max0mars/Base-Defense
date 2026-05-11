@@ -61,6 +61,18 @@ local EnemyRegistry = {
                 { id = "armored_hp", name = "Dreadnought Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Armored" },
                 { id = "armored_resist", name = "Even Stronger Armor", description = "Normal resistance +10%", modifiers = { normal = 0.9 }, target = "Armored" }
             }
+        },
+        {
+            id = "Guardian",
+            type = "Guardian",
+            class = require("Enemies.Guardian"),
+            spawnCost = 100,
+            spawnWeight = 25,
+            description = "Support unit. Projects a damage reduction aura to nearby allies.",
+            mutations = {
+                { id = "guardian_hp", name = "Sanctuary Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Guardian" },
+                { id = "guardian_shield", name = "Overcharge Shields", description = "Every 5s, grants +50 Shield to the 5 nearest allies.", modifiers = { grantsShield = { set = true } }, target = "Guardian" }
+            }
         }
     },
     

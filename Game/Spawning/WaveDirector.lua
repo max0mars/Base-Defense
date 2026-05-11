@@ -6,11 +6,29 @@ WaveDirector.__index = WaveDirector
 function WaveDirector:new(game)
     local obj = setmetatable({}, self)
     obj.game = game
+    
+    -- Accelerated scaling for a 40-wave game (Wave 1 = 30)
+    obj.baseBudget = 30
+    obj.linearRamp = 25
+    obj.exponentialKicker = 3.5
+    
     return obj
 end
 
+-- Faster Early Scaling Table (Wave 1 = 30):
+-- Wave 1:  30
+-- Wave 10: 255 (Fast early ramp)
+-- Wave 20: 855
+-- Wave 30: 2135
+-- Wave 40: 4155 (Final Challenge)
+
 function WaveDirector:getBudgetForWave(waveNumber)
-    return 30 + (waveNumber-1)*25 + (waveNumber-1)^2 * 2
+    -- Wave 1 starts at exactly baseBudget.
+    -- Subsequent early waves scale linearly, then exponentially after Wave 10.
+    local linearPart = (waveNumber - 1) * self.linearRamp
+    local exponentialPart = (math.max(0, waveNumber - 10) ^ 2) * self.exponentialKicker
+    
+    return self.baseBudget + linearPart + exponentialPart
 end
 
 function WaveDirector:generateWaveList(waveNumber)

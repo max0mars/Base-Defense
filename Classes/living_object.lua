@@ -17,6 +17,8 @@ function living_object:new(config)
     setmetatable(obj, { __index = self })
     obj.maxHp = config.maxHp or config.hp or 100
     obj.hp = config.hp or obj.maxHp -- Default to maxHp if current hp is not provided
+    obj.shield = config.shield or 0
+    obj.maxShield = config.maxShield or math.huge
     obj.armour = config.armour or 0
     obj.affinities = config.affinities or {
         normal = 1,
@@ -98,8 +100,23 @@ function living_object:takeDamage(amount, damageType, hitX, hitY)
         self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType)
     end
 
-    if(amount >= self.hp) then
+    local damageTaken = 0
 
+    -- Shield Logic (Temp Health)
+    if self.shield and self.shield > 0 then
+        if amount >= self.shield then
+            damageTaken = self.shield
+            self.shield = 0
+            -- Damage gating: excess damage does not carry over to normal health
+            return damageTaken
+        else
+            self.shield = self.shield - amount
+            return amount
+        end
+    end
+
+    -- Normal HP Logic
+    if(amount >= self.hp) then
         damageTaken = self.hp
         self.hp = 0
     else

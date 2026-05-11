@@ -6,11 +6,12 @@ Carrier.__index = Carrier
 local default = {
     speed = 18, -- Slower than standard 25
     maxHp = 300,
+    damage = 20,
     color = {0.2, 0.8, 1, 1}, -- Neon Cyan
     types = { carrier = true, tank = true },
     size = 35, -- Balanced size
     reward = 150,
-    spawnInterval = 5,
+    spawnInterval = 7,
     spawnCount = 2,
 }
 

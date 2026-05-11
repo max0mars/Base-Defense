@@ -139,6 +139,15 @@ end
 
 -- Removed drawStatusEffects (moved to UI/LivingObject)
 
+function EffectManager:getEffect(name)
+    for _, effect in ipairs(self.activeEffects) do
+        if effect.name == name then
+            return effect
+        end
+    end
+    return nil
+end
+
 function EffectManager:removeEffect(effect)
     for i = #self.activeEffects, 1, -1 do
         if self.activeEffects[i] == effect then

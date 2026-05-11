@@ -12,17 +12,17 @@ local typeColors = {
     explosive = {1, 0.5, 0, 1}
 }
 
-function DamageNumber:new(amount, x, y, damageType)
+function DamageNumber:new(text, x, y, damageType, customColor)
     local obj = setmetatable({}, self)
     
-    obj.amount = math.floor(amount + 0.5)
+    obj.text = tostring(text)
     obj.x = x + love.math.random(-15, 15)
     obj.y = y + love.math.random(-15, 15)
     obj.velY = -60
     obj.velX = love.math.random(-20, 20)
-    obj.color = typeColors[damageType or "normal"] or typeColors.normal
-    obj.lifetime = 0.8
-    obj.maxLifetime = 0.8
+    obj.color = customColor or typeColors[damageType or "normal"] or typeColors.normal
+    obj.lifetime = 1.0
+    obj.maxLifetime = 1.0
     obj.destroyed = false
     
     return obj
@@ -47,10 +47,10 @@ function DamageNumber:draw()
     local r, g, b = self.color[1], self.color[2], self.color[3]
     
     love.graphics.setColor(0, 0, 0, alpha) -- shadow/outline
-    love.graphics.print(self.amount, self.x + 1, self.y + 1)
+    love.graphics.print(self.text, self.x + 1, self.y + 1)
     
     love.graphics.setColor(r, g, b, alpha)
-    love.graphics.print(self.amount, self.x, self.y)
+    love.graphics.print(self.text, self.x, self.y)
     
     love.graphics.setColor(1, 1, 1, 1)
 end

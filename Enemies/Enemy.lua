@@ -45,6 +45,9 @@ function Enemy:new(config)
     obj.navigator = Navigators[navType]:new(obj, obj.game)
     
     
+    obj.shield = 0
+    obj.maxShield = 50 -- Default reference for shield visuals
+    
     return obj
 end
 
@@ -90,6 +93,46 @@ function Enemy:update(dt)
         self:died() -- Destroy the enemy if it reaches the base
     end
     self.effectManager:update(dt) -- Update status effects
+end
+
+function Enemy:takeDamage(amount, damageType, hitX, hitY)
+    local damageMult = 1   
+    if self.affinities and self.affinities[damageType] then
+        damageMult = self.affinities[damageType]
+    end
+
+    amount = amount * damageMult
+    
+    -- Apply Damage Reduction (from Guardian Aura or other effects)
+    local reduction = self:getStat("damageReductionMultiplier", 1)
+    amount = amount * reduction
+    
+    if amount > 1 then
+        self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType)
+    end
+
+    -- 1. Check if shield exists
+    if self.shield > 0 then
+        self.shield = self.shield - amount
+        if self.shield < 0 then
+            self.shield = 0
+        end
+        -- Explicitly return to nullify remaining damage from this attack
+        return amount
+    end
+
+    -- 2. Apply damage to HP if no shield
+    if amount >= self.hp then
+        self.hp = 0
+    else
+        self.hp = self.hp - amount
+    end
+
+    if self.hp <= 0 then
+        self:died()
+    end
+
+    return amount
 end
 
 function Enemy:getFuturePosition(time)
@@ -208,24 +251,34 @@ function Enemy:draw()
     local drawX = self.x - self.w/2
     local drawY = self.y - self.h/2
     
-    -- 1. Draw "Empty" Base State (Dim fill)
+    -- 1. Layer 1 (Empty Base): Dim fill
     love.graphics.setColor(r, g, b, 0.15)
     love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
     
-    -- 2. Calculate Scissor Box for Health Fill (Draining effect)
+    -- 2. Layer 2 (Normal HP Fill): Bright glow fill with bottom-up scissor
     local fillRatio = self.hp / self:getStat("maxHp")
-    -- Fill drops from top to bottom. The filled portion starts at the bottom.
     local scissorY = drawY + self.h * (1 - fillRatio)
     local scissorH = self.h * fillRatio
     
-    -- 3. Draw "Health" Fill (Bright fill restricted by scissor)
-    -- We use math.floor to prevent sub-pixel jittering with setScissor
     love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
-    love.graphics.setColor(r, g, b, 0.7) -- Bright inner color
+    love.graphics.setColor(r, g, b, 0.7)
     love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
-    love.graphics.setScissor() -- Reset scissor immediately
+    love.graphics.setScissor()
     
-    -- 4. Draw Glow Layers (Outside scissor)
+    -- 3. Layer 3 (Shield Fill): Flat Grey fill with bottom-up scissor
+    if self.maxShield > 0 and self.shield > 0 then
+        local shieldRatio = self.shield / self.maxShield
+        local sScissorY = drawY + self.h * (1 - shieldRatio)
+        local sScissorH = self.h * shieldRatio
+        
+        love.graphics.setScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
+        love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
+        love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+        love.graphics.setScissor()
+    end
+    
+    -- 4. Layer 4 (Neon Border): Thick neon outer outline and glow
+    -- Glow Layers
     for i = 6, 1, -1 do
         local alpha = 0.05 * (1 - i/7)
         love.graphics.setColor(r, g, b, alpha)
@@ -233,7 +286,7 @@ function Enemy:draw()
         love.graphics.rectangle("line", drawX, drawY, self.w, self.h)
     end
     
-    -- 5. Draw Main Neon Border (Last to ensure crisp edges)
+    -- Main crisp outline
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", drawX, drawY, self.w, self.h)

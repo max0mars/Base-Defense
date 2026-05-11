@@ -5,6 +5,7 @@ Flyer.__index = Flyer
 local default = {
     speed = 25, -- Faster than standard 25
     maxHp = 200,
+    damage = 15,
     color = {1, 0.5, 0, 1}, -- Neon Orange
     types = { flyer = true },
     size = 25,

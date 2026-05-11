@@ -94,6 +94,13 @@ local RewardIndex = {
             description = "Bullets apply poison effect.",
             type = "building",
             building = require("Buildings.Buffs.PoisonTotem")
+        },
+        {
+            id = "tokenMint",
+            name = "Token Mint",
+            description = "Generates 1 Token every 3 waves.",
+            type = "building",
+            building = require("Buildings.Turrets.TokenMint")
         }
     },
     epic = {

@@ -221,8 +221,8 @@ function game:update(dt)
             end
         end
 
-        -- Interval 2: Enemy Upgrade (3, 8, 13...)
-        if (self.wave - 3) % 5 == 0 then
+        -- Interval 2: Enemy Upgrade (8, 13, 18...)
+        if (self.wave - 3) % 5 == 0 and self.wave ~= 3 then
             local options = EnemyRegistry:getUpgradeOptions(2)
             if #options > 0 then
                 self:setState("upgrade_mutation")
@@ -360,6 +360,13 @@ end
 function game:waveComplete()
     self:interest()
     self:addTokens(3)
+    
+    -- Trigger onWaveComplete for all buildings (e.g. TokenMint)
+    for _, obj in ipairs(self.objects) do
+        if obj.onWaveComplete and not obj.destroyed then
+            obj:onWaveComplete()
+        end
+    end
 end
 
 function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)
@@ -379,6 +386,10 @@ function game:spawnDamageNumber(amount, x, y, damageType)
     if self.showDamageNumbers then
         table.insert(self.animations, DamageNumber:new(amount, x, y, damageType))
     end
+end
+
+function game:spawnFloatingText(text, x, y, color)
+    table.insert(self.animations, DamageNumber:new(text, x, y, nil, color))
 end
 
 function game:toggleDamageNumbers()
