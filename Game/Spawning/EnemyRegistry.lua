@@ -1,37 +1,102 @@
 local EnemyRegistry = {
-    enemies = {
+    -- Current pools for mutations
+    inactivePool = {
         {
-            type = "Basic",
-            class = require("Enemies.Enemy"),
-            spawnCost = 10,
-            spawnWeight = 100,
-            minWave = 1
-        },
-        {
+            id = "Speeder",
             type = "Speeder",
             class = require("Enemies.Speeder"),
             spawnCost = 15,
             spawnWeight = 50,
-            minWave = 3
+            description = "Fast but fragile. Often spawns in large numbers.",
+            mutations = {
+                { id = "speeder_speed", name = "Overdrive", description = "Speed +20%", modifiers = { speed = 1.2 }, target = "Speeder" },
+                { id = "speeder_hp", name = "Hardened Shell", description = "HP +30%", modifiers = { maxHp = 1.3, hp = 1.3 }, target = "Speeder" }
+            }
         },
         {
+            id = "Tank",
             type = "Tank",
             class = require("Enemies.Tank"),
-            spawnCost = 40,
-            spawnWeight = 20,
-            minWave = 5
+            spawnCost = 45,
+            spawnWeight = 30,
+            description = "Slow and heavy. Can soak up massive damage.",
+            mutations = {
+                { id = "tank_hp", name = "Behemoth Plating", description = "HP +50%", modifiers = { maxHp = 1.5, hp = 1.5 }, target = "Tank" },
+                { id = "tank_speed", name = "Turbo Engines", description = "Speed +25%", modifiers = { speed = 1.25 }, target = "Tank" }
+            }
         }
-    }
+    },
+    
+    activePool = {
+        {
+            id = "Basic",
+            type = "Basic",
+            class = require("Enemies.Enemy"),
+            spawnCost = 10,
+            spawnWeight = 100,
+            description = "The backbone of the invasion. Average speed and health.",
+            mutations = {
+                { id = "basic_hp", name = "Veteran Training", description = "HP +25%", modifiers = { maxHp = 1.25, hp = 1.25 }, target = "Basic" },
+                { id = "basic_speed", name = "Adrenaline", description = "Speed +15%", modifiers = { speed = 1.15 }, target = "Basic" },
+                { id = "basic_Explosive_armour", name = "Blast Shields", description = "Take 30% less explosive damage.", modifiers = { explosive = 0.7 }, target = "Basic" }
+            }
+        }
+    },
+
+    availableUpgrades = {}, -- Upgrades waiting to be picked
+    activeUpgrades = {}     -- Picked upgrades currently in effect
 }
 
-function EnemyRegistry:getAvailableEnemies(waveNumber)
-    local available = {}
-    for _, e in ipairs(self.enemies) do
-        if waveNumber >= (e.minWave or 1) then
-            table.insert(available, e)
-        end
+-- Initialize Basic enemy upgrades into available pool at start
+for _, mut in ipairs(EnemyRegistry.activePool[1].mutations) do
+    table.insert(EnemyRegistry.availableUpgrades, mut)
+end
+
+function EnemyRegistry:getAvailableEnemies()
+    return self.activePool
+end
+
+function EnemyRegistry:getMutationOptions(count)
+    local options = {}
+    local poolCopy = {}
+    for i, v in ipairs(self.inactivePool) do table.insert(poolCopy, {idx = i, data = v, type = "enemy"}) end
+    
+    for i = 1, math.min(count, #poolCopy) do
+        local r = math.random(1, #poolCopy)
+        table.insert(options, table.remove(poolCopy, r))
     end
-    return available
+    return options
+end
+
+function EnemyRegistry:getUpgradeOptions(count)
+    local options = {}
+    local poolCopy = {}
+    for i, v in ipairs(self.availableUpgrades) do table.insert(poolCopy, {idx = i, data = v, type = "upgrade"}) end
+    
+    for i = 1, math.min(count, #poolCopy) do
+        local r = math.random(1, #poolCopy)
+        table.insert(options, table.remove(poolCopy, r))
+    end
+    return options
+end
+
+function EnemyRegistry:activateMutation(option)
+    if option.type == "enemy" then
+        -- option.idx is index in current inactivePool
+        local enemyData = table.remove(self.inactivePool, option.idx)
+        table.insert(self.activePool, enemyData)
+        
+        -- Add this enemy's specific mutations to the available pool
+        if enemyData.mutations then
+            for _, mut in ipairs(enemyData.mutations) do
+                table.insert(self.availableUpgrades, mut)
+            end
+        end
+    elseif option.type == "upgrade" then
+        -- option.idx is index in availableUpgrades
+        local upgrade = table.remove(self.availableUpgrades, option.idx)
+        table.insert(self.activeUpgrades, upgrade)
+    end
 end
 
 return EnemyRegistry
