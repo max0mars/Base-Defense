@@ -97,9 +97,29 @@ end
 
 function HitscanBullet:draw()
     local alpha = self.displayLifespan / self.maxDisplayLifespan
-    love.graphics.setColor(self.color[1], self.color[2], self.color[3], alpha)
-    love.graphics.setLineWidth(2)
+    local r, g, b = self.color[1], self.color[2], self.color[3]
+    
+    -- 1. Outer Bloom (Thickest, most transparent)
+    love.graphics.setColor(r, g, b, alpha * 0.15)
+    love.graphics.setLineWidth(8)
     love.graphics.line(self.x, self.y, self.endpoint.x, self.endpoint.y)
+    
+    -- 2. Middle Glow
+    love.graphics.setColor(r, g, b, alpha * 0.4)
+    love.graphics.setLineWidth(4)
+    love.graphics.line(self.x, self.y, self.endpoint.x, self.endpoint.y)
+    
+    -- 3. Core Line (Brighter)
+    love.graphics.setColor(r, g, b, alpha * 0.8)
+    love.graphics.setLineWidth(1.5)
+    love.graphics.line(self.x, self.y, self.endpoint.x, self.endpoint.y)
+    
+    -- 4. White-Hot Center (Sharpest)
+    love.graphics.setColor(1, 1, 1, alpha)
+    love.graphics.setLineWidth(0.5)
+    love.graphics.line(self.x, self.y, self.endpoint.x, self.endpoint.y)
+    
+    -- Reset state
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
 end

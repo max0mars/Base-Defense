@@ -212,6 +212,20 @@ function Base:drawHealthBar()
     -- Base health bar is handled by GUIManager HUD
 end
 
+function Base:initMainTurret(turretClass)
+    local gridWidth  = self.buildGrid.width
+    local gridHeight = self.buildGrid.height
+    local centerRow  = math.ceil(gridHeight / 2)
+    local centerCol  = math.ceil(gridWidth / 2)
+    local centerSlot = (centerRow - 1) * gridWidth + centerCol
+    
+    self.mainTurret = turretClass:new({game = self.game})
+    self.buildGrid.unlocked[centerSlot] = true 
+    self.game:newBuilding(self.mainTurret, centerSlot)
+    
+    return self.mainTurret
+end
+
 function Base:addBuilding(building, anchorSlot)
     if not building or not anchorSlot then
         error("Invalid building or anchor slot is missing")

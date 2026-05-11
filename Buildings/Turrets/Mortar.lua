@@ -1,14 +1,14 @@
 local Turret = require("Buildings.Turrets.Turret")
 local Utils = require("Classes.Utils")
-local LobberBullet = require("Bullets.LobberBullet")
+local MortarBullet = require("Bullets.MortarBullet")
 local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
 
-local Lobber = setmetatable({}, { __index = Turret })
-Lobber.__index = Lobber
+local Mortar = setmetatable({}, { __index = Turret })
+Mortar.__index = Mortar
 
 -- Source of Truth: All stats in a single flat table
-Lobber.template = {
-    name = "Lobber",
+Mortar.template = {
+    name = "Mortar",
     size = 15,
     rotation = 0,
     turnSpeed = math.huge,
@@ -18,7 +18,7 @@ Lobber.template = {
     color = {1, 1, 1, 1},
     baseShape = "circle",
     barrelShape = "thick",
-    types = { turret = true, lobber = true },
+    types = { turret = true, mortar = true },
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,
@@ -27,10 +27,10 @@ Lobber.template = {
     },
     
     -- Bullet properties (now flat)
-    bulletName = "Lobber Shell",
+    bulletName = "Mortar Shell",
     bulletSpeed = 400,
     damageType = "explosive",
-    damage = 35, 
+    damage = 40, 
     canDirectHit = false,
     pierce = 1,
     lifespan = 3,
@@ -42,15 +42,15 @@ Lobber.template = {
     }
 }
 
-function Lobber:new(config)
-    local baseConfig = Utils.deepCopy(Lobber.template)
+function Mortar:new(config)
+    local baseConfig = Utils.deepCopy(Mortar.template)
     
     if config then
         for k, v in pairs(config) do
             baseConfig[k] = v
         end
     end
-    baseConfig.bulletType = LobberBullet
+    baseConfig.bulletType = MortarBullet
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
     
@@ -66,4 +66,4 @@ function Lobber:new(config)
     return t
 end
 
-return Lobber
+return Mortar

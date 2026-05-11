@@ -105,11 +105,11 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Sniper")
         },
         {
-            id = "lobber",
-            name = "Lobber",
+            id = "mortar",
+            name = "Mortar",
             description = "Shoots explosive projectiles in an arc.",
             type = "building",
-            building = require("Buildings.Turrets.Lobber")
+            building = require("Buildings.Turrets.Mortar")
         },
         {
             id = "explosiveBullets",

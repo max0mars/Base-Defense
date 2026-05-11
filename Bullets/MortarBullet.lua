@@ -1,24 +1,24 @@
 local bullet = require("Bullets.Bullet")
 
-local LobberBullet = setmetatable({}, bullet)
-LobberBullet.__index = LobberBullet
+local MortarBullet = setmetatable({}, bullet)
+MortarBullet.__index = MortarBullet
 
 -- Constants
 local GRAVITY = 1500
 local Z_COLLIDE_RANGE = 20
 local MAX_HEIGHT = 150
 
-function LobberBullet:getTOF()
+function MortarBullet:getTOF()
     local vz0 = math.sqrt(2 * GRAVITY * MAX_HEIGHT)
     return (2 * vz0) / GRAVITY
 end
 
-function LobberBullet:new(config)
+function MortarBullet:new(config)
     -- Safety checks (getStat protocol)
     local required = {"bulletSpeed", "damage"}
     for _, key in ipairs(required) do
         if config[key] == nil then
-            error("Developer Error: LobberBullet is missing required stat: " .. key)
+            error("Developer Error: MortarBullet is missing required stat: " .. key)
         end
     end
 
@@ -62,7 +62,7 @@ function LobberBullet:new(config)
     return b
 end
 
-function LobberBullet:update(dt)
+function MortarBullet:update(dt)
     if self.destroyed then return end
     
     -- Horizontal Movement (using Bullet code)
@@ -81,7 +81,7 @@ function LobberBullet:update(dt)
     end
 end
 
-function LobberBullet:onCollision(obj)
+function MortarBullet:onCollision(obj)
     if self.destroyed then return end
     
     -- Only check for enemy collisions
@@ -95,7 +95,7 @@ function LobberBullet:onCollision(obj)
     end
 end
 
-function LobberBullet:draw()
+function MortarBullet:draw()
     -- Visual Indicator: Shadow at base coordinates
     local shadowWidth = 12
     local shadowHeight = 6
@@ -114,4 +114,4 @@ function LobberBullet:draw()
     end
 end
 
-return LobberBullet
+return MortarBullet

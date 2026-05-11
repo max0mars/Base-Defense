@@ -49,6 +49,18 @@ local EnemyRegistry = {
                 { id = "carrier_hp", name = "Reinforced Hull", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Carrier" },
                 { id = "carrier_rate", name = "Rapid Deployment", description = "Spawn Rate +30%", modifiers = { spawnInterval = 0.7 }, target = "Carrier" }
             }
+        },
+        {
+            id = "Armored",
+            type = "Armored",
+            class = require("Enemies.Armored"),
+            spawnCost = 35,
+            spawnWeight = 30,
+            description = "Heavily resistant to normal damage.",
+            mutations = {
+                { id = "armored_hp", name = "Dreadnought Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Armored" },
+                { id = "armored_resist", name = "Even Stronger Armor", description = "Normal resistance +10%", modifiers = { normal = 0.9 }, target = "Armored" }
+            }
         }
     },
     

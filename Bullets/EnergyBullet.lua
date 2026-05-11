@@ -12,14 +12,6 @@ function EnergyBullet:new(config)
 end
 
 function EnergyBullet:update(dt)
-    if self.destroyed then return end
-    
-    -- Store current position for trail before moving
-    table.insert(self.trail, 1, {x = self.x, y = self.y})
-    if #self.trail > self.maxTrail then
-        table.remove(self.trail)
-    end
-    
     Bullet.update(self, dt)
 end
 

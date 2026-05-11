@@ -24,7 +24,7 @@ local Inventory          = require("Game.Inventory.Inventory")
 local EffectManager      = require("Game.Effects.EffectManager")
 
 -- Entities & UI
-local MainTurret         = require("Buildings.Turrets.MainTurret")
+local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
@@ -83,7 +83,7 @@ function game:load(saveData)
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.mutationInterval     = 5 -- Waves between enemy mutations
         self.inputMode            = "idle"
-        self.useHybridSeparation  = true
+        self.useHybridSeparation  = false
         self.pulseTimer           = 0
         self.oscillationSpeed     = 1
         
@@ -105,16 +105,9 @@ function game:load(saveData)
     self:addObject(self.base)
     self.ground = ground
     
-    -- Spawn Starting Turret in the center of the build grid
-    self.mainTurret = MainTurret:new({game = self})
-    local gridWidth  = self.base.buildGrid.width
-    local gridHeight = self.base.buildGrid.height
-    local centerRow  = math.ceil(gridHeight / 2)
-    local centerCol  = math.ceil(gridWidth / 2)
-
-    local centerSlot = (centerRow - 1) * gridWidth + centerCol
-    self.base.buildGrid.unlocked[centerSlot] = true 
-    self:newBuilding(self.mainTurret, centerSlot)
+    -- Spawn Starting Turret via Base
+    self.base:initMainTurret(StandardMainTurret)
+    self.mainTurret = self.base.mainTurret
     
     love.mouse.setVisible(false)
 end

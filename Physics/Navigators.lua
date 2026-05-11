@@ -124,38 +124,6 @@ function GridNavigator:update(dt)
             local vx = (dx / dist)
             local vy = (dy / dist)
             
-            -- Hybrid Separation Logic
-            if game.useHybridSeparation and enemy.currentSeparationStrength and enemy.currentSeparationStrength > 0 then
-                local sepX, sepY = 0, 0
-                local neighborRadius = 200
-                local r2 = neighborRadius * neighborRadius
-                
-                for _, other in ipairs(game.objects) do
-                    if other ~= enemy and other:isType("enemy") and not other.destroyed then
-                        local sx = enemy.x - other.x
-                        local sy = enemy.y - other.y
-                        local d2 = sx*sx + sy*sy
-                        
-                        if d2 < r2 and d2 > 0 then
-                            local d = math.sqrt(d2)
-                            -- Inverse square law: push harder when closer
-                            local force = 1 / d2 
-                            sepX = sepX + (sx / d) * force
-                            sepY = sepY + (sy / d) * force
-                        end
-                    end
-                end
-                
-                -- Scale separation by current strength and combine with movement
-                vx = vx + sepX * 100 * enemy.currentSeparationStrength
-                vy = vy + sepY * 100 * enemy.currentSeparationStrength
-                
-                -- Repurifying movement vector
-                local newMag = math.sqrt(vx*vx + vy*vy)
-                if newMag > 0 then
-                    vx, vy = vx/newMag, vy/newMag
-                end
-            end
 
             local nextX = enemy.x + vx * currentSpeed * dt
             local nextY = enemy.y + vy * currentSpeed * dt

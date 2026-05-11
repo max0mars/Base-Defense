@@ -21,7 +21,7 @@ Rare
 Epic
 - Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.
 - Explosive Rounds [Buildings.Buffs.ExplosiveTotem]: Bullets explode on impact.
-- Lobber [Buildings.Turrets.Lobber]: Shoots explosive projectiles in an arc.
+- Mortar [Buildings.Turrets.Mortar]: Shoots explosive projectiles in an arc.
 
 Legendary
 - *No rewards currently defined in this tier.*
