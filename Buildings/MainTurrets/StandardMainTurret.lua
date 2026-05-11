@@ -1,5 +1,6 @@
 local MainTurret = require("Buildings.MainTurrets.MainTurret")
 local HitscanBullet = require("Bullets.HitscanBullet")
+local BurnEffect = require("Game.Effects.StatusEffects.Burn")
 local Utils = require("Classes.Utils")
 
 local StandardMainTurret = setmetatable({}, { __index = MainTurret })
@@ -121,20 +122,50 @@ function StandardMainTurret:draw()
     local currentFireRate = self:getStat("fireRate")
     local reloadProgress = 1 - math.max(0, self.cooldown / (1 / currentFireRate))
     
-    if reloadProgress > 0.25 then
+    if not self.upgrades["electric_field"] and reloadProgress > 0.25 then
         love.graphics.setColor(0, 0.5, 1, 0.3 * reloadProgress)
         love.graphics.setLineWidth(5)
         drawTeslaCoil()
     end
     
-    love.graphics.setLineWidth(2)
-    drawTeslaCoil()
-    
-    -- Core Glow at tip and base
-    if reloadProgress >= 1 then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.circle("fill", 20, 0, 1.5)
+    if not self.upgrades["electric_field"] then
+        love.graphics.setLineWidth(2)
+        drawTeslaCoil()
+        
+        -- Core Glow at tip and base
+        if reloadProgress >= 1 then
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.circle("fill", 20, 0, 1.5)
+        end
+    else
+        -- Electric Charging Rings (Replaces Barrel) - Reduced size to fit slot
+        for i = 1, 3 do
+            local ringRadius = 7 + i * 5 -- Reduced from 10 + i * 7
+            local threshold = i / 3
+            local isCharged = reloadProgress >= threshold
+            
+            if isCharged then
+                love.graphics.setColor(0.4, 0.7, 1, 0.8)
+                love.graphics.setLineWidth(2)
+            else
+                love.graphics.setColor(0.2, 0.2, 0.3, 0.5)
+                love.graphics.setLineWidth(1)
+            end
+            
+            love.graphics.circle("line", 0, 0, ringRadius)
+            
+            if isCharged then
+                love.graphics.setColor(0.4, 0.7, 1, 0.15)
+                love.graphics.circle("fill", 0, 0, ringRadius)
+            end
+        end
+        
+        -- Central Core pulsing
+        local pulse = (math.sin(love.timer.getTime() * 10) + 1) / 2
+        love.graphics.setColor(0.4, 0.7, 1, 0.5 + 0.5 * pulse * reloadProgress)
+        love.graphics.circle("fill", 0, 0, 4 + 2 * pulse)
     end
+    
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.circle("fill", 0, 0, 3)
     
@@ -149,6 +180,38 @@ function StandardMainTurret:getFirePoint()
     local mx, my = love.mouse.getPosition()
     local angle = math.atan2(my - cy, mx - cx)
     return cx + math.cos(angle) * 20, cy + math.sin(angle) * 20
+end
+
+function StandardMainTurret:applyHitEffects(target)
+    -- Unstable Laser: 20% chance to apply Burn
+    if self.upgrades["unstable_laser"] and math.random() <= 0.20 then
+        if target.effectManager and target.effectManager.applyEffect then
+            target.effectManager:applyEffect(BurnEffect:new({
+                name = "burn",
+                duration_burn = 3,
+                dps_burn = 10,
+                maxStacks = 5
+            }), self) -- Pass self as source for stat scaling
+        end
+    end
+end
+
+function StandardMainTurret:fire(args)
+     -- Ensure correct angle for hitscan/projectiles
+     local fX, fY = self:getFirePoint()
+     local angle = math.atan2(args.targetY - fY, args.targetX - fX)
+     args.angle = angle
+     args.displayLifespan = self:getStat("displayLifespan")
+     args.color = self:getStat("bulletColor")
+     args.fireX = fX
+     args.fireY = fY
+     
+     -- Pass hit effects to the bullet
+     args.onHitCallback = function(bullet, target)
+         self:applyHitEffects(target)
+     end
+     
+     MainTurret.fire(self, args)
 end
 
 return StandardMainTurret

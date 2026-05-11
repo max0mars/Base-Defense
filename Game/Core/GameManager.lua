@@ -30,6 +30,7 @@ local enemy              = require("Enemies.Enemy") -- Note: Check if needed her
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
 local CircleFade       = require("Graphics.Animations.CircleFade")
 local DamageNumber       = require("Graphics.Animations.DamageNumber")
+local LightningBolt     = require("Graphics.Animations.LightningBolt")
 
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
@@ -361,7 +362,7 @@ function game:waveComplete()
     self:interest()
     self:addTokens(3)
     
-    -- Trigger onWaveComplete for all buildings (e.g. TokenMint)
+    -- Trigger onWaveComplete for all buildings (e.g. Bank)
     for _, obj in ipairs(self.objects) do
         if obj.onWaveComplete and not obj.destroyed then
             obj:onWaveComplete()
@@ -375,6 +376,10 @@ end
 
 function game:spawnCircleFade(x, y, radius, color, duration)
     table.insert(self.animations, CircleFade:new(x, y, radius, color, duration))
+end
+
+function game:spawnLightningBolt(tx, ty, config)
+    table.insert(self.animations, LightningBolt:new(tx, ty, config))
 end
 
 function game:EnemyDied(enemy)

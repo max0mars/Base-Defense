@@ -79,6 +79,13 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Turrets.EnergyBlaster")
         },
+        {
+            id = "bank",
+            name = "Bank",
+            description = "Generates 1 Token every 3 waves.",
+            type = "building",
+            building = require("Buildings.Turrets.Bank")
+        },
     },
     rare = {
         {
@@ -96,12 +103,16 @@ local RewardIndex = {
             building = require("Buildings.Buffs.PoisonTotem")
         },
         {
-            id = "tokenMint",
-            name = "Token Mint",
-            description = "Generates 1 Token every 3 waves.",
-            type = "building",
-            building = require("Buildings.Turrets.TokenMint")
-        }
+            id = "unstable_laser",
+            name = "Unstable Laser",
+            description = "Main Turret: 20% chance to burn enemies for 3s.",
+            type = "main_upgrade",
+            isEligible = function(game)
+                local mt = game.base and game.base.mainTurret
+                return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
+            end
+        },
+        
     },
     epic = {
         {
@@ -124,9 +135,29 @@ local RewardIndex = {
             description = "Bullets explode on impact.",
             type = "building",
             building = require("Buildings.Buffs.ExplosiveTotem")
-        }
+        },
+        {
+            id = "low_power_operating",
+            name = "Low Power Ops",
+            description = "Main Turret: +50% Fire Rate, -20% Damage.",
+            type = "main_upgrade",
+            isEligible = function(game)
+                local mt = game.base and game.base.mainTurret
+                return mt and mt.id == "standard_main" and not mt.upgrades["low_power_operating"]
+            end
+        },
     },
     legendary = {
+        {
+            id = "electric_field",
+            name = "Electric Field",
+            description = "Main Turret: Auto-zaps up to 3 nearby enemies for 1.5x damage.",
+            type = "main_upgrade",
+            isEligible = function(game)
+                local mt = game.base and game.base.mainTurret
+                return mt and not mt.upgrades["electric_field"]
+            end
+        },
         {
             id = "chainLaser",
             name = "Chain Laser",

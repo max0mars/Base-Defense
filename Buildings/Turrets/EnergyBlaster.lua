@@ -11,7 +11,7 @@ function EnergyBlaster:new(config)
     config.color = {0, 1, 1, 1} -- Bright Cyan
     config.rotation = config.rotation or 0
     config.turnSpeed = 4
-    config.fireRate = 2.5
+    config.fireRate = 1.2
     config.damage = 35
     config.bulletSpeed = 450
     config.range = 400
@@ -21,7 +21,7 @@ function EnergyBlaster:new(config)
     config.bulletShape = "pill"
     config.damageType = "energy"
     config.bulletName = "Energy Bolt"
-    config.lifespan = 1.2
+    config.lifespan = 1.5
     config.pierce = 1
     config.types = { turret = true, energy = true, building = true }
     

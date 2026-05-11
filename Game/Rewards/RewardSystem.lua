@@ -13,7 +13,7 @@ function RewardSystem:new(game)
         game = game,
         isActive = false,
         rewardPool = {}, -- current choices being presented
-        poolLogic = RewardPool:new(RewardIndex)
+        poolLogic = RewardPool:new(RewardIndex, game)
     }, self)
     
     system.currentChoices = {}
@@ -62,6 +62,11 @@ function RewardSystem:selectReward(index)
         --print("Selected reward: " .. reward.name)
         if reward.type == "building" then
             self.game:placeBuilding(reward.building, reward)
+        elseif reward.type == "main_upgrade" then
+            if self.game.base and self.game.base.mainTurret then
+                self.game.base.mainTurret.upgrades[reward.id] = true
+                -- Optional: Visual feedback could be added here
+            end
         else
             error("Invalid reward type: " .. reward.type)
         end

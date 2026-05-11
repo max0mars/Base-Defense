@@ -4,6 +4,7 @@ Armored.__index = Armored
 
 local default = {
     speed = 20,
+    damage = 15,
     maxHp = 150,
     color = {0.5, 0.4, 1, 1}, -- Neon Steel/Purple
     types = { armored = true, tank = true },

@@ -18,9 +18,10 @@ RewardPool.LuckTable = {
 -- Preferred rarity order for fallbacks
 RewardPool.RarityOrder = { "legendary", "epic", "rare", "uncommon", "common" }
 
-function RewardPool:new(rewardIndex)
+function RewardPool:new(rewardIndex, game)
     local obj = setmetatable({
-        index = rewardIndex
+        index = rewardIndex,
+        game = game
     }, self)
     return obj
 end
@@ -75,7 +76,13 @@ function RewardPool:getRandomRewardFromTier(rarity, excludedIds)
                 local available = {}
                 for _, item in ipairs(tier) do
                     if not excludedIds[item.id or item.name] then
-                        table.insert(available, item)
+                        local eligible = true
+                        if item.isEligible then
+                            eligible = item.isEligible(self.game)
+                        end
+                        if eligible then
+                            table.insert(available, item)
+                        end
                     end
                 end
                 

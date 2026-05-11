@@ -1,11 +1,11 @@
 local Turret = require("Buildings.Turrets.Turret")
 local Utils = require("Classes.Utils")
 
-local TokenMint = setmetatable({}, { __index = Turret })
-TokenMint.__index = TokenMint
+local Bank = setmetatable({}, { __index = Turret })
+Bank.__index = Bank
 
-TokenMint.template = {
-    name = "Token Mint",
+Bank.template = {
+    name = "Bank",
     size = 20,
     rotation = 0,
     turnSpeed = 0, -- Static
@@ -29,8 +29,8 @@ TokenMint.template = {
     cycleWaves = 3
 }
 
-function TokenMint:new(config)
-    local baseConfig = Utils.deepCopy(TokenMint.template)
+function Bank:new(config)
+    local baseConfig = Utils.deepCopy(Bank.template)
     
     if config then
         for k, v in pairs(config) do
@@ -46,7 +46,7 @@ function TokenMint:new(config)
     return t
 end
 
-function TokenMint:onWaveComplete()
+function Bank:onWaveComplete()
     self.wavesSinceLastToken = self.wavesSinceLastToken + 1
     
     if self.wavesSinceLastToken >= self.cycleWaves then
@@ -62,7 +62,7 @@ function TokenMint:onWaveComplete()
 end
 
 -- Override draw to make it look like a mint/vault
-function TokenMint:draw(drawx, drawy)
+function Bank:draw(drawx, drawy)
     local cx, cy = drawx or self.x, drawy or self.y
     if not drawx and not drawy then
         cx, cy = self:getCenterPosition()
@@ -83,4 +83,4 @@ function TokenMint:draw(drawx, drawy)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-return TokenMint
+return Bank
