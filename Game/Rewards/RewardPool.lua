@@ -4,11 +4,11 @@ RewardPool.__index = RewardPool
 -- Static Luck Table: Luck (1-10) -> {rarity -> weight}
 RewardPool.LuckTable = {
     [1]  = { common = 90, uncommon = 10, rare = 0,  epic = 0,  legendary = 0 },
-    [2]  = { common = 85, uncommon = 13, rare = 2,  epic = 0,  legendary = 0 },
-    [3]  = { common = 80, uncommon = 15, rare = 4,  epic = 1,  legendary = 0 },
-    [4]  = { common = 74, uncommon = 17, rare = 6,  epic = 2,  legendary = 1 },
-    [5]  = { common = 67, uncommon = 20, rare = 8,  epic = 4,  legendary = 1 },
-    [6]  = { common = 60, uncommon = 22, rare = 10, epic = 6,  legendary = 2 },
+    [2]  = { common = 80, uncommon = 15, rare = 5,  epic = 0,  legendary = 0 },
+    [3]  = { common = 75, uncommon = 18, rare = 6,  epic = 1,  legendary = 0 },
+    [4]  = { common = 70, uncommon = 20, rare = 7,  epic = 2,  legendary = 1 },
+    [5]  = { common = 60, uncommon = 24, rare = 12,  epic = 2,  legendary = 1 },
+    [6]  = { common = 55, uncommon = 25, rare = 12, epic = 6,  legendary = 2 },
     [7]  = { common = 50, uncommon = 25, rare = 12, epic = 10, legendary = 3 },
     [8]  = { common = 40, uncommon = 25, rare = 15, epic = 15, legendary = 5 },
     [9]  = { common = 30, uncommon = 25, rare = 20, epic = 20, legendary = 5 },

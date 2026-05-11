@@ -31,6 +31,7 @@ local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
 local CircleFade       = require("Graphics.Animations.CircleFade")
 local DamageNumber       = require("Graphics.Animations.DamageNumber")
 local LightningBolt     = require("Graphics.Animations.LightningBolt")
+local ExpandingCircle   = require("Graphics.Animations.ExpandingCircle")
 
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
@@ -373,6 +374,10 @@ end
 
 function game:spawnLightningBolt(tx, ty, config)
     table.insert(self.animations, LightningBolt:new(tx, ty, config))
+end
+
+function game:spawnExpandingCircle(x, y, startRadius, endRadius, color, duration)
+    table.insert(self.animations, ExpandingCircle:new(x, y, startRadius, endRadius, color, duration))
 end
 
 function game:EnemyDied(enemy)

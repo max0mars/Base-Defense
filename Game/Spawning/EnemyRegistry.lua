@@ -54,7 +54,7 @@ local EnemyRegistry = {
             id = "Armored",
             type = "Armored",
             class = require("Enemies.Armored"),
-            spawnCost = 35,
+            spawnCost = 40,
             spawnWeight = 30,
             description = "Heavily resistant to normal damage.",
             mutations = {
@@ -68,12 +68,12 @@ local EnemyRegistry = {
             class = require("Enemies.Guardian"),
             spawnCost = 100,
             spawnWeight = 25,
-            description = "Support unit. Projects a damage reduction aura to nearby allies.",
+            description = "Support unit. Periodically grants shields to nearby allies.",
             mutations = {
                 { id = "guardian_hp", name = "Sanctuary Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Guardian" },
-                { id = "guardian_shield", name = "Overcharge Shields", description = "Every 5s, grants +50 Shield to the 5 nearest allies.", modifiers = { grantsShield = { set = true } }, target = "Guardian" }
+                { id = "guardian_aura", name = "Guardian Aura", description = "Guardian projects a 25% damage reduction aura to nearby allies.", modifiers = { hasAura = { set = true } }, target = "Guardian" }
             }
-        }
+        },
     },
     
     activePool = {
@@ -82,7 +82,7 @@ local EnemyRegistry = {
             type = "Basic",
             class = require("Enemies.Enemy"),
             spawnCost = 10,
-            spawnWeight = 80,
+            spawnWeight = 60,
             description = "The backbone of the invasion. Average speed and health.",
             mutations = {
                 { id = "basic_hp", name = "Veteran Training", description = "HP +25%", modifiers = { maxHp = 1.25, hp = 1.25 }, target = "Basic" },

@@ -26,7 +26,9 @@ function Guardian:new(config)
     setmetatable(obj, { __index = self })
     
     obj.auraRadius = 150
-    obj.grantsShield = false -- Set to true by upgrade
+    obj.grantsShield = true  -- Standard
+    obj.hasAura = false     -- Upgrade
+    obj.shieldAmount = 50
     obj.shieldTimer = 0
     
     return obj
@@ -38,59 +40,58 @@ function Guardian:update(dt)
     -- Call parent update (Enemy.lua handles navigation, base collision, etc.)
     Enemy.update(self, dt)
     
-    -- 1. Aura Logic: Buff nearby allies using the effect system
-    local radiusSq = self.auraRadius * self.auraRadius
-    local auraEffectTemplate = {
-        name = "GuardianAura",
-        duration = 0.5, -- Refreshable short duration
-        maxStacks = 1,
-        statModifiers = {
-            damageReductionMultiplier = { mult = -0.25 }
+    -- 1. Aura Logic (Upgrade): Buff nearby allies using the effect system
+    if self.hasAura then
+        local radiusSq = self.auraRadius * self.auraRadius
+        local auraEffectTemplate = {
+            name = "GuardianAura",
+            duration = 0.5, -- Refreshable short duration
+            maxStacks = 1,
+            statModifiers = {
+                damageReductionMultiplier = { mult = -0.25 }
+            }
         }
-    }
 
-    for _, obj in ipairs(self.game.objects) do
-        if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed then
-            local dx = obj.x - self.x
-            local dy = obj.y - self.y
-            if dx*dx + dy*dy <= radiusSq then
-                local existing = obj.effectManager:getEffect("GuardianAura")
-                if existing then
-                    existing.duration = 0.2 -- Refresh duration
-                else
-                    obj.effectManager:applyEffect(auraEffectTemplate)
+        for _, obj in ipairs(self.game.objects) do
+            if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed then
+                local dx = obj.x - self.x
+                local dy = obj.y - self.y
+                if dx*dx + dy*dy <= radiusSq then
+                    local existing = obj.effectManager:getEffect("GuardianAura")
+                    if existing then
+                        existing.duration = 0.2 -- Refresh duration
+                    else
+                        obj.effectManager:applyEffect(auraEffectTemplate)
+                    end
                 end
             end
         end
     end
     
-    -- 2. Shield Upgrade Logic
+    -- 2. Shield Logic (Innate)
     if self.grantsShield then
         self.shieldTimer = self.shieldTimer + dt
         if self.shieldTimer >= 5.0 then
             self.shieldTimer = 0
             self:grantShieldsToNearby()
+            -- Add animation
+            self.game:spawnExpandingCircle(self.x, self.y, 0, self.auraRadius, {0.6, 0.6, 0.6}, 0.8)
         end
     end
 end
 
 function Guardian:grantShieldsToNearby()
-    local candidates = {}
+    local radiusSq = self.auraRadius * self.auraRadius
     for _, obj in ipairs(self.game.objects) do
         if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed then
-                local dx = obj.x - self.x
-                local dy = obj.y - self.y
-                table.insert(candidates, {obj = obj, distSq = dx*dx + dy*dy})
+            local dx = obj.x - self.x
+            local dy = obj.y - self.y
+            if dx*dx + dy*dy <= radiusSq then
+                if obj.shield < self.shieldAmount then    
+                    obj.shield = self.shieldAmount
+                end
+            end
         end
-    end
-    
-    -- Sort by distance
-    table.sort(candidates, function(a, b) return a.distSq < b.distSq end)
-    
-    -- Grant shields to the 5 closest
-    for i = 1, math.min(5, #candidates) do
-        local target = candidates[i].obj
-        target.shield = (target.shield or 0) + 50
     end
 end
 
@@ -144,12 +145,14 @@ function Guardian:draw()
     love.graphics.setLineWidth(2)
     self:drawShape("line", drawX, drawY, self.w, self.h)
     
-    -- Aura Range Visual (Faint circle)
-    love.graphics.setColor(r, g, b, 0.03)
-    love.graphics.circle("fill", self.x, self.y, self.auraRadius)
-    love.graphics.setColor(r, g, b, 0.15)
-    love.graphics.setLineWidth(1)
-    love.graphics.circle("line", self.x, self.y, self.auraRadius)
+    -- Aura Range Visual (Faint circle) - Only if upgrade active
+    if self.hasAura then
+        love.graphics.setColor(r, g, b, 0.03)
+        love.graphics.circle("fill", self.x, self.y, self.auraRadius)
+        love.graphics.setColor(r, g, b, 0.15)
+        love.graphics.setLineWidth(1)
+        love.graphics.circle("line", self.x, self.y, self.auraRadius)
+    end
 end
 
 return Guardian
