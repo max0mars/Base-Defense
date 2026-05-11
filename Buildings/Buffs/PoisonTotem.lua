@@ -7,7 +7,7 @@ PoisonTotem.__index = PoisonTotem
 local default = {
     name = "Poison Totem",
     types = { passive = true, totem = true, poison = true },
-    affectedSlots = {{1, 0}}, -- Only affects building directly in front
+    affectedSlots = {{1, 0}, {0, 1}, {0, -1}}, -- Only affects building directly in front
     color = {0, 0.6, 0.2, 1}, -- Vibrant poison green
     
     -- Properties for the poison effect granted to cannons

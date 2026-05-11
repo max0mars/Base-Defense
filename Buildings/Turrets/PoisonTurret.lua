@@ -29,10 +29,10 @@ PoisonTurret.template = {
     bulletH = 4, 
     bulletShape = "rectangle",
     
-    -- Placeholder values for effect initialization (overridden by inherent buff)
-    duration_poison = 0,
-    dps_poison = 0,
-    maxStacks = 0,
+    -- Values for effect initialization (can be overridden by inherent buff or external buffs)
+    duration_poison = 4,
+    dps_poison = 15,
+    maxStacks = math.huge,
 }
 
 function PoisonTurret:new(config)
@@ -45,7 +45,9 @@ function PoisonTurret:new(config)
     end
     
     -- Initialize hit effects from the config values
-    baseConfig.hitEffects = {PoisonEffect:new(baseConfig)}
+    local poisonEffectConfig = Utils.deepCopy(baseConfig)
+    poisonEffectConfig.name = "poison"
+    baseConfig.hitEffects = {PoisonEffect:new(poisonEffectConfig)}
     
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
@@ -54,7 +56,7 @@ function PoisonTurret:new(config)
     t.effectManager:applyEffect({
         name = "Inherent Poison",
         statModifiers = {
-            dps_poison = {max = 15, hidden = true},
+            dps_poison = {max = 10, hidden = true},
             duration_poison = {max = 4, hidden = true},
             maxStacks = {max = math.huge, hidden = true}
         }

@@ -7,7 +7,7 @@ ExplosiveTotem.__index = ExplosiveTotem
 local default = {
     name = "Explosive Totem",
     types = { passive = true, totem = true, explosive = true },
-    affectedSlots = {{1, 0}}, -- Affects adjacent turrets in a cross pattern
+    affectedSlots = {{1, 0}, {0, -1}}, -- Affects adjacent turrets in a cross pattern
     color = {1, 0.4, 0, 1}, -- Vibrant neon orange
     
     -- Configuration used to initialize the Explosion independent effect

@@ -59,7 +59,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.tokens       = 0
+        self.tokens       = 1000
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
@@ -81,6 +81,7 @@ function game:load(saveData)
         self.rewardCost           = 2
         self.autoStartWave        = false
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
+        self.mutationInterval     = 5 -- Waves between enemy mutations
         self.inputMode            = "idle"
         self.useHybridSeparation  = true
         self.pulseTimer           = 0
@@ -201,18 +202,42 @@ function game:update(dt)
         return
     end
 
-    -- Pause update logic if a modal menu (Rewards) is active
+    -- Update GUI first so it can handle hover/interaction even while paused
+    self.gui:update(dt)
+
+    -- Pause update logic if a modal menu (Rewards/Mutation) is active
     if (self.rewardSystem and self.rewardSystem.isActive) or 
-       (self.specialUpgradeManager and self.specialUpgradeManager.isActive) then 
+       (self.specialUpgradeManager and self.specialUpgradeManager.isActive) or
+       (self.gui.mutation and self.gui.mutation.isActive) then 
         return 
     end
 
     -- State Transitions: Wave Completion
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
         self:waveComplete()
-        -- if self.wave % self.specialWaveInterval == 0 then
-        --     self.specialUpgradeManager:activate()
-        -- end
+        
+        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+        
+        -- Interval 1: New Enemy (5, 10, 15...)
+        if self.wave % self.mutationInterval == 0 then
+            local options = EnemyRegistry:getMutationOptions(2)
+            if #options > 0 then
+                self:setState("enemy_mutation")
+                self.gui.mutation:activate(options, "enemy")
+                return -- Exit early to prioritize this menu
+            end
+        end
+
+        -- Interval 2: Enemy Upgrade (3, 8, 13...)
+        if (self.wave - 3) % 5 == 0 then
+            local options = EnemyRegistry:getUpgradeOptions(2)
+            if #options > 0 then
+                self:setState("upgrade_mutation")
+                self.gui.mutation:activate(options, "upgrade")
+                return -- Exit early to prioritize this menu
+            end
+        end
+
         self:setState("preparing")
     end
     
@@ -231,7 +256,6 @@ function game:update(dt)
     self.WaveSpawner:update(dt)
     self.playerEffectManager:update(dt)
     self.enemyEffectManager:update(dt)
-    self.gui:update(dt)
 
     -- Entity Updates
     for _, obj in ipairs(self.objects) do
@@ -295,7 +319,10 @@ function game:draw()
     
     if self.inputMode == "placing" and self.blueprint then
         self.blueprint.isPreview = true
-        self.blueprint:draw(self.inputHandler.mouseX, self.inputHandler.mouseY)
+        -- Fallback to mouse coordinates if not snapped to grid
+        local drawX = self.inputHandler.snappedX or self.inputHandler.mouseX
+        local drawY = self.inputHandler.snappedY or self.inputHandler.mouseY
+        self.blueprint:draw(drawX, drawY)
         self.blueprint.isPreview = false
     end
     if self.rewardSystem and self.rewardSystem.isActive then

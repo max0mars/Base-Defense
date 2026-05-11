@@ -221,12 +221,33 @@ function Enemy:checkBaseCollision()
     return false
 end
 
+function Enemy:drawHealthBar()
+    -- Health is now drawn as a fill effect inside the enemy sprite
+end
+
 function Enemy:draw()
     local r, g, b, a = unpack(self.color or {1, 0, 0, 1})
     local drawX = self.x - self.w/2
     local drawY = self.y - self.h/2
     
-    -- Draw glow layers dynamically (no canvas needed)
+    -- 1. Draw "Empty" Base State (Dim fill)
+    love.graphics.setColor(r, g, b, 0.15)
+    love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+    
+    -- 2. Calculate Scissor Box for Health Fill (Draining effect)
+    local fillRatio = self.hp / self:getStat("maxHp")
+    -- Fill drops from top to bottom. The filled portion starts at the bottom.
+    local scissorY = drawY + self.h * (1 - fillRatio)
+    local scissorH = self.h * fillRatio
+    
+    -- 3. Draw "Health" Fill (Bright fill restricted by scissor)
+    -- We use math.floor to prevent sub-pixel jittering with setScissor
+    love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
+    love.graphics.setColor(r, g, b, 0.7) -- Bright inner color
+    love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+    love.graphics.setScissor() -- Reset scissor immediately
+    
+    -- 4. Draw Glow Layers (Outside scissor)
     for i = 6, 1, -1 do
         local alpha = 0.05 * (1 - i/7)
         love.graphics.setColor(r, g, b, alpha)
@@ -234,7 +255,7 @@ function Enemy:draw()
         love.graphics.rectangle("line", drawX, drawY, self.w, self.h)
     end
     
-    -- Main crisp outline
+    -- 5. Draw Main Neon Border (Last to ensure crisp edges)
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", drawX, drawY, self.w, self.h)

@@ -15,8 +15,8 @@ local default = {
     -- shapePattern = {
     --     {0, 0}
     -- },
-    --dark green color (normalized to 0-1 range for Love2D)
-    color = {21/255, 71/255, 52/255},
+    -- vibrant neon green color
+    color = {0.2, 0.9, 0.3, 1},
 }
 
 -- buff provides either a stat boost or an on hit ability to nearby towers
@@ -60,40 +60,98 @@ function Buff:getAffectedSlotsFromAnchor(anchorSlot)
 end
 
 function Buff:draw(drawx, drawy)
-    if not drawx or not drawy then
-        if not self.slot then
-            error("Can't draw building if it's not placed on grid")
-        end -- Can't draw without placement
+    local cx, cy
+    local totalW, totalH
+    local cellSize = self.buildGrid.cellSize
     
-        love.graphics.setColor(self.color or {1, 1, 1, 1})
+    -- 1. Calculate Bounding Box and Center
+    if not drawx or not drawy then
+        if not self.slot then return end
+        cx, cy = self:getCenterPosition()
         
-        -- Draw filled rectangles for each occupied slot
-        local occupiedSlots = self:getSlotsFromPattern(self.slot)
-        for _, slot in ipairs(occupiedSlots) do
-            local i = ((slot - 1) % self.buildGrid.width) + 1
-            local j = math.ceil(slot / self.buildGrid.width)
-            local x = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
-            local y = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
-            
-            love.graphics.rectangle("fill", x, y, self.buildGrid.cellSize, self.buildGrid.cellSize)
-        end
-        
-        -- Reset color
-        love.graphics.setColor(1, 1, 1, 1)
-    else
-        love.graphics.setColor(self.color or {1, 1, 1, 1})
-        
-        -- Draw the building's shape based on shapePattern
+        -- Calculate total span from shapePattern for multi-cell buildings
+        local minX, maxX, minY, maxY = math.huge, -math.huge, math.huge, -math.huge
         for _, coord in ipairs(self.shapePattern) do
-            local cellX = drawx + (coord[1] * self.buildGrid.cellSize)
-            local cellY = drawy + (coord[2] * self.buildGrid.cellSize)
-            
-            love.graphics.rectangle("fill", cellX, cellY, self.buildGrid.cellSize, self.buildGrid.cellSize)
+            minX = math.min(minX, coord[1])
+            maxX = math.max(maxX, coord[1])
+            minY = math.min(minY, coord[2])
+            maxY = math.max(maxY, coord[2])
         end
+        totalW = (maxX - minX + 1) * cellSize
+        totalH = (maxY - minY + 1) * cellSize
+    else
+        -- Preview mode: snapped center is passed as drawx, drawy
+        cx, cy = drawx, drawy
         
-        -- Reset color
-        love.graphics.setColor(1, 1, 1, 1)
+        local minX, maxX, minY, maxY = math.huge, -math.huge, math.huge, -math.huge
+        for _, coord in ipairs(self.shapePattern) do
+            minX = math.min(minX, coord[1])
+            maxX = math.max(maxX, coord[1])
+            minY = math.min(minY, coord[2])
+            maxY = math.max(maxY, coord[2])
+        end
+        totalW = (maxX - minX + 1) * cellSize
+        totalH = (maxY - minY + 1) * cellSize
+        
+        -- Adjust center point if building is multi-cell
+        local offsetX = (minX + maxX) * cellSize / 2
+        local offsetY = (minY + maxY) * cellSize / 2
+        cx = cx + offsetX
+        cy = cy + offsetY
     end
+
+    -- 2. Styling Parameters
+    local padding = cellSize * 0.15
+    local w = totalW - padding * 2
+    local h = totalH - padding * 2
+    
+    local r, g, b = unpack(self.color or {1, 1, 1})
+    local time = love.timer.getTime()
+    local pulse = (math.sin(time * 4) + 1) / 2 -- 0 to 1 pulsing
+    
+    -- 3. Neon Glow Effect
+    -- Draw multiple layers of the geometric shape with decreasing thickness and increasing opacity
+    for i = 4, 1, -1 do
+        local alpha = (0.05 + (1 - i/5) * 0.3) * (0.6 + pulse * 0.4)
+        local glowWidth = i * 2 + pulse * 3
+        love.graphics.setLineWidth(glowWidth)
+        love.graphics.setColor(r, g, b, alpha)
+        
+        -- Geometric Shape: Diamond wireframe
+        love.graphics.polygon("line", 
+            cx, cy - h/2, -- Top
+            cx + w/2, cy, -- Right
+            cx, cy + h/2, -- Bottom
+            cx - w/2, cy  -- Left
+        )
+    end
+    
+    -- 4. Bright Core Line
+    love.graphics.setLineWidth(2)
+    love.graphics.setColor(math.min(r * 1.5, 1), math.min(g * 1.5, 1), math.min(b * 1.5, 1), 1)
+    love.graphics.polygon("line", 
+        cx, cy - h/2,
+        cx + w/2, cy,
+        cx, cy + h/2,
+        cx - w/2, cy
+    )
+    
+    -- 5. Inner Detail: Pulse-synced Core Node
+    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
+    love.graphics.circle("fill", cx, cy, 3 + pulse * 2)
+    
+    -- Inner diamond detail
+    local sw, sh = w * 0.4, h * 0.4
+    love.graphics.polygon("line", 
+        cx, cy - sh/2,
+        cx + sw/2, cy,
+        cx, cy + sh/2,
+        cx - sw/2, cy
+    )
+    
+    -- Reset drawing state
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Buff:applyBuffs()

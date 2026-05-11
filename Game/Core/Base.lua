@@ -153,9 +153,10 @@ function Base:draw()
         end
         love.graphics.setLineWidth(1) -- Reset line width
     end
-    if self.game.inputMode == "placing" then
-        self.game.blueprint:draw(self.game.inputHandler.mouseX, self.game.inputHandler.mouseY)
-    end
+    -- Redundant blueprint drawing removed (handled by GameManager)
+    -- if self.game.inputMode == "placing" then
+    --     self.game.blueprint:draw(self.game.inputHandler.mouseX, self.game.inputHandler.mouseY)
+    -- end
     -- Draw green outline for buff building hover/selection slots
     if self.buffHoverSlots then
         love.graphics.setColor(0, 1, 0, 1) -- Bright green outline

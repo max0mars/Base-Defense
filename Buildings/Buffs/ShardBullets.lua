@@ -7,7 +7,11 @@ ShardBullets.__index = ShardBullets
 local default = {
     name = "Shard Bullets",
     types = { passive = true, totem = true, shard = true },
-    affectedSlots = {{1, 0}}, -- Only affects building directly in front
+    affectedSlots = {{0, -1}, {0, 1}}, -- Only affects building directly in front
+    shapePattern = {
+        {0, 0},
+        {1, 0}
+    },
     color = {0.3, 0.3, 0.8, 1}, -- Steel blue for sharding
     
     -- Properties for the split effect identification

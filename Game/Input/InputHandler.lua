@@ -248,9 +248,18 @@ function InputHandler:handleBuildingSlotHover()
             else
                 base.affectedSlots = nil
             end
+
+            -- GRID SNAPPING: Calculate center of the anchor slot for the preview
+            self.snappedX = buildGrid.x + (gridX - 1) * buildGrid.cellSize + buildGrid.cellSize / 2
+            self.snappedY = buildGrid.y + (gridY - 1) * buildGrid.cellSize + buildGrid.cellSize / 2
         else
             activeStateBox.selectedSlot = anchorSlot
+            self.snappedX = nil
+            self.snappedY = nil
         end
+    else
+        self.snappedX = nil
+        self.snappedY = nil
     end
 end
 

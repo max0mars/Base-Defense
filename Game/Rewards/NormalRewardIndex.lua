@@ -21,6 +21,13 @@ local RewardIndex = {
             building = require("Buildings.Blockers.SmallBox"),
             type = "building"
         },
+        {
+            id = "rangeBuff",
+            name = "Radar Tower",
+            description = "Increases range of adjacent turrets by 25%.",
+            type = "building",
+            building = require("Buildings.Buffs.RangeBuff")
+        },
     },
     uncommon = {
         {
@@ -106,7 +113,13 @@ local RewardIndex = {
         }
     },
     legendary = {
-        
+        {
+            id = "chainLaser",
+            name = "Chain Laser",
+            description = "High-tech turret that fires bouncing energy bolts. Hits up to 10 targets.",
+            type = "building",
+            building = require("Buildings.Turrets.ChainLaser")
+        }
     }
 }
 

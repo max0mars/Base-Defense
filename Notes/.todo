@@ -1,11 +1,6 @@
 # CURRENT TASKS
 
-Special Upgrade System
-- Create new file for special Upgrade manager
-- Every 5 waves get a special upgrade
-- these upgrades pull from two pools: Special pool and enemy upgrade pool
-- create these two new pools
-- when the player chooses their reward, upgrades from each pool must be paired up.
+Buffs that cover multiple tiles should not give the same tower multiple buffs, fix this.
 
 ## Testing
 

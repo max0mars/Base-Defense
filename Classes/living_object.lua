@@ -18,6 +18,16 @@ function living_object:new(config)
     obj.hp = config.hp
     obj.maxHp = config.maxHp or config.hp -- Store the maximum health
     obj.armour = config.armour or 0
+    obj.affinities = config.affinities or {
+        normal = 1,
+        poison = 1,
+        armourPiercing = 1,
+        trueDamage = 1,
+        fire = 1,
+        explosive = 1,
+        electric = 1,
+        energy = 1
+    }
     return obj
 end
 
