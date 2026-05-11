@@ -185,6 +185,11 @@ function collision:checkCollision(obj1, obj2)
     if not a or not b then
         return false
     end
+    -- Bypass collision resolution between flyers and blockers
+    if (obj1.isFlying and obj2:isType("blocker")) or (obj2.isFlying and obj1:isType("blocker")) then
+        return false
+    end
+
     return self:rectRect(a, b) -- only rectangle-rectangle collision implemented
     -- if a.type == "circle" and b.type == "circle" then
     --     return self:circleCircle(a, b)

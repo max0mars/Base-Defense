@@ -43,6 +43,8 @@ function Turret:new(config)
     }
     
     t.color = config.color
+    t.baseShape = config.baseShape or "octagon"
+    t.barrelShape = config.barrelShape or "single"
     t.poison_from_damage = config.poison_from_damage or 0
     t.dps_poison = config.dps_poison or 0
     t.bulletName = config.bulletName or "Bullet"
@@ -144,6 +146,7 @@ function Turret:fire(args)
         canDirectHit = self:getStat("canDirectHit"),
         game = self.game, -- Reference to the game object
         source = self,
+        color = self.color, -- Pass turret color to bullet
         tags = {"bullet"},
         types = { bullet = true },
         targetX = args and args.targetX or nil,
@@ -189,28 +192,84 @@ end
 
 function Turret:draw(drawx, drawy)
     local cx, cy = drawx or self.x, drawy or self.y
-    -- If no override provided, default to the building's logical center
     if not drawx and not drawy then
         cx, cy = self:getCenterPosition()
     end
 
-    -- Draw firing arc if showArc flag is set
     if self.showArc then
         self:drawFiringArc(cx, cy, 0.4)
     end
     
-    love.graphics.setColor(self.color)
-    -- Draw turret mount
-    love.graphics.circle("fill", cx, cy, 8)
+    local r, g, b, a = unpack(self.color or {1, 1, 1, 1})
 
-    -- Draw barrel
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.setLineWidth(3)
-    love.graphics.line(
-        cx, cy,
-        cx + math.cos(self.rotation) * self.barrel,
-        cy + math.sin(self.rotation) * self.barrel
-    )
+    -- 1. Draw Turret Base
+    local function drawBaseShape()
+        local s = self.baseShape
+        local radius = 9
+        if s == "octagon" then
+            local points = {}
+            for i = 0, 7 do
+                local angle = i * (math.pi * 2 / 8) + math.pi / 8
+                table.insert(points, cx + math.cos(angle) * radius)
+                table.insert(points, cy + math.sin(angle) * radius)
+            end
+            love.graphics.polygon("line", points)
+        elseif s == "diamond" then
+            love.graphics.polygon("line", cx, cy-11, cx+11, cy, cx, cy+11, cx-11, cy)
+        elseif s == "square" then
+            love.graphics.rectangle("line", cx-9, cy-9, 18, 18, 2, 2)
+        elseif s == "circle" then
+            love.graphics.circle("line", cx, cy, 10)
+        end
+    end
+
+    -- Sharper Neon Glow (2 layers, tighter widths)
+    for i = 2, 1, -1 do
+        love.graphics.setColor(r, g, b, 0.15 * (3 - i))
+        love.graphics.setLineWidth(i * 2.5)
+        drawBaseShape()
+    end
+    love.graphics.setColor(r, g, b, 1)
+    love.graphics.setLineWidth(1.5)
+    drawBaseShape()
+
+    -- 2. Draw Rotating Barrel
+    love.graphics.push()
+    love.graphics.translate(cx, cy)
+    love.graphics.rotate(self.rotation)
+
+    local function drawBarrelShape()
+        local s = self.barrelShape
+        if s == "single" then
+            love.graphics.rectangle("line", 0, -2, self.barrel, 4, 1, 1)
+        elseif s == "double" then
+            love.graphics.rectangle("line", 0, -5, self.barrel, 3, 1, 1)
+            love.graphics.rectangle("line", 0, 2, self.barrel, 3, 1, 1)
+        elseif s == "thick" then
+            love.graphics.rectangle("line", 0, -4, self.barrel, 8, 2, 2)
+        elseif s == "long" then
+            love.graphics.rectangle("line", 0, -1.5, self.barrel, 3, 0.5, 0.5)
+        end
+    end
+
+    -- Barrel Neon Glow
+    for i = 2, 1, -1 do
+        love.graphics.setColor(r, g, b, 0.15 * (3 - i))
+        love.graphics.setLineWidth(i * 2.5)
+        drawBarrelShape()
+    end
+    love.graphics.setColor(r, g, b, 1)
+    love.graphics.setLineWidth(2)
+    drawBarrelShape()
+
+    -- 3. Energy core / breach glow (Sharper)
+    love.graphics.setColor(r, g, b, 0.4)
+    love.graphics.circle("fill", 0, 0, 3)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.circle("fill", 0, 0, 1.5)
+
+    love.graphics.pop()
+    
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
 end

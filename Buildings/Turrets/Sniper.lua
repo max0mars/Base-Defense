@@ -16,6 +16,8 @@ Sniper.template = {
     firingArc = { direction = 0, minRange = 0, angle = math.pi/32 },
     shapePattern = {{0,0}},
     color = {0.8, 0.2, 0.2, 1},
+    baseShape = "diamond",
+    barrelShape = "long",
     types = { turret = true, sniper = true },
     
     -- Bullet Properties (Hitscan)

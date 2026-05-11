@@ -16,6 +16,8 @@ Lobber.template = {
     range = 500,
     barrel = 15,
     color = {1, 1, 1, 1},
+    baseShape = "circle",
+    barrelShape = "thick",
     types = { turret = true, lobber = true },
     shapePattern = {{0,0}},
     firingArc = {

@@ -15,8 +15,8 @@ function living_object:new(config)
     config.effectManager = true
     local obj = object:new(config)
     setmetatable(obj, { __index = self })
-    obj.hp = config.hp
-    obj.maxHp = config.maxHp or config.hp -- Store the maximum health
+    obj.maxHp = config.maxHp or config.hp or 100
+    obj.hp = config.hp or obj.maxHp -- Default to maxHp if current hp is not provided
     obj.armour = config.armour or 0
     obj.affinities = config.affinities or {
         normal = 1,

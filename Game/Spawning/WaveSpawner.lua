@@ -69,20 +69,7 @@ function WaveSpawner:update(dt)
                 
                 -- Apply Mutation Upgrades
                 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
-                for _, upgrade in ipairs(EnemyRegistry.activeUpgrades) do
-                    if enemyInstance:isType(upgrade.target:lower()) or upgrade.target == "All" then
-                        if upgrade.modifiers then
-                            for stat, multiplier in pairs(upgrade.modifiers) do
-                                -- Apply multiplier to current value
-                                if enemyInstance[stat] then
-                                    enemyInstance[stat] = enemyInstance[stat] * multiplier
-                                elseif enemyInstance.affinities and enemyInstance.affinities[stat] then
-                                    enemyInstance.affinities[stat] = enemyInstance.affinities[stat] * multiplier
-                                end
-                            end
-                        end
-                    end
-                end
+                EnemyRegistry:applyActiveMutations(enemyInstance)
                 
                 self.game:addObject(enemyInstance)
                 

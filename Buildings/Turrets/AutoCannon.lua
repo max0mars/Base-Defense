@@ -12,6 +12,8 @@ AutoCannon.template = {
     range = 350,
     barrel = 15,
     color = {0.8, 0.8, 0.2, 1},
+    baseShape = "octagon",
+    barrelShape = "double",
     types = { turret = true },
     shapePattern = {{0,0}},
     firingArc = {

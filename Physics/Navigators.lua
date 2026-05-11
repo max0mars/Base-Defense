@@ -102,7 +102,7 @@ function GridNavigator:update(dt)
         local targetX = enemy.target
         local baseCellX = math.floor((targetX - game.battlefieldGrid.x + 0.5) / game.battlefieldGrid.cellSize) + 1
         
-        self.path = Pathfinder.findGroundPath(startX, startY, baseCellX, game)
+        self.path = Pathfinder.findGroundPath(startX, startY, baseCellX, game, enemy)
         self.currentNodeIndex = 2 -- Skip starting node
         self.needsRecalculation = false
         self:calculateNodeTarget()
@@ -164,7 +164,7 @@ function GridNavigator:update(dt)
                 local cx = math.floor((nx - game.battlefieldGrid.x + 0.5) / game.battlefieldGrid.cellSize) + 1
                 local cy = math.floor((ny - game.battlefieldGrid.y + 0.5) / game.battlefieldGrid.cellSize) + 1
                 if cx >= 1 and cx <= game.battlefieldGrid.width and cy >= 1 and cy <= game.battlefieldGrid.height then
-                    return Pathfinder.isBlocked(cx, cy, game)
+                    return Pathfinder.isBlocked(cx, cy, game, enemy)
                 end
                 return false
             end

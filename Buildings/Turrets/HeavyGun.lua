@@ -12,6 +12,8 @@ HeavyGun.template = {
     range = 600,
     barrel = 20,
     color = {0.8, 0.4, 0.2, 1},
+    baseShape = "square",
+    barrelShape = "thick",
     types = { turret = true },
     shapePattern = {{0,0}},
     firingArc = {

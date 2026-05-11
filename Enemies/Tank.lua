@@ -4,8 +4,7 @@ tank.__index = tank
 
 local default = {
     speed = 10, -- Set speed for tank
-    hp = 1000, -- Set health for tank
-    maxHp = 1000,
+    maxHp = 1200,
     color = {1, 1, 0, 1}, -- Default color for basic enemies
     types = { tank = true },
     size = 45,

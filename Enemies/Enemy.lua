@@ -11,7 +11,6 @@ local Stats = {
     size = 20, -- Default size for basic enemies
     shape = "rectangle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies
-    hp = 100, -- Default health for basic enemies
     maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
     types = { enemy = true }, -- Using Multi-Type system

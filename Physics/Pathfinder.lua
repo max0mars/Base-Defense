@@ -52,12 +52,20 @@ end
 
 -- UTILS --
 
-function Pathfinder.isBlocked(nx, ny, game)
+function Pathfinder.isBlocked(nx, ny, game, entity)
     local bfGrid = game.battlefieldGrid
     local baseGrid = game.base.buildGrid
     local bfSlot = (ny - 1) * bfGrid.width + nx
     
-    if bfGrid.buildings[bfSlot] then return true end
+    local building = bfGrid.buildings[bfSlot]
+    if building then
+        -- Flying units ignore blockers
+        if entity and entity.isFlying and building:isType("blocker") then
+            -- Walkable for flyers
+        else
+            return true
+        end
+    end
     
     local px = bfGrid.x + (nx - 1) * bfGrid.cellSize
     local py = bfGrid.y + (ny - 1) * bfGrid.cellSize
@@ -136,7 +144,7 @@ end
 
 -- CORE PATHING --
 
-function Pathfinder.findGroundPath(startX, startY, goalX, game)
+function Pathfinder.findGroundPath(startX, startY, goalX, game, entity)
     local openSet = Heap.new(function(a, b) return a.f < b.f end)
     local startNode = {x = startX, y = startY, g = 0, f = math.abs(startX - goalX)}
     openSet:push(startNode)
@@ -161,7 +169,7 @@ function Pathfinder.findGroundPath(startX, startY, goalX, game)
                             local nx, ny = node.x + dx, node.y + dy
                             if nx >= 1 and nx <= game.battlefieldGrid.width and 
                                ny >= 1 and ny <= game.battlefieldGrid.height and 
-                               not Pathfinder.isBlocked(nx, ny, game) then
+                               not Pathfinder.isBlocked(nx, ny, game, entity) then
                                 walkableCount = walkableCount + 1
                             end
                         end
@@ -183,7 +191,7 @@ function Pathfinder.findGroundPath(startX, startY, goalX, game)
         local dirs = {{0,-1},{0,1},{-1,0},{1,0}}
         for _, d in ipairs(dirs) do
             local nx, ny = current.x + d[1], current.y + d[2]
-            if nx >= 1 and nx <= game.battlefieldGrid.width and ny >= 1 and ny <= game.battlefieldGrid.height and not Pathfinder.isBlocked(nx, ny, game) then
+            if nx >= 1 and nx <= game.battlefieldGrid.width and ny >= 1 and ny <= game.battlefieldGrid.height and not Pathfinder.isBlocked(nx, ny, game, entity) then
                 local tentative_g = gScore[current.x .. "," .. current.y] + 1
                 local key = nx .. "," .. ny
                 if not gScore[key] or tentative_g < gScore[key] then
