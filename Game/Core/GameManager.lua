@@ -62,7 +62,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.tokens       = 1000
+        self.tokens       = 0
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
