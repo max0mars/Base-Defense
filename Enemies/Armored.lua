@@ -19,7 +19,16 @@ function Armored:new(config)
     config = config or {}
     if not config.types then config.types = {} end
     for key, value in pairs(default) do
-        config[key] = config[key] or value
+        if key == "affinities" then
+            if not config.affinities then
+                config.affinities = {}
+                for k, v in pairs(default.affinities) do
+                    config.affinities[k] = v
+                end
+            end
+        else
+            config[key] = config[key] or value
+        end
     end
     for key in pairs(default.types) do
         config.types[key] = true
@@ -55,8 +64,8 @@ function Armored:draw()
 
     -- 2. Scissor Box for Health Fill (Bottom-to-Top)
     local fillRatio = self.hp / self:getStat("maxHp")
-    local footprintW = size
-    local footprintH = size
+    local footprintW = size * 1.2
+    local footprintH = size * 1.2
     local fx = self.x - footprintW/2
     local fy = self.y - footprintH/2
     
@@ -68,6 +77,18 @@ function Armored:draw()
     love.graphics.setColor(r, g, b, 0.7)
     love.graphics.polygon("fill", points)
     love.graphics.setScissor()
+
+    -- Layer 3: Shield Fill (Scissor bottom-up)
+    if self.maxShield > 0 and self.shield > 0 then
+        local shieldRatio = self.shield / self.maxShield
+        local sScissorY = fy + footprintH * (1 - shieldRatio)
+        local sScissorH = footprintH * shieldRatio
+        
+        love.graphics.setScissor(math.floor(fx), math.floor(sScissorY), math.ceil(footprintW), math.ceil(sScissorH))
+        love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
+        love.graphics.polygon("fill", points)
+        love.graphics.setScissor()
+    end
 
     -- 4. Glow Layers (Double thick borders)
     for i = 4, 1, -1 do

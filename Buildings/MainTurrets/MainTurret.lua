@@ -47,7 +47,7 @@ function MainTurret:applyUpgrade(reward)
         local BurnEffect = require("Game.Effects.StatusEffects.Burn")
         local burn = BurnEffect:new({
             name = "burn",
-            duration_burn = 3,
+            duration_burn = 3.2,
             dps_burn = 10,
             maxStacks = 5,
             chance = 0.25

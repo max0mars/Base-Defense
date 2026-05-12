@@ -10,10 +10,23 @@ local game = require("Game.Core.GameManager") -- Import the game module
 function game_scene:load()
     game:load()
     game.time_mul = 1 -- game starts at normal speed
+    self.gameover = false
     if AUDIO then AUDIO:playMusic() end
 end
 
 function game_scene:mousepressed(x, y, button)
+    if self.gameover then
+        if button == 1 then
+            local btnW = 140
+            local btnH = 45
+            local btnX = VIRTUAL_WIDTH / 2 - btnW / 2
+            local btnY = VIRTUAL_HEIGHT / 2 + 80
+            if x >= btnX and x <= btnX + btnW and y >= btnY and y <= btnY + btnH then
+                love.event.quit()
+            end
+        end
+        return
+    end
     game.inputHandler:mousepressed(x, y, button) -- Route through InputHandler
 end
 
@@ -24,8 +37,9 @@ function game_scene:mousereleased(x, y, button)
 end
 
 function game_scene:update(dt)
-    if game:isState("gameover") then
+    if game:isState("gameover") and not self.gameover then
         self.gameover = true
+        love.mouse.setVisible(true)
     end
 
     local effectiveDt = dt * game.time_mul
@@ -44,11 +58,38 @@ end
 
 function game_scene:draw()
     if self.gameover then
-        love.graphics.setColor(0, 0, 0, 0.7) -- Semi-transparent black for game over overlay
+        love.graphics.setColor(0, 0, 0, 0.85) -- Dark overlay
         love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
-        love.graphics.setColor(1, 0, 0) -- Red color for text
-        love.graphics.printf("Game Over", 0, VIRTUAL_HEIGHT / 2 - 20, VIRTUAL_WIDTH, "center")
-        love.graphics.printf("Final Score: " .. game.xp, 0, VIRTUAL_HEIGHT / 2 + 20, VIRTUAL_WIDTH, "center")
+        
+        -- Game Over Title
+        love.graphics.setColor(1, 0.2, 0.2)
+        love.graphics.push()
+        love.graphics.scale(2, 2)
+        love.graphics.printf("GAME OVER", 0, VIRTUAL_HEIGHT / 4 - 30, VIRTUAL_WIDTH / 2, "center")
+        love.graphics.pop()
+        
+        -- Stats
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("Wave Reached: " .. tostring(game.wave or 1), 0, VIRTUAL_HEIGHT / 2 - 10, VIRTUAL_WIDTH, "center")
+        love.graphics.printf("Final Score: " .. tostring(game.xp or 0), 0, VIRTUAL_HEIGHT / 2 + 20, VIRTUAL_WIDTH, "center")
+        
+        -- Quit Button
+        local mx, my = love.mouse.getPosition()
+        local btnW = 140
+        local btnH = 45
+        local btnX = VIRTUAL_WIDTH / 2 - btnW / 2
+        local btnY = VIRTUAL_HEIGHT / 2 + 80
+        local isHovered = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
+        
+        love.graphics.setColor(isHovered and {0.8, 0.2, 0.2, 1} or {0.5, 0.1, 0.1, 1})
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 8, 8)
+        love.graphics.setColor(1, 0.5, 0.5, 1)
+        love.graphics.setLineWidth(isHovered and 2 or 1)
+        love.graphics.rectangle("line", btnX, btnY, btnW, btnH, 8, 8)
+        love.graphics.setLineWidth(1)
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("Quit Game", btnX, btnY + 15, btnW, "center")
         return
     end
     game:draw()

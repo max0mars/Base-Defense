@@ -3,25 +3,31 @@ Sorted by Rarity
 
 Common
 - Sentry [Buildings.Turrets.Sentry]: Basic defensive turret. Balanced speed and damage.
-- Heavy Gun [Buildings.Turrets.HeavyGun]: High damage, slow fire rate.
 - Auto Cannon [Buildings.Turrets.AutoCannon]: High fire rate, low damage, shorter range.
-- Small Box [Buildings.Blockers.SmallBox]: Block Enemies.
+- Small Box [Buildings.Blockers.SmallBox]: Block Enemies
+- Radar Tower [Buildings.Buffs.RangeBuff]: Increases range of adjacent turrets by 25%.
 
 Uncommon
-- Slotted Blocker [Buildings.Blockers.SlottedBlocker]: Block Enemies and allow turrets to be placed on it.
+- Slotted Blocker [Buildings.Blockers.SlottedBlocker]: Block Enemies and allow turrets to be placed on it
+- Heavy Gun [Buildings.Turrets.HeavyGun]: High damage, slow fire rate.
 - Splitter [Buildings.Turrets.Splitter]: Bullets split into multiple smaller projectiles upon hitting an enemy.
-- Small Fence [Buildings.Blockers.SmallFence]: Block Enemies.
-- Ammo Cache [Buildings.Buffs.Buff]: Increase turret damage by 20%.
+- Small Fence [Buildings.Blockers.SmallFence]: Block Enemies
+- Ammo Cache [Buildings.Buffs.Buff]: Increase turret damage by 20%
 - Shatter Rounds [Buildings.Buffs.ShardBullets]: Bullets shatter into multiple smaller projectiles upon hitting an enemy.
+- Energy Blaster [Buildings.Turrets.EnergyBlaster]: High-tech weapon dealing energy damage with trailing projectiles.
+- Bank [Buildings.Turrets.Bank]: Generates 1 Token every 3 waves.
 
 Rare
-- Poison Turret [Buildings.Turrets.PoisonTurret]: Bullets apply poison effect.
+- Poison Turret [Buildings.Turrets.PoisonTurret]: Bullets apply poison effect
 - Poison Coating [Buildings.Buffs.PoisonTotem]: Bullets apply poison effect.
+- Unstable Laser [main_upgrade]: Main Turret: 20% chance to burn enemies for 3.2s.
 
 Epic
 - Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.
-- Explosive Rounds [Buildings.Buffs.ExplosiveTotem]: Bullets explode on impact.
 - Mortar [Buildings.Turrets.Mortar]: Shoots explosive projectiles in an arc.
+- Explosive Bullets [Buildings.Buffs.ExplosiveTotem]: Bullets explode on impact.
+- Low Power Ops [main_upgrade]: Main Turret: +50% Fire Rate, -20% Damage.
 
 Legendary
-- *No rewards currently defined in this tier.*
+- Electric Field [main_upgrade]: Main Turret: Auto-zaps up to 3 nearby enemies for 1.5x damage.
+- Chain Laser [Buildings.Turrets.ChainLaser]: High-tech turret that fires bouncing energy bolts. Hits up to 10 targets.

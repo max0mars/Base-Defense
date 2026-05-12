@@ -1,10 +1,10 @@
 # CURRENT TASKS
 
-Buffs that cover multiple tiles should not give the same tower multiple buffs, fix this.
-
-- [x] sometimes enemy upgrades arren't applying their bonuses, check this
-- [x] sometimes enemy does not have death sfx, sometimes it is super loud
-- [x] Poison coating is over powered, enforce a max stack
+- Buffs that cover multiple tiles should not give the same tower multiple buffs
+- Some enemies don't show grey for shield
+- flyers are not completely filled in
+- show shape of turrets and shape of buffs on upgrade screen
+- armoured enemies might be constantly increasing armour?
 
 ## Testing
 

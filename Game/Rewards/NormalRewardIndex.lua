@@ -105,7 +105,7 @@ local RewardIndex = {
         {
             id = "unstable_laser",
             name = "Unstable Laser",
-            description = "Main Turret: 20% chance to burn enemies for 3s.",
+            description = "Main Turret: 20% chance to burn enemies.",
             type = "main_upgrade",
             isEligible = function(game)
                 local mt = game.base and game.base.mainTurret

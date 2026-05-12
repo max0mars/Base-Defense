@@ -435,6 +435,11 @@ function Turret:lookAt(x, y, dt)
     local dy = y - cy
     self.targetRotation = math.atan2(dy, dx)
     
+    if true then -- fast turning
+        self.rotation = self.targetRotation
+        return
+    end
+
     -- Normalize targetRotation to [0, 2π]
     if self.targetRotation < 0 then
         self.targetRotation = self.targetRotation + 2 * math.pi

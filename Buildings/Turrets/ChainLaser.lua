@@ -9,7 +9,7 @@ local template = {
     rotation = 0,
     turnSpeed = 5,
     fireRate = 0.65,
-    damage = 40,
+    damage = 30,
     bulletSpeed = 600,
     range = 500,
     barrel = 15,
@@ -71,8 +71,11 @@ function ChainLaser:fire(args)
     Turret.fire(self, args)
 end
 
-function ChainLaser:draw()
-    local cx, cy = self:getCenterPosition()
+function ChainLaser:draw(drawx, drawy)
+    local cx, cy = drawx or self.x, drawy or self.y
+    if not drawx and not drawy then
+        cx, cy = self:getCenterPosition()
+    end
     local r, g, b = unpack(self.color or {0.4, 0.7, 1, 1})
     local time = love.timer.getTime()
     

@@ -71,9 +71,9 @@ function Flyer:draw()
     
     -- 2. Calculate Scissor Box for Health Fill (Draining effect)
     local fillRatio = self.hp / self:getStat("maxHp")
-    -- We use the square footprint for the scissor calculation
-    local footprintW = self.w
-    local footprintH = self.h
+    -- We use a footprint that fully covers the arrow points radius (size * 0.8 * 2)
+    local footprintW = size * 1.6
+    local footprintH = size * 1.6
     local fx = self.x - footprintW/2
     local fy = self.y - footprintH/2
     
@@ -85,6 +85,18 @@ function Flyer:draw()
     love.graphics.setColor(r, g, b, 0.7)
     love.graphics.polygon("fill", arrowPoints)
     love.graphics.setScissor()
+    
+    -- Layer 3: Shield Fill (Scissor bottom-up)
+    if self.maxShield > 0 and self.shield > 0 then
+        local shieldRatio = self.shield / self.maxShield
+        local sScissorY = fy + footprintH * (1 - shieldRatio)
+        local sScissorH = footprintH * shieldRatio
+        
+        love.graphics.setScissor(math.floor(fx), math.floor(sScissorY), math.ceil(footprintW), math.ceil(sScissorH))
+        love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
+        love.graphics.polygon("fill", arrowPoints)
+        love.graphics.setScissor()
+    end
     
     -- 4. Glow Layers (Outside scissor)
     for i = 4, 1, -1 do

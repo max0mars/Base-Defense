@@ -3,8 +3,8 @@ local tank = setmetatable({}, {__index = Enemy})
 tank.__index = tank
 
 local default = {
-    speed = 10, -- Set speed for tank
-    maxHp = 1200,
+    speed = 15, -- Set speed for tank
+    maxHp = 1300,
     damage = 30,
     color = {1, 1, 0, 1}, -- Default color for basic enemies
     types = { tank = true },

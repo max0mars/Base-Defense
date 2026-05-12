@@ -4,8 +4,8 @@ local EnemyRegistry = {
         {
             id = "Speeder",
             type = "Speeder",
-            class = require("Enemies.Speeder"),
-            spawnCost = 10,
+            class = require("Enemies.SpeederGroup"),
+            spawnCost = 25,
             spawnWeight = 50,
             description = "Fast but fragile. Often spawns in large numbers.",
             mutations = {
@@ -23,7 +23,8 @@ local EnemyRegistry = {
             description = "Slow and heavy. Can soak up massive damage.",
             mutations = {
                 { id = "tank_hp", name = "Behemoth Plating", description = "HP +50%", modifiers = { maxHp = 1.5, hp = 1.5 }, target = "Tank" },
-                { id = "tank_speed", name = "Turbo Engines", description = "Speed +25%", modifiers = { speed = 1.25 }, target = "Tank" }
+                { id = "tank_speed", name = "Turbo Engines", description = "Speed +25%", modifiers = { speed = 1.25 }, target = "Tank" },
+
             }
         },
         {
@@ -60,7 +61,8 @@ local EnemyRegistry = {
             description = "Heavily resistant to normal damage.",
             mutations = {
                 { id = "armored_hp", name = "Dreadnought Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Armored" },
-                { id = "armored_resist", name = "Even Stronger Armor", description = "Normal resistance +10%", modifiers = { normal = 0.9 }, target = "Armored" }
+                { id = "armored_resist", name = "Even Stronger Armor", description = "Normal resistance +20%", modifiers = { normal = 0.8 }, target = "Armored" },
+                { id = "armored_energy_resist", name = "Energy Shielding", description = "Energy resistance +25%", modifiers = { energy = 0.75 }, target = "Armored" },
             }
         },
         {

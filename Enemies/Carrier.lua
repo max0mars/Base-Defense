@@ -110,6 +110,18 @@ function Carrier:draw()
     love.graphics.polygon("fill", hexPoints)
     love.graphics.setScissor()
     
+    -- Layer 3: Shield Fill (Scissor bottom-up)
+    if self.maxShield > 0 and self.shield > 0 then
+        local shieldRatio = self.shield / self.maxShield
+        local sScissorY = fy + footprintH * (1 - shieldRatio)
+        local sScissorH = footprintH * shieldRatio
+        
+        love.graphics.setScissor(math.floor(fx), math.floor(sScissorY), math.ceil(footprintW), math.ceil(sScissorH))
+        love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
+        love.graphics.polygon("fill", hexPoints)
+        love.graphics.setScissor()
+    end
+    
     -- 4. Glow Layers (Outside scissor)
     for i = 5, 1, -1 do
         local alpha = 0.05 * (1 - i/6)

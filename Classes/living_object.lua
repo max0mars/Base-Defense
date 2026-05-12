@@ -177,14 +177,14 @@ function living_object:getHealthBarRect()
     if self.shape == "circle" then
         width = self.size * 2
         height = self.size
-        yOffset = 0
+        yOffset = self.size
     else
         width = self.w
         height = 10
         yOffset = self.h / 2
     end
     local barX = self.x - width / 2
-    local barY = self.y - 20 - yOffset
+    local barY = self.y - 2 - yOffset
     return barX, barY, width, height
 end
 
