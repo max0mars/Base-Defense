@@ -43,13 +43,24 @@ function Split:trigger(target, sourceBullet)
         local spawnX = target and target.x or sourceBullet.x
         local spawnY = target and target.y or sourceBullet.y
 
+        local _damage = 0
+        local mult = sourceBullet:getStat("splitDamage_from_damage")
+        if mult > 0 then
+            _damage = sourceBullet:getStat("damage") * mult
+        else
+            _damage = sourceBullet:getStat("splitDamage")
+        end
+        if _damage <= 0 then
+            _damage = sourceBullet:getStat("damage") * 0.4
+        end
+
         local splitBulletConfig = {
             name = (sourceBullet.name or "Bullet") .. " Shard",
             x = spawnX,
             y = spawnY,
             angle = angle,
             bulletSpeed = sourceBullet:getStat("bulletSpeed") * 0.7, 
-            damage = sourceBullet:getStat("damage") * 0.4,
+            damage = _damage,
             pierce = 1,
             lifespan = sourceBullet:getStat("lifespan") * 0.5,
             displayLifespan = sourceBullet:getStat("displayLifespan") or 0.1,

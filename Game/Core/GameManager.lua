@@ -32,6 +32,7 @@ local CircleFade       = require("Graphics.Animations.CircleFade")
 local DamageNumber       = require("Graphics.Animations.DamageNumber")
 local LightningBolt     = require("Graphics.Animations.LightningBolt")
 local ExpandingCircle   = require("Graphics.Animations.ExpandingCircle")
+local ArmorBreak        = require("Graphics.Animations.ArmorBreak")
 
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
@@ -61,7 +62,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.tokens       = 0
+        self.tokens       = 1000
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
@@ -378,6 +379,10 @@ end
 
 function game:spawnExpandingCircle(x, y, startRadius, endRadius, color, duration)
     table.insert(self.animations, ExpandingCircle:new(x, y, startRadius, endRadius, color, duration))
+end
+
+function game:spawnArmorBreak(x, y)
+    table.insert(self.animations, ArmorBreak:new(x, y))
 end
 
 function game:EnemyDied(enemy)

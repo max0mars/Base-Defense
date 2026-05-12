@@ -22,11 +22,6 @@ end
 function MainTurret:getStat(statName, defaultVal)
     local val = Turret.getStat(self, statName, defaultVal)
     
-    -- Special logic for Electric Field range capping
-    if statName == "range" and self.upgrades["electric_field"] then
-        if val > 600 then val = 400 end
-    end
-    
     return val
 end
 
@@ -54,7 +49,8 @@ function MainTurret:applyUpgrade(reward)
             name = "burn",
             duration_burn = 3,
             dps_burn = 10,
-            maxStacks = 5
+            maxStacks = 5,
+            chance = 0.25
         })
         self:addHitEffect(burn)
         
@@ -127,7 +123,7 @@ function MainTurret:updateElectricField(dt)
             
             if #targets > 0 then
                 for _, target in ipairs(targets) do
-                    target:takeDamage(zapDamage, "electric", target.x, target.y)
+                    target:takeDamage(zapDamage, "energy", target.x, target.y)
                     
                     -- Apply specialized hit effects (e.g. Burn procs)
                     self:applyHitEffects(target)
@@ -199,21 +195,33 @@ function MainTurret:fire(args)
      args.displayLifespan = args.displayLifespan or self:getStat("displayLifespan")
      args.color = args.color or self:getStat("bulletColor")
      
+     if AUDIO then AUDIO:playSFX("laser_01") end
+     
      Turret.fire(self, args)
 end
 
 function MainTurret:getTargetArc() end
 function MainTurret:isInFiringArc(enemy) return true end
 
-function MainTurret:drawFiringArc(alpha)
+function MainTurret:drawFiringArc(a1, a2, a3)
+    local alpha = (type(a1) == "number" and a1 <= 1 and a1) or a3 or 0.2
     local cx, cy = self:getCenterPosition()
     local range = self:getStat("range")
     
-    love.graphics.setColor(1, 1, 1, alpha or 0.2)
-    love.graphics.setLineWidth(1)
-    love.graphics.circle("line", cx, cy, range)
-    love.graphics.setColor(1, 1, 1, (alpha or 0.2) * 0.3)
-    love.graphics.circle("fill", cx, cy, range)
+    if self.upgrades["electric_field"] then
+        love.graphics.setColor(0.4, 0.7, 1, alpha)
+        love.graphics.setLineWidth(1.5)
+        love.graphics.circle("line", cx, cy, range)
+        love.graphics.setColor(0.4, 0.7, 1, alpha * 0.15)
+        love.graphics.circle("fill", cx, cy, range)
+    else
+        love.graphics.setColor(1, 1, 1, alpha)
+        love.graphics.setLineWidth(1)
+        love.graphics.circle("line", cx, cy, range)
+        love.graphics.setColor(1, 1, 1, alpha * 0.3)
+        love.graphics.circle("fill", cx, cy, range)
+    end
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 return MainTurret

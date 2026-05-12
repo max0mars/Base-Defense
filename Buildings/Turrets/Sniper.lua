@@ -19,6 +19,7 @@ Sniper.template = {
     baseShape = "diamond",
     barrelShape = "long",
     types = { turret = true, sniper = true },
+    sfx = "gunshot_03",
     
     -- Bullet Properties (Hitscan)
     bulletName = "Sniper Shot",

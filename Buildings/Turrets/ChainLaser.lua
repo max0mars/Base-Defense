@@ -29,7 +29,8 @@ local template = {
     damageType = "energy",
     bouncesLeft = 10,
     cost = 500, -- Legendary price
-    types = { turret = true, legendary = true, energy = true, laser = true }
+    types = { turret = true, legendary = true, energy = true, laser = true },
+    sfx = "laser_02"
 }
 
 function ChainLaser:new(config)

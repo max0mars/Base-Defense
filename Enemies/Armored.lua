@@ -5,13 +5,13 @@ Armored.__index = Armored
 local default = {
     speed = 20,
     damage = 15,
-    maxHp = 150,
+    maxHp = 300,
     color = {0.5, 0.4, 1, 1}, -- Neon Steel/Purple
     types = { armored = true, tank = true },
     size = 32,
     reward = 50,
     affinities = {
-        normal = 0.75, -- 25% resistance to normal damage
+        normal = 0.5, -- 50% resistance to normal damage
     }
 }
 

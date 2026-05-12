@@ -19,6 +19,7 @@ Mortar.template = {
     baseShape = "circle",
     barrelShape = "thick",
     types = { turret = true, mortar = true },
+    sfx = "gunshot_04",
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,

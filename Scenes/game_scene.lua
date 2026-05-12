@@ -10,6 +10,7 @@ local game = require("Game.Core.GameManager") -- Import the game module
 function game_scene:load()
     game:load()
     game.time_mul = 1 -- game starts at normal speed
+    if AUDIO then AUDIO:playMusic() end
 end
 
 function game_scene:mousepressed(x, y, button)

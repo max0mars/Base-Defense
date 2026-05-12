@@ -19,7 +19,7 @@ local EnemyRegistry = {
             type = "Tank",
             class = require("Enemies.Tank"),
             spawnCost = 45,
-            spawnWeight = 35,
+            spawnWeight = 30,
             description = "Slow and heavy. Can soak up massive damage.",
             mutations = {
                 { id = "tank_hp", name = "Behemoth Plating", description = "HP +50%", modifiers = { maxHp = 1.5, hp = 1.5 }, target = "Tank" },
@@ -43,11 +43,12 @@ local EnemyRegistry = {
             type = "Carrier",
             class = require("Enemies.Carrier"),
             spawnCost = 40,
-            spawnWeight = 40,
+            spawnWeight = 30,
             description = "Swarm mother. Periodically spawns speeders.",
             mutations = {
                 { id = "carrier_hp", name = "Reinforced Hull", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Carrier" },
-                { id = "carrier_rate", name = "Rapid Deployment", description = "Spawn Rate +30%", modifiers = { spawnInterval = 0.7 }, target = "Carrier" }
+                { id = "carrier_rate", name = "Rapid Deployment", description = "Spawn Rate +30%", modifiers = { spawnInterval = 0.7 }, target = "Carrier" },
+                { id = "carrier_count", name = "Swarm Brood", description = "Carrier spawns +1 Speeder.", modifiers = { spawnCount = { add = 1 } }, target = "Carrier" }
             }
         },
         {
@@ -71,7 +72,8 @@ local EnemyRegistry = {
             description = "Support unit. Periodically grants shields to nearby allies.",
             mutations = {
                 { id = "guardian_hp", name = "Sanctuary Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Guardian" },
-                { id = "guardian_aura", name = "Guardian Aura", description = "Guardian projects a 25% damage reduction aura to nearby allies.", modifiers = { hasAura = { set = true } }, target = "Guardian" }
+                { id = "guardian_aura", name = "Guardian Aura", description = "Guardian projects a 25% damage reduction aura to nearby allies.", modifiers = { hasAura = { set = true } }, target = "Guardian" },
+                { id = "guardian_shield", name = "Shield Overcharge", description = "Doubles the amount of shields granted to allies.", modifiers = { shieldAmount = 2 }, target = "Guardian" }
             }
         },
     },
@@ -87,7 +89,8 @@ local EnemyRegistry = {
             mutations = {
                 { id = "basic_hp", name = "Veteran Training", description = "HP +25%", modifiers = { maxHp = 1.25, hp = 1.25 }, target = "Basic" },
                 { id = "basic_speed", name = "Adrenaline", description = "Speed +15%", modifiers = { speed = 1.15 }, target = "Basic" },
-                { id = "basic_Explosive_armour", name = "Blast Shields", description = "Take 30% less explosive damage.", modifiers = { explosive = 0.7 }, target = "Basic" }
+                { id = "basic_Explosive_armour", name = "Blast Shields", description = "Take 30% less explosive damage.", modifiers = { explosive = 0.7 }, target = "Basic" },
+                { id = "basic_mitosis", name = "Mitosis", description = "10% chance to split into 2 Basic enemies on death.", modifiers = { splitOnDeathChance = { set = 0.1 } }, target = "Basic" }
             }
         },
     },
@@ -158,11 +161,14 @@ function EnemyRegistry:applyActiveMutations(enemyInstance)
             if upgrade.modifiers then
                 for stat, modifier in pairs(upgrade.modifiers) do
                     local isSet = type(modifier) == "table" and modifier.set ~= nil
-                    local val = isSet and modifier.set or modifier
+                    local isAdd = type(modifier) == "table" and modifier.add ~= nil
+                    local val = (isSet and modifier.set) or (isAdd and modifier.add) or modifier
                     
                     if enemyInstance[stat] ~= nil then
                         if isSet then
                             enemyInstance[stat] = val
+                        elseif isAdd then
+                            enemyInstance[stat] = enemyInstance[stat] + val
                         else
                             enemyInstance[stat] = enemyInstance[stat] * val
                         end

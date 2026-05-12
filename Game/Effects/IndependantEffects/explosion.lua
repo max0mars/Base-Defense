@@ -27,6 +27,7 @@ function Explosion:new(config)
 end
 
 function Explosion:trigger(target, source)
+    if AUDIO then AUDIO:playSFX("explosion_02") end
     -- Stat Propagation: Link our EffectManager to the source (Bullet) to inherit its stats
     if source and source.effectManager then
         self.effectManager.parent = source.effectManager

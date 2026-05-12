@@ -24,6 +24,7 @@ function EnergyBlaster:new(config)
     config.lifespan = 1.5
     config.pierce = 1
     config.types = { turret = true, energy = true, building = true }
+    config.sfx = "laser_02"
     
     config.firingArc = config.firingArc or {
         direction = config.rotation,

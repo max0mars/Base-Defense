@@ -15,7 +15,7 @@ local default = {
         name = "poison",
         duration_poison = 3,
         dps_poison = 10,
-        maxStacks = math.huge
+        maxStacks = 3
     }
 }
 

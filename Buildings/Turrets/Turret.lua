@@ -79,6 +79,14 @@ function Turret:addHitEffect(effect)
 end
 
 function Turret:fire(args)
+    if AUDIO then
+        if self.sfx then
+            AUDIO:playSFX(self.sfx)
+        elseif not self.isMainTurret and not (self.types and self.types.mainTurret) then
+            AUDIO:playSFX("gunshot_01")
+        end
+    end
+
     local offset = 0 --love.math.random() * self.spread * 2 - self.spread
     local x, y
     -- Use provided position or default to fire point
@@ -183,8 +191,16 @@ function Turret:update(dt)
             if currentFireRate > 0 then
                 x, y = self:getTargetLeadPosition()
                 self:lookAt(x, y, dt)
-                self:fire({targetX = x, targetY = y})
-                self.cooldown = 1 / currentFireRate
+                
+                local angleDiff = math.abs((self.targetRotation or self.rotation) - self.rotation)
+                if angleDiff > math.pi then
+                    angleDiff = 2 * math.pi - angleDiff
+                end
+                
+                if angleDiff <= 0.15 then
+                    self:fire({targetX = x, targetY = y})
+                    self.cooldown = 1 / currentFireRate
+                end
             end
         end
     end

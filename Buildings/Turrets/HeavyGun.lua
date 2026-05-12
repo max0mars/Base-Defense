@@ -21,6 +21,7 @@ HeavyGun.template = {
         minRange = 0,
         angle = math.pi/8
     },
+    sfx = "gunshot_02",
     
     -- Bullet Properties
     bulletName = "Heavy Shell",

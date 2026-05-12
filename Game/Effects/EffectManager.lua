@@ -75,6 +75,10 @@ function EffectManager:propagateRecalculation()
 end
 
 function EffectManager:applyEffect(effectTemplate, source)
+    if effectTemplate.chance and math.random() > effectTemplate.chance then
+        return
+    end
+
     local effect = {}
     for k, v in pairs(effectTemplate) do
         effect[k] = v
@@ -90,7 +94,12 @@ function EffectManager:applyEffect(effectTemplate, source)
 
     local name = effect.name
     local currentStacks = self.effectCounts[name] or 0
-    local maxStacks = effect.maxStacks or math.huge
+    
+    local sourceMaxStacks = source and source.getStat and source:getStat("maxStacks")
+    if sourceMaxStacks == nil or sourceMaxStacks <= 0 then
+        sourceMaxStacks = effect.maxStacks
+    end
+    local maxStacks = sourceMaxStacks or math.huge
 
     if currentStacks < maxStacks then
         table.insert(self.activeEffects, effect)

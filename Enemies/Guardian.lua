@@ -25,7 +25,7 @@ function Guardian:new(config)
     local obj = Enemy:new(config)
     setmetatable(obj, { __index = self })
     
-    obj.auraRadius = 150
+    obj.auraRadius = 75
     obj.grantsShield = true  -- Standard
     obj.hasAura = false     -- Upgrade
     obj.shieldAmount = 50
@@ -89,6 +89,9 @@ function Guardian:grantShieldsToNearby()
             if dx*dx + dy*dy <= radiusSq then
                 if obj.shield < self.shieldAmount then    
                     obj.shield = self.shieldAmount
+                    if obj.maxShield and obj.maxShield < self.shieldAmount then
+                        obj.maxShield = self.shieldAmount
+                    end
                 end
             end
         end

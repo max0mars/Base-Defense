@@ -15,17 +15,38 @@ local Stats = {
     hitbox = true, -- Enemies have hitboxes by default
     types = { enemy = true }, -- Using Multi-Type system
     effectManager = true, -- Enemies have a effectManager by default
+    splitOnDeathChance = 0,
 }   
 
 function Enemy:new(config)
     config = config or {}
-    for key, value in pairs(Stats) do
-        config[key] = config[key] or value -- Use default values if not provided
+    local customTypes = config.types
+    config.types = {}
+    if customTypes then
+        for k, v in pairs(customTypes) do
+            config.types[k] = v
+        end
     end
     
-    if not config.types then config.types = {} end
+    for key, value in pairs(Stats) do
+        if key ~= "types" then
+            config[key] = config[key] or value -- Use default values if not provided
+        end
+    end
+    
     for key in pairs(Stats.types) do
         config.types[key] = true
+    end
+    
+    local isSpecialized = false
+    for k in pairs(config.types) do
+        if k ~= "enemy" then
+            isSpecialized = true
+            break
+        end
+    end
+    if not isSpecialized then
+        config.types.basic = true
     end
     
     config.w = config.w or config.size
@@ -113,9 +134,13 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY)
 
     -- 1. Check if shield exists
     if self.shield > 0 then
+        local oldShield = self.shield
         self.shield = self.shield - amount
-        if self.shield < 0 then
+        if self.shield <= 0 then
             self.shield = 0
+            if oldShield > 0 then
+                self.game:spawnArmorBreak(self.x, self.y)
+            end
         end
         -- Explicitly return to nullify remaining damage from this attack
         return amount
@@ -227,6 +252,27 @@ function Enemy:getVelocity()
 end
 
 function Enemy:died()
+    if AUDIO then AUDIO:playSFX("explosion_01") end
+    
+    if self.splitOnDeathChance and self.splitOnDeathChance > 0 and math.random() <= self.splitOnDeathChance then
+        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+        local offsets = {
+            {x = -12, y = -12},
+            {x = 12, y = 12}
+        }
+        for i = 1, 2 do
+            local spawnConfig = {
+                game = self.game,
+                x = self.x + offsets[i].x,
+                y = self.y + offsets[i].y
+            }
+            local basicClass = require("Enemies.Enemy")
+            local childInstance = basicClass:new(spawnConfig)
+            EnemyRegistry:applyActiveMutations(childInstance)
+            self.game:addObject(childInstance)
+        end
+    end
+    
     self.game:EnemyDied(self) -- tell game manager I dead
     self:destroy() -- Call the destroy method from the base living_object
 end

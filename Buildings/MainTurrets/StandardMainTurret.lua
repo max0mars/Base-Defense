@@ -13,10 +13,10 @@ StandardMainTurret.template = {
     rotation = 0,
     turnSpeed = math.huge,
     fireRate = 0.5,
-    range = 2000,
+    range = 500,
     barrel = 20,
     color = {0.3, 0.3, 0.3, 1},
-    types = { turret = true, mainTurret = true, tesla = true },
+    types = { turret = true, mainTurret = true, energy = true },
     shapePattern = {
         {0, 0}, {1, 0},
         {0, 1}, {1, 1}
@@ -24,7 +24,7 @@ StandardMainTurret.template = {
     firingArc = { 
         direction = 0, 
         minRange = 0, 
-        angle = math.pi * 2 
+        angle = math.pi 
     },
     
     -- Bullet Properties (Hitscan Laser)
@@ -61,6 +61,10 @@ end
 function StandardMainTurret:draw()
     local cx, cy = self:getCenterPosition()
     local r, g, b = unpack(self.color or {0.3, 0.3, 0.3, 1})
+    
+    if self.showArc and self.upgrades["electric_field"] then
+        self:drawFiringArc(0.3)
+    end
     
     -- 1. Draw Sleek Base (Single Octagon)
     local function drawBase(radius)

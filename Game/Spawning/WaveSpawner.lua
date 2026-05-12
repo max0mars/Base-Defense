@@ -55,7 +55,10 @@ function WaveSpawner:update(dt)
             self.spawntimer = self.spawntimer - dt
             if self.spawntimer < 0 then
                 local grid = self.game.battlefieldGrid
-                local randomRow = math.random(1, grid.height)
+                -- Exclude outermost rows to prevent edge-creeping spawns
+                local minRow = (grid.height > 2) and 2 or 1
+                local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
+                local randomRow = math.random(minRow, maxRow)
                 local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
                 
                 local enemyClass = table.remove(self.waveList, 1)

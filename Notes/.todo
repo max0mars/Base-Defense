@@ -2,6 +2,10 @@
 
 Buffs that cover multiple tiles should not give the same tower multiple buffs, fix this.
 
+- [x] sometimes enemy upgrades arren't applying their bonuses, check this
+- [x] sometimes enemy does not have death sfx, sometimes it is super loud
+- [x] Poison coating is over powered, enforce a max stack
+
 ## Testing
 
 Not 100% sure new type vs tag is working but no bugs so far

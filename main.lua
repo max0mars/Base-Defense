@@ -24,12 +24,18 @@ scene_manager.scenes.test = require("Scenes.test_scene")
 
 scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to menu_scene
 
+local AudioManager = require("Audio.AudioManager")
+
 function love.load()
     love.window.setTitle("Base Defense")
     scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true})
     scalify:setBorderColor(0.1, 0.1, 0.1)
     math.randomseed( os.time() )
     love.graphics.setBlendMode("alpha", "alphamultiply")
+    
+    -- Initialize global Audio Subsystem
+    AUDIO = AudioManager:new()
+    
     scene_manager:load() -- Load the initial scene
 end
 
@@ -54,6 +60,7 @@ function love.mousereleased(x, y, button)
 end
 
 function love.update(dt)
+    if AUDIO then AUDIO:update(dt) end
     scene_manager:update(dt)
 end
 
