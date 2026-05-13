@@ -78,10 +78,10 @@ function EnemyRegistry:reset()
                 { id = "guardian_aura", name = "Guardian Aura", description = "Guardian projects a 25% damage reduction aura to nearby allies.", modifiers = { hasAura = { set = true } }, target = "Guardian" },
                 { id = "guardian_shield", name = "Shield Overcharge", description = "Doubles the amount of shields granted to allies.", modifiers = { shieldAmount = 2 }, target = "Guardian" }
             }
-        },
-    },
+        }
+    }
     
-    activePool = {
+    self.activePool = {
         {
             id = "Basic",
             type = "Basic",
