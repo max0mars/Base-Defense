@@ -26,6 +26,17 @@ function Reward:new(config)
     }
     -- Additional metadata
     reward.category = config.category or "general" -- weapon, defense, utility, etc.
+    reward.game = config.game
+    
+    -- Create dummy building if it's a building type, to read properties for icons
+    if reward.building and type(reward.building) == "table" and reward.building.new and reward.game then
+        local success, b = pcall(reward.building.new, reward.building, {game = reward.game, types={building=true}})
+        if success then
+            reward.dummyBuilding = b
+        else
+            print("Failed to instantiate dummy building for reward: " .. tostring(reward.id))
+        end
+    end
     
     return reward
 end
@@ -106,17 +117,57 @@ function Reward:draw(x, y, width, height, isSelected)
         local cy = math.floor(y + height - 20)
         
         if iconCat == "buff" then
-            -- 3x3 grid
-            local startX = cx - 7
-            local startY = cy - 7
-            for r = 1, 3 do
-                for c = 1, 3 do
-                    if r == 2 and c == 2 then
-                        love.graphics.setColor(0.6, 0.6, 0.6, 1)
-                    else
-                        love.graphics.setColor(0.2, 0.8, 0.2, 1)
+            if self.dummyBuilding and self.dummyBuilding.shapePattern then
+                local b = self.dummyBuilding
+                local minX, maxX, minY, maxY = 0, 0, 0, 0
+                local shapeMap = {}
+                for _, p in ipairs(b.shapePattern) do
+                    shapeMap[p[1] .. "," .. p[2]] = true
+                    minX = math.min(minX, p[1]); maxX = math.max(maxX, p[1])
+                    minY = math.min(minY, p[2]); maxY = math.max(maxY, p[2])
+                end
+                local buffMap = {}
+                if b.affectedSlots then
+                    for _, p in ipairs(b.affectedSlots) do
+                        buffMap[p[1] .. "," .. p[2]] = true
+                        minX = math.min(minX, p[1]); maxX = math.max(maxX, p[1])
+                        minY = math.min(minY, p[2]); maxY = math.max(maxY, p[2])
                     end
-                    love.graphics.rectangle("fill", startX + (c - 1) * 5, startY + (r - 1) * 5, 4, 4)
+                end
+                
+                local gridW = maxX - minX + 1
+                local gridH = maxY - minY + 1
+                local cellSize = 5
+                local startX = cx - (gridW * cellSize) / 2
+                local startY = cy - (gridH * cellSize) / 2
+                
+                for r = minY, maxY do
+                    for c = minX, maxX do
+                        local px = startX + (c - minX) * cellSize
+                        local py = startY + (r - minY) * cellSize
+                        local key = c .. "," .. r
+                        if shapeMap[key] then
+                            love.graphics.setColor(0.6, 0.6, 0.6, 1)
+                            love.graphics.rectangle("fill", px, py, cellSize-1, cellSize-1)
+                        elseif buffMap[key] then
+                            love.graphics.setColor(0.2, 0.8, 0.2, 1)
+                            love.graphics.rectangle("fill", px, py, cellSize-1, cellSize-1)
+                        end
+                    end
+                end
+            else
+                -- Fallback 3x3 grid
+                local startX = cx - 7
+                local startY = cy - 7
+                for r = 1, 3 do
+                    for c = 1, 3 do
+                        if r == 2 and c == 2 then
+                            love.graphics.setColor(0.6, 0.6, 0.6, 1)
+                        else
+                            love.graphics.setColor(0.2, 0.8, 0.2, 1)
+                        end
+                        love.graphics.rectangle("fill", startX + (c - 1) * 5, startY + (r - 1) * 5, 4, 4)
+                    end
                 end
             end
         elseif iconCat == "turret" then

@@ -43,6 +43,7 @@ function RewardSystem:initializeRewardPool()
     local choices = self.poolLogic:generateChoices(3, luck)
     
     for _, rewardData in ipairs(choices) do
+        rewardData.game = self.game
         table.insert(self.rewardPool, Reward:new(rewardData))
     end
 end
