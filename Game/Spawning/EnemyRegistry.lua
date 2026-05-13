@@ -1,6 +1,7 @@
-local EnemyRegistry = {
-    -- Current pools for mutations
-    inactivePool = {
+local EnemyRegistry = {}
+
+function EnemyRegistry:reset()
+    self.inactivePool = {
         {
             id = "Speeder",
             type = "Speeder",
@@ -95,20 +96,22 @@ local EnemyRegistry = {
                 { id = "basic_mitosis", name = "Mitosis", description = "10% chance to split into 2 Basic enemies on death.", modifiers = { splitOnDeathChance = { set = 0.1 } }, target = "Basic" }
             }
         },
-    },
+    }
 
-    availableUpgrades = {}, -- Upgrades waiting to be picked
-    activeUpgrades = {}     -- Picked upgrades currently in effect
-}
+    self.availableUpgrades = {} -- Upgrades waiting to be picked
+    self.activeUpgrades = {}     -- Picked upgrades currently in effect
 
--- Initialize starting enemy upgrades into available pool
-for _, enemy in ipairs(EnemyRegistry.activePool) do
-    if enemy.mutations then
-        for _, mut in ipairs(enemy.mutations) do
-            table.insert(EnemyRegistry.availableUpgrades, mut)
+    -- Initialize starting enemy upgrades into available pool
+    for _, enemy in ipairs(self.activePool) do
+        if enemy.mutations then
+            for _, mut in ipairs(enemy.mutations) do
+                table.insert(self.availableUpgrades, mut)
+            end
         end
     end
 end
+
+EnemyRegistry:reset()
 
 function EnemyRegistry:getAvailableEnemies()
     return self.activePool

@@ -14,7 +14,6 @@ local Base               = require("Game.Core.Base")
 local BattlefieldGrid    = require("Game.Core.BattlefieldGrid")
 local collision          = require("Physics.collisionSystem_brute")
 local InputHandler       = require("Game.Input.InputHandler")
-
 -- Gameplay Mechanics
 local WaveSpawner        = require("Game.Spawning.WaveSpawner")
 local WaveDirector       = require("Game.Spawning.WaveDirector")
@@ -26,6 +25,7 @@ local EffectManager      = require("Game.Effects.EffectManager")
 -- Entities & UI
 local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
+local EnemyRegistry      = require("Game.Spawning.EnemyRegistry")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
 local CircleFade       = require("Graphics.Animations.CircleFade")
@@ -57,6 +57,7 @@ function game:load(saveData)
     if saveData then 
         -- Future Implementation: Handle save game loading here
     else
+        EnemyRegistry:reset()
         -- Initialize Game State
         self.state        = "startup" -- States: "startup", "preparing", "wave", "gameover"
         self.objects      = {}        -- Entity master list
