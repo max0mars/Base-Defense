@@ -88,6 +88,7 @@ function MusicManager:nextTrack()
     self.playlistIndex = self.playlistIndex + 1
     if self.playlistIndex > #self.playlist then
         self.playlistIndex = 1
+        print("MusicManager: Playlist ended, restarting from track 1.")
     end
     self:play(self.playlist[self.playlistIndex])
 end
@@ -111,7 +112,15 @@ function MusicManager:update(dt)
     -- Check if current track finished playing, then automatically transition to next track
     if self.currentSource then
         if not self.currentSource:isPlaying() then
-            self:nextTrack()
+            local pos = self.currentSource:tell("seconds")
+            local dur = self.currentSource:getDuration("seconds")
+            
+            -- If pos is 0, the stream has naturally reached its end and reset.
+            -- If pos > 0 but very close to dur, it also reached the end.
+            -- This prevents tracks from skipping instantly when the window loses focus (which pauses all audio).
+            if pos == 0 or (dur > 0 and pos >= dur - 0.5) then
+                self:nextTrack()
+            end
         end
     end
 end
