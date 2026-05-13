@@ -11,7 +11,9 @@ function game_scene:load()
     game:load()
     game.time_mul = 1 -- game starts at normal speed
     self.gameover = false
-    if AUDIO then AUDIO:playMusic() end
+    if AUDIO and not AUDIO:isPlayingMusic() then AUDIO:playMusic() end
+    local AudioSlidersUI = require("Game.GUI.AudioSlidersUI")
+    self.sliders = AudioSlidersUI:new({ x = (VIRTUAL_WIDTH - 200) / 2, y = VIRTUAL_HEIGHT / 2 + 40, w = 200 })
 end
 
 function game_scene:mousepressed(x, y, button)
@@ -32,16 +34,29 @@ function game_scene:mousepressed(x, y, button)
         end
         return
     end
+    if paused == 1 then
+        if self.sliders and self.sliders:mousepressed(x, y, button) then
+            return
+        end
+        return
+    end
     game.inputHandler:mousepressed(x, y, button) -- Route through InputHandler
 end
 
 function game_scene:mousereleased(x, y, button)
+    if paused == 1 then
+        if self.sliders then self.sliders:mousereleased(x, y, button) end
+        return
+    end
     if game.inputHandler.mousereleased then
         game.inputHandler:mousereleased(x, y, button)
     end
 end
 
 function game_scene:update(dt)
+    if paused == 1 and self.sliders then
+        self.sliders:update(dt)
+    end
     if game:isState("gameover") and not self.gameover then
         self.gameover = true
         love.mouse.setVisible(true)
@@ -117,6 +132,7 @@ function game_scene:draw()
         love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
         love.graphics.setColor(1, 1, 1) -- Reset color for text
         love.graphics.printf("Game Paused", 0, VIRTUAL_HEIGHT / 2 - 20, VIRTUAL_WIDTH, "center")
+        if self.sliders then self.sliders:draw() end
     end
     love.graphics.setColor(1, 1, 1, 1)
     -- love.graphics.print("Tokens: " .. game.tokens, 10, 10)
@@ -137,11 +153,16 @@ function game_scene:keypressed(key)
     elseif key == "-" then
         game.time_mul = math.max(game.time_mul - 0.5, 0) -- Decrease time multiplier down to 0x
     elseif key == "escape" then
-        game.gui.confirmation:activate(
-            "Do you want to quit?",
-            function() love.event.quit() end,
-            function() end
-        )
+        if game.gui.confirmation.active then
+            game.gui.confirmation.active = false
+            if game.gui.confirmation.onCancel then game.gui.confirmation.onCancel() end
+        else
+            game.gui.confirmation:activate(
+                "Do you want to quit?",
+                function() love.event.quit() end,
+                function() end
+            )
+        end
     else 
         game.inputHandler:keypressed(key) -- Route through InputHandler
     end

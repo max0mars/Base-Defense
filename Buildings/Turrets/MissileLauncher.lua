@@ -9,8 +9,8 @@ MissileLauncher.template = {
     name = "Missile Launcher",
     rotation = 0,
     turnSpeed = 4,
-    fireRate = 0.3,  -- Extremely heavy and deliberate: 1 shot every 5 seconds
-    range = 700,     -- Exceptional standoff capability
+    fireRate = 0.4,  -- Extremely heavy and deliberate: 1 shot every 5 seconds
+    range = 450,     -- Exceptional standoff capability
     barrel = 15,
     color = {0.7, 0.2, 0.9, 1}, -- Vibrant neon purple theme
     baseShape = "square",
@@ -20,7 +20,7 @@ MissileLauncher.template = {
     firingArc = {
         direction = 0,
         minRange = 0,
-        angle = math.pi
+        angle = math.pi/6
     },
     sfx = "missile_01",
     

@@ -3,117 +3,133 @@ local RewardIndex = {
         {
             id = "sentry",
             name = "Sentry",
-            description = "Basic defensive turret. Balanced speed and damage.",
+            description = "Balanced range and damage.",
             building = require("Buildings.Turrets.Sentry"),
-            type = "building"
+            type = "building",
+            iconCategory = "turret"
         },
         {
             id = "autoCannon",
             name = "Auto Cannon",
-            description = "High fire rate, low damage, shorter range.",
+            description = "High fire rate, low damage, short range.",
             type = "building",
-            building = require("Buildings.Turrets.AutoCannon")
+            building = require("Buildings.Turrets.AutoCannon"),
+            iconCategory = "turret"
         },
         {
             id = "smallbox",
             name = "Small Box",
-            description = "Block Enemies",
+            description = "Gets in the enemy's way.",
             building = require("Buildings.Blockers.SmallBox"),
-            type = "building"
+            type = "building",
+            iconCategory = "blocker"
         },
         {
             id = "rangeBuff",
             name = "Radar Tower",
             description = "Increases range of adjacent turrets by 25%.",
             type = "building",
-            building = require("Buildings.Buffs.RangeBuff")
+            building = require("Buildings.Buffs.RangeBuff"),
+            iconCategory = "buff"
         },
         {
             id = "shotgunTurret",
             name = "Shotgun Turret",
-            description = "Fires a staggered 10-pellet cluster spread. Massive close-range shredding.",
+            description = "Shreds close-range targets.",
             type = "building",
-            building = require("Buildings.Turrets.ShotgunTurret")
-        },
-    },
-    uncommon = {
-        {
-            id = "slottedBlocker",
-            name = "Slotted Blocker",
-            description = "Block Enemies and allow turrets to be placed on it",
-            building = require("Buildings.Blockers.SlottedBlocker"),
-            type = "building"
+            building = require("Buildings.Turrets.ShotgunTurret"),
+            iconCategory = "turret"
         },
         {
             id = "heavygun",
             name = "Heavy Gun",
-            description = "High damage, slow fire rate.",
+            description = "Long range, high damage.",
             type = "building",
-            building = require("Buildings.Turrets.HeavyGun")
+            building = require("Buildings.Turrets.HeavyGun"),
+            iconCategory = "turret"
         },
+    },
+    uncommon = {
         {
             id = "splitter",
             name = "Splitter",
-            description = "Bullets split into multiple smaller projectiles upon hitting an enemy.",
+            description = "Big damage to the guy behind!",
             type = "building",
-            building = require("Buildings.Turrets.Splitter")
+            building = require("Buildings.Turrets.Splitter"),
+            iconCategory = "turret"
         },
         {
             id = "smallfence",
             name = "Small Fence",
-            description = "Block Enemies",
+            description = "Redirect Enemy movement.",
             building = require("Buildings.Blockers.SmallFence"),
-            type = "building"
+            type = "building",
+            iconCategory = "blocker"
         },
         {
             id = "ammoCache",
             name = "Ammo Cache",
-            description = "Increase turret damage by 20%",
+            description = "Increase nearby turret damage by 20%",
             type = "building",
-            building = require("Buildings.Buffs.Buff")
+            building = require("Buildings.Buffs.Buff"),
+            iconCategory = "buff"
         },
         {
             id = "shatterRounds",
             name = "Shatter Rounds",
-            description = "Bullets shatter into multiple smaller projectiles upon hitting an enemy.",
+            description = "Gives nearby turrets bullets that shatter on impact.",
             type = "building",
-            building = require("Buildings.Buffs.ShardBullets")
+            building = require("Buildings.Buffs.ShardBullets"),
+            iconCategory = "buff"
         },
         {
             id = "energyBlaster",
             name = "Energy Blaster",
-            description = "High-tech weapon dealing energy damage with trailing projectiles.",
+            description = "Energy damage that ignores heavy armor.",
             type = "building",
-            building = require("Buildings.Turrets.EnergyBlaster")
+            building = require("Buildings.Turrets.EnergyBlaster"),
+            iconCategory = "turret"
         },
         {
             id = "bank",
             name = "Bank",
             description = "Generates 1 Token every 3 waves.",
             type = "building",
-            building = require("Buildings.Turrets.Bank")
+            building = require("Buildings.Turrets.Bank"),
+            iconCategory = "buff"
+        },
+        {
+            id = "grenadier",
+            name = "Grenadier",
+            description = "Lobs grenades that explode after a short delay.",
+            type = "building",
+            iconCategory = "turret",
+            building = require("Buildings.Turrets.Grenadier")
         },
     },
     rare = {
         {
             id = "poisonTurret",
             name = "Poison Turret",
-            description = "Bullets apply poison effect",
+            description = "Bullets apply long term poison effect. Great for dealing with heavy targets",
             type = "building",
-            building = require("Buildings.Turrets.PoisonTurret")
+            building = require("Buildings.Turrets.PoisonTurret"),
+            iconCategory = "turret"
         },
         {
             id = "poisonCoating",
             name = "Poison Coating",
-            description = "Bullets apply poison effect.",
+            description = "Grants nearby towers poison effect.",
             type = "building",
-            building = require("Buildings.Buffs.PoisonTotem")
+            building = require("Buildings.Buffs.PoisonTotem"),
+            iconCategory = "buff"
         },
         {
             id = "unstable_laser",
             name = "Unstable Laser",
-            description = "Main Turret: 20% chance to burn enemies.",
+            description = "Gives your big lazer a 20% chance to burn enemies.",
             type = "main_upgrade",
+            iconCategory = "upgrade",
             isEligible = function(game)
                 local mt = game.base and game.base.mainTurret
                 return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
@@ -122,16 +138,34 @@ local RewardIndex = {
         {
             id = "missileLauncher",
             name = "Missile Launcher",
-            description = "Fires a heavy standoff payload that detonates on impact dealing massive splash damage.",
+            description = "Wouldn't want to get in the way of one of these.",
             type = "building",
-            building = require("Buildings.Turrets.MissileLauncher")
+            building = require("Buildings.Turrets.MissileLauncher"),
+            iconCategory = "turret"
         },
         {
             id = "sequenceTurret",
             name = "CSR-8 Sequence",
-            description = "Long-range sequence gun. Fire rate accelerates dramatically during continuous targeting.",
+            description = "The longer you shoot, the faster it gets. Loses charge when retargeting",
             type = "building",
-            building = require("Buildings.Turrets.SequenceTurret")
+            building = require("Buildings.Turrets.SequenceTurret"),
+            iconCategory = "turret"
+        },
+        {
+            id = "slottedBlocker",
+            name = "Slotted Blocker",
+            description = "It's a fence with a free turret slot!",
+            building = require("Buildings.Blockers.SlottedBlocker"),
+            type = "building",
+            iconCategory = "blocker"
+        },
+        {
+            id = "slowBlocker",
+            name = "Frost Trap",
+            description = "Slows down nearby enemies.",
+            type = "building",
+            building = require("Buildings.Blockers.SlowBlocker"),
+            iconCategory = "blocker"
         },
     },
     epic = {
@@ -140,27 +174,31 @@ local RewardIndex = {
             name = "Sniper Turret",
             description = "High damage, long range.",
             type = "building",
-            building = require("Buildings.Turrets.Sniper")
+            building = require("Buildings.Turrets.Sniper"),
+            iconCategory = "turret"
         },
         {
             id = "mortar",
             name = "Mortar",
-            description = "Shoots explosive projectiles in an arc.",
+            description = "KABOOM!",
             type = "building",
-            building = require("Buildings.Turrets.Mortar")
+            building = require("Buildings.Turrets.Mortar"),
+            iconCategory = "turret"
         },
         {
             id = "explosiveBullets",
             name = "Explosive Bullets",
-            description = "Bullets explode on impact.",
+            description = "Adds a little extra something to nearby turrets.",
             type = "building",
-            building = require("Buildings.Buffs.ExplosiveTotem")
+            building = require("Buildings.Buffs.ExplosiveTotem"),
+            iconCategory = "buff"
         },
         {
             id = "low_power_operating",
             name = "Low Power Ops",
-            description = "Main Turret: +50% Fire Rate, -20% Damage.",
+            description = "Your big lazer shoots much faster but does a little less damage.",
             type = "main_upgrade",
+            iconCategory = "upgrade",
             isEligible = function(game)
                 local mt = game.base and game.base.mainTurret
                 return mt and mt.id == "standard_main" and not mt.upgrades["low_power_operating"]
@@ -170,9 +208,10 @@ local RewardIndex = {
     legendary = {
         {
             id = "electric_field",
-            name = "Electric Field",
-            description = "Main Turret: Auto-zaps up to 3 nearby enemies for 1.5x damage.",
+            name = "PROJECT STORMBREAKER",
+            description = "zzzZap!",
             type = "main_upgrade",
+            iconCategory = "upgrade",
             isEligible = function(game)
                 local mt = game.base and game.base.mainTurret
                 return mt and not mt.upgrades["electric_field"]
@@ -180,10 +219,11 @@ local RewardIndex = {
         },
         {
             id = "chainLaser",
-            name = "Chain Laser",
-            description = "High-tech turret that fires bouncing energy bolts. Hits up to 10 targets.",
+            name = "PROJECT CHIMERA",
+            description = "No one is safe",
             type = "building",
-            building = require("Buildings.Turrets.ChainLaser")
+            building = require("Buildings.Turrets.ChainLaser"),
+            iconCategory = "turret"
         }
     }
 }

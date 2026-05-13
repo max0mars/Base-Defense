@@ -1,4 +1,6 @@
-local Burn = {}
+local Burn = {
+    timePerTick = 1
+}
 Burn.__index = Burn
 
 function Burn:new(config)
@@ -48,9 +50,9 @@ end
 
 function Burn:onUpdate(dt, target)
     self.time = self.time + dt
-    if self.time >= 1 then
-        target:takeDamage(self.dps_burn, "fire")
-        self.time = 0
+    if self.time >= self.timePerTick then
+        target:takeDamage(self.dps_burn * self.timePerTick, "fire")
+        self.time = self.time - self.timePerTick
     end
 end
 

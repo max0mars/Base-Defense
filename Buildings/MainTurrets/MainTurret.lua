@@ -122,6 +122,7 @@ function MainTurret:updateElectricField(dt)
             end
             
             if #targets > 0 then
+                if AUDIO then AUDIO:playSFX("lightning_01") end
                 for _, target in ipairs(targets) do
                     target:takeDamage(zapDamage, "energy", target.x, target.y)
                     

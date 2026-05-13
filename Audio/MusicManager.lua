@@ -15,8 +15,9 @@ function MusicManager:new()
     instance:registerTrack("Electroman", "Audio/Music/Electroman Adventures V2.mp3")
     instance:registerTrack("Moonbeam", "Audio/Music/Moonbeam.mp3")
     instance:registerTrack("Dawn of Time", "Audio/Music/The Dawn of Time.mp3")
+    instance:registerTrack("Meltdown", "Audio/Music/Meltdown.mp3")
     
-    instance.playlist = {"City Chase", "Clutterfunk", "Electroman", "Moonbeam", "Dawn of Time"}
+    instance.playlist = {"City Chase", "Moonbeam", "Meltdown", "Dawn of Time", "Clutterfunk", "Electroman"}
     instance.playlistIndex = 1
     
     return instance

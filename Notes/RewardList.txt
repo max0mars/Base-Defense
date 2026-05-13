@@ -7,16 +7,16 @@ Common
 - Small Box [Buildings.Blockers.SmallBox]: Block Enemies
 - Radar Tower [Buildings.Buffs.RangeBuff]: Increases range of adjacent turrets by 25%.
 - Shotgun Turret [Buildings.Turrets.ShotgunTurret]: Fires a staggered 10-pellet cluster spread. Massive close-range shredder.
+- Heavy Gun [Buildings.Turrets.HeavyGun]: High damage, slow fire rate.
 
 Uncommon
-- Slotted Blocker [Buildings.Blockers.SlottedBlocker]: Block Enemies and allow turrets to be placed on it
-- Heavy Gun [Buildings.Turrets.HeavyGun]: High damage, slow fire rate.
 - Splitter [Buildings.Turrets.Splitter]: Bullets split into multiple smaller projectiles upon hitting an enemy.
 - Small Fence [Buildings.Blockers.SmallFence]: Block Enemies
 - Ammo Cache [Buildings.Buffs.Buff]: Increase turret damage by 20%
 - Shatter Rounds [Buildings.Buffs.ShardBullets]: Bullets shatter into multiple smaller projectiles upon hitting an enemy.
 - Energy Blaster [Buildings.Turrets.EnergyBlaster]: High-tech weapon dealing energy damage with trailing projectiles.
 - Bank [Buildings.Turrets.Bank]: Generates 1 Token every 3 waves.
+- Grenadier [Buildings.Turrets.Grenadier]: Lobs grenades that land on the ground and explode after a short delay.
 
 Rare
 - Poison Turret [Buildings.Turrets.PoisonTurret]: Bullets apply poison effect
@@ -24,6 +24,8 @@ Rare
 - Unstable Laser [main_upgrade]: Main Turret: 20% chance to burn enemies for 3.2s.
 - Missile Launcher [Buildings.Turrets.MissileLauncher]: Fires a heavy standoff payload that detonates on impact dealing massive splash damage.
 - CSR-8 Sequence [Buildings.Turrets.SequenceTurret]: Long-range physical gun. Fire rate ramps up heavily during sustained targeting.
+- Slotted Blocker [Buildings.Blockers.SlottedBlocker]: Block Enemies and allow turrets to be placed on it
+- Frost Trap [Buildings.Blockers.SlowBlocker]: A 1x1 block that slows down all enemies in a wide radius by 50%.
 
 Epic
 - Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.

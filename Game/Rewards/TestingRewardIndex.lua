@@ -1,12 +1,13 @@
 local RewardIndex = {
     common = {
         {
-            id = "energyBlaster",
-            name = "Energy Blaster",
-            description = "High-tech weapon dealing energy damage with trailing projectiles.",
+            id = "poisonTurret",
+            name = "Poison Turret",
+            description = "Bullets apply poison effect",
             type = "building",
-            building = require("Buildings.Turrets.EnergyBlaster")
-        },
+            building = require("Buildings.Turrets.PoisonTurret"),
+            iconCategory = "turret"
+        }
     },
 }
 

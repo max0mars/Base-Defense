@@ -20,6 +20,7 @@ function SFXManager:new()
     instance:registerSound("gunshot_04", "Audio/SFX/gunshot_04.mp3")
     instance:registerSound("explosion_02", "Audio/SFX/explosion_02.mp3")
     instance:registerSound("missile_01", "Audio/SFX/missile_01.mp3")
+    instance:registerSound("lightning_01", "Audio/SFX/lightning_01.mp3")
     
     return instance
 end

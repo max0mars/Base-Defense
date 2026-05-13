@@ -6,6 +6,7 @@ local GameText = {
         {"Turrets have a set firing arc. Click on them or press space to set their firing arc."},
         {"Inbetween waves, click on a turret to adjust it's firing arc and click again to lock it."},
         {"When placing a building click the bottom of the screen to store it for later."},
+        {"Press Esc to change volume or quit."},
         {"Good luck!"}
     }
 }

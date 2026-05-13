@@ -112,10 +112,7 @@ function game:load(saveData)
     self.base:initMainTurret(StandardMainTurret)
     self.mainTurret = self.base.mainTurret
     
-    -- Equip base with an innate starting Missile Launcher directly above the main gun for ordnance testing
-    local MissileLauncher = require("Buildings.Turrets.MissileLauncher")
-    local startingMissile = MissileLauncher:new({game = self})
-    self:newBuilding(startingMissile, 26)
+
     
     love.mouse.setVisible(false)
 end

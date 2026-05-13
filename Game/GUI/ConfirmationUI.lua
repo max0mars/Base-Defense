@@ -2,6 +2,7 @@ local ConfirmationUI = {}
 ConfirmationUI.__index = ConfirmationUI
 
 function ConfirmationUI:new(game)
+    local AudioSlidersUI = require("Game.GUI.AudioSlidersUI")
     local obj = setmetatable({
         game = game,
         active = false,
@@ -12,7 +13,8 @@ function ConfirmationUI:new(game)
         boxH = 100,
         onConfirm = nil,
         onCancel = nil,
-        target = nil
+        target = nil,
+        sliders = AudioSlidersUI:new({w = 200})
     }, self)
     return obj
 end
@@ -23,9 +25,19 @@ function ConfirmationUI:activate(message, onConfirm, onCancel, target)
     self.onConfirm = onConfirm
     self.onCancel = onCancel
     self.target = target
+    if not target then
+        self.boxW = 260
+        self.boxH = 220
+    else
+        self.boxW = 240
+        self.boxH = 100
+    end
 end
 
 function ConfirmationUI:update(dt)
+    if self.active and not self.target and self.sliders then
+        self.sliders:update(dt)
+    end
     -- Handle the legacy destruction target auto-activation
     if not self.active and self.game.inputHandler and self.game.inputHandler.destructionTarget then
         self:activate(
@@ -83,7 +95,13 @@ function ConfirmationUI:draw()
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", cx, cy, self.boxW, self.boxH, 8)
     
-    love.graphics.printf(self.message, cx + 10, cy + 15, self.boxW - 20, "center")
+    if not self.target and self.sliders then
+        self.sliders:setPosition(cx + math.floor((self.boxW - self.sliders.w) / 2), cy + 30)
+        self.sliders:draw()
+        love.graphics.printf(self.message, cx + 10, cy + 125, self.boxW - 20, "center")
+    else
+        love.graphics.printf(self.message, cx + 10, cy + 15, self.boxW - 20, "center")
+    end
     
     -- Draw buttons
     local btnW, btnH = 80, 30
@@ -115,6 +133,12 @@ end
 
 function ConfirmationUI:mousepressed(x, y, button)
     if not self.active or button ~= 1 then return false end
+    
+    if not self.target and self.sliders then
+        if self.sliders:mousepressed(x, y, button) then
+            return true
+        end
+    end
     
     -- Check Confirm
     if self.confirmRect and x >= self.confirmRect.x and x <= self.confirmRect.x + self.confirmRect.w and

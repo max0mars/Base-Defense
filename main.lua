@@ -35,6 +35,7 @@ function love.load()
     
     -- Initialize global Audio Subsystem
     AUDIO = AudioManager:new()
+    AUDIO:playMusic()
     
     scene_manager:load() -- Load the initial scene
 end

@@ -14,6 +14,7 @@ function Reward:new(config)
     reward.building = config.building or nil -- Reference to building class if type is building
     reward.id = config.id or nil -- Unique identifier
     reward.effect = config.effect or nil -- Table for Status Effects
+    reward.iconCategory = config.iconCategory or nil
     
     -- Rarity colors for visual representation
     reward.rarityColors = {
@@ -80,7 +81,69 @@ function Reward:draw(x, y, width, height, isSelected)
         love.graphics.setColor(0.8, 0.8, 0.8, 1.0)
         love.graphics.printf(self.description, x + 5, y + topPadding + 45, width - 10, "left")
     end
-    --love.graphics.setLineWidth(1)
+    
+    -- Draw Category Icon at the bottom center
+    local iconCat = self.iconCategory
+    if not iconCat then
+        if self.type == "main_upgrade" or self.type == "effect" or self.type == "upgrade" then
+            iconCat = "upgrade"
+        elseif self.type == "building" then
+            if self.id and (self.id:find("buff") or self.id:find("Buff") or self.id:find("Cache") or self.id == "bank" or self.id:find("Coating") or self.id:find("Rounds") or self.id:find("rounds")) then
+                iconCat = "buff"
+            elseif self.id and (self.id:find("box") or self.id:find("fence") or self.id:find("Blocker")) then
+                iconCat = "blocker"
+            else
+                iconCat = "turret"
+            end
+        else
+            iconCat = "upgrade"
+        end
+    end
+    
+    if iconCat then
+        love.graphics.push("all")
+        local cx = math.floor(x + width / 2)
+        local cy = math.floor(y + height - 20)
+        
+        if iconCat == "buff" then
+            -- 3x3 grid
+            local startX = cx - 7
+            local startY = cy - 7
+            for r = 1, 3 do
+                for c = 1, 3 do
+                    if r == 2 and c == 2 then
+                        love.graphics.setColor(0.6, 0.6, 0.6, 1)
+                    else
+                        love.graphics.setColor(0.2, 0.8, 0.2, 1)
+                    end
+                    love.graphics.rectangle("fill", startX + (c - 1) * 5, startY + (r - 1) * 5, 4, 4)
+                end
+            end
+        elseif iconCat == "turret" then
+            -- Simple circle with barrel
+            love.graphics.setColor(0.7, 0.7, 0.7, 1)
+            love.graphics.circle("fill", cx, cy, 5)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setLineWidth(1)
+            love.graphics.circle("line", cx, cy, 5)
+            love.graphics.setColor(0.9, 0.9, 0.9, 1)
+            love.graphics.rectangle("fill", cx - 1.5, cy - 9, 3, 5)
+        elseif iconCat == "blocker" then
+            -- Small fence: 3 vertical posts, 2 horizontal rails
+            love.graphics.setColor(0.7, 0.5, 0.3, 1)
+            love.graphics.rectangle("fill", cx - 7, cy - 6, 2, 12)
+            love.graphics.rectangle("fill", cx - 1, cy - 6, 2, 12)
+            love.graphics.rectangle("fill", cx + 5, cy - 6, 2, 12)
+            love.graphics.rectangle("fill", cx - 8, cy - 3, 16, 2)
+            love.graphics.rectangle("fill", cx - 8, cy + 3, 16, 2)
+        elseif iconCat == "upgrade" then
+            -- Plus sign (+)
+            love.graphics.setColor(1, 0.8, 0.2, 1)
+            love.graphics.rectangle("fill", cx - 6, cy - 1.5, 12, 3)
+            love.graphics.rectangle("fill", cx - 1.5, cy - 6, 3, 12)
+        end
+        love.graphics.pop()
+    end
 end
 
 return Reward

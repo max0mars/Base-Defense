@@ -22,6 +22,10 @@ function AudioManager:playMusic(trackName)
     self.music:play(trackName)
 end
 
+function AudioManager:isPlayingMusic()
+    return self.music.currentSource and self.music.currentSource:isPlaying()
+end
+
 function AudioManager:stopMusic()
     self.music:stop()
 end
@@ -42,6 +46,10 @@ function AudioManager:setMusicVolume(volume)
     self.music:setVolume(volume)
 end
 
+function AudioManager:getMusicVolume()
+    return self.music.volume
+end
+
 function AudioManager:toggleMusicMute()
     return self.music:toggleMute()
 end
@@ -56,6 +64,10 @@ end
 
 function AudioManager:setSFXVolume(volume)
     self.sfx:setVolume(volume)
+end
+
+function AudioManager:getSFXVolume()
+    return self.sfx.volume
 end
 
 function AudioManager:toggleSFXMute()

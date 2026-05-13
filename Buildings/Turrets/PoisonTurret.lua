@@ -30,9 +30,9 @@ PoisonTurret.template = {
     bulletShape = "rectangle",
     
     -- Values for effect initialization (can be overridden by inherent buff or external buffs)
-    duration_poison = 4,
-    dps_poison = 15,
-    maxStacks = 5,
+    duration_poison = 5,
+    dps_poison = 20,
+    maxStacks = 3,
 }
 
 function PoisonTurret:new(config)
@@ -58,7 +58,8 @@ function PoisonTurret:new(config)
         statModifiers = {
             dps_poison = {max = 10, hidden = true},
             duration_poison = {max = 4, hidden = true},
-            maxStacks = {max = 5, hidden = true}
+            maxStacks = {max = 5, hidden = true},
+            timePerTick = {max = 0.5, hidden = true},
         }
     })
     

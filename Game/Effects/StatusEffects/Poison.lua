@@ -1,4 +1,6 @@
-local Poison = {}
+local Poison = {
+    timePerTick = 0.4
+}
 Poison.__index = Poison
 
 function Poison:new(config)
@@ -21,6 +23,7 @@ function Poison:new(config)
     -- Ensure we have a name for the EffectManager stacking and icons
     instance.name = config.name or ("poison")
     instance.duration = config.duration_poison
+    instance.time = 0
     
     return instance
 end
@@ -50,7 +53,11 @@ function Poison:onApply(target, source)
 end
 
 function Poison:onUpdate(dt, target)
-    target:takeDamage(self.dps_poison * dt, "poison")
+    self.time = self.time + dt
+    if self.time >= self.timePerTick then
+        target:takeDamage(self.dps_poison * self.timePerTick, "poison")
+        self.time = self.time - self.timePerTick
+    end
 end
 
 return Poison

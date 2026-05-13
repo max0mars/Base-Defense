@@ -30,7 +30,7 @@ function InputHandler:update(dt)
     -- Handle space key hold for showing all firing arcs
     local showAllArcs = love.keyboard.isDown("space")
     for _, obj in ipairs(game.objects) do
-        if obj:isType("turret") and not obj.destroyed then
+        if (obj:isType("turret") or (obj:isType("blocker") and obj.range)) and not obj.destroyed then
             if showAllArcs then
                 obj.showArc = true
             else
@@ -92,12 +92,12 @@ function InputHandler:handleBuildingHover()
     
     -- Check for building hover
     for _, obj in ipairs(gameObjects) do
-        if (obj:isType("turret") or obj:isType("passive")) and not obj.destroyed then
+        if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
             if self:isMouseOverBuilding(obj) then
                 self.hoveredBuilding = obj
                 obj.showEffects = true
                 -- Handle turret-specific hover (firing arcs)
-                if obj:isType("turret") then
+                if obj:isType("turret") or (obj:isType("blocker") and obj.range) then
                     obj.showArc = true
                 end
                 
@@ -110,7 +110,7 @@ function InputHandler:handleBuildingHover()
             else
                 -- Clear effects if not hovered and not selected
                 if obj ~= self.selectedBuilding and not showAllArcs then
-                    if obj:isType("turret") then
+                    if obj:isType("turret") or (obj:isType("blocker") and obj.range) then
                         obj.showArc = false
                         obj.showEffects = false
                     end
@@ -438,7 +438,7 @@ function InputHandler:mousepressed(x, y, button)
         if game:isState("preparing") then
             -- Check if clicking on a building (exclude MainTurret)
             for _, obj in ipairs(game.objects) do
-                if (obj:isType("turret") or obj:isType("passive")) and not obj:isType("mainTurret") and not obj.destroyed then
+                if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainTurret") and not obj.destroyed then
                     if self:isMouseOverBuilding(obj) then
                         self:selectBuilding(obj)
                         clickedOnBuilding = true
@@ -480,7 +480,7 @@ function InputHandler:selectBuilding(building)
     building.selected = true
     
     -- Handle building-specific selection behavior
-    if building:isType("turret") then
+    if building:isType("turret") or (building:isType("blocker") and building.range) then
         building.showArc = true
     elseif building:isType("passive") and building.getAffectedSlotsFromAnchor then
         -- Show affected slots for buff buildings
@@ -493,7 +493,7 @@ function InputHandler:clearSelection()
         self.selectedBuilding.selected = false
         
         -- Handle building-specific clearing
-        if self.selectedBuilding:isType("turret") then
+        if self.selectedBuilding:isType("turret") or (self.selectedBuilding:isType("blocker") and self.selectedBuilding.range) then
             self.selectedBuilding.showArc = false
         end
         

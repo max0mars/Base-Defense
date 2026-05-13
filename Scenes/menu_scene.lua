@@ -32,10 +32,13 @@ function menu_scene:load()
     end
 
     self.confirmation = require("Game.GUI.ConfirmationUI"):new({inputHandler = {}})
+    local AudioSlidersUI = require("Game.GUI.AudioSlidersUI")
+    self.sliders = AudioSlidersUI:new({ x = (VIRTUAL_WIDTH - 200) / 2, y = 460, w = 200 })
 end
 
 function menu_scene:update(dt)
     self.confirmation:update(dt)
+    if self.sliders then self.sliders:update(dt) end
 end
 
 function menu_scene:draw()
@@ -70,11 +73,16 @@ function menu_scene:draw()
         love.graphics.printf(label, btn.x, btn.y + (btn.h / 2) - 6, btn.w, "center")
     end
 
+    if self.sliders then self.sliders:draw() end
     self.confirmation:draw()
 end
 
 function menu_scene:mousepressed(x, y, button)
     if self.confirmation:mousepressed(x, y, button) then
+        return true
+    end
+
+    if self.sliders and self.sliders:mousepressed(x, y, button) then
         return true
     end
 
@@ -100,11 +108,22 @@ function menu_scene:keypressed(key)
     elseif key == "t" then
         self.scene_manager.switch("test") -- Switch to the test scene when 't' is pressed
     elseif key == "escape" then
-        self.confirmation:activate(
-            "Do you want to quit?",
-            function() love.event.quit() end,
-            function() end
-        )
+        if self.confirmation.active then
+            self.confirmation.active = false
+            if self.confirmation.onCancel then self.confirmation.onCancel() end
+        else
+            self.confirmation:activate(
+                "Do you want to quit?",
+                function() love.event.quit() end,
+                function() end
+            )
+        end
+    end
+end
+
+function menu_scene:mousereleased(x, y, button)
+    if self.sliders then
+        self.sliders:mousereleased(x, y, button)
     end
 end
 

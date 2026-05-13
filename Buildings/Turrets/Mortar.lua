@@ -23,8 +23,8 @@ Mortar.template = {
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,
-        minRange = 200,
-        angle = math.pi/6
+        minRange = 300,
+        angle = math.pi/4
     },
     
     -- Bullet properties (now flat)
