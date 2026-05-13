@@ -85,7 +85,6 @@ function GUIManager:draw()
     
     -- UI elements on top of masks
     self.hand:draw()
-    self.confirmation:draw() -- Draw prompts above hand
     self.mutation:draw()     -- Draw mutation screen
     self.tooltips:draw()     -- Draw tips above everything
 end

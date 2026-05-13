@@ -6,6 +6,7 @@ Common
 - Auto Cannon [Buildings.Turrets.AutoCannon]: High fire rate, low damage, shorter range.
 - Small Box [Buildings.Blockers.SmallBox]: Block Enemies
 - Radar Tower [Buildings.Buffs.RangeBuff]: Increases range of adjacent turrets by 25%.
+- Shotgun Turret [Buildings.Turrets.ShotgunTurret]: Fires a staggered 10-pellet cluster spread. Massive close-range shredder.
 
 Uncommon
 - Slotted Blocker [Buildings.Blockers.SlottedBlocker]: Block Enemies and allow turrets to be placed on it
@@ -21,6 +22,8 @@ Rare
 - Poison Turret [Buildings.Turrets.PoisonTurret]: Bullets apply poison effect
 - Poison Coating [Buildings.Buffs.PoisonTotem]: Bullets apply poison effect.
 - Unstable Laser [main_upgrade]: Main Turret: 20% chance to burn enemies for 3.2s.
+- Missile Launcher [Buildings.Turrets.MissileLauncher]: Fires a heavy standoff payload that detonates on impact dealing massive splash damage.
+- CSR-8 Sequence [Buildings.Turrets.SequenceTurret]: Long-range physical gun. Fire rate ramps up heavily during sustained targeting.
 
 Epic
 - Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.

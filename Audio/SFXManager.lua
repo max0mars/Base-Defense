@@ -19,6 +19,7 @@ function SFXManager:new()
     instance:registerSound("money_01", "Audio/SFX/money_01.mp3")
     instance:registerSound("gunshot_04", "Audio/SFX/gunshot_04.mp3")
     instance:registerSound("explosion_02", "Audio/SFX/explosion_02.mp3")
+    instance:registerSound("missile_01", "Audio/SFX/missile_01.mp3")
     
     return instance
 end
@@ -41,14 +42,15 @@ function SFXManager:play(name)
     
     local baseSource = self.sounds[name]
     if baseSource then
+        local sfxVol = name == "missile_01" and math.min(1, self.volume * 40) or self.volume
         local success, clone = pcall(baseSource.clone, baseSource)
         if success and clone then
-            clone:setVolume(self.volume)
+            clone:setVolume(sfxVol)
             clone:play()
             table.insert(self.activeSounds, clone)
         else
             -- Fallback to playing the base source directly
-            baseSource:setVolume(self.volume)
+            baseSource:setVolume(sfxVol)
             baseSource:play()
         end
     else

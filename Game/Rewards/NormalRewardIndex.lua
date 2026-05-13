@@ -28,6 +28,13 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Buffs.RangeBuff")
         },
+        {
+            id = "shotgunTurret",
+            name = "Shotgun Turret",
+            description = "Fires a staggered 10-pellet cluster spread. Massive close-range shredding.",
+            type = "building",
+            building = require("Buildings.Turrets.ShotgunTurret")
+        },
     },
     uncommon = {
         {
@@ -112,7 +119,20 @@ local RewardIndex = {
                 return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
             end
         },
-        
+        {
+            id = "missileLauncher",
+            name = "Missile Launcher",
+            description = "Fires a heavy standoff payload that detonates on impact dealing massive splash damage.",
+            type = "building",
+            building = require("Buildings.Turrets.MissileLauncher")
+        },
+        {
+            id = "sequenceTurret",
+            name = "CSR-8 Sequence",
+            description = "Long-range sequence gun. Fire rate accelerates dramatically during continuous targeting.",
+            type = "building",
+            building = require("Buildings.Turrets.SequenceTurret")
+        },
     },
     epic = {
         {
