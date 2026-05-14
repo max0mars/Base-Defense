@@ -192,6 +192,12 @@ function EffectManager:getStat(statName, baseValue)
     return (baseValue + mod.add + mod.max) * (1 + mod.mult)
 end
 
+function EffectManager:getStatMult(statName)
+    local mod = self.currentModifiers[statName]
+    if not mod then return 1 end
+    return (1 + mod.mult)
+end
+
 function EffectManager:getDamage(baseValue, damageTags)
     local mult = 0
     local add = 0
