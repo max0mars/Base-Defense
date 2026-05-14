@@ -44,8 +44,9 @@ function InputHandler:update(dt)
     
     -- Update selected turret's firing arc direction during preparation phase or when aiming after placement
     if (game:isState("preparing") or game.inputMode == "aiming") and self.selectedBuilding and self.selectedBuilding.firingArc then
-        local dx = self.mouseX - self.selectedBuilding.x
-        local dy = self.mouseY - self.selectedBuilding.y
+        local cx, cy = self.selectedBuilding:getCenterPosition()
+        local dx = self.mouseX - cx
+        local dy = self.mouseY - cy
         local angleToMouse = math.atan2(dy, dx)
         
         -- Normalize angle to [0, 2π]
@@ -84,36 +85,47 @@ function InputHandler:handleBuildingHover()
     local base = self.game.base
     
     base.buffHoverSlots = nil
-    if self.hoveredBuilding then
-        self.hoveredBuilding.showEffects = false
-        self.hoveredBuilding.showArc = false
-    end
-    self.hoveredBuilding = nil
     
-    -- Check for building hover
+    -- Find the best hovered building (Prioritize Turrets/Passives over Blockers)
+    local bestHover = nil
     for _, obj in ipairs(gameObjects) do
         if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
             if self:isMouseOverBuilding(obj) then
-                self.hoveredBuilding = obj
-                obj.showEffects = true
-                -- Handle turret-specific hover (firing arcs)
+                bestHover = obj
+                -- If we found a turret or passive, it takes absolute priority
+                if obj:isType("turret") or obj:isType("passive") then
+                    break
+                end
+            end
+        end
+    end
+
+    -- Update hovered building state
+    if self.hoveredBuilding and self.hoveredBuilding ~= bestHover then
+        self.hoveredBuilding.showEffects = false
+    end
+    self.hoveredBuilding = bestHover
+    
+    if bestHover then
+        bestHover.showEffects = true
+        -- Handle turret-specific hover (firing arcs)
+        if bestHover:isType("turret") or (bestHover:isType("blocker") and bestHover.range) then
+            bestHover.showArc = true
+        end
+        
+        -- Handle buff building hover (affected slots)
+        if bestHover:isType("passive") and bestHover.getAffectedSlotsFromAnchor then
+            base.buffHoverSlots = bestHover:getAffectedSlotsFromAnchor(bestHover.slot)
+        end
+    end
+
+    -- Cleanup arcs for all non-hovered/non-selected buildings
+    for _, obj in ipairs(gameObjects) do
+        if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
+            if obj ~= self.hoveredBuilding and obj ~= self.selectedBuilding and not showAllArcs then
                 if obj:isType("turret") or (obj:isType("blocker") and obj.range) then
-                    obj.showArc = true
-                end
-                
-                -- Handle buff building hover (affected slots)
-                if obj:isType("passive") and obj.getAffectedSlotsFromAnchor then
-                    base.buffHoverSlots = obj:getAffectedSlotsFromAnchor(obj.slot)
-                end
-                
-                break -- Only hover one building at a time
-            else
-                -- Clear effects if not hovered and not selected
-                if obj ~= self.selectedBuilding and not showAllArcs then
-                    if obj:isType("turret") or (obj:isType("blocker") and obj.range) then
-                        obj.showArc = false
-                        obj.showEffects = false
-                    end
+                    obj.showArc = false
+                    obj.showEffects = false
                 end
             end
         end
@@ -436,15 +448,22 @@ function InputHandler:mousepressed(x, y, button)
         
         -- Only allow building selection during preparing phase
         if game:isState("preparing") then
-            -- Check if clicking on a building (exclude MainTurret)
+            -- Check if clicking on a building (Prioritize Turrets/Passives over Blockers)
+            local selected = nil
             for _, obj in ipairs(game.objects) do
                 if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainTurret") and not obj.destroyed then
                     if self:isMouseOverBuilding(obj) then
-                        self:selectBuilding(obj)
-                        clickedOnBuilding = true
-                        break
+                        selected = obj
+                        if obj:isType("turret") or obj:isType("passive") then
+                            break
+                        end
                     end
                 end
+            end
+            
+            if selected then
+                self:selectBuilding(selected)
+                clickedOnBuilding = true
             end
         end
         
