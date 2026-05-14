@@ -117,6 +117,10 @@ function Enemy:update(dt)
 end
 
 function Enemy:takeDamage(amount, damageType, hitX, hitY)
+    if not amount or type(amount) ~= "number" or amount ~= amount or amount <= 0 then
+        return 0
+    end
+    
     local damageMult = 1   
     if self.affinities and self.affinities[damageType] then
         damageMult = self.affinities[damageType]
