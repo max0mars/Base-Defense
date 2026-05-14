@@ -399,8 +399,9 @@ function game:EnemyDied(enemy)
 end
 
 function game:spawnDamageNumber(amount, x, y, damageType)
-    if self.showDamageNumbers then
-        table.insert(self.animations, DamageNumber:new(amount, x, y, damageType))
+    if self.showDamageNumbers and amount >= 1 then
+        local displayAmount = math.floor(amount + 0.5)
+        table.insert(self.animations, DamageNumber:new(displayAmount, x, y, damageType))
     end
 end
 
