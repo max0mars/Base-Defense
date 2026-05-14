@@ -93,9 +93,9 @@ local RewardIndex = {
         {
             id = "bank",
             name = "Bank",
-            description = "Generates 1 Token every 3 waves.",
+            description = "Generates 3 Token every 3 waves.",
             type = "building",
-            building = require("Buildings.Turrets.Bank"),
+            building = require("Buildings.Buffs.Bank"),
             iconCategory = "buff"
         },
         {

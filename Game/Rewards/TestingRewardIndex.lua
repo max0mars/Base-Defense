@@ -7,6 +7,14 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Buffs.ToxicTotem"),
             iconCategory = "buff"
+        },
+        {
+            id = "bank",
+            name = "Bank",
+            description = "Generates 3 Tokens every 3 waves.",
+            type = "building",
+            building = require("Buildings.Buffs.Bank"),
+            iconCategory = "buff"
         }
     },
 }

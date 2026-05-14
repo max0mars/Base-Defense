@@ -15,7 +15,7 @@ Uncommon
 - Ammo Cache [Buildings.Buffs.Buff]: Increase turret damage by 20%
 - Shatter Rounds [Buildings.Buffs.ShardBullets]: Bullets shatter into multiple smaller projectiles upon hitting an enemy.
 - Energy Blaster [Buildings.Turrets.EnergyBlaster]: High-tech weapon dealing energy damage with trailing projectiles.
-- Bank [Buildings.Turrets.Bank]: Generates 1 Token every 3 waves.
+- Bank [Buildings.Buffs.Bank]: Generates 3 Tokens every 3 waves.
 - Grenadier [Buildings.Turrets.Grenadier]: Lobs grenades that land on the ground and explode after a short delay.
 
 Rare
