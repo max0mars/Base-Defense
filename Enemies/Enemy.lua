@@ -256,6 +256,13 @@ function Enemy:getVelocity()
 end
 
 function Enemy:died()
+    if self.isDead then return end
+    self.isDead = true
+    
+    if self.effectManager then
+        self.effectManager:triggerEvent("onDeath", self)
+    end
+    
     if AUDIO then AUDIO:playSFX("explosion_01") end
     
     if self.splitOnDeathChance and self.splitOnDeathChance > 0 and math.random() <= self.splitOnDeathChance then

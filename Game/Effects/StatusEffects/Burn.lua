@@ -1,5 +1,5 @@
 local Burn = {
-    timePerTick = 1
+    timePerTick = 0.2
 }
 Burn.__index = Burn
 

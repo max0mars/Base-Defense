@@ -20,6 +20,13 @@ function EffectManager:new(owner, game)
     return instance
 end
 
+function EffectManager:getStackingKey(effect)
+    if effect.globalStacks then
+        return effect.displayName or effect.name
+    end
+    return effect.name
+end
+
 function EffectManager:recalculateStats()
     self.currentModifiers = {}
     self.taggedModifiers = {}
@@ -92,18 +99,32 @@ function EffectManager:applyEffect(effectTemplate, source)
         return
     end
 
-    local name = effect.name
-    local currentStacks = self.effectCounts[name] or 0
+    local stackingKey = self:getStackingKey(effect)
+    local currentStacks = self.effectCounts[stackingKey] or 0
     
     local sourceMaxStacks = source and source.getStat and source:getStat("maxStacks")
     if sourceMaxStacks == nil or sourceMaxStacks <= 0 then
         sourceMaxStacks = effect.maxStacks
     end
     local maxStacks = sourceMaxStacks or math.huge
+    if effect.globalStacks then
+        maxStacks = 1
+    end
+
+    if currentStacks >= maxStacks then
+        -- Find and remove the oldest stack of the same name to make room for the new one
+        for i = 1, #self.activeEffects do
+            if self:getStackingKey(self.activeEffects[i]) == stackingKey then
+                table.remove(self.activeEffects, i)
+                currentStacks = currentStacks - 1
+                break
+            end
+        end
+    end
 
     if currentStacks < maxStacks then
         table.insert(self.activeEffects, effect)
-        self.effectCounts[name] = currentStacks + 1
+        self.effectCounts[stackingKey] = currentStacks + 1
         self:recalculateStats()
         if not self.owner then
             self:propagateRecalculation()
@@ -127,7 +148,8 @@ function EffectManager:update(dt)
                 if effect.onExpire then
                     effect:onExpire(self.owner)
                 end
-                self.effectCounts[effect.name] = (self.effectCounts[effect.name] or 1) - 1
+                local key = self:getStackingKey(effect)
+                self.effectCounts[key] = (self.effectCounts[key] or 1) - 1
                 -- Find and remove from activeEffects
                 for j = 1, #self.activeEffects do
                     if self.activeEffects[j] == effect then
@@ -161,7 +183,8 @@ end
 function EffectManager:removeEffect(effect)
     for i = #self.activeEffects, 1, -1 do
         if self.activeEffects[i] == effect then
-            self.effectCounts[effect.name] = (self.effectCounts[effect.name] or 1) - 1
+            local key = self:getStackingKey(effect)
+            self.effectCounts[key] = (self.effectCounts[key] or 1) - 1
             table.remove(self.activeEffects, i)
             self:recalculateStats()
             if not self.owner then
