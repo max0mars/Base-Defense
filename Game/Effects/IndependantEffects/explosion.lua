@@ -21,6 +21,8 @@ function Explosion:new(config)
     instance.maxLifetime = config.maxLifetime or 0.4
     instance.lifetime = instance.maxLifetime
     instance.minDamagePercent = config.minDamagePercent or 0.25
+    instance.damageType = config.damageType or "explosive"
+    instance.explosionDamage = config.explosionDamage or 0
     
     return instance
 end
@@ -53,7 +55,8 @@ function Explosion:trigger(target, source)
         y = source.y,
         radius = radius,
         explosionDamage = damage,
-        color = self.color,
+        color = config.color or self.color,
+        damageType = config.damageType or self.damageType,
         minDamagePercent = 0.25,
         maxLifetime = 0.4
     })
@@ -95,10 +98,16 @@ function Explosion:applyDamage(source)
                 falloff = math.max(self.minDamagePercent or 0.25, falloff)
                 
                 local finalDamage = self.explosionDamage * falloff
-                obj:takeDamage(finalDamage, "explosive")
+                obj:takeDamage(finalDamage, self.damageType or "explosive")
+
+                -- If this is a toxic explosion, spread the infection
+                if (self.damageType == "toxic" or (source and source.damageType == "toxic")) and obj.effectManager then
+                    local Toxic = require("Game.Effects.StatusEffects.Toxic")
+                    obj.effectManager:applyEffect(Toxic:new(), source)
+                end
 
                 -- Apply auxiliary hit effects (Poison, Burn, etc.)
-                if source.hitEffects then
+                if source and source.hitEffects then
                     for _, effect in ipairs(source.hitEffects) do
                         if not effect.isIndependent and obj.effectManager then
                             obj.effectManager:applyEffect(effect, source)
