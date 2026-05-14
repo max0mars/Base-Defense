@@ -4,6 +4,7 @@ EffectManager.__index = EffectManager
 EffectManager.colors = {
     poison = {0.3, 1, 0.3, 1},
     burn = {1, 0.5, 0, 1},
+    toxic = {0.7, 0.2, 0.9, 1},
     -- add other effect colors here
 }
 

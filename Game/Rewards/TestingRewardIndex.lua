@@ -1,12 +1,12 @@
 local RewardIndex = {
     common = {
         {
-            id = "poisonTurret",
-            name = "Poison Turret",
-            description = "Bullets apply poison effect",
+            id = "toxicTotem",
+            name = "Toxic Totem",
+            description = "Nearby turrets apply Toxic and explode on death.",
             type = "building",
-            building = require("Buildings.Turrets.PoisonTurret"),
-            iconCategory = "turret"
+            building = require("Buildings.Buffs.ToxicTotem"),
+            iconCategory = "buff"
         }
     },
 }

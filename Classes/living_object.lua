@@ -27,7 +27,6 @@ function living_object:new(config)
         trueDamage = 1,
         fire = 1,
         explosive = 1,
-        electric = 1,
         energy = 1
     }
     return obj
@@ -79,7 +78,6 @@ local damageTypes = {
     trueDamage = 1,
     fire = 1,
     explosive = 1,
-    electric = 1,
     energy = 1
 }
 function living_object:takeDamage(amount, damageType, hitX, hitY)
