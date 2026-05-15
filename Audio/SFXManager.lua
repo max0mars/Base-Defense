@@ -6,7 +6,7 @@ function SFXManager:new()
     instance.sounds = {}
     instance.activeSounds = {}
     instance.playedThisFrame = {}
-    instance.volume = 0.03
+    instance.volume = 0.15
     instance.isMuted = false
     
     -- Pre-register default sound effects

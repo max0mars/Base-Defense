@@ -6,7 +6,7 @@ function MusicManager:new()
     instance.tracks = {}
     instance.currentTrackName = nil
     instance.currentSource = nil
-    instance.volume = 0.07
+    instance.volume = 0.15
     instance.isMuted = false
     
     -- Register default available tracks
