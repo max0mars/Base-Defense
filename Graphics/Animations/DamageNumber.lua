@@ -15,7 +15,7 @@ local typeColors = {
     toxic = {0.7, 0.2, 0.9, 1}
 }
 
-function DamageNumber:new(text, x, y, damageType, customColor)
+function DamageNumber:new(text, x, y, damageType, customColor, delay)
     local obj = setmetatable({}, self)
     
     obj.text = tostring(text)
@@ -26,12 +26,18 @@ function DamageNumber:new(text, x, y, damageType, customColor)
     obj.color = customColor or typeColors[damageType or "normal"] or typeColors.normal
     obj.lifetime = 1.0
     obj.maxLifetime = 1.0
+    obj.delay = delay or 0
     obj.destroyed = false
     
     return obj
 end
 
 function DamageNumber:update(dt)
+    if self.delay > 0 then
+        self.delay = self.delay - dt
+        return
+    end
+
     self.lifetime = self.lifetime - dt
     if self.lifetime <= 0 then
         self.destroyed = true
@@ -46,6 +52,8 @@ function DamageNumber:update(dt)
 end
 
 function DamageNumber:draw()
+    if self.delay > 0 then return end
+    
     local alpha = math.min(1, self.lifetime / (self.maxLifetime * 0.5))
     local r, g, b = self.color[1], self.color[2], self.color[3]
     
