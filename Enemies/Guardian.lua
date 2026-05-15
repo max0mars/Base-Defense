@@ -112,24 +112,47 @@ function Guardian:draw()
     local drawY = self.y - self.h/2
     
     -- Layer 1: Empty Base (Dim)
-    love.graphics.setColor(r, g, b, 0.15)
+    love.graphics.setColor(r, g, b, 0.2)
     self:drawShape("fill", drawX, drawY, self.w, self.h)
     
     -- Layer 2: HP Fill (Scissor bottom-up)
-    local fillRatio = self.hp / self:getStat("maxHp")
+    local maxHp = self:getStat("maxHp")
+    local fillRatio = self.hp / maxHp
     local scissorY = drawY + self.h * (1 - fillRatio)
-    local scissorH = self.h * fillRatio
+    
+    -- Guarantee 1px visual drop
+    if self.hp < maxHp and self.hp > 0 then
+        scissorY = math.max(drawY + 1, math.min(drawY + self.h - 1, scissorY))
+    end
+    
+    local scissorH = (drawY + self.h) - scissorY
     
     love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
     self:drawShape("fill", drawX, drawY, self.w, self.h)
+    
+    -- Add bright cap line
+    -- We do this by setting a very thin scissor and redrawing the shape fill
+    if fillRatio > 0 and fillRatio < 1 then
+        love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
+        love.graphics.setColor(r, g, b, 1)
+        self:drawShape("fill", drawX, drawY, self.w, self.h)
+        love.graphics.setScissor()
+    end
+    
     love.graphics.setScissor()
     
     -- Layer 3: Shield Fill (Scissor bottom-up)
     if self.maxShield > 0 and self.shield > 0 then
         local shieldRatio = self.shield / self.maxShield
         local sScissorY = drawY + self.h * (1 - shieldRatio)
-        local sScissorH = self.h * shieldRatio
+        
+        -- Guarantee 1px visual drop
+        if self.shield < self.maxShield and self.shield > 0 then
+            sScissorY = math.max(drawY + 1, math.min(drawY + self.h - 1, sScissorY))
+        end
+        
+        local sScissorH = (drawY + self.h) - sScissorY
         
         love.graphics.setScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey

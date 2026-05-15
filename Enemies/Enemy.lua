@@ -309,24 +309,49 @@ function Enemy:draw()
     local drawY = self.y - self.h/2
     
     -- 1. Layer 1 (Empty Base): Dim fill
-    love.graphics.setColor(r, g, b, 0.15)
+    love.graphics.setColor(r, g, b, 0.2)
     love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
     
     -- 2. Layer 2 (Normal HP Fill): Bright glow fill with bottom-up scissor
-    local fillRatio = self.hp / self:getStat("maxHp")
+    local maxHp = self:getStat("maxHp")
+    local fillRatio = self.hp / maxHp
+    
+    -- Calculate scissor with a "visual drop" guarantee
     local scissorY = drawY + self.h * (1 - fillRatio)
-    local scissorH = self.h * fillRatio
+    
+    -- Guarantee at least a 1px drop if any damage taken, and at least 1px remains if alive
+    if self.hp < maxHp and self.hp > 0 then
+        scissorY = math.max(drawY + 1, math.min(drawY + self.h - 1, scissorY))
+    end
+    
+    local scissorH = (drawY + self.h) - scissorY
     
     love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
     love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+    
+    -- Add a bright horizontal line at the health level "cap"
+    -- We do this by setting a very thin scissor and redrawing the shape fill
+    if fillRatio > 0 and fillRatio < 1 then
+        love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
+        love.graphics.setColor(r, g, b, 1)
+        love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+        love.graphics.setScissor()
+    end
+    
     love.graphics.setScissor()
     
     -- 3. Layer 3 (Shield Fill): Flat Grey fill with bottom-up scissor
     if self.maxShield > 0 and self.shield > 0 then
         local shieldRatio = self.shield / self.maxShield
         local sScissorY = drawY + self.h * (1 - shieldRatio)
-        local sScissorH = self.h * shieldRatio
+        
+        -- Guarantee 1px visual drop/presence
+        if self.shield < self.maxShield and self.shield > 0 then
+            sScissorY = math.max(drawY + 1, math.min(drawY + self.h - 1, sScissorY))
+        end
+        
+        local sScissorH = (drawY + self.h) - sScissorY
         
         love.graphics.setScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey

@@ -95,28 +95,50 @@ function Carrier:draw()
     love.graphics.polygon("fill", hexPoints)
     
     -- 2. Calculate Scissor Box for Health Fill (Draining effect)
-    local fillRatio = self.hp / self:getStat("maxHp")
-    local footprintW = self.w
-    local footprintH = self.h
-    local fx = self.x - footprintW/2
-    local fy = self.y - footprintH/2
+    local maxHp = self:getStat("maxHp")
+    local fillRatio = self.hp / maxHp
     
-    local scissorY = fy + footprintH * (1 - fillRatio)
-    local scissorH = footprintH * fillRatio
+    -- Calculate actual vertical bounds of the hexagon to avoid "dead space"
+    local minY, maxY = hexPoints[2], hexPoints[2]
+    for i = 4, #hexPoints, 2 do
+        local y = hexPoints[i]
+        if y < minY then minY = y end
+        if y > maxY then maxY = y end
+    end
+    local actualH = maxY - minY
+    
+    local scissorY = minY + actualH * (1 - fillRatio)
+    
+    -- Guarantee at least a 1px visual drop/presence
+    if self.hp < maxHp and self.hp > 0 then
+        scissorY = math.max(minY + 1, math.min(maxY - 1, scissorY))
+    end
+    
+    local scissorH = maxY - scissorY
     
     -- 3. Draw "Health" Fill (Bright fill restricted by scissor)
-    love.graphics.setScissor(math.floor(fx), math.floor(scissorY), math.ceil(footprintW), math.ceil(scissorH))
+    love.graphics.setScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
     love.graphics.polygon("fill", hexPoints)
+    
+    -- Add a bright horizontal line at the health level "cap"
+    -- We do this by setting a very thin scissor and redrawing the shape fill
+    if fillRatio > 0 and fillRatio < 1 then
+        love.graphics.setScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), 2)
+        love.graphics.setColor(r, g, b, 1)
+        love.graphics.polygon("fill", hexPoints)
+        love.graphics.setScissor()
+    end
+    
     love.graphics.setScissor()
     
     -- Layer 3: Shield Fill (Scissor bottom-up)
     if self.maxShield > 0 and self.shield > 0 then
         local shieldRatio = self.shield / self.maxShield
-        local sScissorY = fy + footprintH * (1 - shieldRatio)
-        local sScissorH = footprintH * shieldRatio
+        local sScissorY = minY + actualH * (1 - shieldRatio)
+        local sScissorH = maxY - sScissorY
         
-        love.graphics.setScissor(math.floor(fx), math.floor(sScissorY), math.ceil(footprintW), math.ceil(sScissorH))
+        love.graphics.setScissor(math.floor(self.x - size), math.floor(sScissorY), math.ceil(size * 2), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
         love.graphics.polygon("fill", hexPoints)
         love.graphics.setScissor()
