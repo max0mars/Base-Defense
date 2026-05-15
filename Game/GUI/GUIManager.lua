@@ -161,7 +161,7 @@ function GUIManager:drawHUD()
     end
 
     love.graphics.printf("Damage Numbers: " .. (game.showDamageNumbers and "On" or "Off"), 600, 20, VIRTUAL_WIDTH - 20, "left")
-    love.graphics.printf("AutoFire: " .. (game.mainTurret and game.mainTurret.autofire and "On" or "Off"), 600, 40, VIRTUAL_WIDTH - 20, "left")
+    love.graphics.printf("AutoFire: " .. (game.mainLazer and game.mainLazer.autofire and "On" or "Off"), 600, 40, VIRTUAL_WIDTH - 20, "left")
     love.graphics.printf(string.format("Game Speed: %.1fx", game.time_mul), 600, 60, VIRTUAL_WIDTH - 20, "left")
     
     if game:isState("startup") then

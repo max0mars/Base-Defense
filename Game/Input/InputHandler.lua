@@ -134,7 +134,7 @@ end
 
 function InputHandler:handleButtonHold()
     local game = self.game
-    local mainTurret = game.mainTurret
+    local mainLazer = game.mainLazer
     
     -- Prevent firing while interacting with UI, placing buildings, or destroying
     if game.inputMode ~= "idle" then return end
@@ -148,7 +148,7 @@ function InputHandler:handleButtonHold()
 
     if self.isMouseDown then
         -- Handle left mouse button hold actions here
-        mainTurret:PlayerClick(self.mouseX, self.mouseY)
+        mainLazer:PlayerClick(self.mouseX, self.mouseY)
     end
 end
 
@@ -314,12 +314,12 @@ function InputHandler:mousepressed(x, y, button)
     end
     
     local base = game.base
-    local mainTurret = game.mainTurret
+    local mainLazer = game.mainLazer
     
     if button == 2 then
         local clickedTarget = false
         for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainTurret") and not obj.destroyed then
+            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainLazer") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     self.destructionTarget = obj
                     clickedTarget = true
@@ -451,7 +451,7 @@ function InputHandler:mousepressed(x, y, button)
             -- Check if clicking on a building (Prioritize Turrets/Passives over Blockers)
             local selected = nil
             for _, obj in ipairs(game.objects) do
-                if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainTurret") and not obj.destroyed then
+                if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainLazer") and not obj.destroyed then
                     if self:isMouseOverBuilding(obj) then
                         selected = obj
                         if obj:isType("turret") or obj:isType("passive") then
@@ -467,11 +467,11 @@ function InputHandler:mousepressed(x, y, button)
             end
         end
         
-        -- Handle MainTurret clicking (firing only, not selectable)
+        -- Handle MainLazer clicking (firing only, not selectable)
         for _, obj in ipairs(game.objects) do
-            if obj:isType("mainTurret") and not obj.destroyed then
+            if obj:isType("mainLazer") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
-                    -- Handle MainTurret firing (only in wave state)
+                    -- Handle MainLazer firing (only in wave state)
                     obj:PlayerClick(x, y)
                     clickedOnBuilding = true
                     break
@@ -554,8 +554,8 @@ function InputHandler:keypressed(key)
         end
     elseif key == "tab" then
         -- Toggle autofire
-        if game.mainTurret then
-            game.mainTurret.autofire = not game.mainTurret.autofire
+        if game.mainLazer then
+            game.mainLazer.autofire = not game.mainLazer.autofire
         end
     end
     

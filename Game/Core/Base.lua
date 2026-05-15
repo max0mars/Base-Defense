@@ -212,18 +212,18 @@ function Base:drawHealthBar()
     -- Base health bar is handled by GUIManager HUD
 end
 
-function Base:initMainTurret(turretClass)
+function Base:initMainLazer(turretClass)
     local gridWidth  = self.buildGrid.width
     local gridHeight = self.buildGrid.height
     local centerRow  = math.ceil(gridHeight / 2)
     local centerCol  = math.ceil(gridWidth / 2)
     local centerSlot = (centerRow - 1) * gridWidth + centerCol
     
-    self.mainTurret = turretClass:new({game = self.game})
+    self.mainLazer = turretClass:new({game = self.game})
     self.buildGrid.unlocked[centerSlot] = true 
-    self.game:newBuilding(self.mainTurret, centerSlot)
+    self.game:newBuilding(self.mainLazer, centerSlot)
     
-    return self.mainTurret
+    return self.mainLazer
 end
 
 function Base:addBuilding(building, anchorSlot)

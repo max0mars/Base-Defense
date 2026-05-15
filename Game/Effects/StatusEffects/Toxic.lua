@@ -48,6 +48,7 @@ function Toxic:onDeath(target)
             x = target.x,
             y = target.y,
             angle = angle,
+            damage = self.bloomDamage,
             hitCache = {[target:getID()] = true} -- Skip the enemy that just died
         })
         target.game:addObject(shard)

@@ -110,8 +110,8 @@ function game:load(saveData)
     self.ground = ground
     
     -- Spawn Starting Turret via Base
-    self.base:initMainTurret(StandardMainTurret)
-    self.mainTurret = self.base.mainTurret
+    self.base:initMainLazer(StandardMainTurret)
+    self.mainLazer = self.base.mainLazer
     
 
     
