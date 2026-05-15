@@ -93,9 +93,9 @@ local RewardIndex = {
         {
             id = "bank",
             name = "Bank",
-            description = "Generates 1 Token every 3 waves.",
+            description = "Generates 3 Token every 3 waves.",
             type = "building",
-            building = require("Buildings.Turrets.Bank"),
+            building = require("Buildings.Buffs.Bank"),
             iconCategory = "buff"
         },
         {
@@ -109,21 +109,14 @@ local RewardIndex = {
     },
     rare = {
         {
-            id = "poisonTurret",
-            name = "Poison Turret",
-            description = "Bullets apply long term poison effect. Great for dealing with heavy targets",
+            id = "toxicTotem",
+            name = "Chem Lab",
+            description = "Nearby turrets apply Toxic effect.",
             type = "building",
-            building = require("Buildings.Turrets.PoisonTurret"),
-            iconCategory = "turret"
-        },
-        {
-            id = "poisonCoating",
-            name = "Poison Coating",
-            description = "Grants nearby towers poison effect.",
-            type = "building",
-            building = require("Buildings.Buffs.PoisonTotem"),
+            building = require("Buildings.Buffs.ToxicTotem"),
             iconCategory = "buff"
         },
+
         {
             id = "unstable_laser",
             name = "Unstable Laser",

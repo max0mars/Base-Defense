@@ -117,6 +117,10 @@ function Enemy:update(dt)
 end
 
 function Enemy:takeDamage(amount, damageType, hitX, hitY)
+    if not amount or type(amount) ~= "number" or amount ~= amount or amount <= 0 then
+        return 0
+    end
+    
     local damageMult = 1   
     if self.affinities and self.affinities[damageType] then
         damageMult = self.affinities[damageType]
@@ -252,6 +256,13 @@ function Enemy:getVelocity()
 end
 
 function Enemy:died()
+    if self.isDead then return end
+    self.isDead = true
+    
+    if self.effectManager then
+        self.effectManager:triggerEvent("onDeath", self)
+    end
+    
     if AUDIO then AUDIO:playSFX("explosion_01") end
     
     if self.splitOnDeathChance and self.splitOnDeathChance > 0 and math.random() <= self.splitOnDeathChance then

@@ -15,11 +15,11 @@ Uncommon
 - Ammo Cache [Buildings.Buffs.Buff]: Increase turret damage by 20%
 - Shatter Rounds [Buildings.Buffs.ShardBullets]: Bullets shatter into multiple smaller projectiles upon hitting an enemy.
 - Energy Blaster [Buildings.Turrets.EnergyBlaster]: High-tech weapon dealing energy damage with trailing projectiles.
-- Bank [Buildings.Turrets.Bank]: Generates 1 Token every 3 waves.
+- Bank [Buildings.Buffs.Bank]: Generates 3 Tokens every 3 waves.
 - Grenadier [Buildings.Turrets.Grenadier]: Lobs grenades that land on the ground and explode after a short delay.
 
 Rare
-- Poison Turret [Buildings.Turrets.PoisonTurret]: Bullets apply poison effect
+- Toxic Totem [Buildings.Buffs.ToxicTotem]: Nearby turrets apply Toxic and explode on death.
 - Poison Coating [Buildings.Buffs.PoisonTotem]: Bullets apply poison effect.
 - Unstable Laser [main_upgrade]: Main Turret: 20% chance to burn enemies for 3.2s.
 - Missile Launcher [Buildings.Turrets.MissileLauncher]: Fires a heavy standoff payload that detonates on impact dealing massive splash damage.

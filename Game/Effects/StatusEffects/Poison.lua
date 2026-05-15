@@ -1,5 +1,5 @@
 local Poison = {
-    timePerTick = 0.4
+    timePerTick = 1
 }
 Poison.__index = Poison
 
