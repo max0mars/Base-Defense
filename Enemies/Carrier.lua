@@ -108,13 +108,7 @@ function Carrier:draw()
     local actualH = maxY - minY
     
     local scissorY = minY + actualH * (1 - fillRatio)
-    
-    -- Guarantee at least a 1px visual drop/presence
-    if self.hp < maxHp and self.hp > 0 then
-        scissorY = math.max(minY + 1, math.min(maxY - 1, scissorY))
-    end
-    
-    local scissorH = maxY - scissorY
+    local scissorH = actualH * fillRatio
     
     -- 3. Draw "Health" Fill (Bright fill restricted by scissor)
     love.graphics.setScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), math.ceil(scissorH))
@@ -136,7 +130,7 @@ function Carrier:draw()
     if self.maxShield > 0 and self.shield > 0 then
         local shieldRatio = self.shield / self.maxShield
         local sScissorY = minY + actualH * (1 - shieldRatio)
-        local sScissorH = maxY - sScissorY
+        local sScissorH = actualH * shieldRatio
         
         love.graphics.setScissor(math.floor(self.x - size), math.floor(sScissorY), math.ceil(size * 2), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey

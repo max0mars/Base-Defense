@@ -119,13 +119,7 @@ function Guardian:draw()
     local maxHp = self:getStat("maxHp")
     local fillRatio = self.hp / maxHp
     local scissorY = drawY + self.h * (1 - fillRatio)
-    
-    -- Guarantee 1px visual drop
-    if self.hp < maxHp and self.hp > 0 then
-        scissorY = math.max(drawY + 1, math.min(drawY + self.h - 1, scissorY))
-    end
-    
-    local scissorH = (drawY + self.h) - scissorY
+    local scissorH = self.h * fillRatio
     
     love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
@@ -146,13 +140,7 @@ function Guardian:draw()
     if self.maxShield > 0 and self.shield > 0 then
         local shieldRatio = self.shield / self.maxShield
         local sScissorY = drawY + self.h * (1 - shieldRatio)
-        
-        -- Guarantee 1px visual drop
-        if self.shield < self.maxShield and self.shield > 0 then
-            sScissorY = math.max(drawY + 1, math.min(drawY + self.h - 1, sScissorY))
-        end
-        
-        local sScissorH = (drawY + self.h) - sScissorY
+        local sScissorH = self.h * shieldRatio
         
         love.graphics.setScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
