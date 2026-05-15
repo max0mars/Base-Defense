@@ -32,21 +32,36 @@ function Explosion:trigger(target, source)
     
     -- Link our EffectManager to the source (Bullet) to inherit its stats temporarily
     -- This allows us to calculate the final radius/damage based on turret buffs.
-    if source and source.effectManager then
+    local oldParent = nil
+    if source and source.effectManager and self.effectManager then
+        oldParent = self.effectManager.parent
         self.effectManager.parent = source.effectManager
     end
 
     -- Calculate final damage and radius using the dynamic stat system
-    local radius = self.effectManager:getStat("radius", source:getStat("radius"))
-    local damage = self.effectManager:getStat("explosionDamage", source:getStat("explosionDamage"))
+    local radius = 0
+    local damage = 0
+
+    if self.effectManager then
+        radius = self.effectManager:getStat("radius", source and source:getStat("radius") or 0)
+        damage = self.effectManager:getStat("explosionDamage", source and source:getStat("explosionDamage") or 0)
+    elseif source then
+        radius = source:getStat("radius")
+        damage = source:getStat("explosionDamage")
+    end
     
     -- Check for percentage-based scaling from the source bullet
-    local explosionMult = source:getStat("explosion_from_damage")
-    if explosionMult > 0 then
-        damage = source:getStat("damage") * explosionMult
+    if source and source.getStat then
+        local explosionMult = source:getStat("explosion_from_damage")
+        if explosionMult > 0 then
+            damage = source:getStat("damage") * explosionMult
+        end
     end
 
-    if radius <= 0 or damage <= 0 then return end
+    if radius <= 0 or damage <= 0 then 
+        if self.effectManager then self.effectManager.parent = oldParent end
+        return 
+    end
 
     -- Create a fresh instance for the visual animation and damage event
     local event = Explosion:new({
@@ -55,8 +70,8 @@ function Explosion:trigger(target, source)
         y = source.y,
         radius = radius,
         explosionDamage = damage,
-        color = config.color or self.color,
-        damageType = config.damageType or self.damageType,
+        color = self.color,
+        damageType = self.damageType,
         minDamagePercent = 0.25,
         maxLifetime = 0.4
     })
@@ -67,8 +82,10 @@ function Explosion:trigger(target, source)
     -- Add to animations table for visual feedback
     table.insert(source.game.animations, event)
     
-    -- Unlink to avoid potential reference leaks
-    self.effectManager.parent = nil
+    -- Restore previous parent to avoid potential reference leaks or breaking shared templates
+    if self.effectManager then
+        self.effectManager.parent = oldParent
+    end
 end
 
 function Explosion:applyDamage(source)

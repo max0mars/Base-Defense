@@ -63,7 +63,7 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.tokens       = 0
+        self.tokens       = 1000
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
@@ -295,9 +295,11 @@ function game:draw()
 
     love.graphics.setColor(1, 1, 1, 1)
     
-    -- 4. Animations (Drawn over entities but under UI)
+    -- 4. World Animations (Drawn over entities but under UI)
     for _, anim in ipairs(self.animations) do
-        anim:draw()
+        if not anim.isUI then
+            anim:draw()
+        end
     end
 
     if self.inputMode == "placing" or self.debugMode then
@@ -330,7 +332,14 @@ function game:draw()
         self.gui.confirmation:draw()
     end
 
-    -- 6. Custom Cursor
+    -- 6. UI Animations (Drawn over HUD and menu elements)
+    for _, anim in ipairs(self.animations) do
+        if anim.isUI then
+            anim:draw()
+        end
+    end
+
+    -- 7. Custom Cursor
     local mx, my = love.mouse.getPosition()
     love.graphics.setColor(1, 0, 0, 1)
     love.graphics.circle("fill", mx, my, 3)
@@ -443,6 +452,37 @@ function game:buyLuck()
     if cost and self.tokens >= cost and self.luck < 10 and self.inputMode == "idle" then
         self.tokens = self.tokens - cost
         self.luck = self.luck + 1
+        
+        -- Visual & Audio Feedback
+        local btn = self.gui.luckButton
+        local cx, cy = btn.x + btn.w/2, btn.y + btn.h/2
+        
+        -- 1. Particle Effect (Golden Explosion)
+        local explosion = ParticleExplosion:new({1, 0.8, 0.2}, 40, cx, cy, 0.6, 30)
+        explosion.isUI = true
+        table.insert(self.animations, explosion)
+        
+        -- 2. Audio Feedback
+        if AUDIO then AUDIO:playSFX("money_01") end
+        
+        -- 3. Rarity Numbers (Staggered Floating Text)
+        local probs = self.rewardSystem.poolLogic:getLuckProbabilities(self.luck)
+        for i, p in ipairs(probs) do
+            local text = string.format("%d%%", math.floor(p.percent + 0.5))
+            -- Staggered positions and appearance (To the right of the button)
+            local delay = (i - 1) * 0.15
+            local spawnX = btn.x + btn.w + 20
+            local spawnY = cy + 15 + i * 16
+            
+            local floatingText = DamageNumber:new(text, spawnX, spawnY, nil, p.color, delay)
+            floatingText.isUI = true
+            floatingText.x = spawnX -- Override random offset from constructor
+            floatingText.y = spawnY
+            floatingText.velX = 0  -- No horizontal drift
+            floatingText.velY = -25 -- Much slower float
+            table.insert(self.animations, floatingText)
+        end
+        
         return true
     end
     return false
