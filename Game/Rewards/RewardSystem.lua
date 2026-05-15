@@ -13,7 +13,7 @@ function RewardSystem:new(game)
         game = game,
         isActive = false,
         rewardPool = {}, -- current choices being presented
-        poolLogic = RewardPool:new(RewardIndex, game)
+        poolLogic = RewardPool:new(TestingIndex, game)
     }, self)
     
     system.currentChoices = {}

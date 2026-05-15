@@ -39,6 +39,9 @@ function Bullet:new(config)
     b.radius = config.radius or 0
     b.explosionDamage = config.explosionDamage or 0
     b.explosion_from_damage = config.explosion_from_damage or 0
+    b.recursion = config.recursion or 0
+    b.recursionSpread = config.recursionSpread or math.rad(30)
+    b.skipRecursion = config.skipRecursion or false
     b.canDirectHit = config.canDirectHit
     if b.canDirectHit == nil then b.canDirectHit = true end
     
@@ -174,6 +177,80 @@ function Bullet:onHit(target)
     if self.pierce <= 0 then
         self:died()
     end
+end
+
+function Bullet:died()
+    if self.destroyed then return end
+
+    if not self.skipRecursion and self.recursion and self.recursion > 0 then
+        local newRecursion = self.recursion - 1
+        local newDamage = self:getStat("damage") * 0.5
+        local newW = self.w * 0.75
+        local newH = self.h * 0.75
+        local newRadius = (self.radius or 0) * 0.5
+        local spread = self.recursionSpread or math.rad(30)
+
+        local class = getmetatable(self).__index
+
+        for i = -1, 1, 2 do
+            local spawnAngle = self.angle + (spread * i)
+            if self.z then
+                -- Randomize direction for lobbed bullets to make the "bounce" more visible
+                spawnAngle = love.math.random() * math.pi * 2
+            end
+
+            local bSpeed = self:getStat("bulletSpeed")
+            if self.z then
+                bSpeed = 50 -- Ensure bounce has consistent horizontal momentum
+            end
+
+            local config = {
+                name = self.name,
+                x = self.x,
+                y = self.y,
+                angle = spawnAngle,
+                bulletSpeed = bSpeed,
+                damage = newDamage,
+                pierce = self:getStat("pierce", 1),
+                lifespan = self.source and self.source:getStat("lifespan") or 2.0,
+                displayLifespan = self:getStat("displayLifespan"),
+                damageType = self.damageType,
+                w = newW,
+                h = newH,
+                shape = self.shape,
+                hitbox = true,
+                hitEffects = self.hitEffects,
+                game = self.game,
+                source = self.source,
+                color = self.color,
+                recursion = newRecursion,
+                recursionSpread = spread,
+                radius = newRadius,
+                explosionDamage = (self.explosionDamage or self.damage or 0) * 0.5,
+                explosion_from_damage = self.explosion_from_damage,
+                canDirectHit = self.canDirectHit,
+                tags = self.tags,
+                types = self.types,
+                hitCache = self.hitCache -- Clones share the hit history to avoid hitting the same target instantly
+            }
+
+            -- Reset Z for Lobbed/Mortar bullets to effect a "bounce"
+            if self.z then
+                config.z = 0
+            end
+
+            local child = class:new(config)
+            
+            -- If it's a Lobbed bullet, ensure it has vertical velocity for the bounce
+            if self.z and child.v_z ~= nil and child.GRAVITY and child.MAX_HEIGHT then
+                child.v_z = math.sqrt(2 * child.GRAVITY * child.MAX_HEIGHT)
+            end
+
+            self.game:addObject(child)
+        end
+    end
+
+    self:destroy()
 end
 
 return Bullet

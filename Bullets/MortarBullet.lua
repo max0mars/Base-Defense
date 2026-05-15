@@ -8,4 +8,8 @@ function MortarBullet:new(config)
     return b
 end
 
+function MortarBullet:onCollision(obj)
+    -- Mortars only explode on ground impact
+end
+
 return MortarBullet

@@ -1,5 +1,4 @@
 local Buff = require("Buildings.Buffs.Buff")
-local SplitEffect = require("Game.Effects.IndependantEffects.split")
 
 local ShardBullets = setmetatable({}, Buff)
 ShardBullets.__index = ShardBullets
@@ -12,11 +11,6 @@ local default = {
         {0, 0}
     },
     color = {0.3, 0.3, 0.8, 1}, -- Steel blue for sharding
-    
-    -- Properties for the split effect identification
-    splitConfig = {
-        name = "split",
-    }
 }
 
 function ShardBullets:new(config)
@@ -29,12 +23,9 @@ function ShardBullets:new(config)
     -- This effect now adds stats that tell the split effect to scale with damage
     config.effect = {
         name = "Sharding Bullets",
-        grantedHitEffect = SplitEffect:new(config.splitConfig),
         duration = math.huge,
         statModifiers = {
-            splitamount = {add = 2, hidden = true},
-            spread = {max = math.pi/8, hidden = true},
-            splitDamage_from_damage = {max = 0.5, hidden = true}
+            recursion = {add = 1}
         }
     }
     
