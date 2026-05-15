@@ -70,6 +70,8 @@ function Bounce:trigger(target, sourceBullet)
             damageType = sourceBullet.damageType or "energy",
             hitCache = Utils.deepCopy(sourceBullet.hitCache),
             hitEffects = {},
+            recursion = sourceBullet.recursion,
+            recursionSpread = sourceBullet.recursionSpread,
             canDirectHit = true
         }
         

@@ -99,7 +99,9 @@ function MissileLauncher:fire(args)
         tags = {"bullet"},
         types = { bullet = true },
         targetX = args and args.targetX or nil,
-        targetY = args and args.targetY or nil
+        targetY = args and args.targetY or nil,
+        recursion = self:getStat("recursion"),
+        recursionSpread = self:getStat("recursionSpread")
     }
     
     if args then

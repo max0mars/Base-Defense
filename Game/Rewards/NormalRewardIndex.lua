@@ -51,11 +51,11 @@ local RewardIndex = {
     },
     uncommon = {
         {
-            id = "splitter",
-            name = "Splitter",
-            description = "Big damage to the guy behind!",
+            id = "airburst",
+            name = "Airburst Turret",
+            description = "Fires shells that explode mid-air into shrapnel.",
             type = "building",
-            building = require("Buildings.Turrets.Splitter"),
+            building = require("Buildings.Turrets.AirburstTurret"),
             iconCategory = "turret"
         },
         {

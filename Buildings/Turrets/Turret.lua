@@ -67,6 +67,8 @@ function Turret:new(config)
     t.radius = config.radius or 0
     t.explosionDamage = config.explosionDamage or 0
     t.explosion_from_damage = config.explosion_from_damage or 0
+    t.recursion = config.recursion or 0
+    t.recursionSpread = config.recursionSpread or math.rad(30)
     
     t.canDirectHit = config.canDirectHit
     if t.canDirectHit == nil then t.canDirectHit = true end
@@ -151,6 +153,8 @@ function Turret:fire(args)
         radius = self:getStat("radius"),
         explosionDamage = self:getStat("explosionDamage"),
         explosion_from_damage = self:getStat("explosion_from_damage"),
+        recursion = self:getStat("recursion"),
+        recursionSpread = self:getStat("recursionSpread"),
         canDirectHit = self:getStat("canDirectHit"),
         game = self.game, -- Reference to the game object
         source = self,
