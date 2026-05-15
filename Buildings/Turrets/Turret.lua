@@ -31,7 +31,7 @@ function Turret:new(config)
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
     t.bulletType = config.bulletType or bullet
     t.cooldown = 0 -- Cooldown timer for firing
-    --t.hitEffects = config.hitEffects or {} -- Table to store hit effects
+    t.hitEffects = config.hitEffects or {} -- Table to store hit effects
     t.target = nil  -- Target to auto aim at
     
     -- Re-structure firingArc for internal use
@@ -84,7 +84,7 @@ function Turret:fire(args)
     if AUDIO then
         if self.sfx then
             AUDIO:playSFX(self.sfx)
-        elseif not self.isMainTurret and not (self.types and self.types.mainTurret) then
+        elseif not self.isMainLazer and not (self.types and self.types.mainLazer) then
             AUDIO:playSFX("gunshot_01")
         end
     end

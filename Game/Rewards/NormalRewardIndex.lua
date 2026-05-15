@@ -111,7 +111,7 @@ local RewardIndex = {
         {
             id = "toxicTotem",
             name = "Chem Lab",
-            description = "Nearby turrets apply Toxic effect.",
+            description = "Spreads toxins. Highly contagious.",
             type = "building",
             building = require("Buildings.Buffs.ToxicTotem"),
             iconCategory = "buff"
@@ -124,7 +124,7 @@ local RewardIndex = {
             type = "main_upgrade",
             iconCategory = "upgrade",
             isEligible = function(game)
-                local mt = game.base and game.base.mainTurret
+                local mt = game.base and game.base.mainLazer
                 return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
             end
         },
@@ -139,7 +139,7 @@ local RewardIndex = {
         {
             id = "sequenceTurret",
             name = "CSR-8 Sequence",
-            description = "The longer you shoot, the faster it gets. Loses charge when retargeting",
+            description = "Shoots faster the longer it stays locked onto a target.",
             type = "building",
             building = require("Buildings.Turrets.SequenceTurret"),
             iconCategory = "turret"
@@ -193,7 +193,7 @@ local RewardIndex = {
             type = "main_upgrade",
             iconCategory = "upgrade",
             isEligible = function(game)
-                local mt = game.base and game.base.mainTurret
+                local mt = game.base and game.base.mainLazer
                 return mt and mt.id == "standard_main" and not mt.upgrades["low_power_operating"]
             end
         },
@@ -206,7 +206,7 @@ local RewardIndex = {
             type = "main_upgrade",
             iconCategory = "upgrade",
             isEligible = function(game)
-                local mt = game.base and game.base.mainTurret
+                local mt = game.base and game.base.mainLazer
                 return mt and not mt.upgrades["electric_field"]
             end
         },

@@ -65,9 +65,9 @@ function Explosion:trigger(target, source)
 
     -- Create a fresh instance for the visual animation and damage event
     local event = Explosion:new({
-        game = source.game,
-        x = source.x,
-        y = source.y,
+        game = (source and source.game) or (target and target.game),
+        x = (target and target.x) or (source and source.x) or 0,
+        y = (target and target.y) or (source and source.y) or 0,
         radius = radius,
         explosionDamage = damage,
         color = self.color,

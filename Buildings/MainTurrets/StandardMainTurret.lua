@@ -1,9 +1,9 @@
-local MainTurret = require("Buildings.MainTurrets.MainTurret")
+local MainLazer = require("Buildings.MainTurrets.MainLazer")
 local HitscanBullet = require("Bullets.HitscanBullet")
 local BurnEffect = require("Game.Effects.StatusEffects.Burn")
 local Utils = require("Classes.Utils")
 
-local StandardMainTurret = setmetatable({}, { __index = MainTurret })
+local StandardMainTurret = setmetatable({}, { __index = MainLazer })
 StandardMainTurret.__index = StandardMainTurret
 
 StandardMainTurret.template = {
@@ -16,7 +16,7 @@ StandardMainTurret.template = {
     range = 500,
     barrel = 20,
     color = {0.3, 0.3, 0.3, 1},
-    types = { turret = true, mainTurret = true, energy = true },
+    types = { turret = true, mainLazer = true, energy = true },
     shapePattern = {
         {0, 0}, {1, 0},
         {0, 1}, {1, 1}
@@ -53,7 +53,7 @@ function StandardMainTurret:new(config)
     
     baseConfig.bulletType = HitscanBullet
     
-    local t = MainTurret:new(baseConfig)
+    local t = MainLazer:new(baseConfig)
     setmetatable(t, { __index = self })
     return t
 end
@@ -201,7 +201,7 @@ function StandardMainTurret:fire(args)
          self:applyHitEffects(target)
      end
      
-     MainTurret.fire(self, args)
+     MainLazer.fire(self, args)
 end
 
 return StandardMainTurret

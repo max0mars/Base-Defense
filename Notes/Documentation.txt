@@ -38,7 +38,7 @@ Regular Turret (Buildings/Turrets/Turret.lua):
   - 3*math.pi/2 = firing arc centered facing UP
   - Can be independent of visual rotation for strategic gameplay
 
-MainTurret (Buildings/Turrets/MainTurret.lua):
+MainLazer (Buildings/MainTurrets/MainLazer.lua):
 - Player-controlled turret, placed automatically at game start in center slot
 - No firing arc restrictions - can fire in any direction
 - No automatic targeting - controlled entirely by player
