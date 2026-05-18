@@ -144,8 +144,8 @@ function MainLazer:updateElectricField(dt)
             -- Fire the Zap
             if AUDIO then AUDIO:playSFX("lightning_01") end
             
-            target:takeDamage(self:getStat("damage"), "energy", target.x, target.y)
             self:applyHitEffects(target)
+            target:takeDamage(self:getStat("damage"), "energy", target.x, target.y)
             
             if self.game.spawnLightningBolt then
                 self.game:spawnLightningBolt(target.x, target.y)
