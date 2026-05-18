@@ -431,6 +431,7 @@ function game:placeBuilding(building, sourceReward)
     self.inputMode = "placing"
     self.blueprint = building:new({game = self})
     self.blueprint.rewardCard = sourceReward
+    self.blueprint.showArc = true
 end
 
 function game:setState(newState)    self.state = newState end

@@ -198,7 +198,7 @@ function InputHandler:handleBuildingSlotHover()
     if isBlocker then
         buildGrid = game.battlefieldGrid
         isBattlefield = true
-    elseif game.blueprint:isType("turret") and hoverBattlefield then
+    elseif (game.blueprint:isType("turret") or game.blueprint:isType("passive")) and hoverBattlefield then
         -- Only use battlefield if NOT hovering over the base grid (prioritize base)
         if not self:isMouseOverGrid(base.buildGrid) then
             buildGrid = game.battlefieldGrid
@@ -356,7 +356,7 @@ function InputHandler:mousepressed(x, y, button)
         if isBlocker then
             buildGrid = game.battlefieldGrid
             isBattlefield = true
-        elseif game.blueprint:isType("turret") and hoverBattlefield then
+        elseif (game.blueprint:isType("turret") or game.blueprint:isType("passive")) and hoverBattlefield then
             if not self:isMouseOverGrid(base.buildGrid) then
                 buildGrid = game.battlefieldGrid
                 isBattlefield = true
