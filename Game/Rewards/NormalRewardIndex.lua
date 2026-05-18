@@ -137,6 +137,14 @@ local RewardIndex = {
             iconCategory = "turret"
         },
         {
+            id = "plasmaScattershot",
+            name = "Plasma Scattershot",
+            description = "High-tech shotgun with fast-firing plasma cells that recharge when idle.",
+            type = "building",
+            building = require("Buildings.Turrets.PlasmaScattershot"),
+            iconCategory = "turret"
+        },
+        {
             id = "sequenceTurret",
             name = "CSR-8 Sequence",
             description = "Shoots faster the longer it stays locked onto a target.",
