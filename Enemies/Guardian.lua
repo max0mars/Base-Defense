@@ -49,7 +49,8 @@ function Guardian:update(dt)
             maxStacks = 1,
             statModifiers = {
                 damageReductionMultiplier = { mult = -0.25 }
-            }
+            },
+            globalStacks = 1
         }
 
         for _, obj in ipairs(self.game.objects) do
