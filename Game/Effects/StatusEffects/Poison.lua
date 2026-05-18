@@ -8,7 +8,7 @@ function Poison:new(config)
         error("Developer Error: Poison effect called with nil config.")
     end
 
-    local required = {"duration_poison", "dps_poison", "maxStacks"}
+    --local required = {"duration_poison", "dps_poison", "maxStacks"}
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: Poison is missing the '" .. key .. "' field in config.")
@@ -22,7 +22,7 @@ function Poison:new(config)
 
     -- Ensure we have a name for the EffectManager stacking and icons
     instance.name = config.name or ("poison")
-    instance.duration = config.duration_poison
+    instance.duration = config.duration_poison or config.duration
     instance.time = 0
     
     return instance
