@@ -25,6 +25,7 @@ function Bullet:new(config)
     b.damageType = config.damageType or "normal"
     b.hitEffects = config.hitEffects or {}
     b.displayLifespan = config.displayLifespan or 0.1
+    b.onHitCallback = config.onHitCallback
 
 
     -- Effect Stats
@@ -145,7 +146,23 @@ function Bullet:onHit(target)
         self.hitCache[target:getID()] = true
     end
 
-    -- 1. Trigger Independent Effects (The Payload)
+    -- Trigger custom onHitCallback if present (before damage is resolved)
+    if self.onHitCallback and target then
+        self:onHitCallback(target)
+    end
+
+    -- 1. Apply non-independent status effects (Poison, Fire, etc.) FIRST
+    if self:getStat("canDirectHit") then
+        if self.hitEffects then
+            for _, effectTemplate in ipairs(self.hitEffects) do
+                if not effectTemplate.isIndependent and target and target.effectManager then
+                    target.effectManager:applyEffect(effectTemplate, self)
+                end
+            end
+        end
+    end
+
+    -- 2. Trigger Independent Effects (The Payload, e.g. Explosions)
     -- These trigger regardless of canDirectHit
     if self.hitEffects then
         for _, effectTemplate in ipairs(self.hitEffects) do
@@ -157,19 +174,10 @@ function Bullet:onHit(target)
         end
     end
     
-    -- 2. Conditional Direct Impact (Contact Damage & Status Effects)
+    -- 3. Conditional Direct Impact Damage
     if self:getStat("canDirectHit") then
         if target then 
             target:takeDamage(self:getStat("damage"), self.damageType)
-        end
-
-        -- Apply non-independent status effects (Poison, Fire, etc.)
-        if self.hitEffects then
-            for _, effectTemplate in ipairs(self.hitEffects) do
-                if not effectTemplate.isIndependent and target and target.effectManager then
-                    target.effectManager:applyEffect(effectTemplate, self)
-                end
-            end
         end
     end
 
