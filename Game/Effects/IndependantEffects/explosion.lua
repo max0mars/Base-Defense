@@ -118,17 +118,64 @@ function Explosion:applyDamage(source)
                 obj:takeDamage(finalDamage, self.damageType or "explosive")
 
                 -- If this is a toxic explosion, spread the infection
-                if (self.damageType == "toxic" or (source and source.damageType == "toxic")) and obj.effectManager then
-                    local Toxic = require("Game.Effects.StatusEffects.Toxic")
-                    obj.effectManager:applyEffect(Toxic:new(), source)
-                end
+                -- if (self.damageType == "toxic" or (source and source.damageType == "toxic")) and obj.effectManager then
+                --     local Toxic = require("Game.Effects.StatusEffects.Toxic")
+                --     obj.effectManager:applyEffect(Toxic:new(), source)
+                -- end
 
                 -- Apply auxiliary hit effects (Poison, Burn, etc.)
-                if source and source.hitEffects then
-                    for _, effect in ipairs(source.hitEffects) do
-                        if not effect.isIndependent and obj.effectManager then
-                            obj.effectManager:applyEffect(effect, source)
+                local auxiliaryEffects = {}
+                local seenEffects = {}
+                
+                local function collect(effectsTable)
+                    if not effectsTable then return end
+                    for _, effect in ipairs(effectsTable) do
+                        if not effect.isIndependent and effect.name and not seenEffects[effect.name] then
+                            table.insert(auxiliaryEffects, effect)
+                            seenEffects[effect.name] = true
                         end
+                    end
+                end
+
+                if source then
+                    collect(source.hitEffects)
+                    
+                    if source.effectManager then
+                        local function collectFromEM(em)
+                            for _, effect in ipairs(em.activeEffects) do
+                                if effect.grantedHitEffect then
+                                    local ge = effect.grantedHitEffect
+                                    if not ge.isIndependent and ge.name and not seenEffects[ge.name] then
+                                        table.insert(auxiliaryEffects, ge)
+                                        seenEffects[ge.name] = true
+                                    end
+                                end
+                            end
+                            if em.parent then collectFromEM(em.parent) end
+                        end
+                        collectFromEM(source.effectManager)
+                    end
+                    
+                    if source.source and source.source.effectManager then
+                        local function collectFromEM(em)
+                            for _, effect in ipairs(em.activeEffects) do
+                                if effect.grantedHitEffect then
+                                    local ge = effect.grantedHitEffect
+                                    if not ge.isIndependent and ge.name and not seenEffects[ge.name] then
+                                        table.insert(auxiliaryEffects, ge)
+                                        seenEffects[ge.name] = true
+                                    end
+                                end
+                            end
+                            if em.parent then collectFromEM(em.parent) end
+                        end
+                        collectFromEM(source.source.effectManager)
+                    end
+                end
+
+                for _, effect in ipairs(auxiliaryEffects) do
+                    if obj.effectManager then
+                        obj.effectManager:applyEffect(effect, source)
                     end
                 end
             end
