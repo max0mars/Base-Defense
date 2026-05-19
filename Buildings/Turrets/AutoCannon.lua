@@ -46,7 +46,32 @@ function AutoCannon:new(config)
     
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
+    t.shootSide = 0
     return t
+end
+
+function AutoCannon:fire(args)
+    args = args or {}
+    
+    -- Alternate between top (1) and bottom (2) barrels
+    self.shootSide = (self.shootSide or 0) + 1
+    if self.shootSide > 2 then
+        self.shootSide = 1
+    end
+    
+    -- Local offset: top is y = -3.5, bottom is y = 3.5
+    local ly = (self.shootSide == 1) and -3.5 or 3.5
+    local lx = self.barrel or 15
+    
+    local cx, cy = self:getCenterPosition()
+    local cosR = math.cos(self.rotation)
+    local sinR = math.sin(self.rotation)
+    
+    -- Transform local coordinate to world coordinates
+    args.fireX = cx + lx * cosR - ly * sinR
+    args.fireY = cy + lx * sinR + ly * cosR
+    
+    Turret.fire(self, args)
 end
 
 return AutoCannon
