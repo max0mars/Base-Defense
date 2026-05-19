@@ -30,43 +30,15 @@ function Bank:new(config)
     return b
 end
 
-local lastWaveNumber = -1
-local currentStaggerIndex = 0
-
-function Bank:onWaveComplete()
+function Bank:checkPayout()
     self.wavesSinceLastToken = self.wavesSinceLastToken + 1
     
     if self.wavesSinceLastToken >= self.cycleWaves then
         self.wavesSinceLastToken = 0
-        
-        if self.game.wave ~= lastWaveNumber then
-            lastWaveNumber = self.game.wave
-            currentStaggerIndex = 0
-        end
-        
-        -- Stagger multiple banks by 0.25 seconds each
-        self.payoutDelay = currentStaggerIndex * 0.25
-        currentStaggerIndex = currentStaggerIndex + 1
+        return self.tokensPerCycle
     end
-end
-
-function Bank:update(dt)
-    -- Skip Turret.update since we inherit from Buff/Building
-    if self.payoutDelay then
-        self.payoutDelay = self.payoutDelay - dt
-        if self.payoutDelay <= 0 then
-            self.payoutDelay = nil
-            
-            if AUDIO then AUDIO:playSFX("money_01") end
-            self.game:addTokens(self.tokensPerCycle)
-            
-            -- Payout visual cue
-            if self.game.spawnFloatingText then
-                local cx, cy = self:getCenterPosition()
-                self.game:spawnFloatingText("+" .. tostring(self.tokensPerCycle) .. " Tokens", cx, cy - 20, {1, 0.84, 0, 1})
-            end
-        end
-    end
+    
+    return 0
 end
 
 -- We inherit Buff:draw() so it looks like other support/buff buildings (Neon Gold Diamond)

@@ -371,10 +371,17 @@ function game:interest()
     self:addTokens(math.floor(self.tokens * 0.1))
 end
 function game:waveComplete()
-    self:interest()
-    self:addTokens(3)
+    if self.gui and self.gui.incomeFeedback then
+        self.gui.incomeFeedback:triggerSequence()
+    else
+        -- Fallback if GUI/manager isn't initialized yet
+        local baseIncome = 3
+        local interestAmount = math.floor(self.tokens * 0.1)
+        self:addTokens(baseIncome)
+        self:addTokens(interestAmount)
+    end
     
-    -- Trigger onWaveComplete for all buildings (e.g. Bank)
+    -- Trigger onWaveComplete for other objects (if any)
     for _, obj in ipairs(self.objects) do
         if obj.onWaveComplete and not obj.destroyed then
             obj:onWaveComplete()

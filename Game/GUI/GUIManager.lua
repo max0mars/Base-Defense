@@ -3,6 +3,7 @@ local TooltipManager = require("Game.GUI.TooltipManager")
 local ConfirmationUI = require("Game.GUI.ConfirmationUI")
 local GameText = require("Game.GUI.GameText")
 local MutationUI = require("Game.GUI.MutationUI")
+local IncomeFeedbackManager = require("Game.GUI.IncomeFeedbackManager")
 
 local GUIManager = {}
 GUIManager.__index = GUIManager
@@ -16,7 +17,8 @@ function GUIManager:new(game)
         buyButton = { x = 210, y = 50, w = 150, h = 30 },
         infoButton = { x = 365, y = 50, w = 30, h = 30 },
         luckButton = { x = 210, y = 10, w = 150, h = 30 },
-        mutation = MutationUI:new(game)
+        mutation = MutationUI:new(game),
+        incomeFeedback = IncomeFeedbackManager:new(game)
     }, self)
     return obj
 end
@@ -64,6 +66,7 @@ function GUIManager:update(dt)
     self.tooltips:update(dt)
     self.confirmation:update(dt)
     self.mutation:update(dt)
+    self.incomeFeedback:update(dt)
 
     -- Handle Info Button Hover
     local mx, my = love.mouse.getPosition()
