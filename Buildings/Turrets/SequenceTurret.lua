@@ -19,14 +19,14 @@ SequenceTurret.template = {
     firingArc = {
         direction = 0,
         minRange = 0,
-        angle = math.pi/8
+        angle = math.pi/5
     },
     sfx = "gunshot_01",
     
     coolDownRate = 0.5,   -- Charges down extremely quickly (fully depleted in 0.5s idle)
     fireRateMultiplier = 12,
     rampUpDuration = 8,
-    spread = math.rad(7), -- Initial wide cone spread
+    spread = math.rad(10), -- Initial wide cone spread
     
     -- Bullet Properties
     bulletName = "Sequence Bolt",
@@ -59,7 +59,7 @@ function SequenceTurret:new(config)
     setmetatable(t, { __index = self })
     
     t.fireRate = t.baseFireRate
-    t.spread = baseConfig.spread or math.rad(20)
+    t.spread = baseConfig.spread or 0
     t.currentColor = baseConfig.color
     
     return t
@@ -80,7 +80,7 @@ function SequenceTurret:update(dt)
     -- Detect target switching or target loss to penalize charge state BEFORE base class shoots
     if self.target and self.lastTarget and self.target ~= self.lastTarget then
         -- Lose 50% of accumulated charge instantly when snapping to a new target
-        self.currentCharge = math.max(0.0, self.currentCharge - 0.7)
+        self.currentCharge = math.max(0.0, self.currentCharge - 0.5)
         self.cooldown = 0.5
     end
     self.lastTarget = self.target
