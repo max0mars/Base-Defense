@@ -8,7 +8,7 @@ AutoCannon.template = {
     name = "Auto Cannon",
     rotation = 0,
     turnSpeed = 10,
-    fireRate = 6,
+    fireRate = 5,
     range = 350,
     barrel = 15,
     color = {0.8, 0.8, 0.2, 1},
@@ -21,14 +21,14 @@ AutoCannon.template = {
         minRange = 0,
         angle = math.pi/4
     },
-    
+    spread = math.rad(5),
     -- Bullet Properties
     bulletName = "Cannon Round",
     bulletSpeed = 500,
     damageType = "normal",
     damage = 8,
     pierce = 1,
-    lifespan = 3,
+    lifespan = .8,
     bulletW = 3, 
     bulletH = 3, 
     bulletShape = "rectangle",
