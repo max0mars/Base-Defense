@@ -111,7 +111,7 @@ local RewardIndex = {
         {
             id = "toxicTotem",
             name = "Chem Lab",
-            description = "Spreads toxins. Highly contagious.",
+            description = "Spreads deadly toxins. Highly contagious.",
             type = "building",
             building = require("Buildings.Buffs.ToxicTotem"),
             iconCategory = "buff"
@@ -139,7 +139,7 @@ local RewardIndex = {
         {
             id = "plasmaScattershot",
             name = "Plasma Scattershot",
-            description = "High-tech shotgun with fast-firing plasma cells that recharge when idle.",
+            description = "Fires plamsa rounds at high speed but has limited ammo. Reloads slowly.",
             type = "building",
             building = require("Buildings.Turrets.PlasmaScattershot"),
             iconCategory = "turret"
