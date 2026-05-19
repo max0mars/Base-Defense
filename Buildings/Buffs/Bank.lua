@@ -8,13 +8,13 @@ local default = {
     size = 20,
     color = {1, 0.84, 0, 1}, -- Neon Gold
     types = { building = true, economy = true, passive = true },
-    shapePattern = {{0,0}, {0,1}, {1,0}, {1,1}},
-    affectedSlots = {}, -- Bank doesn't affect other slots
+    shapePattern = {{0,0}},
+    affectedSlots = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}}, -- Bank doesn't affect other slots
     effect = nil, -- No buff effect
     
     -- Economy specific
-    tokensPerCycle = 3,
-    cycleWaves = 3
+    tokensPerCycle = 1,
+    cycleWaves = 1
 }
 
 function Bank:new(config)
@@ -35,7 +35,24 @@ function Bank:checkPayout()
     
     if self.wavesSinceLastToken >= self.cycleWaves then
         self.wavesSinceLastToken = 0
-        return self.tokensPerCycle
+        
+        -- Check if all valid affected slots in the grid are occupied
+        local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
+        local allOccupied = true
+        if #affectedSlots == 0 then
+            allOccupied = false
+        else
+            for _, slot in ipairs(affectedSlots) do
+                if not self.game.base.buildGrid.buildings[slot] then
+                    allOccupied = false
+                    break
+                end
+            end
+        end
+        
+        if allOccupied then
+            return self.tokensPerCycle
+        end
     end
     
     return 0
