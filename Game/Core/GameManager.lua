@@ -57,7 +57,6 @@ function game:load(saveData, isTesting)
     if saveData then 
         -- Future Implementation: Handle save game loading here
     else
-        EnemyRegistry:reset()
         -- Initialize Game State
         self.state        = "startup" -- States: "startup", "preparing", "wave", "gameover"
         self.objects      = {}        -- Entity master list
@@ -70,6 +69,7 @@ function game:load(saveData, isTesting)
         else
             self.tokens   = 5
         end
+        EnemyRegistry:reset(self)
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
