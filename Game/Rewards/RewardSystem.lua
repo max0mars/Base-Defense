@@ -9,11 +9,12 @@ local RewardPool = require("Game.Rewards.RewardPool")
 --local Reward = require("Game.Rewards.Reward")
 
 function RewardSystem:new(game)
+    local indexToUse = game.testingMode and TestingIndex or RewardIndex
     local system = setmetatable({
         game = game,
         isActive = false,
         rewardPool = {}, -- current choices being presented
-        poolLogic = RewardPool:new(RewardIndex, game)
+        poolLogic = RewardPool:new(indexToUse, game)
     }, self)
     
     system.currentChoices = {}
