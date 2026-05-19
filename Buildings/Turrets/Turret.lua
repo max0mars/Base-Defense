@@ -45,8 +45,6 @@ function Turret:new(config)
     t.color = config.color
     t.baseShape = config.baseShape or "octagon"
     t.barrelShape = config.barrelShape or "single"
-    t.poison_from_damage = config.poison_from_damage or 0
-    t.dps_poison = config.dps_poison or 0
     t.bulletName = config.bulletName or "Bullet"
     t.lifespan = config.lifespan or 1
     t.displayLifespan = config.displayLifespan or 0.1
@@ -55,15 +53,15 @@ function Turret:new(config)
     t.bulletH = config.bulletH or 4
     t.bulletShape = config.bulletShape or "rectangle"
     t.damageType = config.damageType or "normal"
-    -- Effect Stats (All disabled by default, enabled via buffs/turret-specific logic)
-    t.dps_poison = 0
-    t.duration_poison = 0
-    t.poison_from_damage = 0
-    t.maxStacks = 0
-    t.splitamount = 0
-    t.spread = 0
-    t.splitDamage = 0
-    t.splitDamage_from_damage = 0
+    -- Effect Stats (Initialized from config, defaulting to 0)
+    t.dps_poison = config.dps_poison or 0
+    t.duration_poison = config.duration_poison or 0
+    t.poison_from_damage = config.poison_from_damage or 0
+    t.maxStacks = config.maxStacks or 0
+    t.splitamount = config.splitamount or 0
+    t.spread = config.spread or 0
+    t.splitDamage = config.splitDamage or 0
+    t.splitDamage_from_damage = config.splitDamage_from_damage or 0
     t.radius = config.radius or 0
     t.explosionDamage = config.explosionDamage or 0
     t.explosion_from_damage = config.explosion_from_damage or 0
@@ -89,7 +87,7 @@ function Turret:fire(args)
         end
     end
 
-    local offset = 0 --love.math.random() * self.spread * 2 - self.spread
+    local offset = love.math.random() * self.spread * 2 - self.spread
     local x, y
     -- Use provided position or default to fire point
     if args and args.fireX and args.fireY then
