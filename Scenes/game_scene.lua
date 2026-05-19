@@ -8,7 +8,8 @@ setmetatable(game_scene, { __index = scene })
 local game = require("Game.Core.GameManager") -- Import the game module
 
 function game_scene:load()
-    game:load()
+    local isTesting = game.testingMode
+    game:load(nil, isTesting)
     game.time_mul = 1 -- game starts at normal speed
     self.gameover = false
     if AUDIO and not AUDIO:isPlayingMusic() then AUDIO:playMusic() end

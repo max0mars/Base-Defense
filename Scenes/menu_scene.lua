@@ -1,6 +1,7 @@
 local menu_scene = {}
 menu_scene.__index = menu_scene
 local scene = require("Scenes.scene") -- Import the base scene class
+local game = require("Game.Core.GameManager")
 setmetatable(menu_scene, { __index = scene })
 
 function menu_scene:load()
@@ -47,7 +48,7 @@ function menu_scene:draw()
     -- Draw title and instructions using virtual coordinates
     love.graphics.printf("Welcome to the Base Defense Game!", 0, 100, VIRTUAL_WIDTH, "center")
     love.graphics.printf("Press 'Enter' to Start", 0, 150, VIRTUAL_WIDTH, "center")
-    love.graphics.printf("Press 'T' for Tests", 0, 180, VIRTUAL_WIDTH, "center")
+    love.graphics.printf("Press 'T' for Testing Mode", 0, 180, VIRTUAL_WIDTH, "center")
     
     -- Draw resolution buttons
     for _, btn in ipairs(self.buttons) do
@@ -104,9 +105,11 @@ end
 
 function menu_scene:keypressed(key)
     if key == "return" then
+        game.testingMode = false
         self.scene_manager.switch("game") -- Switch to the game scene when Enter is pressed
     elseif key == "t" then
-        self.scene_manager.switch("test") -- Switch to the test scene when 't' is pressed
+        game.testingMode = true
+        self.scene_manager.switch("game") -- Switch to the game scene in Testing Mode when 't' is pressed
     elseif key == "escape" then
         if self.confirmation.active then
             self.confirmation.active = false

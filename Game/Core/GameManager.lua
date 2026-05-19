@@ -53,7 +53,7 @@ end
 -- -----------------------------------------------------------------------------
 -- Initialization
 -- -----------------------------------------------------------------------------
-function game:load(saveData)
+function game:load(saveData, isTesting)
     if saveData then 
         -- Future Implementation: Handle save game loading here
     else
@@ -63,7 +63,13 @@ function game:load(saveData)
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
-        self.tokens       = 5
+        
+        self.testingMode  = isTesting or false
+        if self.testingMode then
+            self.tokens   = 1000
+        else
+            self.tokens   = 5
+        end
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
@@ -340,6 +346,17 @@ function game:draw()
     end
 
     -- 7. Custom Cursor
+    if self.testingMode then
+        love.graphics.setColor(1, 0, 0, 0.4) -- semi-transparent red
+        local font = love.graphics.getFont()
+        local text = "Testing Mode"
+        local textW = font:getWidth(text)
+        local textH = font:getHeight()
+        local cx = (VIRTUAL_WIDTH or 800) / 2
+        local cy = (VIRTUAL_HEIGHT or 600) / 2
+        love.graphics.print(text, cx - textW / 2, cy - textH / 2)
+    end
+
     local mx, my = love.mouse.getPosition()
     love.graphics.setColor(1, 0, 0, 1)
     love.graphics.circle("fill", mx, my, 3)
@@ -477,10 +494,10 @@ function game:buyLuck()
         local probs = self.rewardSystem.poolLogic:getLuckProbabilities(self.luck)
         for i, p in ipairs(probs) do
             local text = string.format("%d%%", math.floor(p.percent + 0.5))
-            -- Staggered positions and appearance (To the right of the button)
+            -- Staggered positions and appearance (To the right of the button, horizontally aligned)
             local delay = (i - 1) * 0.15
-            local spawnX = btn.x + btn.w + 20
-            local spawnY = cy + 15 + i * 16
+            local spawnX = btn.x + btn.w + 20 + (i - 1) * 38
+            local spawnY = cy - 6
             
             local floatingText = DamageNumber:new(text, spawnX, spawnY, nil, p.color, delay)
             floatingText.isUI = true
