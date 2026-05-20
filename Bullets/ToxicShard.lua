@@ -1,5 +1,4 @@
 local Bullet = require("Bullets.Bullet")
-local ToxicEffect = require("Game.Effects.StatusEffects.Toxic")
 
 local ToxicShard = setmetatable({}, Bullet)
 ToxicShard.__index = ToxicShard
@@ -17,8 +16,8 @@ function ToxicShard:new(config)
     config.color = {0.7, 0.2, 0.9, 1}
     config.damageType = "toxic"
     
-    -- Add the Toxic effect as a hit effect so the base Bullet:onHit handles it
-    config.hitEffects = { ToxicEffect:new() }
+    -- Death shards are a pure damage burst; they do NOT re-apply Toxic
+    -- (doing so caused massive stacking from the 8-shard bloom on death)
     config.hitbox = true
     config.types = { bullet = true }
     

@@ -108,9 +108,9 @@ function EffectManager:applyEffect(effectTemplate, source)
         sourceMaxStacks = effect.maxStacks
     end
     local maxStacks = sourceMaxStacks or math.huge
-    -- if effect.globalStacks then
-    --     maxStacks = 1
-    -- end
+    if effect.globalStacks then
+        maxStacks = 1
+    end
 
     if currentStacks >= maxStacks then
         -- Find and remove the oldest stack of the same name to make room for the new one
