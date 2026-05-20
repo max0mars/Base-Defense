@@ -107,7 +107,7 @@ function IncomeFeedbackManager:triggerSequence()
                 if not payout.bank.destroyed then
                     cx, cy = payout.bank:getCenterPosition()
                 end
-                game:spawnFloatingText("+" .. payout.amount .. " Bank Yield", cx, cy - 20, {1, 0.84, 0, 1})
+                game:spawnFloatingText("+" .. payout.amount .. " token", cx, cy - 20, {1, 0.84, 0, 1})
             end
         end)
     end
