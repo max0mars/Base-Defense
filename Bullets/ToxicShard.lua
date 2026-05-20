@@ -17,7 +17,7 @@ function ToxicShard:new(config)
     config.color = {0.7, 0.2, 0.9, 1}
     config.damageType = "toxic"
     
-    -- Add the Toxic effect as a hit effect so the base Bullet:onHit handles it
+    -- Spread the Toxic status effect on hit (safe now that globalStacks=1 is enforced)
     config.hitEffects = { ToxicEffect:new() }
     config.hitbox = true
     config.types = { bullet = true }
