@@ -5,36 +5,69 @@ local game = require("Game.Core.GameManager")
 setmetatable(menu_scene, { __index = scene })
 
 function menu_scene:load()
-    -- Define resolution options
-    self.resolutions = {
+    love.mouse.setVisible(true)
+    self.buttons = {
+        -- Main Actions
+        {
+            x = (VIRTUAL_WIDTH - 240) / 2,
+            y = 190,
+            w = 240,
+            h = 45,
+            label = "PLAY GAME",
+            type = "main",
+            action = "play",
+            color = {0.1, 0.45, 0.25, 1},
+            hoverColor = {0.18, 0.7, 0.4, 1},
+            borderColor = {0.3, 0.9, 0.5, 1}
+        },
+        {
+            x = (VIRTUAL_WIDTH - 240) / 2,
+            y = 245,
+            w = 240,
+            h = 45,
+            label = "TUTORIAL",
+            type = "main",
+            action = "tutorial",
+            color = {0.3, 0.2, 0.55, 1},
+            hoverColor = {0.48, 0.32, 0.8, 1},
+            borderColor = {0.7, 0.5, 1, 1}
+        }
+    }
+    
+    -- System Resolution settings
+    local resOptions = {
         { width = 800, height = 600, label = "800x600" },
         { width = 1200, height = 900, label = "1200x900" },
         { width = 1600, height = 1200, label = "1600x1200" },
-        { label = "Toggle Fullscreen", fullscreen = true }
+        { label = "Fullscreen", fullscreen = true }
     }
     
-    self.buttons = {}
+    local resW = 110
+    local resH = 28
+    local resSpacing = 12
+    local resStartY = 350
+    local totalResW = #resOptions * resW + (#resOptions - 1) * resSpacing
+    local resStartX = (VIRTUAL_WIDTH - totalResW) / 2
     
-    local buttonWidth = 200
-    local buttonHeight = 30
-    local spacing = 15
-    local startY = 250
-    -- Center buttons horizontally based on the virtual resolution
-    local startX = (VIRTUAL_WIDTH - buttonWidth) / 2
-    
-    for i, res in ipairs(self.resolutions) do
+    for i, res in ipairs(resOptions) do
         table.insert(self.buttons, {
-            x = startX,
-            y = startY + (i - 1) * (buttonHeight + spacing),
-            w = buttonWidth,
-            h = buttonHeight,
-            data = res
+            x = resStartX + (i - 1) * (resW + resSpacing),
+            y = resStartY,
+            w = resW,
+            h = resH,
+            label = res.label,
+            type = "setting",
+            action = "resolution",
+            data = res,
+            color = {0.15, 0.15, 0.18, 1},
+            hoverColor = {0.28, 0.28, 0.32, 1},
+            borderColor = {0.5, 0.5, 0.55, 1}
         })
     end
 
     self.confirmation = require("Game.GUI.ConfirmationUI"):new({inputHandler = {}})
     local AudioSlidersUI = require("Game.GUI.AudioSlidersUI")
-    self.sliders = AudioSlidersUI:new({ x = (VIRTUAL_WIDTH - 200) / 2, y = 460, w = 200 })
+    self.sliders = AudioSlidersUI:new({ x = (VIRTUAL_WIDTH - 240) / 2, y = 445, w = 240 })
 end
 
 function menu_scene:update(dt)
@@ -43,35 +76,93 @@ function menu_scene:update(dt)
 end
 
 function menu_scene:draw()
-    love.graphics.setColor(1, 1, 1) -- Set color to white
+    -- Draw subtle tactical grid background
+    love.graphics.setColor(0.15, 0.15, 0.18, 0.35)
+    for gx = 0, VIRTUAL_WIDTH, 40 do
+        love.graphics.line(gx, 0, gx, VIRTUAL_HEIGHT)
+    end
+    for gy = 0, VIRTUAL_HEIGHT, 40 do
+        love.graphics.line(0, gy, VIRTUAL_WIDTH, gy)
+    end
+
+    -- Draw a glowing sci-fi title banner
+    love.graphics.setColor(0.12, 0.25, 0.4, 0.15)
+    love.graphics.rectangle("fill", 0, 65, VIRTUAL_WIDTH, 65)
+    love.graphics.setColor(0.2, 0.45, 0.7, 0.5)
+    love.graphics.line(0, 65, VIRTUAL_WIDTH, 65)
+    love.graphics.line(0, 130, VIRTUAL_WIDTH, 130)
     
-    -- Draw title and instructions using virtual coordinates
-    love.graphics.printf("Welcome to the Base Defense Game!", 0, 100, VIRTUAL_WIDTH, "center")
-    love.graphics.printf("Press 'Enter' to Start", 0, 150, VIRTUAL_WIDTH, "center")
-    love.graphics.printf("Press 'T' for Testing Mode", 0, 180, VIRTUAL_WIDTH, "center")
+    -- Draw main title
+    love.graphics.push()
+    love.graphics.scale(2.5, 2.5)
+    -- Shadow
+    love.graphics.setColor(0, 0, 0, 0.75)
+    love.graphics.printf("BASE DEFENSE", 1, 31, VIRTUAL_WIDTH / 2.5, "center")
+    -- Text
+    love.graphics.setColor(0.3, 0.7, 1, 1)
+    love.graphics.printf("BASE DEFENSE", 0, 30, VIRTUAL_WIDTH / 2.5, "center")
+    love.graphics.pop()
     
-    -- Draw resolution buttons
+    -- Subtitle
+    love.graphics.setColor(0.55, 0.6, 0.7, 1)
+    love.graphics.printf("Protect the Core. Upgrade your Arsenal.", 0, 148, VIRTUAL_WIDTH, "center")
+    
+    -- Settings Section Divider
+    love.graphics.setColor(0.4, 0.4, 0.45)
+    love.graphics.printf("— SYSTEM CONFIGURATION —", 0, 318, VIRTUAL_WIDTH, "center")
+    
+    -- Draw all buttons
+    local mx, my = love.mouse.getPosition()
     for _, btn in ipairs(self.buttons) do
-        local dw, dh = love.window.getDesktopDimensions()
-        local isTooBig = btn.data.width and (btn.data.width > dw or btn.data.height > dh)
+        local isHovered = mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
         
-        -- Draw button background
-        if isTooBig then
-            love.graphics.setColor(0.5, 0.2, 0.2) -- Reddish warning color
-        else
-            love.graphics.setColor(0.3, 0.3, 0.3)
+        -- Custom checks (like isTooBig for resolutions)
+        local isTooBig = false
+        if btn.action == "resolution" and btn.data.width then
+            local dw, dh = love.window.getDesktopDimensions()
+            isTooBig = btn.data.width > dw or btn.data.height > dh
         end
-        love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h)
         
-        -- Draw button border
-        love.graphics.setColor(0.8, 0.8, 0.8)
-        love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h)
+        -- Select color based on state
+        local bgCol = btn.color
+        local borderCol = btn.borderColor
         
-        -- Draw button label
+        if isTooBig then
+            bgCol = {0.4, 0.15, 0.15, 1}
+            borderCol = {0.8, 0.3, 0.3, 1}
+        elseif isHovered then
+            bgCol = btn.hoverColor
+        end
+        
+        -- Draw button background with rounded corners
+        love.graphics.setColor(bgCol)
+        love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 6, 6)
+        
+        -- Draw glowing border on hover
+        love.graphics.setColor(borderCol)
+        love.graphics.setLineWidth(isHovered and 2 or 1)
+        love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 6, 6)
+        love.graphics.setLineWidth(1)
+        
+        -- Draw button text
         love.graphics.setColor(1, 1, 1)
-        local label = btn.data.label
+        local label = btn.label
         if isTooBig then label = label .. " (!)" end
-        love.graphics.printf(label, btn.x, btn.y + (btn.h / 2) - 6, btn.w, "center")
+        
+        -- Center text vertically
+        local textYOffset = btn.h / 2 - 6
+        if btn.type == "main" then
+            textYOffset = btn.h / 2 - 7
+            -- For main buttons, draw bold shadow
+            love.graphics.push()
+            love.graphics.setColor(0, 0, 0, 0.5)
+            love.graphics.printf(label, btn.x + 1, btn.y + textYOffset + 1, btn.w, "center")
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.printf(label, btn.x, btn.y + textYOffset, btn.w, "center")
+            love.graphics.pop()
+        else
+            love.graphics.printf(label, btn.x, btn.y + textYOffset, btn.w, "center")
+        end
     end
 
     if self.sliders then self.sliders:draw() end
@@ -91,11 +182,21 @@ function menu_scene:mousepressed(x, y, button)
         -- AABB collision detection for buttons
         for _, btn in ipairs(self.buttons) do
             if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-                if btn.data.fullscreen then
-                    scalify:switchFullscreen()
-                else
-                    -- Resize window using scalify
-                    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, btn.data.width, btn.data.height, {resizable = true, highdpi = true})
+                -- Play sound feedback
+                if AUDIO then AUDIO:playSFX("money_01") end
+                
+                if btn.action == "play" then
+                    game.testingMode = false
+                    self.scene_manager.switch("game")
+                elseif btn.action == "tutorial" then
+                    self.scene_manager.switch("tutorial")
+                elseif btn.action == "resolution" then
+                    local res = btn.data
+                    if res.fullscreen then
+                        scalify:switchFullscreen()
+                    else
+                        scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, res.width, res.height, {resizable = true, highdpi = true})
+                    end
                 end
                 break
             end
