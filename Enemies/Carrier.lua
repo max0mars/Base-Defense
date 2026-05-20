@@ -12,7 +12,7 @@ local default = {
     size = 35, -- Balanced size
     reward = 150,
     spawnInterval = 7,
-    spawnCount = 2,
+    spawnCount = 1,
 }
 
 function Carrier:new(config)
