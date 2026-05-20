@@ -25,8 +25,17 @@ function TooltipManager:draw()
     end
     
     -- Draw building effects/buff tooltips
-    if self.hoveredBuilding and self.hoveredBuilding.showEffects and self.hoveredBuilding.effectManager then
-        local strings = self.hoveredBuilding.effectManager:getTooltipStrings()
+    if self.hoveredBuilding and self.hoveredBuilding.showEffects then
+        local strings = {}
+        
+        -- Prefer a building-level override (e.g. Bank)
+        if self.hoveredBuilding.getTooltipStrings then
+            strings = self.hoveredBuilding:getTooltipStrings()
+        -- Fallback: pull from effectManager
+        elseif self.hoveredBuilding.effectManager then
+            strings = self.hoveredBuilding.effectManager:getTooltipStrings()
+        end
+        
         if #strings > 0 then
             local tipX, tipY = self.hoveredBuilding.x, self.hoveredBuilding.y
             if self.hoveredBuilding.getCenterPosition then
