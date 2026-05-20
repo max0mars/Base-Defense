@@ -12,7 +12,7 @@ Grenadier.template = {
     size = 15,
     rotation = 0,
     turnSpeed = math.huge,
-    fireRate = 0.3,
+    fireRate = 0.35,
     range = 500,
     barrel = 15,
     color = {0.3, 0.8, 0.3, 1},
@@ -27,13 +27,15 @@ Grenadier.template = {
         angle = math.pi/6
     },
     
-    fuseTime = 1,
+    fuseTime = 0.7,
     
     -- Bullet properties (now flat)
     bulletName = "Grenade",
     bulletSpeed = 400,
     damageType = "explosive",
-    damage = 15, 
+    damage = 20,
+    explosion_from_damage = 1,
+    radius = 45,
     canDirectHit = false,
     pierce = 1,
     lifespan = 3,
@@ -58,13 +60,12 @@ function Grenadier:new(config)
     setmetatable(t, { __index = self })
     
     -- Add inherent stats via a hidden buff
-    t.effectManager:applyEffect({
-        name = "Inherent Explosion",
-        statModifiers = {
-            radius = {max = 30, hidden = true},
-            explosion_from_damage = {max = 1, hidden = true}
-        }
-    })
+    -- t.effectManager:applyEffect({
+    --     name = "Inherent Explosion",
+    --     statModifiers = {
+    --         explosion_from_damage = {max = 1, hidden = true}
+    --     }
+    -- })
     
     return t
 end

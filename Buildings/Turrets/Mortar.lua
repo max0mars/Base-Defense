@@ -12,7 +12,7 @@ Mortar.template = {
     size = 15,
     rotation = 0,
     turnSpeed = math.huge,
-    fireRate = 0.3,
+    fireRate = 0.2,
     range = 500,
     barrel = 15,
     color = {1, 1, 1, 1},
@@ -31,7 +31,9 @@ Mortar.template = {
     bulletName = "Mortar Shell",
     bulletSpeed = 400,
     damageType = "explosive",
-    damage = 40, 
+    damage = 40,
+    explosion_from_damage = 1,
+    radius = 80,
     canDirectHit = false,
     pierce = 1,
     lifespan = 3,
@@ -56,13 +58,13 @@ function Mortar:new(config)
     setmetatable(t, { __index = self })
     
     -- Add inherent stats via a hidden buff
-    t.effectManager:applyEffect({
-        name = "Inherent Explosion",
-        statModifiers = {
-            radius = {max = 30, hidden = true},
-            explosion_from_damage = {max = 1, hidden = true}
-        }
-    })
+    -- t.effectManager:applyEffect({
+    --     name = "Inherent Explosion",
+    --     statModifiers = {
+    --         radius = {max = 30, hidden = true},
+    --         explosion_from_damage = {max = 1, hidden = true}
+    --     }
+    -- })
     
     return t
 end

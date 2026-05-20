@@ -28,8 +28,8 @@ MissileLauncher.template = {
     bulletName = "Missile",
     bulletSpeed = 350,
     damage = 10,
-    explosionDamage = 20,
-    radius = 60,
+    explosion_from_damage = 2, -- Explosion damage is 2x the direct hit damages
+    radius = 30,
     damageType = "explosive",
     pierce = 1,
     lifespan = 5,
@@ -52,7 +52,7 @@ function MissileLauncher:new(config)
     setmetatable(t, { __index = self })
     
     -- Ensure custom splash variables are initialized onto instance for stat lookups
-    t.explosionDamage = baseConfig.explosionDamage
+    t.explosion_from_damage = baseConfig.explosion_from_damage
     t.radius = baseConfig.radius
     t.sfx = baseConfig.sfx or "missile_01"
     
@@ -100,9 +100,9 @@ function MissileLauncher:fire(args)
         y = y,
         angle = self.rotation,
         bulletSpeed = self:getStat("bulletSpeed") or 350,
-        damage = self:getStat("damage") or 100,
-        explosionDamage = self:getStat("explosionDamage") or self:getStat("damage") or 100,
-        radius = self:getStat("radius") or 120,
+        damage = self:getStat("damage") or 20,
+        explosion_from_damage = self:getStat("explosion_from_damage") or 2,
+        radius = self:getStat("radius") or 60,
         pierce = 1,
         lifespan = self:getStat("lifespan") or 4,
         damageType = self:getStat("damageType") or "explosive",
