@@ -5,7 +5,7 @@ local NormalEnemyIndex = {
             type = "Speeder",
             class = require("Enemies.SpeederGroup"),
             spawnCost = 25,
-            spawnWeight = 50,
+            spawnWeight = 45,
             description = "Fast but fragile. Often spawns in large numbers.",
             mutations = {
                 { id = "speeder_speed", name = "Overdrive", description = "Speed +20%", modifiers = { speed = 1.2 }, target = "Speeder" },
@@ -17,8 +17,8 @@ local NormalEnemyIndex = {
             id = "Tank",
             type = "Tank",
             class = require("Enemies.Tank"),
-            spawnCost = 45,
-            spawnWeight = 30,
+            spawnCost = 55,
+            spawnWeight = 25,
             description = "Slow and heavy. Can soak up massive damage.",
             mutations = {
                 { id = "tank_hp", name = "Behemoth Plating", description = "HP +50%", modifiers = { maxHp = 1.5, hp = 1.5 }, target = "Tank" },
@@ -30,7 +30,7 @@ local NormalEnemyIndex = {
             type = "Flyer",
             class = require("Enemies.Flyer"),
             spawnCost = 25,
-            spawnWeight = 40,
+            spawnWeight = 35,
             description = "Airborne threat. Flies over blockers and walls.",
             mutations = {
                 { id = "flyer_speed", name = "Swift Swarm", description = "Speed +20%", modifiers = { speed = 1.2 }, target = "Flyer" },
@@ -41,7 +41,7 @@ local NormalEnemyIndex = {
             id = "Carrier",
             type = "Carrier",
             class = require("Enemies.Carrier"),
-            spawnCost = 40,
+            spawnCost = 45,
             spawnWeight = 30,
             description = "Swarm mother. Periodically spawns speeders.",
             mutations = {
@@ -67,13 +67,26 @@ local NormalEnemyIndex = {
             id = "Guardian",
             type = "Guardian",
             class = require("Enemies.Guardian"),
-            spawnCost = 100,
+            spawnCost = 75,
             spawnWeight = 25,
             description = "Support unit. Periodically grants shields to nearby allies.",
             mutations = {
                 { id = "guardian_hp", name = "Sanctuary Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Guardian" },
                 { id = "guardian_aura", name = "Guardian Aura", description = "Guardian projects a 25% damage reduction aura to nearby allies.", modifiers = { hasAura = { set = true } }, target = "Guardian" },
                 { id = "guardian_shield", name = "Shield Overcharge", description = "Doubles the amount of shields granted to allies.", modifiers = { shieldAmount = 2 }, target = "Guardian" }
+            }
+        },
+        {
+            id = "Duplicator",
+            type = "Duplicator",
+            class = require("Enemies.Duplicator"),
+            spawnCost = 40,
+            spawnWeight = 40,
+            description = "A cellular mass that divides upon death. Multiplies quickly if unchecked.",
+            mutations = {
+                { id = "duplicator_burst", name = "Symbiotic Burst", description = "On duplication, releases a healing wave affecting all enemies.", modifiers = { healWaveOnSplit = { set = true } }, target = "Duplicator" },
+                { id = "duplicator_speed", name = "Accelerated Mitosis", description = "Each duplication stage has increased movement speed.", modifiers = { acceleratedMitosis = { set = true } }, target = "Duplicator" },
+                { id = "duplicator_hyper", name = "Hyper-Replication", description = "The last duplication stage spawns 1 extra clone.", modifiers = { extraFinalClone = { set = true } }, target = "Duplicator" }
             }
         }
     },
