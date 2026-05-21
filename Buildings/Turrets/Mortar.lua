@@ -14,7 +14,7 @@ Mortar.template = {
     turnSpeed = math.huge,
     fireRate = 0.2,
     range = 500,
-    barrel = 15,
+    barrel = 10,
     color = {1, 1, 1, 1},
     baseShape = "circle",
     barrelShape = "thick",
@@ -67,6 +67,17 @@ function Mortar:new(config)
     -- })
     
     return t
+end
+
+function Mortar:drawCustomBase(cx, cy)
+    -- Trapezoidal base
+    love.graphics.polygon("line", cx - 8, cy + 6, cx + 8, cy + 6, cx + 5, cy - 6, cx - 5, cy - 6)
+end
+
+function Mortar:drawCustomBarrel()
+    -- High-angled hollow circle at the end of the barrel
+    love.graphics.line(0, 0, self.barrel - 4, 0)
+    love.graphics.circle("line", self.barrel, 0, 4)
 end
 
 return Mortar

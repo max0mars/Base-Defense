@@ -11,7 +11,7 @@ MissileLauncher.template = {
     turnSpeed = 4,
     fireRate = 0.4,  -- Extremely heavy and deliberate: 1 shot every 5 seconds
     range = 450,     -- Exceptional standoff capability
-    barrel = 15,
+    barrel = 10,
     color = {0.7, 0.2, 0.9, 1}, -- Vibrant neon purple theme
     baseShape = "square",
     barrelShape = "single",
@@ -144,7 +144,7 @@ function MissileLauncher:draw(drawx, drawy)
     local r, g, bColor, a = unpack(self.color or {1, 0.2, 0.1, 1})
     
     -- 1. Render Sturdy Geometric Gantry/Platform Base
-    local bw, bh = 12, 12
+    local bw, bh = 8, 8
     local basePoints = {
         cx - bw, cy - bh,
         cx + bw, cy - bh,

@@ -10,7 +10,7 @@ HeavyGun.template = {
     turnSpeed = 3,
     fireRate = 0.25,
     range = 600,
-    barrel = 20,
+    barrel = 12,
     color = {0.8, 0.4, 0.2, 1},
     baseShape = "square",
     barrelShape = "thick",
@@ -48,6 +48,17 @@ function HeavyGun:new(config)
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
     return t
+end
+
+function HeavyGun:drawCustomBase(cx, cy)
+    -- Reinforced square base
+    love.graphics.rectangle("line", cx - 9, cy - 9, 18, 18, 1, 1)
+    love.graphics.rectangle("line", cx - 5, cy - 5, 10, 10, 1, 1)
+end
+
+function HeavyGun:drawCustomBarrel()
+    -- Massive single rectangular barrel
+    love.graphics.rectangle("line", 0, -4, self.barrel, 8, 1, 1)
 end
 
 return HeavyGun

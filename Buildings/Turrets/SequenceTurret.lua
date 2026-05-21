@@ -10,7 +10,7 @@ SequenceTurret.template = {
     turnSpeed = 5,
     fireRate = 0.5, -- Slow starting RPM mapped to native Shots Per Second metric
     range = 450,        -- Long-range design profile
-    barrel = 15,
+    barrel = 12,
     color = {0.2, 0.4, 0.8, 1}, -- Dim Blue base state
     baseShape = "octagon",
     barrelShape = "single",
@@ -186,7 +186,7 @@ function SequenceTurret:draw(drawx, drawy)
     love.graphics.translate(cx, cy)
     love.graphics.rotate(self.rotation or self.angle or 0)
     
-    local barrelLength = self.barrel or 15
+    local barrelLength = self.barrel or 12
     local barrelWidth = 4
     
     -- Render static barrel pointing along local X-axis

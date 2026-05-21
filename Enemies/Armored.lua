@@ -8,7 +8,7 @@ local default = {
     maxHp = 300,
     color = {0.5, 0.4, 1, 1}, -- Neon Steel/Purple
     types = { armored = true, tank = true },
-    size = 32,
+    size = 20,
     reward = 50,
     affinities = {
         normal = 0.5, -- 50% resistance to normal damage
@@ -42,7 +42,7 @@ end
 
 function Armored:draw()
     local drawX, drawY = self.x, self.y
-    local size = self.size or 32
+    local size = self.size or 20
     local r, g, b, a = unpack(self.color or {1, 1, 1, 1})
 
     -- Helper to get Octagon points

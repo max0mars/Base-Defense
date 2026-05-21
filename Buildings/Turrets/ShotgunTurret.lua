@@ -10,7 +10,7 @@ ShotgunTurret.template = {
     turnSpeed = 6,
     fireRate = 0.7, -- 1 shot every ~1.5 seconds
     range = 200,     -- Lethal close-range spread weapon
-    barrel = 16,
+    barrel = 10,
     color = {1, 0.4, 0, 1}, -- Bright fiery neon orange
     baseShape = "square",
     barrelShape = "flared",
@@ -105,7 +105,7 @@ function ShotgunTurret:draw(drawx, drawy)
     local r, g, b, a = unpack(self.color or {1, 0.4, 0, 1})
     
     -- 1. Render Heavy Sturdy Square Base
-    local bw, bh = 10, 10
+    local bw, bh = 8, 8
     local basePoints = {
         cx - bw, cy - bh,
         cx + bw, cy - bh,
@@ -134,7 +134,7 @@ function ShotgunTurret:draw(drawx, drawy)
     love.graphics.translate(cx, cy)
     love.graphics.rotate(self.rotation)
     
-    local bl = self.barrel or 16
+    local bl = self.barrel or 10
     local barrelPoints = {
         0, -3,
         bl, -6.5, -- Flare outward

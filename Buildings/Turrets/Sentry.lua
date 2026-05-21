@@ -12,7 +12,7 @@ Sentry.template = {
     turnSpeed = math.huge,
     fireRate = 1,
     range = 500,
-    barrel = 15,
+    barrel = 10,
     color = {1, 1, 1, 1},
     types = { turret = true, sentry = true },
     shapePattern = {{0,0}},
@@ -47,6 +47,16 @@ function Sentry:new(config)
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
     return t
+end
+
+function Sentry:drawCustomBase(cx, cy)
+    -- Minimalistic small diamond base
+    love.graphics.polygon("line", cx, cy - 8, cx + 8, cy, cx, cy + 8, cx - 8, cy)
+end
+
+function Sentry:drawCustomBarrel()
+    -- Simple thin line barrel
+    love.graphics.line(0, 0, self.barrel, 0)
 end
 
 return Sentry

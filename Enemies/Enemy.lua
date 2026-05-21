@@ -303,14 +303,19 @@ function Enemy:drawHealthBar()
     -- Health is now drawn as a fill effect inside the enemy sprite
 end
 
+function Enemy:drawCustomShape(mode, cx, cy)
+    love.graphics.rectangle(mode, cx - self.w/2, cy - self.h/2, self.w, self.h)
+end
+
 function Enemy:draw()
     local r, g, b, a = unpack(self.color or {1, 0, 0, 1})
     local drawX = self.x - self.w/2
     local drawY = self.y - self.h/2
+    local cx, cy = self.x, self.y
     
     -- 1. Layer 1 (Empty Base): Dim fill
     love.graphics.setColor(r, g, b, 0.2)
-    love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+    self:drawCustomShape("fill", cx, cy)
     
     -- 2. Layer 2 (Normal HP Fill): Bright glow fill with bottom-up scissor
     local maxHp = self:getStat("maxHp")
@@ -322,14 +327,13 @@ function Enemy:draw()
     
     love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
-    love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+    self:drawCustomShape("fill", cx, cy)
     
     -- Add a bright horizontal line at the health level "cap"
-    -- We do this by setting a very thin scissor and redrawing the shape fill
     if fillRatio > 0 and fillRatio < 1 then
         love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
         love.graphics.setColor(r, g, b, 1)
-        love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+        self:drawCustomShape("fill", cx, cy)
         love.graphics.setScissor()
     end
     
@@ -343,7 +347,7 @@ function Enemy:draw()
         
         love.graphics.setScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
-        love.graphics.rectangle("fill", drawX, drawY, self.w, self.h)
+        self:drawCustomShape("fill", cx, cy)
         love.graphics.setScissor()
     end
     
@@ -353,13 +357,13 @@ function Enemy:draw()
         local alpha = 0.05 * (1 - i/7)
         love.graphics.setColor(r, g, b, alpha)
         love.graphics.setLineWidth(i * 3)
-        love.graphics.rectangle("line", drawX, drawY, self.w, self.h)
+        self:drawCustomShape("line", cx, cy)
     end
     
     -- Main crisp outline
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", drawX, drawY, self.w, self.h)
+    self:drawCustomShape("line", cx, cy)
     
     if self.game.debugMode and self.navigator and self.navigator.path then
         love.graphics.setColor(0, 1, 0, 0.5) -- Green transparent line for path

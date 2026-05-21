@@ -12,7 +12,7 @@ local template = {
     damage = 30,
     bulletSpeed = 600,
     range = 500,
-    barrel = 15,
+    barrel = 12,
     lifespan = 5,
     firingArc = {
         direction = 0,
@@ -98,16 +98,16 @@ function ChainLaser:draw(drawx, drawy)
     -- Base Glow
     love.graphics.setColor(r, g, b, 0.2)
     love.graphics.setLineWidth(4)
-    drawHex(12)
+    drawHex(10)
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(2)
-    drawHex(10)
+    drawHex(8)
     
     -- Corner Power Cells
     for i = 0, 2 do
         local angle = i * (math.pi * 2 / 3) + time * 0.5
-        local px = cx + math.cos(angle) * 12
-        local py = cy + math.sin(angle) * 12
+        local px = cx + math.cos(angle) * 10
+        local py = cy + math.sin(angle) * 10
         local pulse = (math.sin(time * 5 + i) + 1) / 2
         love.graphics.setColor(r, g, b, 0.3 + 0.7 * pulse)
         love.graphics.circle("fill", px, py, 2)
@@ -125,26 +125,26 @@ function ChainLaser:draw(drawx, drawy)
     -- Floating Rails
     love.graphics.setLineWidth(2)
     love.graphics.setColor(0.2, 0.2, 0.2, 1)
-    love.graphics.rectangle("fill", 5, -6, 15, 3, 1) -- Top rail
-    love.graphics.rectangle("fill", 5, 3, 15, 3, 1)  -- Bottom rail
+    love.graphics.rectangle("fill", 2, -5, 10, 2, 1) -- Top rail
+    love.graphics.rectangle("fill", 2, 3, 10, 2, 1)  -- Bottom rail
     
     love.graphics.setColor(r, g, b, 1)
-    love.graphics.rectangle("line", 5, -6, 15, 3, 1)
-    love.graphics.rectangle("line", 5, 3, 15, 3, 1)
+    love.graphics.rectangle("line", 2, -5, 10, 2, 1)
+    love.graphics.rectangle("line", 2, 3, 10, 2, 1)
     
     -- Energy Core (Pulsing)
     local corePulse = (math.sin(time * 15) + 1) / 2
     love.graphics.setColor(r, g, b, 0.4 + 0.6 * corePulse * reloadProgress)
-    love.graphics.circle("fill", 8, 0, 4 + corePulse)
+    love.graphics.circle("fill", 5, 0, 3 + corePulse)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.circle("fill", 8, 0, 2)
+    love.graphics.circle("fill", 5, 0, 1.5)
     
     -- Electrical Arcs between rails (if charging)
     if reloadProgress > 0.3 then
         love.graphics.setColor(r, g, b, 0.7 * reloadProgress)
         love.graphics.setLineWidth(1)
         for i = 1, 2 do
-            local x = 8 + math.random() * 10
+            local x = 4 + math.random() * 8
             local y1 = -3
             local y2 = 3
             love.graphics.line(x, y1, x + (math.random()-0.5)*4, (y1+y2)/2, x, y2)

@@ -222,6 +222,10 @@ function Turret:draw(drawx, drawy)
 
     -- 1. Draw Turret Base
     local function drawBaseShape()
+        if self.drawCustomBase then
+            self:drawCustomBase(cx, cy)
+            return
+        end
         local s = self.baseShape
         local radius = 9
         if s == "octagon" then
@@ -257,6 +261,10 @@ function Turret:draw(drawx, drawy)
     love.graphics.rotate(self.rotation)
 
     local function drawBarrelShape()
+        if self.drawCustomBarrel then
+            self:drawCustomBarrel()
+            return
+        end
         local s = self.barrelShape
         if s == "single" then
             love.graphics.rectangle("line", 0, -2, self.barrel, 4, 1, 1)

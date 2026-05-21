@@ -25,4 +25,9 @@ function speeder:new(config)
     return instance
 end
 
+function speeder:drawCustomShape(mode, cx, cy)
+    -- Dart shape pointing left
+    love.graphics.polygon(mode, cx - 7, cy, cx + 7, cy - 4, cx + 4, cy, cx + 7, cy + 4)
+end
+
 return speeder

@@ -74,4 +74,15 @@ function AutoCannon:fire(args)
     Turret.fire(self, args)
 end
 
+function AutoCannon:drawCustomBase(cx, cy)
+    -- Rectangular base for AutoCannon
+    love.graphics.rectangle("line", cx - 8, cy - 6, 16, 12, 1, 1)
+end
+
+function AutoCannon:drawCustomBarrel()
+    -- Twin slender barrels
+    love.graphics.rectangle("line", 0, -4.5, self.barrel, 2)
+    love.graphics.rectangle("line", 0, 2.5, self.barrel, 2)
+end
+
 return AutoCannon

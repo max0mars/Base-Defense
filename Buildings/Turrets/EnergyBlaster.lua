@@ -15,7 +15,7 @@ function EnergyBlaster:new(config)
     config.damage = 35
     config.bulletSpeed = 450
     config.range = 400
-    config.barrel = 18
+    config.barrel = 12
     config.bulletW = 12
     config.bulletH = 4
     config.bulletShape = "pill"
@@ -70,7 +70,7 @@ function EnergyBlaster:draw(drawx, drawy)
         love.graphics.setLineWidth(2)
         love.graphics.polygon("line", pts)
     end
-    drawHex(cx, cy, 10)
+    drawHex(cx, cy, 8)
     
     -- 2. Draw Rotating Turret Head (Diamond shape)
     love.graphics.push()
@@ -79,17 +79,17 @@ function EnergyBlaster:draw(drawx, drawy)
     
     -- Head Glow
     love.graphics.setColor(r, g, b, 0.15)
-    love.graphics.polygon("fill", 12, 0, 0, 8, -6, 0, 0, -8)
+    love.graphics.polygon("fill", 10, 0, 0, 6, -5, 0, 0, -6)
     
     -- Main Head
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(2)
-    love.graphics.polygon("line", 12, 0, 0, 8, -6, 0, 0, -8)
+    love.graphics.polygon("line", 10, 0, 0, 6, -5, 0, 0, -6)
     
     -- Barrel (Dual parallel lines for energy feel)
     love.graphics.setLineWidth(3)
-    love.graphics.line(8, -3, self.barrel, -3)
-    love.graphics.line(8, 3, self.barrel, 3)
+    love.graphics.line(6, -2.5, self.barrel, -2.5)
+    love.graphics.line(6, 2.5, self.barrel, 2.5)
     
     -- Energy core (Bright center)
     love.graphics.setColor(1, 1, 1, 1)

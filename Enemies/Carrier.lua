@@ -9,7 +9,7 @@ local default = {
     damage = 20,
     color = {0.2, 0.8, 1, 1}, -- Neon Cyan
     types = { carrier = true, tank = true },
-    size = 35, -- Balanced size
+    size = 22, -- Balanced size
     reward = 150,
     spawnInterval = 7,
     spawnCount = 1,

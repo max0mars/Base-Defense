@@ -69,10 +69,11 @@ function StandardMainTurret:draw()
     -- 1. Draw Sleek Base (Single Octagon)
     local function drawBase(radius)
         local pts = {}
-        for i = 0, 7 do
-            local angle = i * (math.pi * 2 / 8) + math.pi / 8
-            table.insert(pts, cx + math.cos(angle) * radius)
-            table.insert(pts, cy + math.sin(angle) * radius)
+        for i = 0, 15 do
+            local r = (i % 2 == 0) and radius or (radius * 0.6)
+            local angle = i * (math.pi * 2 / 16)
+            table.insert(pts, cx + math.cos(angle) * r)
+            table.insert(pts, cy + math.sin(angle) * r)
         end
         love.graphics.polygon("line", pts)
     end

@@ -12,7 +12,7 @@ Sniper.template = {
     turnSpeed = 2,
     fireRate = 0.2,
     range = 1000,
-    barrel = 25,
+    barrel = 12,
     firingArc = { direction = 0, minRange = 0, angle = math.pi/32 },
     shapePattern = {{0,0}},
     color = {0.8, 0.2, 0.2, 1},
@@ -56,6 +56,16 @@ function Sniper:fire(args)
     args.maxLifespan = self:getStat("maxLifespan")
     args.color = self:getStat("bulletColor")
     Turret.fire(self, args)
+end
+
+function Sniper:drawCustomBase(cx, cy)
+    -- Sleek cross-shaped base
+    love.graphics.polygon("line", cx-2, cy-10, cx+2, cy-10, cx+2, cy-2, cx+10, cy-2, cx+10, cy+2, cx+2, cy+2, cx+2, cy+10, cx-2, cy+10, cx-2, cy+2, cx-10, cy+2, cx-10, cy-2, cx-2, cy-2)
+end
+
+function Sniper:drawCustomBarrel()
+    -- Elongated, extremely thin barrel
+    love.graphics.line(0, 0, self.barrel, 0)
 end
 
 return Sniper

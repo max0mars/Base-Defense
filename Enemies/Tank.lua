@@ -8,7 +8,7 @@ local default = {
     damage = 30,
     color = {1, 1, 0, 1}, -- Default color for basic enemies
     types = { tank = true },
-    size = 45,
+    size = 22,
     reward = 100
 }
 
@@ -24,6 +24,14 @@ function tank:new(config)
     setmetatable(instance, tank)
     
     return instance
+end
+
+function tank:drawCustomShape(mode, cx, cy)
+    -- Bulky tank body and treads
+    love.graphics.rectangle(mode, cx - 9, cy - 7, 18, 14, 2, 2)
+    -- Treads
+    love.graphics.rectangle(mode, cx - 11, cy - 10, 22, 3)
+    love.graphics.rectangle(mode, cx - 11, cy + 7, 22, 3)
 end
 
 return tank

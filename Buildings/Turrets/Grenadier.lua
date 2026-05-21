@@ -14,7 +14,7 @@ Grenadier.template = {
     turnSpeed = math.huge,
     fireRate = 0.35,
     range = 500,
-    barrel = 15,
+    barrel = 10,
     color = {0.3, 0.8, 0.3, 1},
     baseShape = "circle",
     barrelShape = "thick",
@@ -68,6 +68,17 @@ function Grenadier:new(config)
     -- })
     
     return t
+end
+
+function Grenadier:drawCustomBase(cx, cy)
+    -- Wide circular base
+    love.graphics.circle("line", cx, cy, 10)
+    love.graphics.circle("line", cx, cy, 6)
+end
+
+function Grenadier:drawCustomBarrel()
+    -- Short, thick barrel
+    love.graphics.rectangle("line", 0, -5, self.barrel, 10, 2, 2)
 end
 
 return Grenadier

@@ -8,7 +8,7 @@ local default = {
     damage = 15,
     color = {1, 0.5, 0, 1}, -- Neon Orange
     types = { flyer = true },
-    size = 25,
+    size = 15,
     reward = 35,
     isFlying = true -- Custom flag for pathfinding/collision bypass
 }

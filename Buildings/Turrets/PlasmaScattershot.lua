@@ -11,7 +11,7 @@ PlasmaScattershot.template = {
     turnSpeed = 6,
     fireRate = 2,  -- High-tech variant firing significantly faster (2.5 vs 0.7)
     range = 200,     -- Slightly higher range than base shotgun
-    barrel = 16,
+    barrel = 10,
     color = {0.2, 0.6, 1, 1}, -- Neon blue core aesthetic
     baseShape = "square",
     barrelShape = "flared",
@@ -135,7 +135,7 @@ function PlasmaScattershot:draw(drawx, drawy)
     local r, g, b, a = unpack(self.color or {0.2, 0.6, 1, 1})
     
     -- 1. Render Heavy Sturdy Square Base
-    local bw, bh = 10, 10
+    local bw, bh = 8, 8
     local basePoints = {
         cx - bw, cy - bh,
         cx + bw, cy - bh,
@@ -197,7 +197,7 @@ function PlasmaScattershot:draw(drawx, drawy)
     love.graphics.translate(cx, cy)
     love.graphics.rotate(self.rotation)
     
-    local bl = self.barrel or 16
+    local bl = self.barrel or 10
     local barrelPoints = {
         0, -3,
         bl, -6.5, -- Flare outward

@@ -12,7 +12,7 @@ PoisonTurret.template = {
     turnSpeed = 5,
     fireRate = 0.5,
     range = 400,
-    barrel = 15,
+    barrel = 12,
     firingArc = { direction = 0, minRange = 0, angle = math.pi/4 },
     shapePattern = {{0,0}},
     color = {0.5, 1, 0.5, 1},
@@ -64,6 +64,18 @@ function PoisonTurret:new(config)
     })
     
     return t
+end
+
+function PoisonTurret:drawCustomBase(cx, cy)
+    -- Flask-like teardrop shape
+    love.graphics.polygon("line", cx, cy + 8, cx - 6, cy + 2, cx - 3, cy - 8, cx + 3, cy - 8, cx + 6, cy + 2)
+    love.graphics.circle("line", cx, cy + 3, 3)
+end
+
+function PoisonTurret:drawCustomBarrel()
+    -- Thin needle-like barrel
+    love.graphics.line(0, 0, self.barrel, 0)
+    love.graphics.circle("fill", self.barrel, 0, 1)
 end
 
 return PoisonTurret
