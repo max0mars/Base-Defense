@@ -9,6 +9,14 @@ local RewardIndex = {
             iconCategory = "turret"
         },
         {
+            id = "blaster",
+            name = "Blaster",
+            description = "Fires energy bolts, effective against armor.",
+            building = require("Buildings.Turrets.Blaster"),
+            type = "building",
+            iconCategory = "turret"
+        },
+        {
             id = "autoCannon",
             name = "Auto Cannon",
             description = "High fire rate, low damage, short range.",

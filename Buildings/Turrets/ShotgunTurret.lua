@@ -30,7 +30,7 @@ ShotgunTurret.template = {
     damage = 8,      -- High total burst damage (10 * 8 = 80), low individual pellet damage
     damageType = "normal",
     pierce = 1,
-    lifespan = 2,  -- Short-range drop-off
+    lifespan = 0.8,  -- Short-range drop-off
     bulletW = 3,
     bulletH = 3,
     bulletShape = "rectangle",
