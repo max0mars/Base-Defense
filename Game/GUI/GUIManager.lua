@@ -4,6 +4,7 @@ local ConfirmationUI = require("Game.GUI.ConfirmationUI")
 local GameText = require("Game.GUI.GameText")
 local MutationUI = require("Game.GUI.MutationUI")
 local IncomeFeedbackManager = require("Game.GUI.IncomeFeedbackManager")
+local EnemySpawnUI = require("Game.GUI.EnemySpawnUI")
 
 -- =============================================================================
 -- Local Helpers for Tron/Neon UI Aesthetics
@@ -100,7 +101,8 @@ function GUIManager:new(game)
         speedPlusButton = { x = 746, y = 48, w = 32, h = 32 },
         
         mutation = MutationUI:new(game),
-        incomeFeedback = IncomeFeedbackManager:new(game)
+        incomeFeedback = IncomeFeedbackManager:new(game),
+        enemySpawner = EnemySpawnUI:new(game)
     }, self)
     return obj
 end
@@ -112,6 +114,7 @@ function GUIManager:isConsumingInput(x, y)
     if game.rewardSystem and game.rewardSystem.isActive then return true end
     if self.mutation and self.mutation.isActive then return true end
     if game:isState("upgrade_mutation") then return true end
+    if self.enemySpawner and self.enemySpawner.isActive then return true end
     
     -- Top HUD area blocks click/hover completely
     if y <= 100 then return true end
@@ -133,6 +136,7 @@ function GUIManager:update(dt)
     self.confirmation:update(dt)
     self.mutation:update(dt)
     self.incomeFeedback:update(dt)
+    if self.enemySpawner then self.enemySpawner:update(dt) end
 
     -- Handle Info Button Hover
     local mx, my = love.mouse.getPosition()
@@ -155,6 +159,7 @@ function GUIManager:draw()
     -- UI elements on top of masks
     self.hand:draw()
     self.mutation:draw()     -- Draw mutation screen
+    if self.enemySpawner then self.enemySpawner:draw() end
     self.tooltips:draw()     -- Draw tips above everything
 end
 
@@ -479,6 +484,10 @@ function GUIManager:mousepressed(x, y, button)
     end
 
     if self.mutation:mousepressed(x, y, button) then
+        return true
+    end
+    
+    if self.enemySpawner and self.enemySpawner:mousepressed(x, y, button) then
         return true
     end
     

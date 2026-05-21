@@ -56,6 +56,13 @@ function Base:update(dt)
     end
 end
 
+function Base:takeDamage(amount, damageType, hitX, hitY)
+    if self.game.testingMode and self.game.baseInvincible then
+        return 0
+    end
+    return living_object.takeDamage(self, amount, damageType, hitX, hitY)
+end
+
 function Base:draw()
     for i = 1, self.buildGrid.width do
         for j = 1, self.buildGrid.height do

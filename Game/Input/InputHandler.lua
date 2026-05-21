@@ -539,6 +539,39 @@ function InputHandler:keypressed(key)
     -- elseif key == "a" then
     --     game.autoStartWave = not game.autoStartWave
     end
+
+    if game.testingMode then
+        if key == "u" then
+            game.baseInvincible = not game.baseInvincible
+            return
+        end
+        if key == "e" then
+            if game.gui.enemySpawner then
+                game.gui.enemySpawner.isActive = not game.gui.enemySpawner.isActive
+            end
+            return
+        end
+        if game.gui.enemySpawner and game.gui.enemySpawner.isActive and (key == "return" or key == "enter") then
+            local total = 0
+            local customWaveList = {}
+            for eName, count in pairs(game.gui.enemySpawner.spawnCounts) do
+                total = total + count
+                if count > 0 then
+                    local eClass = require("Enemies." .. eName)
+                    for i = 1, count do
+                        table.insert(customWaveList, eClass)
+                    end
+                end
+            end
+            
+            if total > 0 then
+                game.WaveSpawner:startCustomWave(customWaveList)
+                game:setState("wave")
+            end
+            game.gui.enemySpawner.isActive = false
+            return
+        end
+    end
     
     -- Handle turret target reset
     if key == "space" then

@@ -70,7 +70,8 @@ function game_scene:update(dt)
        (game.rewardSystem and game.rewardSystem.isActive) or 
        (game.specialUpgradeManager and game.specialUpgradeManager.isActive) or
        (game.gui.mutation and game.gui.mutation.isActive) or
-       (game.gui.confirmation and game.gui.confirmation.active) then
+       (game.gui.confirmation and game.gui.confirmation.active) or
+       (game.gui.enemySpawner and game.gui.enemySpawner.isActive) then
         effectiveDt = 0
     end
     
