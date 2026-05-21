@@ -13,7 +13,7 @@ function Toxic:new(config)
     instance.duration = config.duration or 8
     instance.dps = config.dps or 6
     instance.speedMult = config.speedMult or -0.15
-    instance.bloomDamage = config.bloomDamage or 15
+    instance.bloomDamage = config.bloomDamage or 3
     instance.globalStacks = true
     
     -- Internal state
@@ -38,10 +38,13 @@ end
 function Toxic:onDeath(target)
     -- Spawn a burst of shards instead of an explosion
     local ToxicShard = require("Bullets.ToxicShard")
-    local numShards = 8
+    local numShards = 4
+    local baseAngle = love.math.random() * math.pi * 2
+    local angleStep = (math.pi * 2) / numShards
     
     for i = 1, numShards do
-        local angle = love.math.random() * math.pi * 2
+        local minAngle = baseAngle + (i - 1) * angleStep
+        local angle = minAngle + (love.math.random() * angleStep)
         local shard = ToxicShard:new({
             game = target.game,
             source = target,
