@@ -92,4 +92,14 @@ function WaveSpawner:startNextWave()
     end
 end
 
+function WaveSpawner:startCustomWave(waveList)
+    if self.waveState == "idle" then
+        self.waveState = "active"
+        self.waveList = waveList
+        self.waveInitialized = true
+        self.game.wave = self.game.wave + 1
+        self.spawnRate = 0.5 * (0.95 ^ (self.game.wave))
+    end
+end
+
 return WaveSpawner
