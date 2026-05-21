@@ -43,7 +43,7 @@ local NormalEnemyIndex = {
             class = require("Enemies.Carrier"),
             spawnCost = 45,
             spawnWeight = 30,
-            description = "Swarm mother. Periodically spawns speeders.",
+            description = "Strong mothership that sends out fast flying enemies.",
             mutations = {
                 { id = "carrier_rate", name = "Rapid Deployment", description = "Spawn Rate +30%", modifiers = { spawnInterval = 0.7 }, target = "Carrier" },
                 { id = "carrier_count", name = "Swarm Brood", description = "Carrier spawns +1 Speeder.", modifiers = { spawnCount = { add = 1 } }, target = "Carrier" }
@@ -85,6 +85,18 @@ local NormalEnemyIndex = {
                 { id = "duplicator_burst", name = "Symbiotic Burst", description = "On duplication, releases a healing wave affecting all enemies.", modifiers = { healWaveOnSplit = { set = true } }, target = "Duplicator" },
                 { id = "duplicator_speed", name = "Accelerated Mitosis", description = "Each duplication stage has increased movement speed.", modifiers = { acceleratedMitosis = { set = true } }, target = "Duplicator" },
                 { id = "duplicator_hyper", name = "Hyper-Replication", description = "The last duplication stage spawns 1 extra clone.", modifiers = { extraFinalClone = { set = true } }, target = "Duplicator" }
+            }
+        },
+        {
+            id = "BeastMaster",
+            type = "BeastMaster",
+            class = require("Enemies.BeastMaster"),
+            spawnCost = 120,
+            spawnWeight = 20,
+            description = "A powerful commander that summons swarms of beasts to protect himself.",
+            mutations = {
+                { id = "beastmaster_blood", name = "Blood Pack", description = "The summon effect also fully heals his currently active beasts.", modifiers = { bloodPackHeal = { set = true } }, target = "BeastMaster" },
+                { id = "beastmaster_endless", name = "Endless Pack", description = "Increases beasts per summon to 4 and max beasts to 8.", modifiers = { spawnCount = { add = 1 }, maxBeasts = { add = 2 } }, target = "BeastMaster" }
             }
         }
     },

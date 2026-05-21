@@ -87,8 +87,8 @@ function EnemyRegistry:applyActiveMutations(enemyInstance)
                         else
                             enemyInstance[stat] = enemyInstance[stat] * val
                         end
-                    elseif enemyInstance.affinities and enemyInstance.affinities[stat] then
-                        enemyInstance.affinities[stat] = enemyInstance.affinities[stat] * val
+                    elseif enemyInstance.affinities then
+                        enemyInstance.affinities[stat] = (enemyInstance.affinities[stat] or 1) * val
                     end
                 end
             end
