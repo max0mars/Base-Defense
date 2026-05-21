@@ -19,12 +19,15 @@ function ConfirmationUI:new(game)
     return obj
 end
 
-function ConfirmationUI:activate(message, onConfirm, onCancel, target)
+function ConfirmationUI:activate(message, onConfirm, onCancel, target, btn1Text, btn2Text, onBtn2)
     self.active = true
     self.message = message
     self.onConfirm = onConfirm
     self.onCancel = onCancel
     self.target = target
+    self.btn1Text = btn1Text or "YES"
+    self.btn2Text = btn2Text or "NO"
+    self.onBtn2 = onBtn2 or onCancel
     if not target then
         self.boxW = 260
         self.boxH = 220
@@ -116,7 +119,7 @@ function ConfirmationUI:draw()
     love.graphics.rectangle("fill", confirmX, btnY, btnW, btnH, 4)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("line", confirmX, btnY, btnW, btnH, 4)
-    love.graphics.printf("YES", confirmX, btnY + 8, btnW, "center")
+    love.graphics.printf(self.btn1Text or "YES", confirmX, btnY + 8, btnW, "center")
     
     -- Cancel Button (Right)
     local cancelX = math.floor(cx + self.boxW / 2 + spacing / 2)
@@ -126,7 +129,7 @@ function ConfirmationUI:draw()
     love.graphics.rectangle("fill", cancelX, btnY, btnW, btnH, 4)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("line", cancelX, btnY, btnW, btnH, 4)
-    love.graphics.printf("NO", cancelX, btnY + 8, btnW, "center")
+    love.graphics.printf(self.btn2Text or "NO", cancelX, btnY + 8, btnW, "center")
     
     love.graphics.setLineWidth(1)
 end
@@ -149,10 +152,10 @@ function ConfirmationUI:mousepressed(x, y, button)
         return true
     end
     
-    -- Check Cancel
+    -- Check Cancel/Btn2
     if self.cancelRect and x >= self.cancelRect.x and x <= self.cancelRect.x + self.cancelRect.w and
        y >= self.cancelRect.y and y <= self.cancelRect.y + self.cancelRect.h then
-        local callback = self.onCancel
+        local callback = self.onBtn2
         self.active = false
         if callback then callback() end
         return true

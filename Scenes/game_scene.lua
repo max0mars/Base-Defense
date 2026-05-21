@@ -160,9 +160,16 @@ function game_scene:keypressed(key)
             if game.gui.confirmation.onCancel then game.gui.confirmation.onCancel() end
         else
             game.gui.confirmation:activate(
-                "Do you want to quit?",
-                function() love.event.quit() end,
-                function() end
+                "Game Paused",
+                function() 
+                    paused = 0
+                    self:load() 
+                end,
+                function() end, -- Cancel via ESC closes without action
+                nil,
+                "Retry",
+                "Quit",
+                function() love.event.quit() end
             )
         end
     else 
