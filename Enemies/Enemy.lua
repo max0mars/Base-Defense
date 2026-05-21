@@ -60,7 +60,7 @@ function Enemy:new(config)
         obj.effectManager:recalculateStats()
     end
     setmetatable(obj, { __index = self })
-    obj.target = obj.game.base.x + obj.game.base.w / 2 + (obj.size or obj.w / 2)
+    obj:getTargetPos()
     
     local navType = config.navigator or "GridNavigator"
     obj.navigator = Navigators[navType]:new(obj, obj.game)
@@ -103,6 +103,10 @@ end
 
 function Enemy:update(dt)
     if self.destroyed then return end
+    
+    self.w = self:getStat("size")
+    self.h = self:getStat("size")
+    self:getTargetPos()
     
     if self.navigator then
         self.navigator:update(dt)
@@ -289,7 +293,7 @@ function Enemy:died()
 end
 
 function Enemy:getTargetPos()
-    self.target = self.game.base.x + self.game.base.w / 2 + (self.size or self.w / 2)
+    self.target = self.game.base.x + self.game.base.w / 2 + self.w / 2
 end
 
 function Enemy:checkBaseCollision()

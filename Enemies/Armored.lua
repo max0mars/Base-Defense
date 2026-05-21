@@ -6,7 +6,7 @@ local default = {
     speed = 20,
     damage = 15,
     maxHp = 300,
-    color = {0.5, 0.4, 1, 1}, -- Neon Steel/Purple
+    color = {0.3, 0.6, 0.9, 1}, -- Blueish Metallic Steel
     types = { armored = true, tank = true },
     size = 20,
     reward = 50,
@@ -40,9 +40,14 @@ function Armored:new(config)
     return instance
 end
 
+function Armored:getTargetPos()
+    -- Armored's visual edge is drawn at size * 0.6, not size * 0.5
+    self.target = self.game.base.x + self.game.base.w / 2 + (self.w * 0.6)
+end
+
 function Armored:draw()
     local drawX, drawY = self.x, self.y
-    local size = self.size or 20
+    local size = self:getStat("size", 20)
     local r, g, b, a = unpack(self.color or {1, 1, 1, 1})
 
     -- Helper to get Octagon points
@@ -121,9 +126,15 @@ function Armored:draw()
     
     -- Inner border for "Armored" look
     local innerPoints = getOctagonPoints(drawX, drawY, size * 0.4)
-    love.graphics.setColor(r, g, b, 0.5)
+    love.graphics.setColor(r, g, b, 0.7)
     love.graphics.setLineWidth(1)
     love.graphics.polygon("line", innerPoints)
+    
+    -- Draw faceted connecting lines for a 3D metallic armor plate look
+    love.graphics.setColor(r, g, b, 0.5)
+    for i = 1, #points, 2 do
+        love.graphics.line(points[i], points[i+1], innerPoints[i], innerPoints[i+1])
+    end
 end
 
 return Armored

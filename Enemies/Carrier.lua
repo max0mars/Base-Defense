@@ -74,7 +74,7 @@ function Carrier:draw()
     local r, g, b, a = unpack(self.color or {0.2, 0.8, 1, 1})
     local drawX = self.x
     local drawY = self.y
-    local size = self.size
+    local size = self:getStat("size")
     
     -- Calculate Hexagon Points
     local function getHexPoints(cx, cy, s)

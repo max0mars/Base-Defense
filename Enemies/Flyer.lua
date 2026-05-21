@@ -32,11 +32,16 @@ function Flyer:new(config)
     return instance
 end
 
+function Flyer:getTargetPos()
+    -- Flyer's visual tip is drawn at size * 0.8, not size * 0.5
+    self.target = self.game.base.x + self.game.base.w / 2 + (self.w * 0.8)
+end
+
 function Flyer:draw()
     local r, g, b, a = unpack(self.color or {1, 0.5, 0, 1})
     local drawX = self.x
     local drawY = self.y
-    local size = self.size
+    local size = self:getStat("size")
     
     -- Calculate rotation (pointing towards target)
     local angle = 0

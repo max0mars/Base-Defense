@@ -25,9 +25,21 @@ function speeder:new(config)
     return instance
 end
 
+function speeder:getTargetPos()
+    -- Speeder's left tip is drawn at 7/15 of its size
+    self.target = self.game.base.x + self.game.base.w / 2 + (self.w * 7 / 15)
+end
+
 function speeder:drawCustomShape(mode, cx, cy)
+    local scale = self:getStat("size", 15) / 15
+    love.graphics.push()
+    love.graphics.translate(cx, cy)
+    love.graphics.scale(scale, scale)
+    
     -- Dart shape pointing left
-    love.graphics.polygon(mode, cx - 7, cy, cx + 7, cy - 4, cx + 4, cy, cx + 7, cy + 4)
+    love.graphics.polygon(mode, -7, 0, 7, -4, 4, 0, 7, 4)
+    
+    love.graphics.pop()
 end
 
 return speeder
