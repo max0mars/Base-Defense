@@ -88,6 +88,18 @@ local TestingEnemyIndex = {
                 { id = "duplicator_speed", name = "Accelerated Mitosis", description = "Each duplication stage has increased movement speed.", modifiers = { acceleratedMitosis = { set = true } }, target = "Duplicator" },
                 { id = "duplicator_hyper", name = "Hyper-Replication", description = "The last duplication stage spawns 1 extra clone.", modifiers = { extraFinalClone = { set = true } }, target = "Duplicator" }
             }
+        },
+        {
+            id = "BeastMaster",
+            type = "BeastMaster",
+            class = require("Enemies.BeastMaster"),
+            spawnCost = 120,
+            spawnWeight = 20,
+            description = "A powerful commander that summons swarms of beasts.",
+            mutations = {
+                { id = "beastmaster_blood", name = "Blood Pack", description = "The summon effect also fully heals his currently active beasts.", modifiers = { bloodPackHeal = { set = true } }, target = "BeastMaster" },
+                { id = "beastmaster_endless", name = "Endless Pack", description = "Increases beasts per summon to 4 and max beasts to 8.", modifiers = { spawnCount = { set = 4 }, maxBeasts = { set = 8 } }, target = "BeastMaster" }
+            }
         }
     },
     activePool = {

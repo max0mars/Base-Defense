@@ -73,7 +73,13 @@ function Duplicator:died()
     if self.effectManager then
         self.effectManager:triggerEvent("onDeath", self)
     end
-    if AUDIO then AUDIO:playSFX("explosion_01") end
+    if AUDIO then
+        if self.x > self.target and self.generation < 2 then
+            AUDIO:playSFX("duplicate_01")
+        else
+            AUDIO:playSFX("explosion_01")
+        end
+    end
 
     -- Check if it died by hitting the base
     if self.x > self.target then
