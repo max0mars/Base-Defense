@@ -110,7 +110,6 @@ function Enemy:update(dt)
     
     if self.navigator then
         self.navigator:update(dt)
-        
     end
     
     if self.x < self.target then
