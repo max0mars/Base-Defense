@@ -212,16 +212,7 @@ function menu_scene:keypressed(key)
         game.testingMode = true
         self.scene_manager.switch("game") -- Switch to the game scene in Testing Mode when 't' is pressed
     elseif key == "escape" then
-        if self.confirmation.active then
-            self.confirmation.active = false
-            if self.confirmation.onCancel then self.confirmation.onCancel() end
-        else
-            self.confirmation:activate(
-                "Do you want to quit?",
-                function() love.event.quit() end,
-                function() end
-            )
-        end
+        love.event.quit()
     end
 end
 
