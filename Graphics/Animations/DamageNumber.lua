@@ -6,7 +6,8 @@ DamageNumber.__index = DamageNumber
 
 local typeColors = {
     normal = {1, 1, 1, 1},
-    poison = {0.3, 1, 0.3, 1},
+    poison = {0.15, 0.6, 0.15, 1}, -- Darkened poison so it's distinct from heal
+    heal = {0.2, 1.0, 0.2, 1},     -- Bright green for healing
     energy = {0.3, 0.6, 1, 1},
     crit = {1, 0.8, 0.2, 1},
     explosive = {1, 0.5, 0, 1},

@@ -6,14 +6,14 @@ function EnemySpawnUI:new(game)
     obj.game = game
     obj.isActive = false
     obj.enemies = {
-        "Armored", "Carrier", "Flyer", "Guardian", "Speeder", "Tank"
+        "Armored", "Carrier", "Flyer", "Guardian", "Speeder", "Tank", "Duplicator"
     }
     obj.spawnCounts = {}
     for _, e in ipairs(obj.enemies) do
         obj.spawnCounts[e] = 0
     end
     obj.w = 300
-    obj.h = 300
+    obj.h = 330
     obj.x = (VIRTUAL_WIDTH - obj.w) / 2
     obj.y = (VIRTUAL_HEIGHT - obj.h) / 2
     return obj
