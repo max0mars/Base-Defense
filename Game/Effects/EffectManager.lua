@@ -5,6 +5,10 @@ EffectManager.colors = {
     poison = {0.3, 1, 0.3, 1},
     burn = {1, 0.5, 0, 1},
     toxic = {0.7, 0.2, 0.9, 1},
+    Toxic = {0.7, 0.2, 0.9, 1},
+    slow = {0.5, 0.8, 1.0, 1},
+    slow_aura = {0.5, 0.8, 1.0, 1},
+    GuardianAura = {0.6, 0.6, 0.6, 1},
     -- add other effect colors here
 }
 
@@ -112,10 +116,12 @@ function EffectManager:applyEffect(effectTemplate, source)
         maxStacks = 1
     end
 
+    local inheritedTime = nil
     if currentStacks >= maxStacks then
         -- Find and remove the oldest stack of the same name to make room for the new one
         for i = 1, #self.activeEffects do
             if self:getStackingKey(self.activeEffects[i]) == stackingKey then
+                inheritedTime = self.activeEffects[i].time
                 table.remove(self.activeEffects, i)
                 currentStacks = currentStacks - 1
                 break
@@ -124,6 +130,9 @@ function EffectManager:applyEffect(effectTemplate, source)
     end
 
     if currentStacks < maxStacks then
+        if inheritedTime then
+            effect.time = inheritedTime
+        end
         table.insert(self.activeEffects, effect)
         self.effectCounts[stackingKey] = currentStacks + 1
         self:recalculateStats()
@@ -213,17 +222,20 @@ end
 function EffectManager:getStat(statName, baseValue)
     local mod = self.currentModifiers[statName]
     if not mod then return baseValue end
+    
+    local finalMult = math.max(0, 1 + mod.mult)
+    
     if baseValue < mod.max then 
-        return (mod.add + mod.max) * (1 + mod.mult)
+        return (mod.add + mod.max) * finalMult
     else 
-        return (baseValue + mod.add) * (1 + mod.mult)
+        return (baseValue + mod.add) * finalMult
     end
 end
 
 function EffectManager:getStatMult(statName)
     local mod = self.currentModifiers[statName]
     if not mod then return 1 end
-    return (1 + mod.mult)
+    return math.max(0, 1 + mod.mult)
 end
 
 function EffectManager:getDamage(baseValue, damageTags)

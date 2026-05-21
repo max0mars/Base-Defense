@@ -29,8 +29,8 @@ local TestingEnemyIndex = {
             id = "Flyer",
             type = "Flyer",
             class = require("Enemies.Flyer"),
-            spawnCost = 25,
-            spawnWeight = 35,
+            spawnCost = 50,
+            spawnWeight = 25,
             description = "Airborne threat. Flies over blockers and walls.",
             mutations = {
                 { id = "flyer_speed", name = "Swift Swarm", description = "Speed +20%", modifiers = { speed = 1.2 }, target = "Flyer" },

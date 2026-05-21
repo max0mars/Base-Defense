@@ -109,10 +109,10 @@ function Beast:update(dt)
         end
     else
         -- Enraged or masterless: Standard base-charging behavior
-        self.speed = self:getStat("speed")
+        local currentSpeed = self:getStat("speed")
         self:getTargetPos()
         if self.x > self.target then
-            self.x = self.x - self.speed * dt
+            self.x = self.x - currentSpeed * dt
         else
             self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y)
             self:died()

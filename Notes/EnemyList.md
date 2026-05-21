@@ -32,11 +32,11 @@
   - Turbo Engines: Speed +50%
 
 ## Flyer
-- **Health**: 200
-- **Damage**: 15
-- **Speed**: 25
-- **Spawn Cost**: 25
-- **Spawn Weight**: 35
+- **Health**: 800
+- **Damage**: 30
+- **Speed**: 18
+- **Spawn Cost**: 50
+- **Spawn Weight**: 25
 - **Upgrades**:
   - Swift Swarm: Speed +40%
   - Precision Wings: HP +40%

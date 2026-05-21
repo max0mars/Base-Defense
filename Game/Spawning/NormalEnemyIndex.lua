@@ -21,16 +21,16 @@ local NormalEnemyIndex = {
             spawnWeight = 25,
             description = "Slow and heavy. Can soak up massive damage.",
             mutations = {
-                { id = "tank_hp", name = "Behemoth Plating", description = "HP +50%", modifiers = { maxHp = 1.5, hp = 1.5 }, target = "Tank" },
-                { id = "tank_speed", name = "Turbo Engines", description = "Speed +50%", modifiers = { speed = 1.5 }, target = "Tank" }
+                { id = "tank_hp", name = "Behemoth Plating", description = "HP +30%", modifiers = { maxHp = 1.3, hp = 1.3 }, target = "Tank" },
+                { id = "tank_speed", name = "Turbo Engines", description = "Speed +30%", modifiers = { speed = 1.3 }, target = "Tank" }
             }
         },
         {
             id = "Flyer",
             type = "Flyer",
             class = require("Enemies.Flyer"),
-            spawnCost = 25,
-            spawnWeight = 35,
+            spawnCost = 50,
+            spawnWeight = 25,
             description = "Airborne threat. Flies over blockers and walls.",
             mutations = {
                 { id = "flyer_speed", name = "Swift Swarm", description = "Speed +40%", modifiers = { speed = 1.4 }, target = "Flyer" },

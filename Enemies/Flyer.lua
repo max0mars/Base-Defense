@@ -3,12 +3,12 @@ local Flyer = setmetatable({}, {__index = Enemy})
 Flyer.__index = Flyer
 
 local default = {
-    speed = 25, -- Faster than standard 25
-    maxHp = 200,
-    damage = 15,
+    speed = 16,
+    maxHp = 800,
+    damage = 30,
     color = {1, 0.5, 0, 1}, -- Neon Orange
     types = { flyer = true },
-    size = 15,
+    size = 30,
     reward = 35,
     isFlying = true -- Custom flag for pathfinding/collision bypass
 }

@@ -98,7 +98,7 @@ function SequenceTurret:update(dt)
     
     -- Apply exponential upward Lerp formula: spooling curve accelerates intensely towards peak RPM
     local maxFR = currentBaseFR * (self.fireRateMultiplier or 8)
-    local targetFR = currentBaseFR + ((maxFR - currentBaseFR) * (self.currentCharge ^ 2))
+    local targetFR = currentBaseFR + ((maxFR - currentBaseFR) * (self.currentCharge))
     self.fireRate = math.max(0.01, targetFR)
     
     -- Calculate neon color shift interpolation from Dim Blue to Bright Red
