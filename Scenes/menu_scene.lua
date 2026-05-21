@@ -183,7 +183,7 @@ function menu_scene:mousepressed(x, y, button)
         for _, btn in ipairs(self.buttons) do
             if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
                 -- Play sound feedback
-                if AUDIO then AUDIO:playSFX("money_01") end
+                -- Sound removed per user request
                 
                 if btn.action == "play" then
                     game.testingMode = false

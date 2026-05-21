@@ -42,8 +42,8 @@ function tutorial_scene:load()
         { id = 2, type = "dialog", text = "Enemies will approach from the right side of the screen.\n\nKeep a close eye on their lanes to plan your defenses.", target = {x = 750, y = 300, angle = 0} },
         { id = 3, type = "dialog", text = "This is your Base. Do not let enemies reach it!\nIf they do, your base health will decrease.", target = {x = 120, y = 300, angle = 0} },
         { id = 4, type = "shoot", text = "You can fire the main laser manually from the base.\n\nLeft-click anywhere on the screen to fire standard laser beams!", target = {x = 50, y = 287, angle = 0} },
-        { id = 5, type = "autofire_on", text = "Manual shooting is great, but we can automate it.\n\nPress the TAB key to toggle Auto-Fire on.", target = {x = 660, y = 40, angle = math.pi/2} },
-        { id = 5.5, type = "autofire_off", text = "Auto-Fire will target and fire at enemies automatically during waves. Now let's toggle it back off.\n\nPress the TAB key again to turn it off.", target = {x = 660, y = 40, angle = math.pi/2} },
+        { id = 5, type = "autofire_on", text = "Manual shooting is great, but we can automate it.\n\nPress the TAB key to toggle Auto-Fire on.", target = {x = 475, y = 24, angle = math.pi/2} },
+        { id = 5.5, type = "autofire_off", text = "Auto-Fire will target and fire at enemies automatically during waves. Now let's toggle it back off.\n\nPress the TAB key again to turn it off.", target = {x = 475, y = 24, angle = math.pi/2} },
         { id = 6, type = "buy_sentry", text = "Now let's expand our arsenal.\n\nClick the 'Buy Upgrade' button to see card choices.", target = {x = 285, y = 65, angle = math.pi/2} },
         { id = 6.5, type = "select_sentry", text = "We must select the Sentry turret card.\n\nClick on the Sentry (first card) to select it." },
         { id = 7, type = "store_sentry", text = "Instead of placing it immediately, let's store it.\n\nMove the mouse to the bottom bar and click to store it in your inventory.", target = {x = 400, y = 550, angle = -math.pi/2} },
@@ -463,7 +463,7 @@ function tutorial_scene:mousepressed(x, y, button)
         -- Check Exit Button
         local eb = self.exitButton
         if x >= eb.x and x <= eb.x + eb.w and y >= eb.y and y <= eb.y + eb.h then
-            if AUDIO then AUDIO:playSFX("money_01") end
+            -- Sound removed per user request
             self:exitTutorial()
             return
         end
