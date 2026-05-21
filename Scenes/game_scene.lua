@@ -75,6 +75,10 @@ function game_scene:update(dt)
         effectiveDt = 0
     end
     
+    if game.rewardSystem and game.rewardSystem.isActive then
+        game.rewardSystem:update(dt)
+    end
+    
     game:update(effectiveDt)
 end
 
