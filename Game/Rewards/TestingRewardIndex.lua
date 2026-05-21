@@ -51,6 +51,14 @@ local RewardIndex = {
     },
     uncommon = {
         {
+            id = "poisonTurret",
+            name = "Poison Turret",
+            description = "Fires toxic darts that damage and slow over time.",
+            type = "building",
+            building = require("Buildings.Turrets.PoisonTurret"),
+            iconCategory = "turret"
+        },
+        {
             id = "airburst",
             name = "Airburst Turret",
             description = "Fires shells that explode mid-air into shrapnel.",

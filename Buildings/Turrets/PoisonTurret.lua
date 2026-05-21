@@ -30,8 +30,8 @@ PoisonTurret.template = {
     bulletShape = "rectangle",
     
     -- Values for effect initialization (can be overridden by inherent buff or external buffs)
-    duration_poison = 5,
-    dps_poison = 20,
+    duration_poison = 4.1,
+    dps_poison = 15,
     maxStacks = 3,
 }
 
@@ -53,15 +53,15 @@ function PoisonTurret:new(config)
     setmetatable(t, { __index = self })
     
     -- Add inherent stats via a hidden buff to follow the new unified buff system
-    t.effectManager:applyEffect({
-        name = "Inherent Poison",
-        statModifiers = {
-            dps_poison = {max = 10, hidden = true},
-            duration_poison = {max = 4, hidden = true},
-            maxStacks = {max = 5, hidden = true},
-            timePerTick = {max = 0.5, hidden = true},
-        }
-    })
+    -- t.effectManager:applyEffect({
+    --     name = "Inherent Poison",
+    --     statModifiers = {
+    --         dps_poison = {max = 10, hidden = true},
+    --         duration_poison = {max = 4, hidden = true},
+    --         maxStacks = {max = 5, hidden = true},
+    --         timePerTick = {max = 0.5, hidden = true},
+    --     }
+    -- })
     
     return t
 end

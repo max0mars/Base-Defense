@@ -9,11 +9,11 @@ function Poison:new(config)
     end
 
     --local required = {"duration_poison", "dps_poison", "maxStacks"}
-    for _, key in ipairs(required) do
-        if config[key] == nil then
-            error("Developer Error: Poison is missing the '" .. key .. "' field in config.")
-        end
-    end
+    -- for _, key in ipairs(required) do
+    --     if config[key] == nil then
+    --         error("Developer Error: Poison is missing the '" .. key .. "' field in config.")
+    --     end
+    -- end
 
     local instance = setmetatable({}, Poison)
     for k, v in pairs(config) do 
