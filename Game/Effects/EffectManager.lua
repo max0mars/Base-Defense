@@ -213,7 +213,11 @@ end
 function EffectManager:getStat(statName, baseValue)
     local mod = self.currentModifiers[statName]
     if not mod then return baseValue end
-    return (baseValue + mod.add + mod.max) * (1 + mod.mult)
+    if baseValue < mod.max then 
+        return (mod.add + mod.max) * (1 + mod.mult)
+    else 
+        return (baseValue + mod.add) * (1 + mod.mult)
+    end
 end
 
 function EffectManager:getStatMult(statName)

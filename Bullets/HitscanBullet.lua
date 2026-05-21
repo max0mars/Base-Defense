@@ -26,15 +26,35 @@ function HitscanBullet:new(config)
     config.lifespan = config.displayLifespan -- technical lifespan for base class
     
     local obj = bullet:new(config)
+    
+    -- Hitscan bullets should not trigger normal physics collisions while their trail lingers
+    obj.hitbox = false 
+    
+    -- Copy hitCache instead of sharing it so recursive branches can hit the same targets independently
+    local newHitCache = {}
+    if config.hitCache then
+        for k, v in pairs(config.hitCache) do
+            newHitCache[k] = v
+        end
+    end
+    obj.hitCache = newHitCache
+    
     setmetatable(obj, self)
     
     obj.displayLifespan = config.displayLifespan
     obj.maxDisplayLifespan = config.displayLifespan
-    obj.endpoint = { x = obj.x, y = obj.y }
-    
-    -- Hitscan endpoint logic
-    local x2 = config.targetX or obj.x
-    local y2 = config.targetY or obj.y
+    --obj.endpoint = { x = obj.x, y = obj.y }
+    local x2, y2 = 0, 0
+
+    if(config.targetX == nil and config.targetY == nil) then
+        local tempRange = 200
+        local angle = config.angle
+        x2 = config.x + math.cos(angle) * tempRange
+        y2 = config.y + math.sin(angle) * tempRange
+    else 
+        x2 = config.targetX
+        y2 = config.targetY
+    end
     
     local ray = {
         x1 = obj.x, y1 = obj.y,
@@ -47,7 +67,7 @@ function HitscanBullet:new(config)
     local closestEnemy = nil
     
     for _, other in ipairs(obj.game.objects) do
-        if other:isType("enemy") and not other.destroyed then
+        if other:isType("enemy") and not other.destroyed and not obj.hitCache[other:getID()] then
             local hit, t = collision:rayRect(ray, other)
             if hit and t < closestT then
                 closestT = t

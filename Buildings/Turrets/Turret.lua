@@ -66,7 +66,7 @@ function Turret:new(config)
     t.explosionDamage = config.explosionDamage or 0
     t.explosion_from_damage = config.explosion_from_damage or 0
     t.recursion = config.recursion or 0
-    t.recursionSpread = config.recursionSpread or math.rad(30)
+    t.recursionSpread = config.recursionSpread or math.rad(5)
     
     t.canDirectHit = config.canDirectHit
     if t.canDirectHit == nil then t.canDirectHit = true end

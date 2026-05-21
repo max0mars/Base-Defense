@@ -25,7 +25,8 @@ function ShardBullets:new(config)
         name = "Sharding Bullets",
         duration = math.huge,
         statModifiers = {
-            recursion = {add = 1}
+            recursion = {add = 1},
+            recursionSpread = {max = math.rad(10), hidden=true}
         }
     }
     

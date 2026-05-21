@@ -41,7 +41,7 @@ function Bullet:new(config)
     b.explosionDamage = config.explosionDamage or 0
     b.explosion_from_damage = config.explosion_from_damage or 0
     b.recursion = config.recursion or 0
-    b.recursionSpread = config.recursionSpread or math.rad(30)
+    b.recursionSpread = config.recursionSpread or math.rad(5)
     b.skipRecursion = config.skipRecursion or false
     b.canDirectHit = config.canDirectHit
     if b.canDirectHit == nil then b.canDirectHit = true end

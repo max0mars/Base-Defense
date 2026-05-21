@@ -1,30 +1,30 @@
 local RewardIndex = {
     common = {
         {
-            id = "ammoCache",
-            name = "Ammo Cache",
-            description = "Increase nearby turret damage by 20%",
+            id = "sniper",
+            name = "Sniper Turret",
+            description = "High damage, long range.",
             type = "building",
-            building = require("Buildings.Buffs.Buff"),
-            iconCategory = "buff"
-        },
-        {
-            id = "mortar",
-            name = "Mortar",
-            description = "KABOOM!",
-            type = "building",
-            building = require("Buildings.Turrets.Mortar"),
+            building = require("Buildings.Turrets.Sniper"),
             iconCategory = "turret"
         },
         {
-            id = "grenadier",
-            name = "Grenadier",
-            description = "Lobs grenades that explode after a short delay.",
+            id = "shatterRounds",
+            name = "Recursive Rounds",
+            description = "Bullets will now split on inpact.",
             type = "building",
-            iconCategory = "turret",
-            building = require("Buildings.Turrets.Grenadier")
+            building = require("Buildings.Buffs.ShardBullets"),
+            iconCategory = "buff"
         },
-    },
+        {
+            id = "missileLauncher",
+            name = "Missile Launcher",
+            description = "Wouldn't want to get in the way of one of these.",
+            type = "building",
+            building = require("Buildings.Turrets.MissileLauncher"),
+            iconCategory = "turret"
+        },
+    }
 }
 
 return RewardIndex
