@@ -107,7 +107,10 @@ function Buff:draw(drawx, drawy)
     
     local r, g, b = unpack(self.color or {1, 1, 1})
     local time = love.timer.getTime()
-    local pulse = (math.sin(time * 4) + 1) / 2 -- 0 to 1 pulsing
+    local pulse = 0
+    if not self.disableGlow then
+        pulse = (math.sin(time * 4) + 1) / 2 -- 0 to 1 pulsing
+    end
     
     -- 3. Neon Glow Effect
     -- Draw multiple layers of the geometric shape with decreasing thickness and increasing opacity

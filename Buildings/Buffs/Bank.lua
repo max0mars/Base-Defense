@@ -73,6 +73,23 @@ function Bank:checkPayout()
     return 0
 end
 
--- We inherit Buff:draw() so it looks like other support/buff buildings (Neon Gold Diamond)
+-- We inherit Buff:draw() but override it to change colors dynamically
+function Bank:draw(drawx, drawy)
+    local originalColor = self.color
+    local originalDisableGlow = self.disableGlow
+    
+    if self:isSurrounded() then
+        self.color = {1, 0.84, 0, 1} -- Neon Gold
+        self.disableGlow = false
+    else
+        self.color = {0.4, 0.4, 0.4, 1} -- Inactive Grey
+        self.disableGlow = true
+    end
+    
+    Buff.draw(self, drawx, drawy)
+    
+    self.color = originalColor
+    self.disableGlow = originalDisableGlow
+end
 
 return Bank
