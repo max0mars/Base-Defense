@@ -36,8 +36,13 @@ end
 function AirburstBullet:airburst()
     -- Calculate damage multiplier relative to the source turret's base damage
     -- This ensures that buffs applied to the turret are propagated to the shrapnel
-    local turretBaseDamage = (self.source and self.source.damage) or 10
-    local damageMult = self:getStat("damage") / turretBaseDamage
+    local damageMult = 1
+    if self.source and self.source.effectManager then
+        damageMult = self.source.effectManager:getStatMult("damage")
+    end
+    
+    local burstDamage = (self.source and self.source:getStat("BurstDamage")) or self.BurstDamage or 25
+    local finalDamage = burstDamage * damageMult
     
     -- 5 high-damage Shrapnel bullets in a forward-facing cone
     local angles = {-30, -15, 0, 15, 30}
@@ -50,7 +55,7 @@ function AirburstBullet:airburst()
             y = self.y,
             angle = self.angle + offsetRad,
             bulletSpeed = 800,
-            damage = 25 * damageMult,
+            damage = finalDamage,
             pierce = 1,
             lifespan = 0.5,
             w = 4,

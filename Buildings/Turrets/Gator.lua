@@ -22,7 +22,7 @@ Gator.template = {
         minRange = 0,
         angle = math.pi/6
     },
-    `
+    
     -- Bullet properties (now flat)
     bulletName = "Gator Rounds",
     bulletSpeed = 500,
