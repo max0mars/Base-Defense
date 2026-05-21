@@ -37,7 +37,7 @@ end
 function Bank:isSurrounded()
     if not self.slot then return false end
     local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
-    if #affectedSlots == 0 then return false end
+    if #affectedSlots < #self.affectedSlots then return false end
     for _, slot in ipairs(affectedSlots) do
         local b = self.game.base.buildGrid.buildings[slot]
         if not b or b.destroyed then
