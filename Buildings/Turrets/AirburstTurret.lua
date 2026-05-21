@@ -26,6 +26,7 @@ AirburstTurret.template = {
     bulletName = "Airburst Shell",
     bulletSpeed = 350,
     damage = 10,
+    BurstDamage = 20,
     damageType = "normal",
     pierce = 1,
     lifespan = 3,
