@@ -76,8 +76,8 @@ local RewardIndex = {
         },
         {
             id = "shatterRounds",
-            name = "Shatter Rounds",
-            description = "Gives nearby turrets bullets that shatter on impact.",
+            name = "Recursive Rounds",
+            description = "Bullets will now split on inpact.",
             type = "building",
             building = require("Buildings.Buffs.ShardBullets"),
             iconCategory = "buff"
@@ -115,6 +115,14 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Buffs.ToxicTotem"),
             iconCategory = "buff"
+        },
+        {
+            id = "gator",
+            name = "GTR-55 Gator",
+            description = "Hard hitting rounds go right through enemies.",
+            type = "building",
+            building = require("Buildings.Turrets.Gator"),
+            iconCategory = "turret"
         },
 
         {
