@@ -23,6 +23,11 @@ function SFXManager:new()
     instance:registerSound("lightning_01", "Audio/SFX/lightning_01.mp3")
     instance:registerSound("whistle_01", "Audio/SFX/whistle_01.mp3")
     instance:registerSound("duplicate_01", "Audio/SFX/duplicate_01.mp3")
+    instance:registerSound("common", "Audio/SFX/common.mp3")
+    instance:registerSound("uncommon", "Audio/SFX/uncommon.mp3")
+    instance:registerSound("rare", "Audio/SFX/rare.mp3")
+    instance:registerSound("epic", "Audio/SFX/epic.mp3")
+    instance:registerSound("legendary", "Audio/SFX/legendary.mp3")
     
     return instance
 end
@@ -50,6 +55,8 @@ function SFXManager:play(name)
             sfxVol = math.min(1, self.volume * 40)
         elseif name == "whistle_01" then
             sfxVol = self.volume * 0.3
+        elseif name == "epic" or name == "legendary" then
+            sfxVol = math.min(1, self.volume * 3)
         end
         local success, clone = pcall(baseSource.clone, baseSource)
         if success and clone then

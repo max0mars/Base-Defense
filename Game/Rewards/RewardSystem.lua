@@ -6,7 +6,7 @@ RewardSystem.__index = RewardSystem
 local RewardIndex = require("Game.Rewards.NormalRewardIndex")
 local TestingIndex = require("Game.Rewards.TestingRewardIndex")
 local RewardPool = require("Game.Rewards.RewardPool")
---local Reward = require("Game.Rewards.Reward")
+local CardReveal = require("Graphics.Animations.CardReveal")
 
 function RewardSystem:new(game)
     local indexToUse = game.testingMode and TestingIndex or RewardIndex
@@ -40,12 +40,20 @@ end
 
 function RewardSystem:initializeRewardPool()
     self.rewardPool = {} -- Clear previous
+    self.revealTimer = 0
+    self.nextRevealIndex = 1
+    
     local luck = self.game.luck or 1
     local choices = self.poolLogic:generateChoices(3, luck)
     
-    for _, rewardData in ipairs(choices) do
+    for i, rewardData in ipairs(choices) do
         rewardData.game = self.game
-        table.insert(self.rewardPool, Reward:new(rewardData))
+        local rewardObj = Reward:new(rewardData)
+        local x = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
+        local y = self.startY
+        
+        local card = CardReveal:new(rewardObj, x, y, self.cardWidth, self.cardHeight)
+        table.insert(self.rewardPool, card)
     end
 end
 
@@ -56,11 +64,30 @@ function RewardSystem:activate()
     self.currentChoices = self.rewardPool
 end
 
+function RewardSystem:update(dt)
+    if not self.isActive then return end
+    
+    -- Sequence card flips
+    if self.nextRevealIndex <= #self.currentChoices then
+        self.revealTimer = self.revealTimer + dt
+        if self.revealTimer >= 0.5 then
+            self.revealTimer = 0
+            self.currentChoices[self.nextRevealIndex]:startFlip()
+            self.nextRevealIndex = self.nextRevealIndex + 1
+        end
+    end
+    
+    -- Update all card animations
+    for _, card in ipairs(self.currentChoices) do
+        card:update(dt)
+    end
+end
 
 function RewardSystem:selectReward(index)
     if not self.isActive then return end
-    local reward = self.currentChoices[index]
-    if reward then
+    local card = self.currentChoices[index]
+    if card and card.state == "revealed" then
+        local reward = card.reward
         --print("Selected reward: " .. reward.name)
         if reward.type == "building" then
             self.game:placeBuilding(reward.building, reward)
@@ -101,12 +128,9 @@ function RewardSystem:draw()
     --love.graphics.printf("Use A/D or Arrow Keys to select, Enter/Space to confirm", 0, 80, VIRTUAL_WIDTH, "center")
     
     -- Draw reward cards
-    for i, reward in ipairs(self.currentChoices) do
-        local x = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
-        local y = self.startY
+    for i, card in ipairs(self.currentChoices) do
         local isSelected = (i == self.selectedIndex)
-        
-        reward:draw(x, y, self.cardWidth, self.cardHeight, isSelected)
+        card:draw(isSelected)
     end
 
     -- Draw skip button
@@ -130,13 +154,15 @@ function RewardSystem:mousepressed(x, y, button)
     if not self.isActive or button ~= 1 then return end
     
     -- Check if click is on a reward card
-    for i, reward in ipairs(self.currentChoices) do
+    for i, card in ipairs(self.currentChoices) do
         local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local cardY = self.startY
         
         if x >= cardX and x <= cardX + self.cardWidth and 
            y >= cardY and y <= cardY + self.cardHeight then
-            self:selectReward(i)
+            if card.state == "revealed" then
+                self:selectReward(i)
+            end
             return
         end
     end

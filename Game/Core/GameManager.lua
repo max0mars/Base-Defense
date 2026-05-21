@@ -247,8 +247,10 @@ function game:update(dt)
             self:setState("wave")
         end
     end
-
     -- Component Updates
+    if self.rewardSystem then
+        self.rewardSystem:update(dt)
+    end
     self.inventory:update(dt)
     self.inputHandler:update(dt)
     self.WaveSpawner:update(dt)
@@ -496,8 +498,8 @@ function game:buyLuck()
             local text = string.format("%d%%", math.floor(p.percent + 0.5))
             -- Staggered positions and appearance (To the right of the button, horizontally aligned)
             local delay = (i - 1) * 0.15
-            local spawnX = btn.x + btn.w + 20 + (i - 1) * 38
-            local spawnY = cy - 6
+            local spawnX = btn.x + 50 + (i - 1) * 38
+            local spawnY = cy + 90
             
             local floatingText = DamageNumber:new(text, spawnX, spawnY, nil, p.color, delay)
             floatingText.isUI = true
