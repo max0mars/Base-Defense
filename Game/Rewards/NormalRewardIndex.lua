@@ -85,7 +85,7 @@ local RewardIndex = {
         {
             id = "ammoCache",
             name = "Ammo Cache",
-            description = "Increase nearby turret damage by 20%",
+            description = "Increase nearby turret damage by 25%",
             type = "building",
             building = require("Buildings.Buffs.Buff"),
             iconCategory = "buff"
