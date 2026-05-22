@@ -140,6 +140,14 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Gator"),
             iconCategory = "turret"
         },
+        {
+            id = "slushCannon",
+            name = "The Slush Cannon",
+            description = "Fires heavy clumps of slush that slow enemies on impact.",
+            type = "building",
+            building = require("Buildings.Turrets.SlushCannon"),
+            iconCategory = "turret"
+        },
 
         {
             id = "unstable_laser",

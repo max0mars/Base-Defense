@@ -6,7 +6,7 @@ function EnemySpawnUI:new(game)
     obj.game = game
     obj.isActive = false
     obj.enemies = {
-        "Armored", "Carrier", "Flyer", "Guardian", "Speeder", "Tank", "Duplicator", "BeastMaster"
+        "Armored", "Carrier", "Flyer", "Guardian", "Speeder", "Tank", "Duplicator", "BeastMaster", "Enemy"
     }
     obj.spawnCounts = {}
     for _, e in ipairs(obj.enemies) do
