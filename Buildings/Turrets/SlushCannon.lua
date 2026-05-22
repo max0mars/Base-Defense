@@ -7,7 +7,7 @@ SlushCannon.__index = SlushCannon
 
 -- Source of Truth: All stats in a single flat table
 SlushCannon.template = {
-    name = "The Slush Cannon",
+    name = "Slush Cannon",
     rotation = 0,
     turnSpeed = 6,
     fireRate = 0.25,

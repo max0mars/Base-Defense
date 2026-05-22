@@ -16,6 +16,14 @@ local RewardIndex = {
             building = require("Buildings.Buffs.ExplosiveTotem"),
             iconCategory = "buff"
         },
+        {
+            id = "hookTurret",
+            name = "The Hook",
+            description = "Fires a heavy shot that stuns enemies in their tracks.",
+            type = "building",
+            building = require("Buildings.Turrets.HookTurret"),
+            iconCategory = "turret"
+        },
     },
     uncommon = {},
     rare = {},

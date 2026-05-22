@@ -40,6 +40,8 @@ function Guardian:update(dt)
     -- Call parent update (Enemy.lua handles navigation, base collision, etc.)
     Enemy.update(self, dt)
     
+    if self:getStat("stunned", 0) > 0 then return end
+    
     -- 1. Aura Logic (Upgrade): Buff nearby allies using the effect system
     if self.hasAura then
         local radiusSq = self.auraRadius * self.auraRadius

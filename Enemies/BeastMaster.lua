@@ -41,6 +41,9 @@ end
 function BeastMaster:update(dt)
     if self.destroyed then return end
     
+    Enemy.update(self, dt)
+    if self:getStat("stunned", 0) > 0 then return end
+    
     -- Clean up dead beasts from tracking
     for i = #self.activeBeasts, 1, -1 do
         if self.activeBeasts[i].destroyed then
@@ -58,8 +61,6 @@ function BeastMaster:update(dt)
             self:summonBeasts()
         end
     -- end
-    
-    Enemy.update(self, dt)
 end
 
 function BeastMaster:summonBeasts()

@@ -39,6 +39,8 @@ function Beast:update(dt)
     
     self.effectManager:update(dt) -- Update status effects
     
+    if self:getStat("stunned", 0) > 0 then return end
+    
     if self.master and not self.master.destroyed and not self.enraged then
         local distToMasterX = self.x - self.master.x
         

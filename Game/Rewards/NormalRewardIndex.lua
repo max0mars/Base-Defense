@@ -200,6 +200,14 @@ local RewardIndex = {
             building = require("Buildings.Blockers.SlowBlocker"),
             iconCategory = "blocker"
         },
+        {
+            id = "hookTurret",
+            name = "The Hook",
+            description = "Fires a heavy shot that stuns enemies in their tracks.",
+            type = "building",
+            building = require("Buildings.Turrets.HookTurret"),
+            iconCategory = "turret"
+        },
     },
     epic = {
         {
