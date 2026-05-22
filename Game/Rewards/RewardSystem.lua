@@ -27,7 +27,7 @@ function RewardSystem:new(game)
     system.startX = 100
     system.startY = 150
     
-    system.skipBtnW = 120
+    system.skipBtnW = 160
     system.skipBtnH = 40
     system.skipBtnX = VIRTUAL_WIDTH / 2 - system.skipBtnW / 2
     system.skipBtnY = 400
@@ -147,7 +147,12 @@ function RewardSystem:draw()
     
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("line", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
-    love.graphics.printf("Skip", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
+    if self.game.tokens >= 1 then
+        love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
+    else
+        love.graphics.setColor(1, 0.4, 0.4, 1)
+        love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
+    end
 end
 
 function RewardSystem:mousepressed(x, y, button)
@@ -170,8 +175,10 @@ function RewardSystem:mousepressed(x, y, button)
     -- Check for skip button
     if x >= self.skipBtnX and x <= self.skipBtnX + self.skipBtnW and
        y >= self.skipBtnY and y <= self.skipBtnY + self.skipBtnH then
-        self.isActive = false
-        self.currentChoices = {}
+        if self.game.tokens >= 1 then
+            self.game.tokens = self.game.tokens - 1
+            self:activate()
+        end
     end
 end
 

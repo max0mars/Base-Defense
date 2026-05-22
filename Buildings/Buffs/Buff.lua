@@ -7,7 +7,7 @@ local default = {
     types = { passive = true },
     effect = {
         name = "Damage Buff",
-        statModifiers = {damage = {mult = 0.2}},
+        statModifiers = {damage = {mult = 0.25}},
         --description = "Increases damage by 20%",
         duration = math.huge,
     },

@@ -8,7 +8,7 @@ local NormalEnemyIndex = {
             spawnWeight = 45,
             description = "Fast but fragile. Often spawns in large numbers.",
             mutations = {
-                { id = "speeder_speed", name = "Overdrive", description = "Speed +20%", modifiers = { speed = 1.2 }, target = "Speeder" },
+                { id = "speeder_speed", name = "Overdrive", description = "Speed +25%", modifiers = { speed = 1.25 }, target = "Speeder" },
                 { id = "speeder_hp", name = "Hardened Shell", description = "HP +30%", modifiers = { maxHp = 1.3, hp = 1.3 }, target = "Speeder" },
                 { id = "speeder_fly", name = "Anti-Grav Plating", description = "Speeders can now fly over blockers.", modifiers = { isFlying = { set = true } }, target = "Speeder" }
             }

@@ -27,9 +27,9 @@ MissileLauncher.template = {
     -- Splash & Projectile Scaling Properties
     bulletName = "Missile",
     bulletSpeed = 350,
-    damage = 10,
-    explosion_from_damage = 2.5, -- Explosion damage is 2x the direct hit damages
-    radius = 30,
+    damage = 25,
+    explosion_from_damage = 1, -- Explosion damage is 2x the direct hit damages
+    radius = 35,
     damageType = "explosive",
     pierce = 1,
     lifespan = 5,

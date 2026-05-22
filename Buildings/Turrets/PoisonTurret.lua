@@ -32,7 +32,7 @@ PoisonTurret.template = {
     -- Values for effect initialization (can be overridden by inherent buff or external buffs)
     duration_poison = 4.1,
     dps_poison = 15,
-    maxStacks = 3,
+    maxStacks = math.huge,
 }
 
 function PoisonTurret:new(config)
