@@ -47,6 +47,7 @@ function Base:new(config)
         buildings = {},
         unlocked = {}
     }
+    obj.damageTracker = {}
     return obj
 end
 
@@ -56,11 +57,58 @@ function Base:update(dt)
     end
 end
 
-function Base:takeDamage(amount, damageType, hitX, hitY)
+function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity)
     if self.game.testingMode and self.game.baseInvincible then
         return 0
     end
+    
+    if sourceEntity then
+        local enemyName = sourceEntity.name or "Enemy"
+        
+        local wave = self.game.wave or 0
+        if not self.damageTracker[wave] then
+            self.damageTracker[wave] = {}
+        end
+        
+        if not self.damageTracker[wave][enemyName] then
+            self.damageTracker[wave][enemyName] = {
+                damage = 0,
+                color = sourceEntity.color,
+                w = sourceEntity.w or 20,
+                h = sourceEntity.h or 20,
+                shape = sourceEntity.shape or "rectangle"
+            }
+        end
+        self.damageTracker[wave][enemyName].damage = self.damageTracker[wave][enemyName].damage + amount
+    end
+
     return living_object.takeDamage(self, amount, damageType, hitX, hitY)
+end
+
+function Base:getProcessedDamageHistory()
+    local history = {}
+    for wave, enemies in pairs(self.damageTracker) do
+        for name, data in pairs(enemies) do
+            table.insert(history, {
+                wave = wave,
+                name = name,
+                damage = data.damage,
+                color = data.color,
+                w = data.w,
+                h = data.h,
+                shape = data.shape
+            })
+        end
+    end
+    
+    table.sort(history, function(a, b)
+        if a.wave == b.wave then
+            return a.damage > b.damage
+        end
+        return a.wave < b.wave
+    end)
+    
+    return history
 end
 
 function Base:draw()

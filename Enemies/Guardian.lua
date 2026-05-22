@@ -3,6 +3,7 @@ local Guardian = setmetatable({}, {__index = Enemy})
 Guardian.__index = Guardian
 
 local Stats = {
+    name = "Guardian",
     speed = 18,
     damage = 20,
     reward = 50,

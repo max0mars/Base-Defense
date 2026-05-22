@@ -3,6 +3,7 @@ local speeder = setmetatable({}, {__index = Enemy})
 speeder.__index = speeder
 
 local default = {
+    name = "Speeder",
     speed = 110, -- Reduced from 120 (carrier nerf)
     maxHp = 25,
     color = {0.8, 1, 0, 1}, -- Default color for basic enemies

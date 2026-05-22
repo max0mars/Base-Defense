@@ -18,23 +18,6 @@ function game_scene:load()
 end
 
 function game_scene:mousepressed(x, y, button)
-    if self.gameover then
-        if button == 1 then
-            local btnW = 130
-            local btnH = 45
-            local btnY = VIRTUAL_HEIGHT / 2 + 80
-            local retryX = VIRTUAL_WIDTH / 2 - 140
-            local quitX = VIRTUAL_WIDTH / 2 + 10
-            
-            if x >= retryX and x <= retryX + btnW and y >= btnY and y <= btnY + btnH then
-                paused = 0
-                self:load()
-            elseif x >= quitX and x <= quitX + btnW and y >= btnY and y <= btnY + btnH then
-                love.event.quit()
-            end
-        end
-        return
-    end
     if paused == 1 then
         if self.sliders and self.sliders:mousepressed(x, y, button) then
             return
@@ -60,7 +43,7 @@ function game_scene:update(dt)
     end
     if game:isState("gameover") and not self.gameover then
         self.gameover = true
-        love.mouse.setVisible(true)
+        self.scene_manager.switch("gameover")
     end
 
     local effectiveDt = dt * game.time_mul
@@ -83,55 +66,6 @@ function game_scene:update(dt)
 end
 
 function game_scene:draw()
-    if self.gameover then
-        love.graphics.setColor(0, 0, 0, 0.85) -- Dark overlay
-        love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
-        
-        -- Game Over Title
-        love.graphics.setColor(1, 0.2, 0.2)
-        love.graphics.push()
-        love.graphics.scale(2, 2)
-        love.graphics.printf("GAME OVER", 0, VIRTUAL_HEIGHT / 4 - 30, VIRTUAL_WIDTH / 2, "center")
-        love.graphics.pop()
-        
-        -- Stats
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.printf("Wave Reached: " .. tostring(game.wave or 1), 0, VIRTUAL_HEIGHT / 2 - 10, VIRTUAL_WIDTH, "center")
-        -- love.graphics.printf("Final Score: " .. tostring(game.xp or 0), 0, VIRTUAL_HEIGHT / 2 + 20, VIRTUAL_WIDTH, "center")
-        
-        -- Retry and Quit Buttons
-        local mx, my = love.mouse.getPosition()
-        local btnW = 130
-        local btnH = 45
-        local btnY = VIRTUAL_HEIGHT / 2 + 80
-        local retryX = VIRTUAL_WIDTH / 2 - 140
-        local quitX = VIRTUAL_WIDTH / 2 + 10
-        
-        local isRetryHovered = mx >= retryX and mx <= retryX + btnW and my >= btnY and my <= btnY + btnH
-        local isQuitHovered = mx >= quitX and mx <= quitX + btnW and my >= btnY and my <= btnY + btnH
-        
-        -- Draw Retry Button (Green themed)
-        love.graphics.setColor(isRetryHovered and {0.2, 0.8, 0.2, 1} or {0.1, 0.5, 0.1, 1})
-        love.graphics.rectangle("fill", retryX, btnY, btnW, btnH, 8, 8)
-        love.graphics.setColor(0.5, 1, 0.5, 1)
-        love.graphics.setLineWidth(isRetryHovered and 2 or 1)
-        love.graphics.rectangle("line", retryX, btnY, btnW, btnH, 8, 8)
-        
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("Retry", retryX, btnY + 15, btnW, "center")
-        
-        -- Draw Quit Button (Red themed)
-        love.graphics.setColor(isQuitHovered and {0.8, 0.2, 0.2, 1} or {0.5, 0.1, 0.1, 1})
-        love.graphics.rectangle("fill", quitX, btnY, btnW, btnH, 8, 8)
-        love.graphics.setColor(1, 0.5, 0.5, 1)
-        love.graphics.setLineWidth(isQuitHovered and 2 or 1)
-        love.graphics.rectangle("line", quitX, btnY, btnW, btnH, 8, 8)
-        love.graphics.setLineWidth(1)
-        
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("Quit Game", quitX, btnY + 15, btnW, "center")
-        return
-    end
     game:draw()
     if paused == 1 then
         love.graphics.setColor(0, 0, 0, 0.5) -- Semi-transparent black for pause overlay

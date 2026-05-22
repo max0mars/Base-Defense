@@ -4,6 +4,7 @@ local Carrier = setmetatable({}, {__index = Enemy})
 Carrier.__index = Carrier
 
 local default = {
+    name = "Carrier",
     speed = 18, -- Slower than standard 25
     maxHp = 300,
     damage = 20,

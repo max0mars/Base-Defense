@@ -4,6 +4,7 @@ local BeastMaster = setmetatable({}, {__index = Enemy})
 BeastMaster.__index = BeastMaster
 
 local default = {
+    name = "Beast Master",
     speed = 20,
     maxHp = 350,
     damage = 25,

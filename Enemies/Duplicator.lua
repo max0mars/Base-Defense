@@ -3,6 +3,7 @@ local Duplicator = setmetatable({}, {__index = Enemy})
 Duplicator.__index = Duplicator
 
 local default = {
+    name = "Duplicator",
     speed = 22,
     damage = 20,
     maxHp = 200,
