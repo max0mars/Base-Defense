@@ -104,6 +104,12 @@ end
 function Enemy:update(dt)
     if self.destroyed then return end
     
+    self.effectManager:update(dt) -- Update status effects
+    
+    if self:getStat("stunned", 0) > 0 then
+        return
+    end
+    
     self.w = self:getStat("size")
     self.h = self:getStat("size")
     self:getTargetPos()
@@ -116,7 +122,6 @@ function Enemy:update(dt)
         self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
-    self.effectManager:update(dt) -- Update status effects
 end
 
 function Enemy:takeDamage(amount, damageType, hitX, hitY)

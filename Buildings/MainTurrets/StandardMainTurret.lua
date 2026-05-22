@@ -197,10 +197,7 @@ function StandardMainTurret:fire(args)
      args.fireX = fX
      args.fireY = fY
      
-     -- Pass hit effects to the bullet
-     args.onHitCallback = function(bullet, target)
-         self:applyHitEffects(target)
-     end
+     -- Hit effects are already handled by Turret:fire passing them to the bullet.
      
      MainLazer.fire(self, args)
 end

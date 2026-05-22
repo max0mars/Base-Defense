@@ -9,6 +9,7 @@ EffectManager.colors = {
     slow = {0.5, 0.8, 1.0, 1},
     slow_aura = {0.5, 0.8, 1.0, 1},
     GuardianAura = {0.6, 0.6, 0.6, 1},
+    stun = {1, 1, 0, 1}, -- Yellow for stun
     -- add other effect colors here
 }
 

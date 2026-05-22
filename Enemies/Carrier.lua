@@ -41,6 +41,8 @@ function Carrier:update(dt)
     -- Call base update for movement and pathfinding
     Enemy.update(self, dt)
     
+    if self:getStat("stunned", 0) > 0 then return end
+    
     -- Spawning Logic
     self.spawnTimer = self.spawnTimer + dt
     local interval = self:getStat("spawnInterval") or 4
