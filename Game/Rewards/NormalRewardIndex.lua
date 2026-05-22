@@ -122,6 +122,14 @@ local RewardIndex = {
             iconCategory = "turret",
             building = require("Buildings.Turrets.Grenadier")
         },
+        {
+            id = "slushCannon",
+            name = "The Slush Cannon",
+            description = "Fires heavy clumps of slush that slow enemies on impact.",
+            type = "building",
+            building = require("Buildings.Turrets.SlushCannon"),
+            iconCategory = "turret"
+        },
     },
     rare = {
         {
@@ -138,14 +146,6 @@ local RewardIndex = {
             description = "Hard hitting rounds go right through enemies.",
             type = "building",
             building = require("Buildings.Turrets.Gator"),
-            iconCategory = "turret"
-        },
-        {
-            id = "slushCannon",
-            name = "The Slush Cannon",
-            description = "Fires heavy clumps of slush that slow enemies on impact.",
-            type = "building",
-            building = require("Buildings.Turrets.SlushCannon"),
             iconCategory = "turret"
         },
 

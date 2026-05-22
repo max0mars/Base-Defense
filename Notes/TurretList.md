@@ -95,3 +95,15 @@
 - **Range**: 450
 - **Fire Rate**: 0.4
 - **Description**: Fires missiles that explode on impact, dealing double damage in a radius.
+
+## The Hook
+- **Damage**: 25
+- **Range**: 300
+- **Fire Rate**: 0.2
+- **Description**: Fires a heavy shot that stuns enemies in their tracks.
+
+## Slush Cannon
+- **Damage**: 5
+- **Range**: 350
+- **Fire Rate**: 0.25
+- **Description**: Fires heavy clumps of slush that slow enemies on impact.

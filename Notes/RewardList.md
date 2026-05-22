@@ -17,6 +17,7 @@ Uncommon
 - Flux Cannon [Buildings.Turrets.FluxCannon]: Energy damage that ignores heavy armor.
 - Bank [Buildings.Buffs.Bank]: Generates 1 Token per wave if adjacent slots are occupied.
 - Grenadier [Buildings.Turrets.Grenadier]: Lobs grenades that explode after a short delay.
+- Slush Cannon [Buildings.Turrets.SlushCannon]: Fires heavy clumps of slush that slow enemies on impact.
 
 Rare
 - Chem Lab [Buildings.Buffs.ToxicTotem]: Spreads deadly toxins. Highly contagious.
@@ -27,6 +28,7 @@ Rare
 - CSR-8 Sequence [Buildings.Turrets.SequenceTurret]: Shoots faster the longer it stays locked onto a target.
 - Slotted Blocker [Buildings.Blockers.SlottedBlocker]: It's a fence with a free turret slot!
 - Frost Trap [Buildings.Blockers.SlowBlocker]: Slows down nearby enemies.
+- The Hook [Buildings.Turrets.HookTurret]: Fires a heavy shot that stuns enemies in their tracks.
 
 Epic
 - Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.
