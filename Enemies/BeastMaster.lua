@@ -12,7 +12,7 @@ local default = {
     color = {0.5, 0.1, 0.5, 1},
     types = { beastmaster = true },
     -- Summoning defaults
-    spawnInterval = 5,
+    spawnInterval = 6,
     spawnCount = 3,
     maxBeasts = 6,
     bloodPackHeal = false
@@ -48,6 +48,36 @@ function BeastMaster:update(dt)
     for i = #self.activeBeasts, 1, -1 do
         if self.activeBeasts[i].destroyed then
             table.remove(self.activeBeasts, i)
+        end
+    end
+    
+    -- Apply Speed aura to active beasts nearby
+    local masterSpeed = self:getStat("speed")
+    for _, beast in ipairs(self.activeBeasts) do
+        local distToMasterX = beast.x - self.x
+        if distToMasterX <= beast.formationRadius then
+            local rawSpeed = beast.speed or 140
+            local speedMult = (masterSpeed / rawSpeed) - 1
+            
+            local existing = beast.effectManager:getEffect("hidden_BeastFormationSpeed")
+            if existing then
+                existing.duration = 0.2
+                if existing.statModifiers.speed.mult ~= speedMult then
+                    existing.statModifiers.speed.mult = speedMult
+                    beast.effectManager:recalculateStats()
+                end
+            else
+                local auraEffectTemplate = {
+                    name = "hidden_BeastFormationSpeed",
+                    duration = 0.2,
+                    maxStacks = 1,
+                    statModifiers = {
+                        speed = { mult = speedMult }
+                    },
+                    globalStacks = 1
+                }
+                beast.effectManager:applyEffect(auraEffectTemplate)
+            end
         end
     end
     
