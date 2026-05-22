@@ -56,11 +56,14 @@ function EffectManager:recalculateStats()
                         })
                     else
                         if not self.currentModifiers[statName] then
-                            self.currentModifiers[statName] = {add = 0, mult = 0, max = 0}
+                            self.currentModifiers[statName] = {add = 0, mult = 0, max = 0, compoundMult = 1}
                         end
                         local m = self.currentModifiers[statName]
                         m.add = m.add + (mod.add or mod.additive or 0)
                         m.mult = m.mult + (mod.mult or mod.multiplier or 0)
+                        if mod.compoundMult then
+                            m.compoundMult = m.compoundMult * mod.compoundMult
+                        end
                         if mod.max then
                             m.max = math.max(m.max, mod.max)
                         end
@@ -113,7 +116,7 @@ function EffectManager:applyEffect(effectTemplate, source)
     end
     local maxStacks = sourceMaxStacks or math.huge
     if effect.globalStacks then
-        maxStacks = 1
+        maxStacks = effect.globalStacks
     end
 
     local inheritedTime = nil
@@ -224,6 +227,9 @@ function EffectManager:getStat(statName, baseValue)
     if not mod then return baseValue end
     
     local finalMult = math.max(0, 1 + mod.mult)
+    if mod.compoundMult then
+        finalMult = finalMult * mod.compoundMult
+    end
     
     if baseValue < mod.max then 
         return (mod.add + mod.max) * finalMult
@@ -235,7 +241,11 @@ end
 function EffectManager:getStatMult(statName)
     local mod = self.currentModifiers[statName]
     if not mod then return 1 end
-    return math.max(0, 1 + mod.mult)
+    local finalMult = math.max(0, 1 + mod.mult)
+    if mod.compoundMult then
+        finalMult = finalMult * mod.compoundMult
+    end
+    return finalMult
 end
 
 function EffectManager:getDamage(baseValue, damageTags)

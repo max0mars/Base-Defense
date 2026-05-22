@@ -45,8 +45,12 @@ function PoisonTurret:new(config)
     end
     
     -- Initialize hit effects from the config values
-    local poisonEffectConfig = Utils.deepCopy(baseConfig)
-    poisonEffectConfig.name = "poison"
+    local poisonEffectConfig = {
+        name = "poison",
+        duration = baseConfig.duration_poison,
+        dps_poison = baseConfig.dps_poison,
+        maxStacks = baseConfig.maxStacks
+    }
     baseConfig.hitEffects = {PoisonEffect:new(poisonEffectConfig)}
     
     local t = Turret:new(baseConfig)

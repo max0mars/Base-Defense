@@ -17,7 +17,7 @@ function Slow:new(config)
     instance.hidden = config.hidden or false
     
     instance.statModifiers = {
-        speed = { mult = -instance.amount }
+        speed = { compoundMult = 1 - instance.amount }
     }
     
     return instance
