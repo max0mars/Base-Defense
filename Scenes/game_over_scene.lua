@@ -22,7 +22,7 @@ function game_over_scene:draw()
     love.graphics.setColor(1, 0.2, 0.2)
     love.graphics.push()
     love.graphics.scale(2, 2)
-    love.graphics.printf("GAME OVER", 0, VIRTUAL_HEIGHT / 4 - 40, VIRTUAL_WIDTH / 2, "center")
+    love.graphics.printf("GAME OVER", 0, VIRTUAL_HEIGHT / 8 - 20, VIRTUAL_WIDTH / 2, "center")
     love.graphics.pop()
     
     -- Stats
@@ -63,19 +63,47 @@ function game_over_scene:draw()
             love.graphics.setColor(1, 1, 1, 0.8)
             love.graphics.printf("Wave: " .. tostring(item.wave), startX + col * cellW, startY + row * cellH + 5, cellW, "center")
             
-            -- Draw Sprite (fallback)
-            if item.color then
-                love.graphics.setColor(unpack(item.color))
-            else
-                love.graphics.setColor(1, 0, 0, 1)
-            end
-            
+            -- Draw Sprite
             local drawW = item.w or 20
             local drawH = item.h or 20
-            if item.shape == "circle" then
-                love.graphics.circle("fill", cx, cy, drawW / 2)
+            
+            local enemyFileName = item.name
+            if enemyFileName == "Basic" then enemyFileName = "Enemy" end
+            local success, enemyClass = pcall(require, "Enemies." .. enemyFileName)
+            
+            if success and enemyClass then
+                local mockEnemy = {
+                    x = cx,
+                    y = cy,
+                    w = drawW,
+                    h = drawH,
+                    hp = 1,
+                    maxHp = 1,
+                    shield = 0,
+                    maxShield = 0,
+                    color = item.color or {1, 0, 0, 1},
+                    game = game,
+                    getStat = function(self, stat)
+                        if stat == "maxHp" then return self.maxHp end
+                        if stat == "size" then return self.w end
+                        return 0
+                    end
+                }
+                setmetatable(mockEnemy, { __index = enemyClass })
+                mockEnemy:draw()
             else
-                love.graphics.rectangle("fill", cx - drawW/2, cy - drawH/2, drawW, drawH)
+                -- Fallback
+                if item.color then
+                    love.graphics.setColor(unpack(item.color))
+                else
+                    love.graphics.setColor(1, 0, 0, 1)
+                end
+                
+                if item.shape == "circle" then
+                    love.graphics.circle("fill", cx, cy, drawW / 2)
+                else
+                    love.graphics.rectangle("fill", cx - drawW/2, cy - drawH/2, drawW, drawH)
+                end
             end
             
             -- Draw Damage
