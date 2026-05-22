@@ -4,6 +4,7 @@ local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
 
 local Stats = {
+    name = "Basic",
     speed = 25,
     damage = 10,
     reward = 25,
@@ -119,7 +120,7 @@ function Enemy:update(dt)
     end
     
     if self.x < self.target then
-        self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y) -- Damage the base if the enemy reaches it
+        self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y, self) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
 end

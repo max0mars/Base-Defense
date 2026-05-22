@@ -85,7 +85,7 @@ function Blaster:fire(args)
     if self.isBursting then
         Turret.fire(self, args)
     else
-        self.burstCount = self.burstAmount
+        self.burstCount = self.burstAmount - 1
         self.burstTimer = self.burstDelay
         self.lastArgs = args
         

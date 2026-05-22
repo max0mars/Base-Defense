@@ -3,6 +3,7 @@ local Flyer = setmetatable({}, {__index = Enemy})
 Flyer.__index = Flyer
 
 local default = {
+    name = "Flyer",
     speed = 16,
     maxHp = 800,
     damage = 30,

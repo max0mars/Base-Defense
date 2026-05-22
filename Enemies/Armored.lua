@@ -3,6 +3,7 @@ local Armored = setmetatable({}, {__index = Enemy})
 Armored.__index = Armored
 
 local default = {
+    name = "Armored",
     speed = 20,
     damage = 15,
     maxHp = 300,

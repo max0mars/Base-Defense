@@ -124,7 +124,7 @@ local RewardIndex = {
         },
         {
             id = "slushCannon",
-            name = "The Slush Cannon",
+            name = "Slush Cannon",
             description = "Fires heavy clumps of slush that slow enemies on impact.",
             type = "building",
             building = require("Buildings.Turrets.SlushCannon"),

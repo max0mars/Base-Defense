@@ -3,6 +3,7 @@ local Beast = setmetatable({}, {__index = Enemy})
 Beast.__index = Beast
 
 local default = {
+    name = "Beast",
     speed = 140,
     maxHp = 30,
     damage = 5,
@@ -106,7 +107,7 @@ function Beast:update(dt)
         -- Check if it reached the base
         self:getTargetPos() -- Ensure target is updated
         if self.x < self.target then
-            self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y)
+            self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y, self)
             self:died()
         end
     else
@@ -116,7 +117,7 @@ function Beast:update(dt)
         if self.x > self.target then
             self.x = self.x - currentSpeed * dt
         else
-            self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y)
+            self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y, self)
             self:died()
         end
     end
