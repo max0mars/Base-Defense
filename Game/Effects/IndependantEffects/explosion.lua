@@ -77,7 +77,7 @@ function Explosion:trigger(target, source)
     })
     
     -- Apply damage logic immediately
-    event:applyDamage(source)
+    event:applyDamage(source, target)
     
     -- Add to animations table for visual feedback
     table.insert(source.game.animations, event)
@@ -88,7 +88,7 @@ function Explosion:trigger(target, source)
     end
 end
 
-function Explosion:applyDamage(source)
+function Explosion:applyDamage(source, target)
     if self.radius <= 0 then return end
     local r2 = self.radius * self.radius
     local game = self.game
@@ -123,59 +123,68 @@ function Explosion:applyDamage(source)
                 --     obj.effectManager:applyEffect(Toxic:new(), source)
                 -- end
 
-                -- Apply auxiliary hit effects (Poison, Burn, etc.)
-                local auxiliaryEffects = {}
-                local seenEffects = {}
-                
-                local function collect(effectsTable)
-                    if not effectsTable then return end
-                    for _, effect in ipairs(effectsTable) do
-                        if not effect.isIndependent and effect.name and not seenEffects[effect.name] then
-                            table.insert(auxiliaryEffects, effect)
-                            seenEffects[effect.name] = true
-                        end
+                local isDirectTarget = false
+                if target and obj == target and source and source.getStat then
+                    if source:getStat("canDirectHit") then
+                        isDirectTarget = true
                     end
                 end
 
-                if source then
-                    collect(source.hitEffects)
+                if not isDirectTarget then
+                    -- Apply auxiliary hit effects (Poison, Burn, etc.)
+                    local auxiliaryEffects = {}
+                    local seenEffects = {}
                     
-                    if source.effectManager then
-                        local function collectFromEM(em)
-                            for _, effect in ipairs(em.activeEffects) do
-                                if effect.grantedHitEffect then
-                                    local ge = effect.grantedHitEffect
-                                    if not ge.isIndependent and ge.name and not seenEffects[ge.name] then
-                                        table.insert(auxiliaryEffects, ge)
-                                        seenEffects[ge.name] = true
-                                    end
-                                end
+                    local function collect(effectsTable)
+                        if not effectsTable then return end
+                        for _, effect in ipairs(effectsTable) do
+                            if not effect.isIndependent and effect.name and not seenEffects[effect.name] then
+                                table.insert(auxiliaryEffects, effect)
+                                seenEffects[effect.name] = true
                             end
-                            if em.parent then collectFromEM(em.parent) end
                         end
-                        collectFromEM(source.effectManager)
                     end
-                    
-                    if source.source and source.source.effectManager then
-                        local function collectFromEM(em)
-                            for _, effect in ipairs(em.activeEffects) do
-                                if effect.grantedHitEffect then
-                                    local ge = effect.grantedHitEffect
-                                    if not ge.isIndependent and ge.name and not seenEffects[ge.name] then
-                                        table.insert(auxiliaryEffects, ge)
-                                        seenEffects[ge.name] = true
-                                    end
-                                end
-                            end
-                            if em.parent then collectFromEM(em.parent) end
-                        end
-                        collectFromEM(source.source.effectManager)
-                    end
-                end
 
-                for _, effect in ipairs(auxiliaryEffects) do
-                    if obj.effectManager then
-                        obj.effectManager:applyEffect(effect, source)
+                    if source then
+                        collect(source.hitEffects)
+                        
+                        if source.effectManager then
+                            local function collectFromEM(em)
+                                for _, effect in ipairs(em.activeEffects) do
+                                    if effect.grantedHitEffect then
+                                        local ge = effect.grantedHitEffect
+                                        if not ge.isIndependent and ge.name and not seenEffects[ge.name] then
+                                            table.insert(auxiliaryEffects, ge)
+                                            seenEffects[ge.name] = true
+                                        end
+                                    end
+                                end
+                                if em.parent then collectFromEM(em.parent) end
+                            end
+                            collectFromEM(source.effectManager)
+                        end
+                        
+                        if source.source and source.source.effectManager then
+                            local function collectFromEM(em)
+                                for _, effect in ipairs(em.activeEffects) do
+                                    if effect.grantedHitEffect then
+                                        local ge = effect.grantedHitEffect
+                                        if not ge.isIndependent and ge.name and not seenEffects[ge.name] then
+                                            table.insert(auxiliaryEffects, ge)
+                                            seenEffects[ge.name] = true
+                                        end
+                                    end
+                                end
+                                if em.parent then collectFromEM(em.parent) end
+                            end
+                            collectFromEM(source.source.effectManager)
+                        end
+                    end
+
+                    for _, effect in ipairs(auxiliaryEffects) do
+                        if obj.effectManager then
+                            obj.effectManager:applyEffect(effect, source)
+                        end
                     end
                 end
             end

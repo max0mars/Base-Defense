@@ -14,7 +14,7 @@ function Toxic:new(config)
     instance.dps = config.dps or 6
     instance.speedMult = config.speedMult or -0.15
     instance.bloomDamage = config.bloomDamage or 3
-    instance.globalStacks = true
+    instance.globalStacks = 1
     
     -- Internal state
     instance.time = 0
