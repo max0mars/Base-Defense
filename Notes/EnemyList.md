@@ -65,9 +65,9 @@
 ## Guardian
 - **Health**: 250
 - **Damage**: 20
-- **Speed**: 22
-- **Spawn Cost**: 75
-- **Spawn Weight**: 25
+- **Speed**: 18
+- **Spawn Cost**: 80
+- **Spawn Weight**: 20
 - **Upgrades**:
   - Guardian Aura: Guardian projects a 25% damage reduction aura to nearby allies.
   - Shield Overcharge: Doubles the amount of shields granted to allies.
@@ -82,3 +82,13 @@
   - Symbiotic Burst: On duplication, releases a healing wave affecting all enemies.
   - Accelerated Mitosis: Each duplication stage has increased movement speed.
   - Hyper-Replication: The last duplication stage spawns 1 extra clone.
+
+## BeastMaster
+- **Health**: 350
+- **Damage**: 25
+- **Speed**: 20
+- **Spawn Cost**: 70
+- **Spawn Weight**: 20
+- **Upgrades**:
+  - Blood Pack: The summon effect also fully heals his currently active beasts.
+  - Endless Pack: Increases beasts per summon to 4 and max beasts to 8.

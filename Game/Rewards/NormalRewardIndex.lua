@@ -99,11 +99,11 @@ local RewardIndex = {
             iconCategory = "buff"
         },
         {
-            id = "energyBlaster",
-            name = "Energy Blaster",
+            id = "fluxCannon",
+            name = "Flux Cannon",
             description = "Energy damage that ignores heavy armor.",
             type = "building",
-            building = require("Buildings.Turrets.EnergyBlaster"),
+            building = require("Buildings.Turrets.FluxCannon"),
             iconCategory = "turret"
         },
         {

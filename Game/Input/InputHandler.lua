@@ -317,17 +317,21 @@ function InputHandler:mousepressed(x, y, button)
     local mainLazer = game.mainLazer
     
     if button == 2 then
-        local clickedTarget = false
+        local bestTarget = nil
         for _, obj in ipairs(game.objects) do
             if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainLazer") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
-                    self.destructionTarget = obj
-                    clickedTarget = true
-                    break
+                    bestTarget = obj
+                    if obj:isType("turret") or obj:isType("passive") then
+                        break
+                    end
                 end
             end
         end
-        if not clickedTarget then
+        if bestTarget then
+            self.destructionTarget = bestTarget
+            clickedTarget = true
+        else
             self.destructionTarget = nil
         end
         return

@@ -43,7 +43,7 @@ function tutorial_scene:load()
         { id = 3, type = "dialog", text = "This is your Base. Do not let enemies reach it!\nIf they do, your base health will decrease.", target = {x = 120, y = 300, angle = 0} },
         { id = 4, type = "shoot", text = "You can fire the main laser manually from the base.\n\nLeft-click anywhere on the screen to fire standard laser beams!", target = {x = 50, y = 287, angle = 0} },
         { id = 5, type = "autofire_on", text = "Manual shooting is great, but we can automate it.\n\nPress the TAB key to toggle Auto-Fire on.", target = {x = 475, y = 24, angle = math.pi/2} },
-        { id = 5.5, type = "autofire_off", text = "Auto-Fire will target and fire at enemies automatically during waves. Now let's toggle it back off.\n\nPress the TAB key again to turn it off.", target = {x = 475, y = 24, angle = math.pi/2} },
+        { id = 5.5, type = "autofire_off", text = "Auto-Fire will automatically shoot during waves but you still need to aim! Now let's toggle it back off.\n\nPress the TAB key again to turn it off.", target = {x = 475, y = 24, angle = math.pi/2} },
         { id = 6, type = "buy_sentry", text = "Now let's expand our arsenal.\n\nClick the 'Buy Upgrade' button to see card choices.", target = {x = 285, y = 65, angle = math.pi/2} },
         { id = 6.5, type = "select_sentry", text = "We must select the Sentry turret card.\n\nClick on the Sentry (first card) to select it." },
         { id = 7, type = "store_sentry", text = "Instead of placing it immediately, let's store it.\n\nMove the mouse to the bottom bar and click to store it in your inventory.", target = {x = 400, y = 550, angle = -math.pi/2} },
@@ -133,6 +133,10 @@ function tutorial_scene:load()
             this.gui:update(dt)
             this.inventory:update(dt)
             this.inputHandler:update(dt)
+            
+            if this.rewardSystem then
+                this.rewardSystem:update(dt)
+            end
             
             -- Keep gameplay objects/components frozen
             this.WaveSpawner:update(0)
@@ -245,9 +249,19 @@ function tutorial_scene:load()
         end
         
         local Reward = require("Game.Rewards.Reward")
-        for _, data in ipairs(choicesData) do
+        local CardReveal = require("Graphics.Animations.CardReveal")
+        
+        rewardSys.revealTimer = 0
+        rewardSys.nextRevealIndex = 1
+        
+        for i, data in ipairs(choicesData) do
             data.game = game
-            table.insert(rewardSys.rewardPool, Reward:new(data))
+            local rewardObj = Reward:new(data)
+            local x = rewardSys.startX + (i - 1) * (rewardSys.cardWidth + rewardSys.cardSpacing)
+            local y = rewardSys.startY
+            
+            local card = CardReveal:new(rewardObj, x, y, rewardSys.cardWidth, rewardSys.cardHeight)
+            table.insert(rewardSys.rewardPool, card)
         end
         rewardSys.currentChoices = rewardSys.rewardPool
     end

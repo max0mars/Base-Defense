@@ -1,13 +1,13 @@
 local Turret = require("Buildings.Turrets.Turret")
 local EnergyBullet = require("Bullets.EnergyBullet")
-local EnergyBlaster = setmetatable({}, { __index = Turret })
-EnergyBlaster.__index = EnergyBlaster
+local FluxCannon = setmetatable({}, { __index = Turret })
+FluxCannon.__index = FluxCannon
 
-function EnergyBlaster:new(config)
+function FluxCannon:new(config)
     config = config or {}
     
-    -- Configure Energy Blaster Stats
-    config.name = "Energy Blaster"
+    -- Configure Flux Cannon Stats
+    config.name = "Flux Cannon"
     config.color = {0, 1, 1, 1} -- Bright Cyan
     config.rotation = config.rotation or 0
     config.turnSpeed = 4
@@ -37,13 +37,13 @@ function EnergyBlaster:new(config)
     }
     
     local instance = Turret:new(config)
-    setmetatable(instance, EnergyBlaster)
+    setmetatable(instance, FluxCannon)
     
     instance.bulletType = EnergyBullet
     return instance
 end
 
-function EnergyBlaster:draw(drawx, drawy)
+function FluxCannon:draw(drawx, drawy)
     local cx, cy = drawx or self.x, drawy or self.y
     if not drawx and not drawy then
         cx, cy = self:getCenterPosition()
@@ -98,4 +98,4 @@ function EnergyBlaster:draw(drawx, drawy)
     love.graphics.pop()
 end
 
-return EnergyBlaster
+return FluxCannon

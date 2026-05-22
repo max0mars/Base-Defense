@@ -65,9 +65,12 @@ function SlottedBlocker:onRemoved()
     
     -- 1. Identify and destroy any turrets on my slots
     for _, slotID in ipairs(self.managedSlots) do
-        local building = grid.buildings[slotID]
-        if building and building ~= self then
-            building:remove() -- Standard cleanup
+        for _, obj in ipairs(self.game.objects) do
+            if not obj.destroyed and (obj:isType("turret") or obj:isType("passive")) then
+                if obj.occupiesSlot and obj:occupiesSlot(slotID) then
+                    obj:remove()
+                end
+            end
         end
         
         -- 2. Re-lock the slot

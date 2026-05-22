@@ -14,7 +14,7 @@ Uncommon
 - Small Fence [Buildings.Blockers.SmallFence]: Redirect Enemy movement.
 - Ammo Cache [Buildings.Buffs.Buff]: Increase nearby turret damage by 20%
 - Recursive Rounds [Buildings.Buffs.ShardBullets]: Bullets will now split on inpact.
-- Energy Blaster [Buildings.Turrets.EnergyBlaster]: Energy damage that ignores heavy armor.
+- Flux Cannon [Buildings.Turrets.FluxCannon]: Energy damage that ignores heavy armor.
 - Bank [Buildings.Buffs.Bank]: Generates 1 Token per wave if adjacent slots are occupied.
 - Grenadier [Buildings.Turrets.Grenadier]: Lobs grenades that explode after a short delay.
 

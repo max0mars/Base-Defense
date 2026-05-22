@@ -10,7 +10,7 @@ function Toxic:new(config)
     -- Configurable variables
     instance.name = "toxic"
     instance.displayName = "Toxic"
-    instance.duration = config.duration or 8
+    instance.duration = config.duration or 16
     instance.dps = config.dps or 6
     instance.speedMult = config.speedMult or -0.15
     instance.bloomDamage = config.bloomDamage or 3
