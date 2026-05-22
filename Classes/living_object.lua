@@ -143,7 +143,7 @@ function living_object:drawStatusEffects()
 
     local effectCount = 0
     for name, count in pairs(self.effectManager.effectCounts) do
-        if count > 0 then
+        if count > 0 and not string.match(name, "^hidden_") then
             effectCount = effectCount + 1
         end
     end
@@ -156,7 +156,7 @@ function living_object:drawStatusEffects()
     local i = 0
     local EffectManager = require("Game.Effects.EffectManager")
     for name, count in pairs(self.effectManager.effectCounts) do
-        if count > 0 then
+        if count > 0 and not string.match(name, "^hidden_") then
             local color = EffectManager.colors[name] or {1,1,1,1}
             love.graphics.setColor(color)
             love.graphics.circle("fill", drawX + i*(iconSize+spacing) + iconSize/2, drawY + iconSize/2, iconSize/2)
