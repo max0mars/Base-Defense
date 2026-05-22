@@ -48,6 +48,7 @@ function Blaster:new(config)
     local t = Turret:new(baseConfig)
     setmetatable(t, { __index = self })
     
+    t.burstAmount = 3
     t.burstCount = 0
     t.burstDelay = 0.1
     t.burstTimer = 0
@@ -84,7 +85,7 @@ function Blaster:fire(args)
     if self.isBursting then
         Turret.fire(self, args)
     else
-        self.burstCount = 2
+        self.burstCount = self.burstAmount
         self.burstTimer = self.burstDelay
         self.lastArgs = args
         

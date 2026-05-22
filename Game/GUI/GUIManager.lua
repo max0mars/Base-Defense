@@ -202,21 +202,21 @@ function GUIManager:drawHUD()
     
     -- WAVE
     love.graphics.setColor(0, 0.85, 1.0, 0.8)
-    love.graphics.print("WAVE", 20, 14)
+    love.graphics.print("WAVE", 20, 20)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print(tostring(game.wave), 90, 14)
+    love.graphics.print(tostring(game.wave), 90, 20)
     
     -- TOKENS
     love.graphics.setColor(1.0, 0.7, 0.1, 0.8)
-    love.graphics.print("TOKENS", 20, 31)
+    love.graphics.print("TOKENS", 20, 42)
     love.graphics.setColor(1.0, 0.9, 0.2, 1)
-    love.graphics.print(tostring(game.tokens), 90, 31)
+    love.graphics.print(tostring(game.tokens), 90, 42)
     
     -- SCORE
-    love.graphics.setColor(1.0, 0.2, 0.6, 0.8)
-    love.graphics.print("SCORE", 20, 48)
-    love.graphics.setColor(1.0, 0.4, 0.8, 1)
-    love.graphics.print(tostring(game.xp), 90, 48)
+    -- love.graphics.setColor(1.0, 0.2, 0.6, 0.8)
+    -- love.graphics.print("SCORE", 20, 48)
+    -- love.graphics.setColor(1.0, 0.4, 0.8, 1)
+    -- love.graphics.print(tostring(game.xp), 90, 48)
     
     -- HEALTH BAR
     if game.base then

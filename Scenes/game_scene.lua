@@ -97,7 +97,7 @@ function game_scene:draw()
         -- Stats
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf("Wave Reached: " .. tostring(game.wave or 1), 0, VIRTUAL_HEIGHT / 2 - 10, VIRTUAL_WIDTH, "center")
-        love.graphics.printf("Final Score: " .. tostring(game.xp or 0), 0, VIRTUAL_HEIGHT / 2 + 20, VIRTUAL_WIDTH, "center")
+        -- love.graphics.printf("Final Score: " .. tostring(game.xp or 0), 0, VIRTUAL_HEIGHT / 2 + 20, VIRTUAL_WIDTH, "center")
         
         -- Retry and Quit Buttons
         local mx, my = love.mouse.getPosition()
@@ -155,9 +155,9 @@ function game_scene:keypressed(key)
     if key == "p" then
         paused = paused == 1 and 0 or 1 -- Toggle pause
     elseif key == "+" or key == "=" then
-        game.time_mul = math.min(game.time_mul + 0.5, 5) -- Increase time multiplier up to 5x
+        game.time_mul = math.min(game.time_mul + 0.5, 2) -- Increase time multiplier up to 2x
     elseif key == "-" then
-        game.time_mul = math.max(game.time_mul - 0.5, 0) -- Decrease time multiplier down to 0x
+        game.time_mul = math.max(game.time_mul - 0.5, 0.5) -- Decrease time multiplier down to 0.5x
     elseif key == "escape" then
         if game.gui.confirmation.active then
             game.gui.confirmation.active = false
