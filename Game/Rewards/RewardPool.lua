@@ -89,19 +89,30 @@ function RewardPool:getRandomRewardFromTier(rarity, excludedIds)
                 if #available > 0 then
                     local choice = available[math.random(1, #available)]
                     
-                    -- Step 3: Deep copy to prevent modifying the master index
-                    -- (Fixes the issue where stamping rarity leaked into other hands)
+                    -- Deep copy to prevent modifying the master index
+                    local function deepCopy(obj)
+                        if type(obj) ~= 'table' then return obj end
+                        local res = {}
+                        for k, v in pairs(obj) do res[k] = deepCopy(v) end
+                        return res
+                    end
+                    
                     local reward = {}
                     for k, v in pairs(choice) do
-                        if type(v) == "table" and k ~= "building" then
-                            reward[k] = {}
-                            for subK, subV in pairs(v) do reward[k][subK] = subV end
-                        else
+                        if k == "building" then
                             reward[k] = v
+                        else
+                            reward[k] = deepCopy(v)
                         end
                     end
                     
-                    reward.rarity = r
+                    if reward.onGenerate then
+                        reward:onGenerate()
+                    end
+                    
+                    if not reward.rarity then
+                        reward.rarity = r
+                    end
                     return reward
                 end
             end

@@ -15,6 +15,10 @@ function Reward:new(config)
     reward.id = config.id or nil -- Unique identifier
     reward.effect = config.effect or nil -- Table for Status Effects
     reward.iconCategory = config.iconCategory or nil
+    reward.shapePattern = config.shapePattern or nil
+    reward.color = config.color or nil
+    reward.turretSlots = config.turretSlots or nil
+    reward.isSlotted = config.isSlotted or false
     
     -- Rarity colors for visual representation
     reward.rarityColors = {
@@ -22,7 +26,8 @@ function Reward:new(config)
         uncommon = {0.0, 1.0, 0.0}, -- Green
         rare = {0.0, 0.5, 1.0}, -- Blue
         epic = {0.6, 0.0, 1.0}, -- Purple
-        legendary = {1.0, 0.8, 0.0} -- Gold
+        legendary = {1.0, 0.8, 0.0}, -- Gold
+        blocker = {0.9, 0.5, 0.1} -- Orange
     }
     -- Additional metadata
     reward.category = config.category or "general" -- weapon, defense, utility, etc.
@@ -180,13 +185,42 @@ function Reward:draw(x, y, width, height, isSelected)
             love.graphics.setColor(0.9, 0.9, 0.9, 1)
             love.graphics.rectangle("fill", cx - 1.5, cy - 9, 3, 5)
         elseif iconCat == "blocker" then
-            -- Small fence: 3 vertical posts, 2 horizontal rails
-            love.graphics.setColor(0.7, 0.5, 0.3, 1)
-            love.graphics.rectangle("fill", cx - 7, cy - 6, 2, 12)
-            love.graphics.rectangle("fill", cx - 1, cy - 6, 2, 12)
-            love.graphics.rectangle("fill", cx + 5, cy - 6, 2, 12)
-            love.graphics.rectangle("fill", cx - 8, cy - 3, 16, 2)
-            love.graphics.rectangle("fill", cx - 8, cy + 3, 16, 2)
+            if self.shapePattern then
+                local minX, maxX, minY, maxY = 0, 0, 0, 0
+                for _, p in ipairs(self.shapePattern) do
+                    minX = math.min(minX, p[1]); maxX = math.max(maxX, p[1])
+                    minY = math.min(minY, p[2]); maxY = math.max(maxY, p[2])
+                end
+                
+                local gridW = maxX - minX + 1
+                local gridH = maxY - minY + 1
+                local cellSize = 8
+                local startX = cx - (gridW * cellSize) / 2
+                local startY = cy - (gridH * cellSize) / 2
+                
+                for _, p in ipairs(self.shapePattern) do
+                    local px = startX + (p[1] - minX) * cellSize
+                    local py = startY + (p[2] - minY) * cellSize
+                    
+                    local isSlot = false
+                    if self.isSlotted and self.turretSlots then
+                        for _, ts in ipairs(self.turretSlots) do
+                            if ts[1] == p[1] and ts[2] == p[2] then
+                                isSlot = true
+                                break
+                            end
+                        end
+                    end
+                    
+                    if isSlot then
+                        love.graphics.setColor(0, 0.8, 1, 1) -- Blue
+                    else
+                        love.graphics.setColor(self.color or {0.9, 0.5, 0.1, 1})
+                    end
+                    
+                    love.graphics.rectangle("fill", px, py, cellSize-1, cellSize-1)
+                end
+            end
         elseif iconCat == "upgrade" then
             -- Plus sign (+)
             love.graphics.setColor(1, 0.8, 0.2, 1)

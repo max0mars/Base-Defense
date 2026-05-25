@@ -334,19 +334,19 @@ function Enemy:draw()
     local scissorY = drawY + self.h * (1 - fillRatio)
     local scissorH = self.h * fillRatio
     
-    love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
+    SetGameScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
     self:drawCustomShape("fill", cx, cy)
     
     -- Add a bright horizontal line at the health level "cap"
     if fillRatio > 0 and fillRatio < 1 then
-        love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
+        SetGameScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
         love.graphics.setColor(r, g, b, 1)
         self:drawCustomShape("fill", cx, cy)
-        love.graphics.setScissor()
+        SetGameScissor()
     end
     
-    love.graphics.setScissor()
+    SetGameScissor()
     
     -- 3. Layer 3 (Shield Fill): Flat Grey fill with bottom-up scissor
     if self.maxShield > 0 and self.shield > 0 then
@@ -354,10 +354,10 @@ function Enemy:draw()
         local sScissorY = drawY + self.h * (1 - shieldRatio)
         local sScissorH = self.h * shieldRatio
         
-        love.graphics.setScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
+        SetGameScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
         self:drawCustomShape("fill", cx, cy)
-        love.graphics.setScissor()
+        SetGameScissor()
     end
     
     -- 4. Layer 4 (Neon Border): Thick neon outer outline and glow

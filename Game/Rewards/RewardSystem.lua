@@ -38,13 +38,25 @@ function RewardSystem:new(game)
     return system
 end
 
-function RewardSystem:initializeRewardPool()
+function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     self.rewardPool = {} -- Clear previous
     self.revealTimer = 0
     self.nextRevealIndex = 1
     
+    local count = numCards or 3
     local luck = self.game.luck or 1
-    local choices = self.poolLogic:generateChoices(3, luck)
+    
+    local indexToUse = self.game.testingMode and TestingIndex or RewardIndex
+    if poolLogicMode == "blocker" then
+        indexToUse = require("Game.Rewards.BlockerRewardIndex")
+    end
+    
+    self.poolLogic = RewardPool:new(indexToUse, self.game)
+    local choices = self.poolLogic:generateChoices(count, luck)
+    
+    local totalWidth = (count * self.cardWidth) + ((count - 1) * self.cardSpacing)
+    local startX = (VIRTUAL_WIDTH - totalWidth) / 2
+    self.startX = startX
     
     for i, rewardData in ipairs(choices) do
         rewardData.game = self.game
@@ -57,10 +69,10 @@ function RewardSystem:initializeRewardPool()
     end
 end
 
-function RewardSystem:activate()
+function RewardSystem:activate(poolLogicMode, numCards)
     self.isActive = true
     self.selectedIndex = 1
-    self:initializeRewardPool()
+    self:initializeRewardPool(poolLogicMode, numCards)
     self.currentChoices = self.rewardPool
 end
 

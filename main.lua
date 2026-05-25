@@ -15,6 +15,27 @@ function love.mouse.getPosition()
     end
     return x, y
 end
+
+function SetGameScissor(x, y, w, h)
+    if not x then
+        if scalify and not scalify._canvas then
+            love.graphics.setScissor(scalify._OFFSET.x, scalify._OFFSET.y, scalify._WWIDTH * scalify._SCALE.x, scalify._WHEIGHT * scalify._SCALE.y)
+        else
+            love.graphics.setScissor()
+        end
+        return
+    end
+
+    if scalify and not scalify._canvas then
+        local rx, ry = scalify:toReal(x, y)
+        local rw = w * scalify._SCALE.x
+        local rh = h * scalify._SCALE.y
+        love.graphics.setScissor(math.floor(rx), math.floor(ry), math.floor(rw), math.ceil(rh))
+    else
+        love.graphics.setScissor(math.floor(x), math.floor(y), math.floor(w), math.ceil(h))
+    end
+end
+
 local state = 0
 local scene_manager = require("Scenes.scene_manager")
 
@@ -29,9 +50,9 @@ scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to me
 local AudioManager = require("Audio.AudioManager")
 
 function love.load()
-    love.graphics.setDefaultFilter("nearest", "nearest")
+    love.graphics.setDefaultFilter("linear", "linear")
     love.window.setTitle("Base Defense")
-    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true})
+    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true, canvas = false})
     scalify:setBorderColor(0.1, 0.1, 0.1)
     math.randomseed( os.time() )
     love.graphics.setBlendMode("alpha", "alphamultiply")

@@ -7,7 +7,7 @@ local default = {
     types = { blocker = true },
     --shape = "rectangle",
     color = {0.8, 0.4, 0.1, 1},
-    noBuildRadius = 1,
+    noBuildRadius = 0,
     cost = 50,
     shapePattern = {
         {0, 0}
@@ -38,27 +38,33 @@ function Blocker:draw(x, y)
     end
     
     -- Draw no-build zone feedback if placing
-    if self.isPreview then
+    if self.isPreview and self.noBuildRadius and self.noBuildRadius > 0 then
         local game = self.game
         local grid = self.buildGrid or (game and game.battlefieldGrid)
         if grid then
             love.graphics.setColor(1, 0.5, 0, 0.3) -- semi-transparent orange tint
             local r = self.noBuildRadius
             
-            local minX, maxX, minY, maxY = math.huge, -math.huge, math.huge, -math.huge
+            local reservedMap = {}
             for _, coord in ipairs(self.shapePattern) do
-                minX = math.min(minX, coord[1] - r)
-                maxX = math.max(maxX, coord[1] + r)
-                minY = math.min(minY, coord[2] - r)
-                maxY = math.max(maxY, coord[2] + r)
+                for dx = -r, r do
+                    for dy = -r, r do
+                        -- Don't draw over the blocker itself
+                        if dx ~= 0 or dy ~= 0 then
+                            local cx = coord[1] + dx
+                            local cy = coord[2] + dy
+                            local key = cx .. "," .. cy
+                            if not reservedMap[key] then
+                                reservedMap[key] = true
+                                local rx = drawX + (cx * w) - w/2
+                                local ry = drawY + (cy * h) - h/2
+                                love.graphics.rectangle("fill", rx, ry, w, h)
+                            end
+                        end
+                    end
+                end
             end
             
-            local rx = drawX + (minX * w) - w/2
-            local ry = drawY + (minY * h) - h/2
-            local rw = (maxX - minX + 1) * w
-            local rh = (maxY - minY + 1) * h
-            
-            love.graphics.rectangle("fill", rx, ry, rw, rh)
             love.graphics.setColor(1, 1, 1, 1)
         end
     end

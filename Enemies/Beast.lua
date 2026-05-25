@@ -146,17 +146,17 @@ function Beast:draw()
     local scissorY = (drawY - size/2) + size * (1 - fillRatio)
     local scissorH = size * fillRatio
     
-    love.graphics.setScissor(math.floor(drawX - size/2), math.floor(scissorY), math.ceil(size), math.ceil(scissorH))
+    SetGameScissor(math.floor(drawX - size/2), math.floor(scissorY), math.ceil(size), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.8)
     love.graphics.rectangle("fill", drawX - size/2, drawY - size/2, size, size)
     
     -- Bright horizontal line at health cap
     if fillRatio > 0 and fillRatio < 1 then
-        love.graphics.setScissor(math.floor(drawX - size/2), math.floor(scissorY), math.ceil(size), 2)
+        SetGameScissor(math.floor(drawX - size/2), math.floor(scissorY), math.ceil(size), 2)
         love.graphics.setColor(r, g, b, 1)
         love.graphics.rectangle("fill", drawX - size/2, drawY - size/2, size, size)
     end
-    love.graphics.setScissor()
+    SetGameScissor()
     
     -- Glowing borders
     for i = 3, 1, -1 do

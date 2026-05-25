@@ -87,21 +87,26 @@ end
 function SlottedBlocker:draw(x, y)
     Blocker.draw(self, x, y)
     
-    -- Draw slot indicators
-    if self.isPreview or self.selected then
-        local drawX = x or self.x
-        local drawY = y or self.y
-        local w = (self.buildGrid and self.buildGrid.cellSize) or 25
-        local h = (self.buildGrid and self.buildGrid.cellSize) or 25
+    local drawX = x or self.x
+    local drawY = y or self.y
+    local w = (self.buildGrid and self.buildGrid.cellSize) or 25
+    local h = (self.buildGrid and self.buildGrid.cellSize) or 25
+    
+    for _, rel in ipairs(self.turretSlots) do
+        local ox = rel[1] * w
+        local oy = rel[2] * h
         
-        love.graphics.setColor(0, 1, 1, 0.4)
-        for _, rel in ipairs(self.turretSlots) do
-            local ox = rel[1] * w
-            local oy = rel[2] * h
+        -- Always draw a smaller blue tinted square to indicate the slot
+        love.graphics.setColor(0, 0.8, 1, 0.5)
+        love.graphics.rectangle("fill", drawX + ox - w/2 + 4, drawY + oy - h/2 + 4, w - 8, h - 8)
+        
+        -- Draw brighter indicator if previewing or selected
+        if self.isPreview or self.selected then
+            love.graphics.setColor(0, 1, 1, 0.8)
             love.graphics.rectangle("line", drawX + ox - w/2 + 2, drawY + oy - h/2 + 2, w - 4, h - 4)
         end
-        love.graphics.setColor(1, 1, 1, 1)
     end
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 return SlottedBlocker

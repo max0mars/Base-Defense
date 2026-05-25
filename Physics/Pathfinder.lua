@@ -210,4 +210,54 @@ function Pathfinder.getDirectPath(startX, startY, goalX, goalY)
     return {{x = startX, y = startY}, {x = goalX, y = goalY}}
 end
 
+function Pathfinder.isPathPossible(game, simulatedBlockerSlots)
+    local grid = game.battlefieldGrid
+    local blocked = {}
+    for _, slot in ipairs(simulatedBlockerSlots) do
+        blocked[slot] = true
+    end
+    
+    local queue = {}
+    local visited = {}
+    
+    -- Rightmost column is spawn
+    for y = 1, grid.height do
+        local x = grid.width
+        if not Pathfinder.isBlocked(x, y, game, nil) then
+            local slot = (y - 1) * grid.width + x
+            if not blocked[slot] then
+                table.insert(queue, {x = x, y = y})
+                visited[slot] = true
+            end
+        end
+    end
+    
+    local baseGrid = game.base.buildGrid
+    local targetX = math.floor((baseGrid.x - grid.x + 0.5) / grid.cellSize) + 1
+    
+    local head = 1
+    while head <= #queue do
+        local curr = queue[head]
+        head = head + 1
+        
+        if curr.x <= targetX then
+            return true
+        end
+        
+        local dirs = {{-1,0}, {0,-1}, {0,1}, {1,0}}
+        for _, d in ipairs(dirs) do
+            local nx, ny = curr.x + d[1], curr.y + d[2]
+            if nx >= 1 and nx <= grid.width and ny >= 1 and ny <= grid.height then
+                local slot = (ny - 1) * grid.width + nx
+                if not visited[slot] and not blocked[slot] and not Pathfinder.isBlocked(nx, ny, game, nil) then
+                    visited[slot] = true
+                    table.insert(queue, {x = nx, y = ny})
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
 return Pathfinder

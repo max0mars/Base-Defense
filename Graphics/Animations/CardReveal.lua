@@ -53,6 +53,9 @@ function CardReveal:new(reward, x, y, width, height)
         obj.ps = createParticleSystem({0, 0.5, 1}, 1, 50, math.pi)
         obj.ps:setSpeed(30, 80)
         obj.ps:setLinearAcceleration(0, -50, 0, -100) -- drift upwards
+    elseif obj.rarity == "blocker" then
+        obj.ps = createParticleSystem({0.9, 0.5, 0.1}, 1.5, 100, math.pi * 2)
+        obj.ps:setSpeed(100, 200)
     end
     
     return obj
@@ -129,6 +132,10 @@ function CardReveal:triggerRevealEffects()
         self.glowAlpha = 1.0
         self.shakeTimer = 0.3
         if self.ps then self.ps:emit(200) end
+    elseif self.rarity == "blocker" then
+        self.glowAlpha = 1.0
+        self.shakeTimer = 0.2
+        if self.ps then self.ps:emit(100) end
     end
 end
 
