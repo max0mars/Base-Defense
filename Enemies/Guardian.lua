@@ -125,20 +125,20 @@ function Guardian:draw()
     local scissorY = drawY + self.h * (1 - fillRatio)
     local scissorH = self.h * fillRatio
     
-    love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
+    SetGameScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
     self:drawShape("fill", drawX, drawY, self.w, self.h)
     
     -- Add bright cap line
     -- We do this by setting a very thin scissor and redrawing the shape fill
     if fillRatio > 0 and fillRatio < 1 then
-        love.graphics.setScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
+        SetGameScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
         love.graphics.setColor(r, g, b, 1)
         self:drawShape("fill", drawX, drawY, self.w, self.h)
-        love.graphics.setScissor()
+        SetGameScissor()
     end
     
-    love.graphics.setScissor()
+    SetGameScissor()
     
     -- Layer 3: Shield Fill (Scissor bottom-up)
     if self.maxShield > 0 and self.shield > 0 then
@@ -146,10 +146,10 @@ function Guardian:draw()
         local sScissorY = drawY + self.h * (1 - shieldRatio)
         local sScissorH = self.h * shieldRatio
         
-        love.graphics.setScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
+        SetGameScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
         self:drawShape("fill", drawX, drawY, self.w, self.h)
-        love.graphics.setScissor()
+        SetGameScissor()
     end
     
     -- Layer 4: Neon Border & Glow

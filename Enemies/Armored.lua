@@ -85,20 +85,20 @@ function Armored:draw()
     local scissorH = actualH * fillRatio
     
     -- 3. Health Fill (Bright fill restricted by scissor)
-    love.graphics.setScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), math.ceil(scissorH))
+    SetGameScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), math.ceil(scissorH))
     love.graphics.setColor(r, g, b, 0.7)
     love.graphics.polygon("fill", points)
     
     -- Add a bright horizontal line at the health level "cap"
     -- We do this by setting a very thin scissor and redrawing the shape fill
     if fillRatio > 0 and fillRatio < 1 then
-        love.graphics.setScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), 2)
+        SetGameScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), 2)
         love.graphics.setColor(r, g, b, 1)
         love.graphics.polygon("fill", points)
-        love.graphics.setScissor()
+        SetGameScissor()
     end
     
-    love.graphics.setScissor()
+    SetGameScissor()
 
     -- Layer 3: Shield Fill (Scissor bottom-up)
     if self.maxShield > 0 and self.shield > 0 then
@@ -106,10 +106,10 @@ function Armored:draw()
         local sScissorY = minY + actualH * (1 - shieldRatio)
         local sScissorH = actualH * shieldRatio
         
-        love.graphics.setScissor(math.floor(self.x - size), math.floor(sScissorY), math.ceil(size * 2), math.ceil(sScissorH))
+        SetGameScissor(math.floor(self.x - size), math.floor(sScissorY), math.ceil(size * 2), math.ceil(sScissorH))
         love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
         love.graphics.polygon("fill", points)
-        love.graphics.setScissor()
+        SetGameScissor()
     end
 
     -- 4. Glow Layers (Double thick borders)

@@ -15,6 +15,27 @@ function love.mouse.getPosition()
     end
     return x, y
 end
+
+function SetGameScissor(x, y, w, h)
+    if not x then
+        if scalify and not scalify._canvas then
+            love.graphics.setScissor(scalify._OFFSET.x, scalify._OFFSET.y, scalify._WWIDTH * scalify._SCALE.x, scalify._WHEIGHT * scalify._SCALE.y)
+        else
+            love.graphics.setScissor()
+        end
+        return
+    end
+
+    if scalify and not scalify._canvas then
+        local rx, ry = scalify:toReal(x, y)
+        local rw = w * scalify._SCALE.x
+        local rh = h * scalify._SCALE.y
+        love.graphics.setScissor(math.floor(rx), math.floor(ry), math.floor(rw), math.ceil(rh))
+    else
+        love.graphics.setScissor(math.floor(x), math.floor(y), math.floor(w), math.ceil(h))
+    end
+end
+
 local state = 0
 local scene_manager = require("Scenes.scene_manager")
 
