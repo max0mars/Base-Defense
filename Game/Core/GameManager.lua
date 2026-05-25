@@ -89,6 +89,7 @@ function game:load(saveData, isTesting)
         
         -- Configuration
         self.rewardCost           = 2
+        self.blockerCost          = 3
         self.autoStartWave        = false
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.mutationInterval     = 5 -- Waves between enemy mutations
@@ -310,14 +311,7 @@ function game:draw()
         end
     end
 
-    if self.inputMode == "placing" or self.debugMode then
-        if self.battlefieldGrid then
-            self.battlefieldGrid:drawOverlays()
-        end
-    end
-
     -- 5. UI & Placement Previews
-    self.gui:draw()
     
     if self.inputMode == "placing" and self.blueprint then
         self.blueprint.isPreview = true
@@ -327,6 +321,14 @@ function game:draw()
         self.blueprint:draw(drawX, drawY)
         self.blueprint.isPreview = false
     end
+    
+    if self.inputMode == "placing" or self.debugMode then
+        if self.battlefieldGrid then
+            self.battlefieldGrid:drawOverlays()
+        end
+    end
+
+    self.gui:draw()
     if self.rewardSystem and self.rewardSystem.isActive then
         self.rewardSystem:draw()
     end
@@ -455,7 +457,22 @@ end
 
 function game:placeBuilding(building, sourceReward)
     self.inputMode = "placing"
-    self.blueprint = building:new({game = self})
+    
+    local config = {game = self}
+    if sourceReward and sourceReward.shapePattern then
+        config.shapePattern = sourceReward.shapePattern
+    end
+    if sourceReward and sourceReward.color then
+        config.color = sourceReward.color
+    end
+    if sourceReward and sourceReward.turretSlots then
+        config.turretSlots = sourceReward.turretSlots
+    end
+    if sourceReward and sourceReward.isSlotted ~= nil then
+        config.isSlotted = sourceReward.isSlotted
+    end
+    
+    self.blueprint = building:new(config)
     self.blueprint.rewardCard = sourceReward
     self.blueprint.showArc = true
 end
@@ -518,7 +535,16 @@ end
 function game:attemptPurchaseReward()
     if self.tokens >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
         self.tokens = self.tokens - self.rewardCost
-        self.rewardSystem:activate()
+        self.rewardSystem:activate("normal", 3)
+        return true
+    end
+    return false
+end
+
+function game:attemptPurchaseBlocker()
+    if self.tokens >= self.blockerCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
+        self.tokens = self.tokens - self.blockerCost
+        self.rewardSystem:activate("blocker", 1)
         return true
     end
     return false

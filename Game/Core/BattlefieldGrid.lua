@@ -274,6 +274,13 @@ function BattlefieldGrid:areSlotsAvailable(building, slotsToCheck, anchorSlot)
         return false
     end
     
+    if building:isType("blocker") then
+        local Pathfinder = require("Physics.Pathfinder")
+        if not Pathfinder.isPathPossible(self.game, slotsToCheck) then
+            return false
+        end
+    end
+    
     return true
 end
 

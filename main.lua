@@ -29,9 +29,9 @@ scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to me
 local AudioManager = require("Audio.AudioManager")
 
 function love.load()
-    love.graphics.setDefaultFilter("nearest", "nearest")
+    love.graphics.setDefaultFilter("linear", "linear")
     love.window.setTitle("Base Defense")
-    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true})
+    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true, canvas = false})
     scalify:setBorderColor(0.1, 0.1, 0.1)
     math.randomseed( os.time() )
     love.graphics.setBlendMode("alpha", "alphamultiply")

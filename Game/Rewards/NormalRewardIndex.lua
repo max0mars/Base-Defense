@@ -24,14 +24,14 @@ local RewardIndex = {
             building = require("Buildings.Turrets.AutoCannon"),
             iconCategory = "turret"
         },
-        {
-            id = "smallbox",
-            name = "Small Box",
-            description = "Gets in the enemy's way.",
-            building = require("Buildings.Blockers.SmallBox"),
-            type = "building",
-            iconCategory = "blocker"
-        },
+        -- {
+        --     id = "smallbox",
+        --     name = "Small Box",
+        --     description = "Gets in the enemy's way.",
+        --     building = require("Buildings.Blockers.SmallBox"),
+        --     type = "building",
+        --     iconCategory = "blocker"
+        -- },
         {
             id = "rangeBuff",
             name = "Radar Tower",
@@ -74,14 +74,14 @@ local RewardIndex = {
             building = require("Buildings.Turrets.AirburstTurret"),
             iconCategory = "turret"
         },
-        {
-            id = "smallfence",
-            name = "Small Fence",
-            description = "Redirect Enemy movement.",
-            building = require("Buildings.Blockers.SmallFence"),
-            type = "building",
-            iconCategory = "blocker"
-        },
+        -- {
+        --     id = "smallfence",
+        --     name = "Small Fence",
+        --     description = "Redirect Enemy movement.",
+        --     building = require("Buildings.Blockers.SmallFence"),
+        --     type = "building",
+        --     iconCategory = "blocker"
+        -- },
         {
             id = "ammoCache",
             name = "Ammo Cache",
@@ -184,14 +184,14 @@ local RewardIndex = {
             building = require("Buildings.Turrets.SequenceTurret"),
             iconCategory = "turret"
         },
-        {
-            id = "slottedBlocker",
-            name = "Slotted Blocker",
-            description = "It's a fence with a free turret slot!",
-            building = require("Buildings.Blockers.SlottedBlocker"),
-            type = "building",
-            iconCategory = "blocker"
-        },
+        -- {
+        --     id = "slottedBlocker",
+        --     name = "Slotted Blocker",
+        --     description = "It's a fence with a free turret slot!",
+        --     building = require("Buildings.Blockers.SlottedBlocker"),
+        --     type = "building",
+        --     iconCategory = "blocker"
+        -- },
         {
             id = "slowBlocker",
             name = "Frost Trap",

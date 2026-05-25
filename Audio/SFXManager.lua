@@ -28,6 +28,7 @@ function SFXManager:new()
     instance:registerSound("rare", "Audio/SFX/rare.mp3")
     instance:registerSound("epic", "Audio/SFX/epic.mp3")
     instance:registerSound("legendary", "Audio/SFX/legendary.mp3")
+    instance:registerSound("blocker", "Audio/SFX/blocker.mp3")
     
     return instance
 end

@@ -88,9 +88,10 @@ function GUIManager:new(game)
         hand = HandUI:new(game),
         tooltips = TooltipManager:new(game),
         confirmation = ConfirmationUI:new(game),
-        buyButton = { x = 210, y = 52, w = 150, h = 32 },
-        infoButton = { x = 365, y = 52, w = 32, h = 32 },
-        luckButton = { x = 210, y = 12, w = 150, h = 32 },
+        buyButton = { x = 210, y = 41, w = 150, h = 24 },
+        infoButton = { x = 365, y = 12, w = 32, h = 82 },
+        luckButton = { x = 210, y = 12, w = 150, h = 24 },
+        buyBlockerButton = { x = 210, y = 70, w = 150, h = 24 },
         
         -- New Cybernetic Controls
         autoFireButton = { x = 410, y = 12, w = 130, h = 24 },
@@ -298,7 +299,7 @@ function GUIManager:drawHUD()
     local luckText = luckMaxed and "MAX LUCK" or "LUCK OFFERING (" .. currentCost .. " T)"
     love.graphics.push("all")
     love.graphics.setColor(1, 1, 1, luckEnabled and 1.0 or 0.5)
-    love.graphics.printf(luckText, self.luckButton.x, self.luckButton.y + 8, self.luckButton.w, "center")
+    love.graphics.printf(luckText, self.luckButton.x, self.luckButton.y + 4, self.luckButton.w, "center")
     love.graphics.pop()
     
     -- 2. Buy Upgrade Button
@@ -328,7 +329,33 @@ function GUIManager:drawHUD()
     local buyCostText = string.format("BUY UPGRADE (%d T)", math.floor(game.rewardCost))
     love.graphics.push("all")
     love.graphics.setColor(1, 1, 1, buyEnabled and 1.0 or 0.5)
-    love.graphics.printf(buyCostText, self.buyButton.x, self.buyButton.y + 8, self.buyButton.w, "center")
+    love.graphics.printf(buyCostText, self.buyButton.x, self.buyButton.y + 4, self.buyButton.w, "center")
+    love.graphics.pop()
+    
+    -- 2.5 Buy Blocker Button
+    local canAffordBlocker = game.tokens >= game.blockerCost
+    local isBlockerHovered = mx >= self.buyBlockerButton.x and mx <= self.buyBlockerButton.x + self.buyBlockerButton.w and
+                             my >= self.buyBlockerButton.y and my <= self.buyBlockerButton.y + self.buyBlockerButton.h
+                         
+    local blockerColor = { 0.9, 0.5, 0.1 } -- Orange for blocker
+    if not buyEnabled then
+        blockerColor = { 0.4, 0.4, 0.4 }
+    elseif isBlockerHovered then
+        if canAffordBlocker then
+            blockerColor = { 0.1, 0.9, 0.3 } -- Green
+        else
+            blockerColor = { 0.9, 0.1, 0.1 } -- Red
+        end
+    end
+    
+    love.graphics.setColor(0.02, 0.05, 0.1, 0.7)
+    love.graphics.rectangle("fill", self.buyBlockerButton.x, self.buyBlockerButton.y, self.buyBlockerButton.w, self.buyBlockerButton.h, 4)
+    drawGlowRect(self.buyBlockerButton.x, self.buyBlockerButton.y, self.buyBlockerButton.w, self.buyBlockerButton.h, blockerColor[1], blockerColor[2], blockerColor[3], isBlockerHovered and 2 or 1, 4, 4, pulse * 0.3)
+    
+    local blockerCostText = string.format("BUY BLOCKER (%d T)", math.floor(game.blockerCost))
+    love.graphics.push("all")
+    love.graphics.setColor(1, 1, 1, buyEnabled and 1.0 or 0.5)
+    love.graphics.printf(blockerCostText, self.buyBlockerButton.x, self.buyBlockerButton.y + 4, self.buyBlockerButton.w, "center")
     love.graphics.pop()
     
     -- 3. Info "?" Button
@@ -342,7 +369,7 @@ function GUIManager:drawHUD()
     
     love.graphics.push("all")
     love.graphics.setColor(1, 1, 1, 0.9)
-    love.graphics.printf("?", self.infoButton.x, self.infoButton.y + 8, self.infoButton.w, "center")
+    love.graphics.printf("?", self.infoButton.x, self.infoButton.y + 34, self.infoButton.w, "center")
     love.graphics.pop()
 
     -- ==========================================
@@ -507,6 +534,13 @@ function GUIManager:mousepressed(x, y, button)
         if x >= self.buyButton.x and x <= self.buyButton.x + self.buyButton.w and
            y >= self.buyButton.y and y <= self.buyButton.y + self.buyButton.h then
             self.game:attemptPurchaseReward()
+            return true
+        end
+
+        -- Check Buy Blocker Button
+        if x >= self.buyBlockerButton.x and x <= self.buyBlockerButton.x + self.buyBlockerButton.w and
+           y >= self.buyBlockerButton.y and y <= self.buyBlockerButton.y + self.buyBlockerButton.h then
+            self.game:attemptPurchaseBlocker()
             return true
         end
 
