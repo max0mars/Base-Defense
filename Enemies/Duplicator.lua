@@ -97,7 +97,7 @@ function Duplicator:died()
                         local dx = obj.x - self.x
                         local dy = obj.y - self.y
                         if (dx*dx + dy*dy) <= healRadiusSq then
-                            local healAmount = 25
+                            local healAmount = 10
                             obj.hp = math.min(obj.hp + healAmount, obj:getStat("maxHp"))
                             self.game:spawnDamageNumber(healAmount, obj.x, obj.y, "heal")
                         end

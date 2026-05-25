@@ -58,7 +58,26 @@ function WaveSpawner:update(dt)
                 -- Exclude outermost rows to prevent edge-creeping spawns
                 local minRow = (grid.height > 2) and 2 or 1
                 local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
-                local randomRow = math.random(minRow, maxRow)
+                
+                -- Shuffled deck logic for sectors
+                if not self.sectorDeck or #self.sectorDeck == 0 then
+                    self.sectorDeck = {0, 1, 2}
+                    for i = #self.sectorDeck, 2, -1 do
+                        local j = math.random(1, i)
+                        self.sectorDeck[i], self.sectorDeck[j] = self.sectorDeck[j], self.sectorDeck[i]
+                    end
+                end
+                local currentSector = table.remove(self.sectorDeck)
+                
+                local totalRows = maxRow - minRow + 1
+                local sectorSize = totalRows / 3.0
+                
+                local sectorMinRow = minRow + math.floor(currentSector * sectorSize)
+                local sectorMaxRow = minRow + math.floor((currentSector + 1) * sectorSize) - 1
+                if sectorMinRow > sectorMaxRow then sectorMaxRow = sectorMinRow end
+                if sectorMaxRow > maxRow then sectorMaxRow = maxRow end
+                
+                local randomRow = math.random(sectorMinRow, sectorMaxRow)
                 local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
                 
                 local enemyClass = table.remove(self.waveList, 1)

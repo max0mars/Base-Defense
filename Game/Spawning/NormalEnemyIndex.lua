@@ -71,7 +71,7 @@ local NormalEnemyIndex = {
             description = "Support unit. Periodically grants shields to nearby allies.",
             mutations = {
                 { id = "guardian_aura", name = "Guardian Aura", description = "Guardian projects a 25% damage reduction aura to nearby allies.", modifiers = { hasAura = { set = true } }, target = "Guardian" },
-                { id = "guardian_shield", name = "Shield Overcharge", description = "Doubles the amount of shields granted to allies.", modifiers = { shieldAmount = 2 }, target = "Guardian" }
+                { id = "guardian_shield", name = "Shield Overcharge", description = "50% more shield granted to allies.", modifiers = { shieldAmount = 1.5 }, target = "Guardian" }
             }
         },
         {
