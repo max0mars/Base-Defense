@@ -22,6 +22,11 @@ function WaveSpawner:new(config)
     for k, v in pairs(config) do 
         instance[k] = v
     end
+    
+    if not instance.activeSectors then
+        instance:updateActiveSectors()
+    end
+    
     return instance
 end
 
@@ -61,7 +66,14 @@ function WaveSpawner:update(dt)
                 
                 -- Shuffled deck logic for sectors
                 if not self.sectorDeck or #self.sectorDeck == 0 then
-                    self.sectorDeck = {0, 1, 2}
+                    self.sectorDeck = {}
+                    local numLanes = #self.activeSectors
+                    local amountPerLane = math.floor(6 / numLanes)
+                    for _, sector in ipairs(self.activeSectors) do
+                        for i = 1, amountPerLane do
+                            table.insert(self.sectorDeck, sector)
+                        end
+                    end
                     for i = #self.sectorDeck, 2, -1 do
                         local j = math.random(1, i)
                         self.sectorDeck[i], self.sectorDeck[j] = self.sectorDeck[j], self.sectorDeck[i]
@@ -99,11 +111,7 @@ function WaveSpawner:update(dt)
             end
         end
     elseif self.waveState == "complete" then
-        self.sectorDeck = {0, 1, 2}
-        for i = #self.sectorDeck, 2, -1 do
-            local j = math.random(1, i)
-            self.sectorDeck[i], self.sectorDeck[j] = self.sectorDeck[j], self.sectorDeck[i]
-        end
+        self:updateActiveSectors()
         -- Logic for transitioning after wave completion handled by GameManager or UI
         self.waveState = "idle"        
     end
@@ -123,6 +131,70 @@ function WaveSpawner:startCustomWave(waveList)
         self.waveInitialized = true
         self.game.wave = self.game.wave + 1
         self.spawnRate = 0.5 * (0.95 ^ (self.game.wave))
+    end
+end
+
+function WaveSpawner:updateActiveSectors()
+    local nextWave = (self.game and self.game.wave) and (self.game.wave + 1) or 1
+    local numLanes = 1
+    if nextWave >= 6 and nextWave <= 15 then
+        numLanes = 2
+    elseif nextWave > 15 then
+        numLanes = 3
+    end
+    
+    local sectors = {0, 1, 2}
+    for i = 3, 2, -1 do
+        local j = math.random(1, i)
+        sectors[i], sectors[j] = sectors[j], sectors[i]
+    end
+    
+    self.activeSectors = {}
+    for i = 1, numLanes do
+        table.insert(self.activeSectors, sectors[i])
+    end
+    
+    self.sectorDeck = {}
+    local amountPerLane = math.floor(6 / numLanes)
+    for _, sector in ipairs(self.activeSectors) do
+        for i = 1, amountPerLane do
+            table.insert(self.sectorDeck, sector)
+        end
+    end
+    
+    for i = #self.sectorDeck, 2, -1 do
+        local j = math.random(1, i)
+        self.sectorDeck[i], self.sectorDeck[j] = self.sectorDeck[j], self.sectorDeck[i]
+    end
+end
+
+function WaveSpawner:draw()
+    if self.game:isState("preparing") and self.activeSectors then
+        local grid = self.game.battlefieldGrid
+        local minRow = (grid.height > 2) and 2 or 1
+        local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
+        local totalRows = maxRow - minRow + 1
+        local sectorSize = totalRows / 3.0
+        
+        -- Draw pulsing arrows indicating the active sectors
+        local pulse = (math.sin(love.timer.getTime() * 5) + 1) / 2
+        love.graphics.setColor(1, 0, 0, 0.5 + 0.5 * pulse)
+        
+        for _, sector in ipairs(self.activeSectors) do
+            local sectorMinRow = minRow + math.floor(sector * sectorSize)
+            local sectorMaxRow = minRow + math.floor((sector + 1) * sectorSize) - 1
+            if sectorMinRow > sectorMaxRow then sectorMaxRow = sectorMinRow end
+            if sectorMaxRow > maxRow then sectorMaxRow = maxRow end
+            
+            local startY = grid.y + (sectorMinRow - 1) * grid.cellSize
+            local endY = grid.y + sectorMaxRow * grid.cellSize
+            local midY = (startY + endY) / 2
+            
+            -- Draw an arrow pointing left from the spawn location
+            local arrowX = 780
+            love.graphics.polygon("fill", arrowX, midY - 15, arrowX, midY + 15, arrowX - 30, midY)
+        end
+        love.graphics.setColor(1, 1, 1, 1)
     end
 end
 
