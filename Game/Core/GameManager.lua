@@ -283,6 +283,10 @@ function game:draw()
     if self.battlefieldGrid then
         self.battlefieldGrid:drawGrid()
     end
+    
+    if self.WaveSpawner and self.WaveSpawner.draw then
+        self.WaveSpawner:draw()
+    end
 
     -- 2. Entities
     for _, obj in ipairs(self.objects) do
