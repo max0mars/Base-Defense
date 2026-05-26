@@ -193,11 +193,17 @@ function MainLazer:PlayerClick(tX, tY)
         if currentFireRate > 0 then
             local fX, fY = self:getFirePoint()
             
+            local angle = math.atan2(tY - fY, tX - fX)
+            local range = (self:getStat("range") or 2000) * 2
+            local extendedTx = fX + math.cos(angle) * range
+            local extendedTy = fY + math.sin(angle) * range
+            
             self:fire({
-                targetX = tX, 
-                targetY = tY,
+                targetX = extendedTx, 
+                targetY = extendedTy,
                 fireX = fX,
-                fireY = fY
+                fireY = fY,
+                angle = angle
             })
             self.cooldown = 1 / currentFireRate
             return true

@@ -99,6 +99,11 @@ function WaveSpawner:update(dt)
             end
         end
     elseif self.waveState == "complete" then
+        self.sectorDeck = {0, 1, 2}
+        for i = #self.sectorDeck, 2, -1 do
+            local j = math.random(1, i)
+            self.sectorDeck[i], self.sectorDeck[j] = self.sectorDeck[j], self.sectorDeck[i]
+        end
         -- Logic for transitioning after wave completion handled by GameManager or UI
         self.waveState = "idle"        
     end
