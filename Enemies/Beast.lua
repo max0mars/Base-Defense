@@ -38,89 +38,49 @@ end
 function Beast:update(dt)
     if self.destroyed then return end
     
-    self.effectManager:update(dt) -- Update status effects
-    
-    if self:getStat("stunned", 0) > 0 then return end
-    
     if self.master and not self.master.destroyed and not self.enraged then
+        local masterBaseSpeed = self.master.speed or 25
         local distToMasterX = self.x - self.master.x
         
         if distToMasterX > self.formationRadius then
-            -- Too far away, just sprint straight forward (left) to catch up
-            self.x = self.x - self:getStat("speed") * dt
+            self.speed = 140
+        elseif distToMasterX < -self.formationRadius then
+            self.speed = masterBaseSpeed * 0.5
         else
-            -- Close enough, compute and lock into the dynamic arc formation
-            local closeBeasts = {}
-            for _, b in ipairs(self.master.activeBeasts) do
-                if not b.destroyed and (b.x - self.master.x) <= self.formationRadius then
-                    table.insert(closeBeasts, b)
-                end
-            end
-            
-            local myIndex = 1
-            local totalBeasts = #closeBeasts
-            for i, b in ipairs(closeBeasts) do
-                if b == self then
-                    myIndex = i
-                    break
-                end
-            end
-            
-            local spacing = 14
-            local totalHeight = (totalBeasts - 1) * spacing
-            local dynamicOffsetY = -totalHeight / 2 + (myIndex - 1) * spacing
-            
-            -- Arc curvature: beasts further from center are pushed further right (backwards)
-            local arcCurve = 0.6
-            local arcX = math.abs(dynamicOffsetY) * arcCurve
-            
-            local targetX = self.master.x + self.formationOffsetX + arcX
-            local targetY = self.master.y + dynamicOffsetY
-            
-            local dx = targetX - self.x
-            local dy = targetY - self.y
-            local dist = math.sqrt(dx*dx + dy*dy)
-            
-            if dist > 5 then
-                -- Slowly adjust into formation while matching master's base speed
-                local masterSpeed = self.master:getStat("speed")
-                self.x = self.x - masterSpeed * dt
-                
-                local adjustSpeed = 40
-                local moveDist = adjustSpeed * dt
-                
-                if moveDist >= dist then
-                    self.x = targetX
-                    self.y = targetY
-                else
-                    self.x = self.x + (dx / dist) * moveDist
-                    self.y = self.y + (dy / dist) * moveDist
-                end
-            else
-                -- Matched formation, move at master's speed
-                local masterSpeed = self.master:getStat("speed")
-                self.x = self.x - masterSpeed * dt
-                self.y = targetY -- snap Y to maintain formation vertically
+            self.speed = masterBaseSpeed
+        end
+        
+        local closeBeasts = {}
+        for _, b in ipairs(self.master.activeBeasts) do
+            if not b.destroyed and (b.x - self.master.x) <= self.formationRadius then
+                table.insert(closeBeasts, b)
             end
         end
         
-        -- Check if it reached the base
-        self:getTargetPos() -- Ensure target is updated
-        if self.x < self.target then
-            self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y, self)
-            self:died()
+        local myIndex = 1
+        local totalBeasts = #closeBeasts
+        for i, b in ipairs(closeBeasts) do
+            if b == self then
+                myIndex = i
+                break
+            end
+        end
+        
+        local spacing = 14
+        local totalHeight = (totalBeasts - 1) * spacing
+        local dynamicOffsetY = -totalHeight / 2 + (myIndex - 1) * spacing
+        
+        if self.navigator then
+            self.navigator.perpendicularOffset = dynamicOffsetY
         end
     else
-        -- Enraged or masterless: Standard base-charging behavior
-        local currentSpeed = self:getStat("speed")
-        self:getTargetPos()
-        if self.x > self.target then
-            self.x = self.x - currentSpeed * dt
-        else
-            self.game.base:takeDamage(self:getStat("damage"), "normal", self.x, self.y, self)
-            self:died()
+        self.speed = 140
+        if not self.enraged and self.masterDied then
+            self:masterDied()
         end
     end
+    
+    Enemy.update(self, dt)
 end
 
 function Beast:masterDied()
