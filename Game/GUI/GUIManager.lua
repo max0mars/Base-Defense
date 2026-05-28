@@ -5,6 +5,7 @@ local GameText = require("Game.GUI.GameText")
 local MutationUI = require("Game.GUI.MutationUI")
 local IncomeFeedbackManager = require("Game.GUI.IncomeFeedbackManager")
 local EnemySpawnUI = require("Game.GUI.EnemySpawnUI")
+local WavePreviewUI = require("Game.GUI.WavePreviewUI")
 
 -- =============================================================================
 -- Local Helpers for Tron/Neon UI Aesthetics
@@ -103,7 +104,8 @@ function GUIManager:new(game)
         
         mutation = MutationUI:new(game),
         incomeFeedback = IncomeFeedbackManager:new(game),
-        enemySpawner = EnemySpawnUI:new(game)
+        enemySpawner = EnemySpawnUI:new(game),
+        wavePreview = WavePreviewUI:new(game)
     }, self)
     return obj
 end
@@ -138,6 +140,7 @@ function GUIManager:update(dt)
     self.mutation:update(dt)
     self.incomeFeedback:update(dt)
     if self.enemySpawner then self.enemySpawner:update(dt) end
+    if self.wavePreview then self.wavePreview:update(dt) end
 
     -- Handle Info Button Hover
     local mx, my = love.mouse.getPosition()
@@ -160,6 +163,7 @@ function GUIManager:draw()
     -- UI elements on top of masks
     self.hand:draw()
     self.mutation:draw()     -- Draw mutation screen
+    if self.wavePreview then self.wavePreview:draw() end
     if self.enemySpawner then self.enemySpawner:draw() end
     self.tooltips:draw()     -- Draw tips above everything
 end
