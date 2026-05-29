@@ -9,6 +9,7 @@ StandardMainTurret.__index = StandardMainTurret
 StandardMainTurret.template = {
     id = "standard_main",
     name = "Standard Blaster",
+    cardRarity = "common", -- actual rarity of this main gun, shown on its detail card
     size = 20,
     rotation = 0,
     turnSpeed = math.huge,

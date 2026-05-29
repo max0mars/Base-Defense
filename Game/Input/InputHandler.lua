@@ -555,6 +555,12 @@ function InputHandler:keypressed(key)
             end
             return
         end
+        if key == "g" then
+            if game.gui.itemPicker then
+                game.gui.itemPicker.isActive = not game.gui.itemPicker.isActive
+            end
+            return
+        end
         if game.gui.enemySpawner and game.gui.enemySpawner.isActive and (key == "return" or key == "enter") then
             local total = 0
             local customWaveList = {}

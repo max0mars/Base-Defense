@@ -33,6 +33,7 @@ function WavePreviewUI:update(dt) end
 
 function WavePreviewUI:draw()
     local game = self.game
+    if game.testingMode then return end -- manual spawning in testing mode
     if not (game:isState("preparing") or game:isState("startup")) then return end
 
     local summary, waveNum = game.WaveSpawner:getUpcomingSummary()

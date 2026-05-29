@@ -9,7 +9,9 @@ local RewardPool = require("Game.Rewards.RewardPool")
 local CardReveal = require("Graphics.Animations.CardReveal")
 
 function RewardSystem:new(game)
-    local indexToUse = game.testingMode and TestingIndex or RewardIndex
+    -- Always use the real reward pool (testing mode included) so "Buy Upgrade"
+    -- offers the full set rather than a small preset list.
+    local indexToUse = RewardIndex
     local system = setmetatable({
         game = game,
         isActive = false,
@@ -22,10 +24,10 @@ function RewardSystem:new(game)
     
     -- UI Properties
     system.cardWidth = 200
-    system.cardHeight = 180
+    system.cardHeight = 230
     system.cardSpacing = 20
     system.startX = 100
-    system.startY = 150
+    system.startY = 130
     
     system.skipBtnW = 160
     system.skipBtnH = 40
@@ -46,7 +48,7 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     local count = numCards or 3
     local luck = self.game.luck or 1
     
-    local indexToUse = self.game.testingMode and TestingIndex or RewardIndex
+    local indexToUse = RewardIndex
     if poolLogicMode == "blocker" then
         indexToUse = require("Game.Rewards.BlockerRewardIndex")
     end

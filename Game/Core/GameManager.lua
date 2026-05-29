@@ -439,10 +439,10 @@ function game:EnemyDied(enemy)
     self:spawnParticleExplosion(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
 end
 
-function game:spawnDamageNumber(amount, x, y, damageType)
+function game:spawnDamageNumber(amount, x, y, damageType, effectiveness)
     if self.showDamageNumbers and amount >= 1 then
         local displayAmount = math.floor(amount + 0.5)
-        table.insert(self.animations, DamageNumber:new(displayAmount, x, y, damageType))
+        table.insert(self.animations, DamageNumber:new(displayAmount, x, y, damageType, nil, nil, effectiveness))
     end
 end
 

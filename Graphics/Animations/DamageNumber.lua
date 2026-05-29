@@ -16,9 +16,9 @@ local typeColors = {
     toxic = {0.7, 0.2, 0.9, 1}
 }
 
-function DamageNumber:new(text, x, y, damageType, customColor, delay)
+function DamageNumber:new(text, x, y, damageType, customColor, delay, effectiveness)
     local obj = setmetatable({}, self)
-    
+
     obj.text = tostring(text)
     obj.x = x + love.math.random(-15, 15)
     obj.y = y + love.math.random(-15, 15)
@@ -28,8 +28,23 @@ function DamageNumber:new(text, x, y, damageType, customColor, delay)
     obj.lifetime = 1.0
     obj.maxLifetime = 1.0
     obj.delay = delay or 0
+    obj.scale = 1
     obj.destroyed = false
-    
+
+    -- Effectiveness feedback: super-effective hits pop bigger/gold with a "!",
+    -- resisted hits shrink and cool to a dim grey-blue. Only applied when no
+    -- explicit color was requested (i.e. real combat damage, not UI text).
+    if not customColor then
+        if effectiveness == "weak" then
+            obj.scale = 1.4
+            obj.color = {1, 0.9, 0.3, 1}
+            obj.text = obj.text .. "!"
+        elseif effectiveness == "resist" then
+            obj.scale = 0.8
+            obj.color = {0.6, 0.65, 0.78, 1}
+        end
+    end
+
     return obj
 end
 
@@ -57,13 +72,14 @@ function DamageNumber:draw()
     
     local alpha = math.min(1, self.lifetime / (self.maxLifetime * 0.5))
     local r, g, b = self.color[1], self.color[2], self.color[3]
-    
+    local s = self.scale or 1
+
     love.graphics.setColor(0, 0, 0, alpha) -- shadow/outline
-    love.graphics.print(self.text, self.x + 1, self.y + 1)
-    
+    love.graphics.print(self.text, self.x + 1, self.y + 1, 0, s, s)
+
     love.graphics.setColor(r, g, b, alpha)
-    love.graphics.print(self.text, self.x, self.y)
-    
+    love.graphics.print(self.text, self.x, self.y, 0, s, s)
+
     love.graphics.setColor(1, 1, 1, 1)
 end
 

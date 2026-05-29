@@ -135,6 +135,9 @@ end
 --- Generates and caches the next wave's enemy list + composition summary while idle
 --- (i.e. during the 'preparing'/'startup' phases) so the preview is accurate.
 function WaveSpawner:prepareUpcomingWave()
+    -- Testing mode spawns waves manually (Enemy Spawner), so skip precomputing
+    -- a director wave — it's meaningless there and must not interfere.
+    if self.game.testingMode then return end
     if self.waveState ~= "idle" then return end
     local nextWaveNum = self.game.wave + 1
     if self.pendingWaveNum == nextWaveNum and self.pendingWaveList then return end

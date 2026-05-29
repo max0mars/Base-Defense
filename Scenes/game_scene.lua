@@ -54,7 +54,8 @@ function game_scene:update(dt)
        (game.specialUpgradeManager and game.specialUpgradeManager.isActive) or
        (game.gui.mutation and game.gui.mutation.isActive) or
        (game.gui.confirmation and game.gui.confirmation.active) or
-       (game.gui.enemySpawner and game.gui.enemySpawner.isActive) then
+       (game.gui.enemySpawner and game.gui.enemySpawner.isActive) or
+       (game.gui.itemPicker and game.gui.itemPicker.isActive) then
         effectiveDt = 0
     end
     

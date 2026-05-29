@@ -6,6 +6,7 @@ local MutationUI = require("Game.GUI.MutationUI")
 local IncomeFeedbackManager = require("Game.GUI.IncomeFeedbackManager")
 local EnemySpawnUI = require("Game.GUI.EnemySpawnUI")
 local WavePreviewUI = require("Game.GUI.WavePreviewUI")
+local ItemPickerUI = require("Game.GUI.ItemPickerUI")
 
 -- =============================================================================
 -- Local Helpers for Tron/Neon UI Aesthetics
@@ -105,7 +106,8 @@ function GUIManager:new(game)
         mutation = MutationUI:new(game),
         incomeFeedback = IncomeFeedbackManager:new(game),
         enemySpawner = EnemySpawnUI:new(game),
-        wavePreview = WavePreviewUI:new(game)
+        wavePreview = WavePreviewUI:new(game),
+        itemPicker = ItemPickerUI:new(game)
     }, self)
     return obj
 end
@@ -118,7 +120,8 @@ function GUIManager:isConsumingInput(x, y)
     if self.mutation and self.mutation.isActive then return true end
     if game:isState("upgrade_mutation") then return true end
     if self.enemySpawner and self.enemySpawner.isActive then return true end
-    
+    if self.itemPicker and self.itemPicker.isActive then return true end
+
     -- Top HUD area blocks click/hover completely
     if y <= 100 then return true end
     
@@ -141,6 +144,7 @@ function GUIManager:update(dt)
     self.incomeFeedback:update(dt)
     if self.enemySpawner then self.enemySpawner:update(dt) end
     if self.wavePreview then self.wavePreview:update(dt) end
+    if self.itemPicker then self.itemPicker:update(dt) end
 
     -- Handle Info Button Hover
     local mx, my = love.mouse.getPosition()
@@ -165,6 +169,7 @@ function GUIManager:draw()
     self.mutation:draw()     -- Draw mutation screen
     if self.wavePreview then self.wavePreview:draw() end
     if self.enemySpawner then self.enemySpawner:draw() end
+    if self.itemPicker then self.itemPicker:draw() end
     self.tooltips:draw()     -- Draw tips above everything
 end
 
@@ -519,6 +524,10 @@ function GUIManager:mousepressed(x, y, button)
     end
     
     if self.enemySpawner and self.enemySpawner:mousepressed(x, y, button) then
+        return true
+    end
+
+    if self.itemPicker and self.itemPicker.isActive and self.itemPicker:mousepressed(x, y, button) then
         return true
     end
     
