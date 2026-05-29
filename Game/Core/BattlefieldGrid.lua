@@ -1,14 +1,18 @@
+local Layout = require("Game.GUI.Layout")
+
 local BattlefieldGrid = {}
 BattlefieldGrid.__index = BattlefieldGrid
 
 function BattlefieldGrid:new(game)
     local obj = setmetatable({}, self)
     obj.game = game
-    -- Grid configuration
+    -- Grid configuration. The field has a FIXED world size (independent of the
+    -- canvas resolution) so widening the canvas to 16:9 never resizes the grid;
+    -- it is centered on screen via the Layout viewport instead.
     obj.cellSize = 25
-    obj.x = 0
-    obj.y = 100
-    obj.width = math.floor(VIRTUAL_WIDTH / obj.cellSize)
+    obj.x = Layout.WORLD_X      -- 0 (world space; centered at draw time)
+    obj.y = Layout.WORLD_Y      -- 100
+    obj.width = math.floor(Layout.FIELD_W / obj.cellSize)  -- 32
     obj.height = 16
     
     obj.buildings = {}

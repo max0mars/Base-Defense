@@ -1,3 +1,5 @@
+local Layout = require("Game.GUI.Layout")
+
 local TooltipManager = {}
 TooltipManager.__index = TooltipManager
 
@@ -51,8 +53,9 @@ function TooltipManager:findHoveredEnemy()
     if game.specialUpgradeManager and game.specialUpgradeManager.isActive then return nil end
     if game.gui and game.gui.mutation and game.gui.mutation.isActive then return nil end
 
-    local mx, my = love.mouse.getPosition()
-    if my <= 100 or my >= 500 then return nil end -- HUD bands
+    local rmx, rmy = love.mouse.getPosition()
+    if not Layout.inFieldScreen(rmx, rmy) then return nil end -- outside the battlefield
+    local mx, my = Layout.mouseToField(rmx, rmy)
 
     local best, bestArea
     for _, obj in ipairs(game.objects) do
@@ -80,40 +83,9 @@ function TooltipManager:draw()
         self:drawSimpleTooltip(self.hoverTooltip.x, self.hoverTooltip.y, self.hoverTooltip.text, self.hoverTooltip.cost or 0)
     end
     
-    -- Any placed building shows its reward-style detail card on hover.
-    if self.hoveredBuilding and self.hoveredBuilding.showEffects then
-        local b = self.hoveredBuilding
-        local card = b.rewardCard
-        -- Turrets without a drafted card (e.g. the player's main turret) get a
-        -- synthesized one so their hover UI matches the other towers.
-        if not (card and card.draw and card.getRarityColor) and b:isType("turret") then
-            card = self:turretCardFor(b)
-        end
-        if card and card.draw and card.getRarityColor then
-            self:drawBuildingCard(b, card)
-        else
-            -- Fallback text panel for non-turret buildings without a reward card.
-            local strings = {}
-            if b.getTooltipStrings then
-                strings = b:getTooltipStrings()
-            elseif b.effectManager then
-                strings = b.effectManager:getTooltipStrings()
-            end
-            if #strings > 0 then
-                local els = {}
-                if b.name then els[#els + 1] = { kind = "text", text = b.name, color = {1, 1, 1, 1} } end
-                for _, str in ipairs(strings) do
-                    els[#els + 1] = { kind = "text", text = str, color = {0.85, 0.9, 1.0, 1} }
-                end
-                self:drawLineBox(els)
-            end
-        end
-    end
-    
-    -- Draw enemy resistance/weakness info on hover
-    if self.hoveredEnemy and not self.hoveredEnemy.destroyed then
-        self:drawEnemyTooltip(self.hoveredEnemy)
-    end
+    -- Hovered building/enemy detail now renders in the left column's INSPECT
+    -- pane (see InfoColumn). hoveredBuilding/hoveredEnemy are still tracked in
+    -- update() so the column can read them.
 
     -- Draw startup and preparation messages
     if game:isState("preparing") then
@@ -124,7 +96,10 @@ function TooltipManager:draw()
     -- Draw rarity probabilities tooltip
     if self.rarityProbs then
         local mx, my = love.mouse.getPosition()
-        self:drawRarityTooltip(mx + 15, my + 15, self.rarityProbs)
+        local h = (#self.rarityProbs * 22) + 24
+        local ty = my + 15
+        if ty + h > VIRTUAL_HEIGHT then ty = my - 15 - h end -- flip above near the bottom
+        self:drawRarityTooltip(mx + 15, ty, self.rarityProbs)
     end
 end
 
@@ -214,21 +189,73 @@ end
 -- Synthesizes (and caches) a reward-style card for a turret that wasn't drafted
 -- from a reward — e.g. the player-controlled main turret. Stats come live from
 -- the turret at draw time, so only name/description/rarity need filling in.
-function TooltipManager:turretCardFor(turret)
-    if not turret._detailCard then
-        local Reward = require("Game.Rewards.Reward")
-        local desc = turret.description
-        if not desc or desc == "" then
-            desc = turret:isType("mainLazer") and "Aim and fire manually to defend the core." or ""
+local RARITY_ORDER = { common = 1, uncommon = 2, rare = 3, epic = 4, legendary = 5 }
+
+-- Lazily index every main-turret upgrade (id -> {name, rarity, description}) so a
+-- turret's applied upgrade flags can be resolved to display identities.
+function TooltipManager:mainUpgradeInfo()
+    if self._mainUpgradeInfo then return self._mainUpgradeInfo end
+    local info = {}
+    local NormalRewardIndex = require("Game.Rewards.NormalRewardIndex")
+    for rarity, entries in pairs(NormalRewardIndex) do
+        if type(entries) == "table" then
+            for _, e in ipairs(entries) do
+                if e.type == "main_upgrade" and e.id then
+                    info[e.id] = { name = e.name, rarity = rarity, description = e.description }
+                end
+            end
         end
+    end
+    self._mainUpgradeInfo = info
+    return info
+end
+
+-- The highest-rarity upgrade currently applied to the turret (or nil).
+function TooltipManager:bestMainUpgrade(turret)
+    if not turret.upgrades then return nil end
+    local info = self:mainUpgradeInfo()
+    local best
+    for id, on in pairs(turret.upgrades) do
+        if on and info[id] then
+            if not best or (RARITY_ORDER[info[id].rarity] or 0) > (RARITY_ORDER[best.rarity] or 0) then
+                best = info[id]
+            end
+        end
+    end
+    return best
+end
+
+-- Synthesizes (and caches) a reward-style card for a turret that wasn't drafted
+-- from a reward (e.g. the player's main turret). Its identity reflects the
+-- highest-rarity applied main-turret upgrade (e.g. legendary PROJECT STORMBREAKER)
+-- instead of staying a plain common turret; live stats come from the turret.
+function TooltipManager:turretCardFor(turret)
+    local name = turret.name or "Turret"
+    local rarity = turret.cardRarity or "common"
+    local desc = turret.description
+
+    local best = self:bestMainUpgrade(turret)
+    if best then
+        name, rarity, desc = best.name, best.rarity, best.description
+    end
+    if not desc or desc == "" then
+        desc = turret:isType("mainLazer") and "Aim and fire manually to defend the core." or ""
+    end
+
+    -- Rebuild the cached card whenever the resolved identity changes (e.g. a new
+    -- upgrade is applied mid-run).
+    local sig = name .. "|" .. rarity
+    if not turret._detailCard or turret._detailCardSig ~= sig then
+        local Reward = require("Game.Rewards.Reward")
         turret._detailCard = Reward:new({
-            name = turret.name or "Turret",
+            name = name,
             description = desc,
             type = "building",
             iconCategory = "turret",
-            rarity = turret.cardRarity or "common",
+            rarity = rarity,
             game = turret.game,
         })
+        turret._detailCardSig = sig
     end
     return turret._detailCard
 end
@@ -361,8 +388,10 @@ function TooltipManager:drawEnemyTooltip(enemy)
         end
     end
 
-    -- Float above the enemy's head.
-    self:drawLineBox(els, { x = enemy.x, y = enemy.y, halfH = (enemy.h or enemy.size or 20) / 2 })
+    -- Float above the enemy's head. Enemy is in world space; the tooltip draws
+    -- in screen space, so convert the anchor onto the centered field.
+    local sx, sy = Layout.worldToScreen(enemy.x, enemy.y)
+    self:drawLineBox(els, { x = sx, y = sy, halfH = (enemy.h or enemy.size or 20) / 2 })
 end
 
 function TooltipManager:drawSimpleTooltip(x, y, text, cost)

@@ -1,4 +1,5 @@
 local MainLazer = require("Buildings.MainTurrets.MainLazer")
+local Layout = require("Game.GUI.Layout")
 local HitscanBullet = require("Bullets.HitscanBullet")
 local BurnEffect = require("Game.Effects.StatusEffects.Burn")
 local Utils = require("Classes.Utils")
@@ -88,7 +89,7 @@ function StandardMainTurret:draw()
     drawBase(self.size * 1.1)
 
     -- 2. Draw Aiming Head (Rotating Tesla Coil)
-    local mx, my = love.mouse.getPosition()
+    local mx, my = Layout.mouseToField()
     local angle = math.atan2(my - cy, mx - cx)
     
     love.graphics.push()
@@ -183,7 +184,7 @@ end
 
 function StandardMainTurret:getFirePoint()
     local cx, cy = self:getCenterPosition()
-    local mx, my = love.mouse.getPosition()
+    local mx, my = Layout.mouseToField()
     local angle = math.atan2(my - cy, mx - cx)
     return cx + math.cos(angle) * 20, cy + math.sin(angle) * 20
 end

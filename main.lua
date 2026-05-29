@@ -1,7 +1,8 @@
-VIRTUAL_WIDTH = 800
-VIRTUAL_HEIGHT = 600
+VIRTUAL_WIDTH = 1280
+VIRTUAL_HEIGHT = 720
 
 scalify = require("Libraries.scalify")
+local Layout = require("Game.GUI.Layout")
 
 -- Override mouse position to always return virtual coordinates
 local originalGetPosition = love.mouse.getPosition
@@ -17,7 +18,17 @@ function love.mouse.getPosition()
 end
 
 function SetGameScissor(x, y, w, h)
-    if not x then
+    -- Inside the world viewport, callers pass WORLD coordinates; convert them to
+    -- virtual (the field is translated + scaled on screen). A no-arg call there
+    -- restores the clip to the field rect rather than the whole canvas.
+    if Layout and Layout.worldActive then
+        if x then
+            local vx, vy = Layout.worldToScreen(x, y)
+            x, y, w, h = vx, vy, w * Layout.scale, h * Layout.scale
+        else
+            x, y, w, h = Layout.field.x, Layout.field.y, Layout.field.w, Layout.field.h
+        end
+    elseif not x then
         if scalify and not scalify._canvas then
             love.graphics.setScissor(scalify._OFFSET.x, scalify._OFFSET.y, scalify._WWIDTH * scalify._SCALE.x, scalify._WHEIGHT * scalify._SCALE.y)
         else
@@ -52,8 +63,8 @@ local AudioManager = require("Audio.AudioManager")
 function love.load()
     love.graphics.setDefaultFilter("linear", "linear")
     love.window.setTitle("Base Defense")
-    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 800, 600, { resizable = true, vsync = true, highdpi = true, canvas = false})
-    scalify:setBorderColor(0.1, 0.1, 0.1)
+    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 1280, 720, { resizable = true, vsync = true, highdpi = true, canvas = false})
+    scalify:setBorderColor(0.03, 0.04, 0.06)
     math.randomseed( os.time() )
     love.graphics.setBlendMode("alpha", "alphamultiply")
     
@@ -91,7 +102,7 @@ end
 
 function love.draw()
     scalify:start()
-    love.graphics.clear(.1, .1, .1) -- Clear the screen with a dark color
+    love.graphics.clear(0.03, 0.04, 0.06) -- Clear the screen with a dark color
     scene_manager:draw() -- Draw the current scene
     scalify:finish()
 end

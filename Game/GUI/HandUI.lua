@@ -1,12 +1,13 @@
+local Layout = require("Game.GUI.Layout")
+
 local HandUI = {}
 HandUI.__index = HandUI
 
 function HandUI:new(game)
     local obj = setmetatable({
         game = game,
-        cardW = 75,
-        cardH = 100,
-        yOffset = 100, -- Height from bottom
+        cardW = 90,
+        cardH = 120,  -- stored-card size (kept <=120 for the compact icon+name layout)
         hoveredIndex = nil
     }, self)
     return obj
@@ -15,14 +16,16 @@ end
 function HandUI:getCardArea()
     local inventory = self.game.inventory.items
     if #inventory == 0 then return nil end
-    
+
     local inventorySize = #inventory
-    local spacing = math.floor(math.min(60, 600 / inventorySize))
+    local cards = Layout.trayCards
+    -- Cards lay out without heavy overlap, centered in the tray's card area.
+    local spacing = math.floor(math.min(self.cardW + 12, (cards.w - 40) / inventorySize))
     if inventorySize == 1 then spacing = self.cardW end
     local totalWidth = (inventorySize - 1) * spacing + self.cardW
-    local startX = math.floor((VIRTUAL_WIDTH - totalWidth) / 2)
-    local startY = VIRTUAL_HEIGHT - self.cardH
-    
+    local startX = cards.x + math.floor((cards.w - totalWidth) / 2)
+    local startY = cards.y + math.floor((cards.h - self.cardH) / 2)
+
     return startX, startY, totalWidth, self.cardH, spacing
 end
 
@@ -94,15 +97,15 @@ end
 
 function HandUI:drawDropZone()
     love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.rectangle("fill", 0, VIRTUAL_HEIGHT - 100, VIRTUAL_WIDTH, 100)
+    love.graphics.rectangle("fill", Layout.trayCards.x, Layout.trayCards.y, Layout.trayCards.w, Layout.trayCards.h)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Click here to store building", 0, VIRTUAL_HEIGHT - 55, VIRTUAL_WIDTH, "center")
+    love.graphics.printf("Click here to store building", Layout.trayCards.x, Layout.trayCards.y + Layout.trayCards.h / 2 - 7, Layout.trayCards.w, "center")
 end
 
 function HandUI:mousepressed(x, y, button)
     if button ~= 1 then return false end
-    
-    if y >= VIRTUAL_HEIGHT - 100 then
+
+    if y >= Layout.trayCards.y and x >= Layout.trayCards.x and x < Layout.trayCards.x + Layout.trayCards.w then
         if self.game.inputMode == "placing" then
             self.game.inventory:add(self.game.blueprint)
             self.game.blueprint = nil

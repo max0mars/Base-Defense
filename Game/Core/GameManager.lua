@@ -25,6 +25,7 @@ local EffectManager      = require("Game.Effects.EffectManager")
 -- Entities & UI
 local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
+local Layout             = require("Game.GUI.Layout")
 local EnemyRegistry      = require("Game.Spawning.EnemyRegistry")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
@@ -277,6 +278,12 @@ end
 function game:draw()
     local healthyboys = {} -- Temporary list for drawing overlays (health bars, etc.)
 
+    -- World rendering (steps 1-5) happens inside the centered field viewport so
+    -- existing world coordinates map onto the 16:9-centered battlefield. The HUD
+    -- (gui:draw and below) is drawn afterwards in full-canvas screen space.
+    SetGameScissor(Layout.field.x, Layout.field.y, Layout.field.w, Layout.field.h)
+    Layout.pushWorld()
+
     -- 1. Environment & Grid
     self.ground:draw()
     
@@ -331,6 +338,56 @@ function game:draw()
             self.battlefieldGrid:drawOverlays()
         end
     end
+
+    -- Highlight target: a focused (clicked) building/enemy is sticky and wins
+    -- over hover (the user must click elsewhere to dismiss). Only one highlights.
+    local ih = self.inputHandler
+    local hb, he
+    if ih and ih.selectedBuilding and not ih.selectedBuilding.destroyed then
+        hb = ih.selectedBuilding
+    elseif ih and ih.selectedEnemy then
+        he = ih.selectedEnemy
+    else
+        hb = ih and ih.hoveredBuilding
+        he = self.gui and self.gui.tooltips and self.gui.tooltips.hoveredEnemy
+    end
+
+    -- Building: white outline around just the PERIMETER of its occupied cells.
+    if hb and hb.slot and hb.buildGrid and not hb.destroyed and hb.getSlotsFromPattern then
+        local bg = hb.buildGrid
+        local cs = bg.cellSize
+        local occ, cells = {}, {}
+        for _, slot in ipairs(hb:getSlotsFromPattern(hb.slot)) do
+            local i = ((slot - 1) % bg.width) + 1
+            local j = math.ceil(slot / bg.width)
+            occ[i .. "," .. j] = true
+            cells[#cells + 1] = { i = i, j = j }
+        end
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.setLineWidth(2)
+        for _, c in ipairs(cells) do
+            local x0 = bg.x + (c.i - 1) * cs
+            local y0 = bg.y + (c.j - 1) * cs
+            if not occ[c.i .. "," .. (c.j - 1)] then love.graphics.line(x0, y0, x0 + cs, y0) end           -- top
+            if not occ[c.i .. "," .. (c.j + 1)] then love.graphics.line(x0, y0 + cs, x0 + cs, y0 + cs) end  -- bottom
+            if not occ[(c.i - 1) .. "," .. c.j] then love.graphics.line(x0, y0, x0, y0 + cs) end            -- left
+            if not occ[(c.i + 1) .. "," .. c.j] then love.graphics.line(x0 + cs, y0, x0 + cs, y0 + cs) end  -- right
+        end
+        love.graphics.pop()
+    end
+
+    -- Enemy: lighten it by overlaying a faint white fill in its own shape.
+    if he and not he.destroyed and he.drawCustomShape then
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, 0.22)
+        he:drawCustomShape("fill", he.x, he.y)
+        love.graphics.pop()
+    end
+
+    -- End the field viewport; HUD and overlays draw in screen space.
+    Layout.popWorld()
+    SetGameScissor()
 
     self.gui:draw()
     if self.rewardSystem and self.rewardSystem.isActive then

@@ -1,6 +1,8 @@
 -- WavePreviewUI.lua: Shows the composition of the upcoming wave during the
 -- 'preparing'/'startup' phases so the player can build counters before committing.
 
+local Layout = require("Game.GUI.Layout")
+
 local WavePreviewUI = {}
 WavePreviewUI.__index = WavePreviewUI
 
@@ -61,8 +63,8 @@ function WavePreviewUI:draw()
     local panelPad = 14
     local panelW = math.max(totalW, font:getWidth(titleText)) + panelPad * 2
     local panelH = 46
-    local panelX = (VIRTUAL_WIDTH - panelW) / 2
-    local panelY = 106 -- just below the top HUD border (y=100)
+    local panelX = Layout.field.x + (Layout.field.w - panelW) / 2
+    local panelY = Layout.field.y + 6 -- top of the battlefield, centered over it
 
     love.graphics.push("all")
 
