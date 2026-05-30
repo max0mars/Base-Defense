@@ -26,6 +26,7 @@ local EffectManager      = require("Game.Effects.EffectManager")
 local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
 local Layout             = require("Game.GUI.Layout")
+local Cursor             = require("Game.GUI.Cursor")
 local EnemyRegistry      = require("Game.Spawning.EnemyRegistry")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
@@ -422,9 +423,13 @@ function game:draw()
         love.graphics.print(text, cx - textW / 2, cy - textH / 2)
     end
 
+    -- Custom cursor: red aim dot over the battlefield, arrow pointer elsewhere.
     local mx, my = love.mouse.getPosition()
-    love.graphics.setColor(1, 0, 0, 1)
-    love.graphics.circle("fill", mx, my, 3)
+    if Layout.inFieldScreen(mx, my) then
+        Cursor.drawAim(mx, my)
+    else
+        Cursor.drawArrow(mx, my)
+    end
     love.graphics.setColor(1, 1, 1, 1)
 end
 
