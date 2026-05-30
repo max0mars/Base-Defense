@@ -337,11 +337,9 @@ function InputHandler:mousepressed(x, y, button)
                 end
             end
         end
+        -- Right-click picks the building up and returns it to the deck.
         if bestTarget then
-            self.destructionTarget = bestTarget
-            clickedTarget = true
-        else
-            self.destructionTarget = nil
+            game:pickUpBuilding(bestTarget)
         end
         return
     end

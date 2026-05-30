@@ -561,6 +561,32 @@ function game:placeBuilding(building, sourceReward)
     self.blueprint.showArc = true
 end
 
+--- Picks up a placed building, removing it from the field and returning it to the
+--- inventory deck as a fresh card. The main turret (no reward card) can't be
+--- picked up. Returns true on success.
+function game:pickUpBuilding(building)
+    if not building or (building.isType and building:isType("mainLazer")) then return false end
+    local reward = building.rewardCard
+    if not reward or not reward.building then return false end -- nothing to re-card
+
+    -- Remove the placed instance (frees grid slots / reservations + destroys it).
+    building:remove()
+
+    -- Recreate a fresh blueprint from the reward and drop it back in the deck.
+    local config = { game = self }
+    if reward.shapePattern then config.shapePattern = reward.shapePattern end
+    if reward.color then config.color = reward.color end
+    if reward.turretSlots then config.turretSlots = reward.turretSlots end
+    if reward.isSlotted ~= nil then config.isSlotted = reward.isSlotted end
+
+    local bp = reward.building:new(config)
+    bp.rewardCard = reward
+    self.inventory:add(bp)
+
+    self:recalculateAllBuffs()
+    return true
+end
+
 function game:setState(newState)    self.state = newState end
 function game:getState()            return self.state end
 function game:isState(checkState)   return self.state == checkState end
