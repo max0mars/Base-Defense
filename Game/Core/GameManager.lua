@@ -428,9 +428,10 @@ function game:draw()
         love.graphics.print(text, cx - textW / 2, cy - textH / 2)
     end
 
-    -- Custom cursor. Skipped while paused (the pause menu draws its own). Uses
-    -- the arrow over any open menu/modal, and the red aim dot only over the live
-    -- battlefield during normal play.
+    -- Cursor. Skipped while paused (the pause menu draws its own). Over the live
+    -- battlefield we hide the OS cursor and draw a red aim dot; over the HUD and
+    -- any open menu/modal we fall back to the real OS hand/arrow cursor (the same
+    -- crisp pointer the main menu uses).
     if not (paused == 1) then
         local mx, my = love.mouse.getPosition()
         local menuActive = (self.rewardSystem and self.rewardSystem.isActive)
@@ -440,12 +441,11 @@ function game:draw()
             or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
             or (self.gui and self.gui.itemPicker and self.gui.itemPicker.isActive)
             or self:isState("enemy_mutation") or self:isState("upgrade_mutation")
-        if Cursor.wantHand then
-            Cursor.drawHand(mx, my)
-        elseif (not menuActive) and Layout.inFieldScreen(mx, my) then
+        if (not Cursor.wantHand) and (not menuActive) and Layout.inFieldScreen(mx, my) then
+            love.mouse.setVisible(false)
             Cursor.drawAim(mx, my)
         else
-            Cursor.drawArrow(mx, my)
+            Cursor.applyOS()
         end
         love.graphics.setColor(1, 1, 1, 1)
     end

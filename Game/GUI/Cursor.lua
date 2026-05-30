@@ -1,6 +1,6 @@
--- Cursor.lua: custom in-game cursors. The OS cursor is hidden during gameplay,
--- so we draw our own: a red aim dot over the battlefield and a normal arrow
--- pointer everywhere else (HUD, menus, pause panel).
+-- Cursor.lua: in-game cursor policy. We use the real OS system cursors (the same
+-- crisp hand/arrow the main menu uses) over the HUD and menus, and hide the OS
+-- cursor to draw a custom red aim dot only over the live battlefield.
 
 local Cursor = {}
 
@@ -8,6 +8,25 @@ local Cursor = {}
 -- frame; the cursor then renders as a hand. Reset at the start of each frame.
 Cursor.wantHand = false
 function Cursor.reset() Cursor.wantHand = false end
+
+-- Lazily-created OS system cursors, shared across every scene so the in-game
+-- pointer matches the main menu exactly.
+local handCursor, arrowCursor
+function Cursor.hand()
+    if not handCursor then handCursor = love.mouse.getSystemCursor("hand") end
+    return handCursor
+end
+function Cursor.arrow()
+    if not arrowCursor then arrowCursor = love.mouse.getSystemCursor("arrow") end
+    return arrowCursor
+end
+
+-- Apply the appropriate OS cursor for clickable/idle UI (hand if hovering a
+-- clickable this frame, arrow otherwise) and make sure it is visible.
+function Cursor.applyOS()
+    love.mouse.setVisible(true)
+    love.mouse.setCursor(Cursor.wantHand and Cursor.hand() or Cursor.arrow())
+end
 
 -- Flags a hand cursor if the current mouse position is inside the given rect.
 function Cursor.hover(x, y, w, h)
