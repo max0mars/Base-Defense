@@ -9,6 +9,7 @@ local EnemySpawnUI = require("Game.GUI.EnemySpawnUI")
 local WavePreviewUI = require("Game.GUI.WavePreviewUI")
 local ItemPickerUI = require("Game.GUI.ItemPickerUI")
 local InfoColumn = require("Game.GUI.InfoColumn")
+local Codex = require("Game.GUI.Codex")
 
 -- =============================================================================
 -- Local Helpers for Tron/Neon UI Aesthetics
@@ -147,7 +148,12 @@ function GUIManager:new(game)
         enemySpawner = EnemySpawnUI:new(game),
         wavePreview = WavePreviewUI:new(game),
         itemPicker = ItemPickerUI:new(game),
-        infoColumn = InfoColumn:new(game)
+        infoColumn = InfoColumn:new(game),
+        codex = Codex:new(game),
+
+        -- Codex open buttons in the top strip (centered between toggles and speed).
+        codexEnemiesButton = { x = 712, y = math.floor((Layout.field.y - 24) / 2), w = 100, h = 24 },
+        codexTurretsButton = { x = 824, y = math.floor((Layout.field.y - 24) / 2), w = 100, h = 24 },
     }, self)
     return obj
 end
@@ -214,6 +220,7 @@ function GUIManager:draw()
     if self.enemySpawner then self.enemySpawner:draw() end
     if self.itemPicker then self.itemPicker:draw() end
     self.tooltips:draw()     -- Draw tips above everything
+    if self.codex then self.codex:draw() end -- Codex overlays everything
 end
 
 function GUIManager:drawHUD()
@@ -395,6 +402,20 @@ function GUIManager:drawHUD()
 
     love.graphics.pop()
 
+    -- Codex open buttons (top strip).
+    for _, cb in ipairs({ { b = self.codexEnemiesButton, label = "ENEMIES" }, { b = self.codexTurretsButton, label = "TURRETS" } }) do
+        local hov = mx >= cb.b.x and mx <= cb.b.x + cb.b.w and my >= cb.b.y and my <= cb.b.y + cb.b.h
+        love.graphics.push("all")
+        love.graphics.setColor(0.5, 0.4, 0.75, hov and 0.30 or 0.16)
+        love.graphics.rectangle("fill", cb.b.x, cb.b.y, cb.b.w, cb.b.h, 4)
+        love.graphics.setColor(0.6, 0.5, 0.9, hov and 1 or 0.7)
+        love.graphics.setLineWidth(1)
+        love.graphics.rectangle("line", cb.b.x, cb.b.y, cb.b.w, cb.b.h, 4)
+        love.graphics.setColor(0.85, 0.82, 1, 1)
+        love.graphics.printf(cb.label, cb.b.x, cb.b.y + cb.b.h / 2 - 6, cb.b.w, "center")
+        love.graphics.pop()
+    end
+
     -- Startup Text (Intro text)
     if game:isState("startup") then
         love.graphics.push("all")
@@ -465,7 +486,13 @@ end
 
 function GUIManager:mousepressed(x, y, button)
     -- Handle input in reverse draw order (top to bottom)
-    
+
+    -- Codex overlays everything and captures all input while open.
+    if self.codex and self.codex.isActive then
+        self.codex:mousepressed(x, y, button)
+        return true
+    end
+
     if self.confirmation:mousepressed(x, y, button) then
         return true
     end
@@ -473,7 +500,7 @@ function GUIManager:mousepressed(x, y, button)
     if self.mutation:mousepressed(x, y, button) then
         return true
     end
-    
+
     if self.enemySpawner and self.enemySpawner:mousepressed(x, y, button) then
         return true
     end
@@ -481,9 +508,32 @@ function GUIManager:mousepressed(x, y, button)
     if self.itemPicker and self.itemPicker.isActive and self.itemPicker:mousepressed(x, y, button) then
         return true
     end
-    
+
     if self.hand:mousepressed(x, y, button) then
         return true
+    end
+
+    -- Codex open buttons (top strip).
+    if button == 1 then
+        if x >= self.codexEnemiesButton.x and x <= self.codexEnemiesButton.x + self.codexEnemiesButton.w and
+           y >= self.codexEnemiesButton.y and y <= self.codexEnemiesButton.y + self.codexEnemiesButton.h then
+            self.codex:open("enemies")
+            return true
+        end
+        if x >= self.codexTurretsButton.x and x <= self.codexTurretsButton.x + self.codexTurretsButton.w and
+           y >= self.codexTurretsButton.y and y <= self.codexTurretsButton.y + self.codexTurretsButton.h then
+            self.codex:open("turrets")
+            return true
+        end
+    end
+
+    -- Clicking a Hoard / Inspect card opens its codex entry.
+    if self.infoColumn and self.infoColumn.mousepressed then
+        local action = self.infoColumn:mousepressed(x, y, button)
+        if action then
+            self.codex:open(action.tab, action.id)
+            return true
+        end
     end
     
     if button == 1 then

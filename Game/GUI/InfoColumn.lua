@@ -298,4 +298,42 @@ function InfoColumn:draw()
     self:drawPreview(x, 376, w, (col.y + col.h) - 376 - 12)
 end
 
+-- Clicking a Hoard enemy card or the Inspect card opens its codex entry; returns
+-- { tab, id } or nil. (Geometry mirrors draw().)
+function InfoColumn:mousepressed(x, y, button)
+    if button ~= 1 then return nil end
+    local col = Layout.leftColumn
+    local rx, rw = col.x + 12, col.w - 24
+
+    -- Hoard cards (region y 104..368).
+    local summary = self.game.WaveSpawner and self.game.WaveSpawner:getUpcomingSummary()
+    if summary then
+        local gy = 104 + 26
+        local cols, gap, cardH = 3, 8, 60
+        local cardW = math.floor((rw - (cols - 1) * gap) / cols)
+        for i, item in ipairs(summary) do
+            local cx = rx + ((i - 1) % cols) * (cardW + gap)
+            local cy = gy + math.floor((i - 1) / cols) * (cardH + gap)
+            if cy + cardH <= 104 + 264 and x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then
+                return { tab = "enemies", id = item.id }
+            end
+        end
+    end
+
+    -- Preview card (region y 376..).
+    local h = (col.y + col.h) - 376 - 12
+    local cardW = math.min(190, rw)
+    local cardH = math.min(h - 30, 200)
+    local cx, cy = rx + math.floor((rw - cardW) / 2), 376 + 26
+    if x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then
+        local kind, obj = self:previewTarget()
+        if kind == "building" then
+            return { tab = "turrets", id = (obj.rewardCard and obj.rewardCard.id) or obj.id }
+        elseif kind == "enemy" then
+            return { tab = "enemies", id = obj.name }
+        end
+    end
+    return nil
+end
+
 return InfoColumn

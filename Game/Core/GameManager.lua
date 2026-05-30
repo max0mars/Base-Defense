@@ -109,6 +109,10 @@ function game:load(saveData, isTesting)
         -- Animation Pool
         self.animations = {}
         self.time_mul = 1
+
+        -- Codex discovery tracking: enemies seen in a wave, turrets ever owned.
+        self.seenEnemies = {}
+        self.ownedTurrets = {}
     end
     
     -- Setup Physics/Collision

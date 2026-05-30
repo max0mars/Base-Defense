@@ -65,8 +65,9 @@ function game_scene:update(dt)
     local effectiveDt = dt * game.time_mul
     
     -- Freeze game if paused or a modal menu is active
-    if paused == 1 or 
-       (game.rewardSystem and game.rewardSystem.isActive) or 
+    if paused == 1 or
+       (game.gui.codex and game.gui.codex.isActive) or
+       (game.rewardSystem and game.rewardSystem.isActive) or
        (game.specialUpgradeManager and game.specialUpgradeManager.isActive) or
        (game.gui.mutation and game.gui.mutation.isActive) or
        (game.gui.confirmation and game.gui.confirmation.active) or
@@ -104,6 +105,12 @@ function game_scene:draw()
 end
 
 function game_scene:keypressed(key)
+    -- Codex (if open) captures Esc to close itself first.
+    if game.gui.codex and game.gui.codex.isActive then
+        game.gui.codex:keypressed(key)
+        return
+    end
+
     -- Esc / P toggle the pause menu (the shared settings panel).
     if key == "escape" or key == "p" then
         paused = paused == 1 and 0 or 1

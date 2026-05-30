@@ -108,11 +108,16 @@ function WaveSpawner:update(dt)
                 }
                 
                 local enemyInstance = enemyClass:new(spawnConfig)
-                
+
                 -- Apply Mutation Upgrades
                 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
                 EnemyRegistry:applyActiveMutations(enemyInstance)
-                
+
+                -- Codex: mark this enemy type as seen.
+                if self.game.seenEnemies and enemyInstance.name then
+                    self.game.seenEnemies[enemyInstance.name] = true
+                end
+
                 self.game:addObject(enemyInstance)
                 
                 self.spawntimer = self.spawnRate
