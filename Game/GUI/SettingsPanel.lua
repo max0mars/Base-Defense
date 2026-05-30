@@ -5,6 +5,7 @@
 -- action string so each scene can route them (e.g. "back", "resume", "exit").
 
 local AudioSlidersUI = require("Game.GUI.AudioSlidersUI")
+local Cursor = require("Game.GUI.Cursor")
 
 local SettingsPanel = {}
 SettingsPanel.__index = SettingsPanel
@@ -155,8 +156,15 @@ function SettingsPanel:draw()
 
     self:divider(p.y + 428)
 
-    for _, btn in ipairs(self.buttons) do drawButton(btn, mx, my) end
-    if self.sliders then self.sliders:draw() end
+    for _, btn in ipairs(self.buttons) do
+        drawButton(btn, mx, my)
+        Cursor.hover(btn.x, btn.y, btn.w, btn.h)
+    end
+    if self.sliders then
+        self.sliders:draw()
+        Cursor.hover(self.sliders.x, self.sliders.y - 4, self.sliders.w, 24)
+        Cursor.hover(self.sliders.x, self.sliders.y + 46, self.sliders.w, 24)
+    end
 end
 
 -- Returns the clicked bottom-button action string (for the caller to route), or

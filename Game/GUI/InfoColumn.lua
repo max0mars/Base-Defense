@@ -6,6 +6,7 @@
 
 local Reward = require("Game.Rewards.Reward")
 local Layout = require("Game.GUI.Layout")
+local Cursor = require("Game.GUI.Cursor")
 
 local InfoColumn = {}
 InfoColumn.__index = InfoColumn
@@ -296,12 +297,16 @@ function InfoColumn:draw()
     -- Stats panel occupies ~y 12..96; hoard then preview fill the rest.
     self:drawHoard(x, 104, w, 264)
     self:drawPreview(x, 376, w, (col.y + col.h) - 376 - 12)
+
+    if not (self.game.gui and self.game.gui:overlayActive()) then
+        local mx, my = love.mouse.getPosition()
+        if self:clickableAt(mx, my) then Cursor.wantHand = true end
+    end
 end
 
--- Clicking a Hoard enemy card or the Inspect card opens its codex entry; returns
--- { tab, id } or nil. (Geometry mirrors draw().)
-function InfoColumn:mousepressed(x, y, button)
-    if button ~= 1 then return nil end
+-- The codex action for a point over a Hoard enemy card or the Inspect card:
+-- returns { tab, id } or nil. (Geometry mirrors draw().)
+function InfoColumn:clickableAt(x, y)
     local col = Layout.leftColumn
     local rx, rw = col.x + 12, col.w - 24
 
@@ -334,6 +339,11 @@ function InfoColumn:mousepressed(x, y, button)
         end
     end
     return nil
+end
+
+function InfoColumn:mousepressed(x, y, button)
+    if button ~= 1 then return nil end
+    return self:clickableAt(x, y)
 end
 
 return InfoColumn

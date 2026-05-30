@@ -282,6 +282,7 @@ end
 
 function game:draw()
     local healthyboys = {} -- Temporary list for drawing overlays (health bars, etc.)
+    Cursor.reset() -- hover flag is re-set by UI components during this frame's draw
 
     -- World rendering (steps 1-5) happens inside the centered field viewport so
     -- existing world coordinates map onto the 16:9-centered battlefield. The HUD
@@ -427,14 +428,27 @@ function game:draw()
         love.graphics.print(text, cx - textW / 2, cy - textH / 2)
     end
 
-    -- Custom cursor: red aim dot over the battlefield, arrow pointer elsewhere.
-    local mx, my = love.mouse.getPosition()
-    if Layout.inFieldScreen(mx, my) then
-        Cursor.drawAim(mx, my)
-    else
-        Cursor.drawArrow(mx, my)
+    -- Custom cursor. Skipped while paused (the pause menu draws its own). Uses
+    -- the arrow over any open menu/modal, and the red aim dot only over the live
+    -- battlefield during normal play.
+    if not (paused == 1) then
+        local mx, my = love.mouse.getPosition()
+        local menuActive = (self.rewardSystem and self.rewardSystem.isActive)
+            or (self.specialUpgradeManager and self.specialUpgradeManager.isActive)
+            or (self.gui and self.gui.mutation and self.gui.mutation.isActive)
+            or (self.gui and self.gui.codex and self.gui.codex.isActive)
+            or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
+            or (self.gui and self.gui.itemPicker and self.gui.itemPicker.isActive)
+            or self:isState("enemy_mutation") or self:isState("upgrade_mutation")
+        if Cursor.wantHand then
+            Cursor.drawHand(mx, my)
+        elseif (not menuActive) and Layout.inFieldScreen(mx, my) then
+            Cursor.drawAim(mx, my)
+        else
+            Cursor.drawArrow(mx, my)
+        end
+        love.graphics.setColor(1, 1, 1, 1)
     end
-    love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- -----------------------------------------------------------------------------

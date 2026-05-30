@@ -3,6 +3,7 @@ menu_scene.__index = menu_scene
 local scene = require("Scenes.scene") -- Import the base scene class
 local game = require("Game.Core.GameManager")
 local SettingsPanel = require("Game.GUI.SettingsPanel")
+local Cursor = require("Game.GUI.Cursor")
 setmetatable(menu_scene, { __index = scene })
 
 -- Vertical offset to center the main-menu title banner on the 720 canvas.
@@ -10,6 +11,8 @@ local MENU_OFFSET_Y = 80
 
 function menu_scene:load()
     love.mouse.setVisible(true)
+    self.handCursor = love.mouse.getSystemCursor("hand")
+    self.arrowCursor = love.mouse.getSystemCursor("arrow")
     self.page = "main" -- "main" | "settings"
 
     local cx = (VIRTUAL_WIDTH - 240) / 2
@@ -41,6 +44,7 @@ end
 function menu_scene:drawMainButtons(mx, my)
     for _, btn in ipairs(self.mainButtons) do
         local isHovered = mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
+        if isHovered then Cursor.wantHand = true end
         love.graphics.setColor(isHovered and btn.hoverColor or btn.color)
         love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 6, 6)
         love.graphics.setColor(btn.borderColor)
@@ -55,6 +59,8 @@ function menu_scene:drawMainButtons(mx, my)
 end
 
 function menu_scene:draw()
+    Cursor.reset() -- hover flag re-set by buttons / settings panel below
+
     -- Subtle tactical grid background (both pages).
     love.graphics.setColor(0.15, 0.15, 0.18, 0.35)
     for gx = 0, VIRTUAL_WIDTH, 40 do love.graphics.line(gx, 0, gx, VIRTUAL_HEIGHT) end
@@ -88,6 +94,9 @@ function menu_scene:draw()
     end
 
     self.confirmation:draw()
+
+    -- Swap the OS cursor to a hand over clickable elements.
+    love.mouse.setCursor(Cursor.wantHand and self.handCursor or self.arrowCursor)
 end
 
 function menu_scene:mousepressed(x, y, button)

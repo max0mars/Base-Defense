@@ -1,4 +1,5 @@
 local Layout = require("Game.GUI.Layout")
+local Cursor = require("Game.GUI.Cursor")
 
 local HandUI = {}
 HandUI.__index = HandUI
@@ -76,6 +77,10 @@ function HandUI:draw()
 
     if self.game.inputMode == "placing" then
         self:drawDropZone()
+    end
+
+    if self.hoveredIndex and not (self.game.gui and self.game.gui:overlayActive()) then
+        Cursor.wantHand = true
     end
 end
 

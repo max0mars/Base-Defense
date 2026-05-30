@@ -10,6 +10,7 @@ local WavePreviewUI = require("Game.GUI.WavePreviewUI")
 local ItemPickerUI = require("Game.GUI.ItemPickerUI")
 local InfoColumn = require("Game.GUI.InfoColumn")
 local Codex = require("Game.GUI.Codex")
+local Cursor = require("Game.GUI.Cursor")
 
 -- =============================================================================
 -- Local Helpers for Tron/Neon UI Aesthetics
@@ -151,9 +152,8 @@ function GUIManager:new(game)
         infoColumn = InfoColumn:new(game),
         codex = Codex:new(game),
 
-        -- Codex open buttons in the top strip (centered between toggles and speed).
-        codexEnemiesButton = { x = 712, y = math.floor((Layout.field.y - 24) / 2), w = 100, h = 24 },
-        codexTurretsButton = { x = 824, y = math.floor((Layout.field.y - 24) / 2), w = 100, h = 24 },
+        -- Codex open button in the top strip (centered between toggles and speed).
+        codexButton = { x = 759, y = math.floor((Layout.field.y - 24) / 2), w = 110, h = 24 },
     }, self)
     return obj
 end
@@ -193,11 +193,11 @@ function GUIManager:update(dt)
     if self.itemPicker then self.itemPicker:update(dt) end
     if self.infoColumn then self.infoColumn:update(dt) end
 
-    -- Rarity odds appear while hovering the Buy Upgrade button.
+    -- Rarity odds appear while hovering the Buy Upgrade button (not behind overlays).
     local mx, my = love.mouse.getPosition()
-    local hoverBuy = Layout.inRegion(self.buyButton, mx, my)
+    local hoverBuy = Layout.inRegion(self.buyButton, mx, my) and not self:overlayActive()
 
-    if hoverBuy and not self.game.rewardSystem.isActive then
+    if hoverBuy then
         if not self.tooltips.rarityProbs then
             self.tooltips.rarityProbs = self.game.rewardSystem.poolLogic:getLuckProbabilities(self.game.luck)
         end
@@ -221,6 +221,19 @@ function GUIManager:draw()
     if self.itemPicker then self.itemPicker:draw() end
     self.tooltips:draw()     -- Draw tips above everything
     if self.codex then self.codex:draw() end -- Codex overlays everything
+end
+
+-- True when a modal/overlay is open over the HUD (so background HUD buttons
+-- should not respond to hover).
+function GUIManager:overlayActive()
+    return (self.game.rewardSystem and self.game.rewardSystem.isActive)
+        or (self.mutation and self.mutation.isActive)
+        or (self.game.specialUpgradeManager and self.game.specialUpgradeManager.isActive)
+        or (self.codex and self.codex.isActive)
+        or (self.enemySpawner and self.enemySpawner.isActive)
+        or (self.itemPicker and self.itemPicker.isActive)
+        or (self.confirmation and self.confirmation.active)
+        or (paused == 1)
 end
 
 function GUIManager:drawHUD()
@@ -330,6 +343,8 @@ function GUIManager:drawHUD()
     -- ROLL / PURCHASE BUTTONS (bottom of the left column)
     -- ==========================================
     local mx, my = love.mouse.getPosition()
+    -- Suppress HUD hover while a modal/overlay is open (no hovering background buttons).
+    if self:overlayActive() then mx, my = -1000, -1000 end
     local buyEnabled = not game.rewardSystem.isActive and game.inputMode == "idle"
 
     -- Luck Offering.
@@ -402,18 +417,29 @@ function GUIManager:drawHUD()
 
     love.graphics.pop()
 
-    -- Codex open buttons (top strip).
-    for _, cb in ipairs({ { b = self.codexEnemiesButton, label = "ENEMIES" }, { b = self.codexTurretsButton, label = "TURRETS" } }) do
-        local hov = mx >= cb.b.x and mx <= cb.b.x + cb.b.w and my >= cb.b.y and my <= cb.b.y + cb.b.h
+    -- Codex open button (top strip).
+    do
+        local cb = self.codexButton
+        local hov = mx >= cb.x and mx <= cb.x + cb.w and my >= cb.y and my <= cb.y + cb.h
         love.graphics.push("all")
         love.graphics.setColor(0.5, 0.4, 0.75, hov and 0.30 or 0.16)
-        love.graphics.rectangle("fill", cb.b.x, cb.b.y, cb.b.w, cb.b.h, 4)
+        love.graphics.rectangle("fill", cb.x, cb.y, cb.w, cb.h, 4)
         love.graphics.setColor(0.6, 0.5, 0.9, hov and 1 or 0.7)
         love.graphics.setLineWidth(1)
-        love.graphics.rectangle("line", cb.b.x, cb.b.y, cb.b.w, cb.b.h, 4)
+        love.graphics.rectangle("line", cb.x, cb.y, cb.w, cb.h, 4)
         love.graphics.setColor(0.85, 0.82, 1, 1)
-        love.graphics.printf(cb.label, cb.b.x, cb.b.y + cb.b.h / 2 - 6, cb.b.w, "center")
+        love.graphics.printf("CODEX", cb.x, cb.y + cb.h / 2 - 6, cb.w, "center")
         love.graphics.pop()
+    end
+
+    -- Hand cursor over any HUD button (mx is neutralized while an overlay is open).
+    for _, btn in ipairs({ self.luckButton, self.buyButton, self.buyBlockerButton,
+        self.autoFireButton, self.dmgNumsButton, self.autoWaveButton,
+        self.speedMinusButton, self.speedPlusButton, self.codexButton }) do
+        if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+            Cursor.wantHand = true
+            break
+        end
     end
 
     -- Startup Text (Intro text)
@@ -513,16 +539,11 @@ function GUIManager:mousepressed(x, y, button)
         return true
     end
 
-    -- Codex open buttons (top strip).
+    -- Codex open button (top strip).
     if button == 1 then
-        if x >= self.codexEnemiesButton.x and x <= self.codexEnemiesButton.x + self.codexEnemiesButton.w and
-           y >= self.codexEnemiesButton.y and y <= self.codexEnemiesButton.y + self.codexEnemiesButton.h then
+        if x >= self.codexButton.x and x <= self.codexButton.x + self.codexButton.w and
+           y >= self.codexButton.y and y <= self.codexButton.y + self.codexButton.h then
             self.codex:open("enemies")
-            return true
-        end
-        if x >= self.codexTurretsButton.x and x <= self.codexTurretsButton.x + self.codexTurretsButton.w and
-           y >= self.codexTurretsButton.y and y <= self.codexTurretsButton.y + self.codexTurretsButton.h then
-            self.codex:open("turrets")
             return true
         end
     end

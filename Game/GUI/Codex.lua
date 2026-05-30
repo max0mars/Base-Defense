@@ -8,6 +8,7 @@ local NormalEnemyIndex  = require("Game.Spawning.NormalEnemyIndex")
 local NormalRewardIndex = require("Game.Rewards.NormalRewardIndex")
 local EnemyRegistry     = require("Game.Spawning.EnemyRegistry")
 local Reward            = require("Game.Rewards.Reward")
+local Cursor            = require("Game.GUI.Cursor")
 
 local Codex = {}
 Codex.__index = Codex
@@ -282,6 +283,19 @@ function Codex:draw()
         for _, r in ipairs(self:gridRects()) do
             local hov = mx >= r.x and mx <= r.x + r.w and my >= r.y and my <= r.y + r.h
             entryCard(self, r, hov)
+        end
+    end
+
+    -- Hand cursor over interactive elements.
+    Cursor.hover(cr.x, cr.y, cr.w, cr.h)
+    Cursor.hover(tabs.enemies.x, tabs.enemies.y, tabs.enemies.w, tabs.enemies.h)
+    Cursor.hover(tabs.turrets.x, tabs.turrets.y, tabs.turrets.w, tabs.turrets.h)
+    if self.selected then
+        local b = self:backRect()
+        Cursor.hover(b.x, b.y, b.w, b.h)
+    else
+        for _, r in ipairs(self:gridRects()) do
+            if self:isRevealed(r.entry) then Cursor.hover(r.x, r.y, r.w, r.h) end
         end
     end
 end

@@ -89,9 +89,9 @@ function game_scene:draw()
         love.graphics.setColor(0, 0, 0, 0.6) -- Dim overlay behind the pause menu
         love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
         self.settings:draw()
-        -- Arrow cursor on top of the menu (the game's own cursor is under the overlay).
+        -- Cursor on top of the menu (the game's own cursor is under the overlay).
         local mx, my = love.mouse.getPosition()
-        Cursor.drawArrow(mx, my)
+        if Cursor.wantHand then Cursor.drawHand(mx, my) else Cursor.drawArrow(mx, my) end
     end
     love.graphics.setColor(1, 1, 1, 1)
     -- love.graphics.print("Tokens: " .. game.tokens, 10, 10)
