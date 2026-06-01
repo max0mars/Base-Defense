@@ -2,7 +2,7 @@
 -- discovery -- enemies once seen in a wave (game.seenEnemies), turrets once owned
 -- (game.ownedTurrets). Enemy detail lists "artifacts" (the enemy's mutations),
 -- revealed once that mutation has been activated (EnemyRegistry.activeUpgrades).
--- Opened from the HUD codex buttons or by clicking a Hoard / Inspect card.
+-- Opened from the HUD codex buttons or by clicking a Horde / Inspect card.
 
 local NormalEnemyIndex  = require("Game.Spawning.NormalEnemyIndex")
 local NormalRewardIndex = require("Game.Rewards.NormalRewardIndex")

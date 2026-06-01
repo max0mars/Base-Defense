@@ -11,7 +11,7 @@
 --   | LEFT   |                                         |
 --   | COLUMN |             BATTLEFIELD                 |
 --   | stats  |          (fills remaining space)        |
---   | hoard  |                                         |
+--   | horde  |                                         |
 --   | prev   |                                         |
 --   +--------+-----------------------------------------+
 --   |                  BOTTOM TRAY                     |
@@ -35,7 +35,7 @@ Layout.FIELD_W = 800
 Layout.FIELD_H = 400
 
 -- HUD region sizes. A single full-height left command column holds ALL the HUD
--- (stats + controls + hoard + preview); there is no top bar. The battlefield
+-- (stats + controls + horde + preview); there is no top bar. The battlefield
 -- fills the rest, with a stored-towers tray under it.
 local TOPBAR_H     = 0
 local TRAY_H       = 150

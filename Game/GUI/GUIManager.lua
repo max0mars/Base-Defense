@@ -210,7 +210,7 @@ function GUIManager:draw()
     -- Global HUD (chrome, stats, controls, borders).
     self:drawHUD()
 
-    -- Left-column Hoard + Inspect (replaces the old floating wave preview and
+    -- Left-column Horde + Inspect (replaces the old floating wave preview and
     -- bottom-right hover card).
     if self.infoColumn then self.infoColumn:draw() end
 
@@ -550,7 +550,7 @@ function GUIManager:mousepressed(x, y, button)
         end
     end
 
-    -- Clicking a Hoard / Inspect card opens its codex entry.
+    -- Clicking a Horde / Inspect card opens its codex entry.
     if self.infoColumn and self.infoColumn.mousepressed then
         local action = self.infoColumn:mousepressed(x, y, button)
         if action then

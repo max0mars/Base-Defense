@@ -1,5 +1,5 @@
 -- InfoColumn.lua: the lower portion of the left command column.
---   * HOARD   - the incoming wave's enemies, as cards.
+--   * HORDE   - the incoming wave's enemies, as cards.
 --   * INSPECT - a live preview of the hovered/selected turret or hovered enemy,
 --               drawn with the shared reward-card visual language.
 -- Sits below the stats panel; the roll/purchase buttons live in the tray.
@@ -87,13 +87,13 @@ local function cardFrame(x, y, w, h, col, glyphFn, name, sub)
 end
 
 -- ---------------------------------------------------------------------------
--- Hoard (incoming enemies)
+-- Horde (incoming enemies)
 -- ---------------------------------------------------------------------------
 
 -- Normalized card list for the wave panel + the wave number + whether the wave
 -- is live. During a wave we read the live roster (with remaining counts and
 -- death-flash timers); otherwise the upcoming-wave preview summary.
-function InfoColumn:hoardCards()
+function InfoColumn:hordeCards()
     local game = self.game
     local spawner = game.WaveSpawner
     local cards = {}
@@ -121,8 +121,8 @@ function InfoColumn:hoardCards()
     return cards, waveNum or (game.wave + 1), false
 end
 
-function InfoColumn:drawHoard(x, y, w, h)
-    local cards, waveNum, inProgress = self:hoardCards()
+function InfoColumn:drawHorde(x, y, w, h)
+    local cards, waveNum, inProgress = self:hordeCards()
 
     local title = waveNum and string.format("INCOMING — WAVE %d", waveNum) or "INCOMING"
     sectionHeader(title, x, y, w, {1.0, 0.4, 0.4})
@@ -341,8 +341,8 @@ function InfoColumn:draw()
     local col = Layout.leftColumn
     local x = col.x + 12
     local w = col.w - 24
-    -- Stats panel occupies ~y 12..96; hoard then preview fill the rest.
-    self:drawHoard(x, 104, w, 264)
+    -- Stats panel occupies ~y 12..96; horde then preview fill the rest.
+    self:drawHorde(x, 104, w, 264)
     self:drawPreview(x, 376, w, (col.y + col.h) - 376 - 12)
 
     if not (self.game.gui and self.game.gui:overlayActive()) then
@@ -351,14 +351,14 @@ function InfoColumn:draw()
     end
 end
 
--- The codex action for a point over a Hoard enemy card or the Inspect card:
+-- The codex action for a point over a Horde enemy card or the Inspect card:
 -- returns { tab, id } or nil. (Geometry mirrors draw().)
 function InfoColumn:clickableAt(x, y)
     local col = Layout.leftColumn
     local rx, rw = col.x + 12, col.w - 24
 
-    -- Hoard cards (region y 104..368).
-    local cards = self:hoardCards()
+    -- Horde cards (region y 104..368).
+    local cards = self:hordeCards()
     if cards then
         local gy = 104 + 26
         local cols, gap, cardH = 3, 8, 60
