@@ -442,24 +442,26 @@ function GUIManager:drawHUD()
         end
     end
 
-    -- Startup Text (Intro text)
-    if game:isState("startup") then
+    -- Single "press enter" call-to-action, shown before wave 1 (startup) and
+    -- between waves (preparing), in a bordered panel centered on the battlefield.
+    if game:isState("startup") or game:isState("preparing") then
+        local f = Layout.field
+        local boxW, boxH = 320, 60
+        local bx = f.x + (f.w - boxW) / 2
+        local by = f.y + (f.h - boxH) / 2
         love.graphics.push("all")
-        love.graphics.setColor(1, 1, 1, 1)
-        local introX, introW = Layout.field.x, Layout.field.w
-        local y = Layout.field.y + 40
-        for i, lineSet in ipairs(GameText.IntroText) do
-            local text = lineSet[1]
-            love.graphics.printf(text, introX, y, introW, "center")
-
-            -- Estimate lines based on width
-            local font = love.graphics.getFont()
-            local _, lines = font:getWrap(text, introW)
-            y = y + (#lines * 16) + 10
-        end
-        -- Glowing start text
+        -- Panel.
+        love.graphics.setColor(0.04, 0.06, 0.09, 0.85)
+        love.graphics.rectangle("fill", bx, by, boxW, boxH, 8, 8)
+        -- Pulsing neon border.
+        love.graphics.setColor(0, 0.85, 1.0, 0.5 + pulse * 0.5)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", bx, by, boxW, boxH, 8, 8)
+        love.graphics.setLineWidth(1)
+        -- Label.
+        local font = love.graphics.getFont()
         love.graphics.setColor(0, 0.85, 1.0, 0.7 + pulse * 0.3)
-        love.graphics.printf("PRESS ENTER TO START", introX, y + 30, introW, "center")
+        love.graphics.printf("PRESS ENTER TO START WAVE", bx, by + boxH / 2 - font:getHeight() / 2, boxW, "center")
         love.graphics.pop()
     end
 end

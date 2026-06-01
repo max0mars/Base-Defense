@@ -87,11 +87,8 @@ function TooltipManager:draw()
     -- pane (see InfoColumn). hoveredBuilding/hoveredEnemy are still tracked in
     -- update() so the column can read them.
 
-    -- Draw startup and preparation messages
-    if game:isState("preparing") then
-        love.graphics.setColor(1, 1, 1, 0.5)
-        love.graphics.printf("Press Enter to Start Wave ", 0, VIRTUAL_HEIGHT / 2 - 20, VIRTUAL_WIDTH, "center")
-    end
+    -- The "press enter" prompt for startup/preparing is drawn as a single bordered
+    -- panel by GUIManager (drawHUD); no plain-text duplicate here.
 
     -- Draw rarity probabilities tooltip
     if self.rarityProbs then

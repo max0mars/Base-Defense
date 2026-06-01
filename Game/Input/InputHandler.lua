@@ -603,10 +603,9 @@ function InputHandler:keypressed(key)
     if key == "space" then
         -- Space key now handled in update() for showing all firing arcs
     elseif key == "return" or key == "enter" then
-        -- Start next wave if in preparing state
-        if game:isState("startup") then
-            game:setState("preparing")
-        elseif game:isState("preparing") then
+        -- Start the wave directly from either the initial startup screen or the
+        -- between-wave preparing screen (both show the same single prompt).
+        if game:isState("startup") or game:isState("preparing") then
             game:recalculateAllBuffs() -- Recalculate all buffs before wave starts
             game.WaveSpawner:startNextWave()
             game:setState("wave")
