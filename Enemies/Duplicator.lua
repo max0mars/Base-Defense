@@ -6,7 +6,7 @@ local default = {
     name = "Duplicator",
     speed = 22,
     damage = 20,
-    maxHp = 200,
+    maxHp = 150,
     color = {0.2, 0.8, 0.4, 1}, -- Toxic Green/Cellular color
     types = { duplicator = true, bio = true },
     size = 18,
@@ -130,7 +130,7 @@ function Duplicator:died()
                 if childGeneration == 1 then
                     childSpeed = childSpeed * 1.5
                 elseif childGeneration == 2 then
-                    childSpeed = childSpeed * 2.5
+                    childSpeed = childSpeed * 1.5
                 end
             end
             
