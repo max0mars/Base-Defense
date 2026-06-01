@@ -57,7 +57,7 @@ function Base:update(dt)
     end
 end
 
-function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity)
+function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTags)
     if self.game.testingMode and self.game.baseInvincible then
         return 0
     end
@@ -82,7 +82,7 @@ function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity)
         self.damageTracker[wave][enemyName].damage = self.damageTracker[wave][enemyName].damage + amount
     end
 
-    return living_object.takeDamage(self, amount, damageType, hitX, hitY)
+    return living_object.takeDamage(self, amount, damageType, hitX, hitY, damageTags)
 end
 
 function Base:getProcessedDamageHistory()

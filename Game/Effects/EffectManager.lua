@@ -223,19 +223,59 @@ function EffectManager:triggerEvent(eventName, ...)
     end
 end
 
-function EffectManager:getStat(statName, baseValue)
+function EffectManager:getStat(statName, baseValue, damageType, damageTags)
     local mod = self.currentModifiers[statName]
-    if not mod then return baseValue end
     
-    local finalMult = math.max(0, 1 + mod.mult)
-    if mod.compoundMult then
-        finalMult = finalMult * mod.compoundMult
+    local effAdd = mod and mod.add or 0
+    local effMult = mod and mod.mult or 0
+    local effMax = mod and mod.max or 0
+    local effCompoundMult = mod and mod.compoundMult or 1
+
+    local hasMod = mod ~= nil
+
+    -- 1. Damage Type Modifiers
+    if statName == "damage" then
+        local dt = damageType
+        if dt == nil and self.owner then
+            dt = self.owner.damageType
+        end
+        
+        local combinedTags = {}
+        if damageTags then
+            for _, tag in ipairs(damageTags) do
+                table.insert(combinedTags, tag)
+            end
+        end
+        if dt then
+            table.insert(combinedTags, dt)
+        end
+        
+        for _, tag in ipairs(combinedTags) do
+            local dtModName = tag .. "_damage"
+            local dtMod = self.currentModifiers[dtModName]
+            if dtMod then
+                effAdd = effAdd + (dtMod.add or 0)
+                effMult = effMult + (dtMod.mult or 0)
+                effMax = math.max(effMax, dtMod.max or 0)
+                if dtMod.compoundMult then
+                    effCompoundMult = effCompoundMult * dtMod.compoundMult
+                end
+                hasMod = true
+            end
+        end
+    end
+
+    if not hasMod then return baseValue end
+    
+    local finalMult = math.max(0, 1 + effMult)
+    if effCompoundMult ~= 1 then
+        finalMult = finalMult * effCompoundMult
     end
     
-    if baseValue < mod.max then 
-        return (mod.add + mod.max) * finalMult
+    if baseValue < effMax then 
+        return (effAdd + effMax) * finalMult
     else 
-        return (baseValue + mod.add) * finalMult
+        return (baseValue + effAdd) * finalMult
     end
 end
 

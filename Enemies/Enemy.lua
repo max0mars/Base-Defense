@@ -125,14 +125,26 @@ function Enemy:update(dt)
     end
 end
 
-function Enemy:takeDamage(amount, damageType, hitX, hitY)
+function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags)
     if not amount or type(amount) ~= "number" or amount ~= amount or amount <= 0 then
         return 0
     end
     
+    local combinedTags = {}
+    if damageTags then
+        for _, tag in ipairs(damageTags) do
+            table.insert(combinedTags, tag)
+        end
+    end
+    table.insert(combinedTags, damageType)
+
     local damageMult = 1
-    if self.affinities and self.affinities[damageType] then
-        damageMult = self.affinities[damageType]
+    if self.affinities then
+        for _, tag in ipairs(combinedTags) do
+            if self.affinities[tag] then
+                damageMult = damageMult * self.affinities[tag]
+            end
+        end
     end
 
     amount = amount * damageMult

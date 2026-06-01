@@ -23,7 +23,6 @@ function living_object:new(config)
     obj.affinities = config.affinities or {
         normal = 1,
         poison = 1,
-        armourPiercing = 1,
         trueDamage = 1,
         fire = 1,
         explosive = 1,
@@ -74,22 +73,44 @@ end
 local damageTypes = {
     normal = 1,
     poison = 1,
-    armourPiercing = 1,
     trueDamage = 1,
     fire = 1,
     explosive = 1,
     energy = 1
 }
-function living_object:takeDamage(amount, damageType, hitX, hitY)
+function living_object:takeDamage(amount, damageType, hitX, hitY, damageTags)
     if damageTypes[damageType] == nil then
-        error("Developer Error: Invalid damage type: " .. damageType)
+        error("Developer Error: Invalid damage type: " .. tostring(damageType))
     end
+    
+    local combinedTags = {}
+    if damageTags then
+        for _, tag in ipairs(damageTags) do
+            table.insert(combinedTags, tag)
+        end
+    end
+    
+    -- Check for multiple core damage types
+    local coreCount = 0
+    for _, tag in ipairs(combinedTags) do
+        if damageTypes[tag] then
+            coreCount = coreCount + 1
+        end
+    end
+    if coreCount > 0 then
+        error("Developer Error: damageTags cannot contain core damage types. Only the primary damageType is allowed.")
+    end
+    
+    table.insert(combinedTags, damageType)
+
     local damageTaken = 0
     local damageMult = 1   
 
     if self.affinities then
-        if self.affinities[damageType] then
-            damageMult = self.affinities[damageType]
+        for _, tag in ipairs(combinedTags) do
+            if self.affinities[tag] then
+                damageMult = damageMult * self.affinities[tag]
+            end
         end
     end
 

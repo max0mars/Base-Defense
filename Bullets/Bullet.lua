@@ -21,6 +21,7 @@ function Bullet:new(config)
     b.angle = config.angle or 0 -- Angle of the bullet
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
     b.tags = config.tags or {} -- Initialize tags table
+    b.damageTags = config.damageTags or {} -- Initialize damageTags table
     b.source = config.source -- Track bullet source for stat calculation
     b.damageType = config.damageType or "normal"
     b.hitEffects = config.hitEffects or {}
@@ -177,7 +178,7 @@ function Bullet:onHit(target)
     -- 3. Conditional Direct Impact Damage
     if self:getStat("canDirectHit") then
         if target then 
-            target:takeDamage(self:getStat("damage"), self.damageType)
+            target:takeDamage(self:getStat("damage"), self.damageType, nil, nil, self.damageTags)
         end
     end
 
@@ -245,6 +246,7 @@ function Bullet:died()
                 explosion_from_damage = self.explosion_from_damage,
                 canDirectHit = self.canDirectHit,
                 tags = self.tags,
+                damageTags = self.damageTags,
                 types = self.types,
                 hitCache = childHitCache -- Clones inherit hit history but maintain independent caches
             }
