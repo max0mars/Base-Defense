@@ -4,12 +4,15 @@ local Reward = require("Game.Rewards.Reward")
 local RewardSystem = {}
 RewardSystem.__index = RewardSystem
 local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local Cursor = require("Game.GUI.Cursor")
 local TestingIndex = require("Game.Rewards.TestingRewardIndex")
 local RewardPool = require("Game.Rewards.RewardPool")
 local CardReveal = require("Graphics.Animations.CardReveal")
 
 function RewardSystem:new(game)
-    local indexToUse = game.testingMode and TestingIndex or RewardIndex
+    -- Always use the real reward pool (testing mode included) so "Buy Upgrade"
+    -- offers the full set rather than a small preset list.
+    local indexToUse = RewardIndex
     local system = setmetatable({
         game = game,
         isActive = false,
@@ -22,15 +25,15 @@ function RewardSystem:new(game)
     
     -- UI Properties
     system.cardWidth = 200
-    system.cardHeight = 180
+    system.cardHeight = 230
     system.cardSpacing = 20
     system.startX = 100
-    system.startY = 150
-    
+    system.startY = 245       -- centered for the 720-tall canvas
+
     system.skipBtnW = 160
     system.skipBtnH = 40
     system.skipBtnX = VIRTUAL_WIDTH / 2 - system.skipBtnW / 2
-    system.skipBtnY = 400
+    system.skipBtnY = 515
     
     -- Initialize the reward pool
     system:initializeRewardPool()
@@ -46,7 +49,7 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     local count = numCards or 3
     local luck = self.game.luck or 1
     
-    local indexToUse = self.game.testingMode and TestingIndex or RewardIndex
+    local indexToUse = RewardIndex
     if poolLogicMode == "blocker" then
         indexToUse = require("Game.Rewards.BlockerRewardIndex")
     end
@@ -136,7 +139,7 @@ function RewardSystem:draw()
     
     -- Draw title
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Choose Your Reward", 0, 50, VIRTUAL_WIDTH, "center")
+    love.graphics.printf("Choose Your Reward", 0, 165, VIRTUAL_WIDTH, "center")
     --love.graphics.printf("Use A/D or Arrow Keys to select, Enter/Space to confirm", 0, 80, VIRTUAL_WIDTH, "center")
     
     -- Draw reward cards
@@ -165,6 +168,13 @@ function RewardSystem:draw()
         love.graphics.setColor(1, 0.4, 0.4, 1)
         love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
     end
+
+    -- Hand cursor over reward cards / reroll.
+    for i = 1, #self.currentChoices do
+        local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
+        Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight)
+    end
+    Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
 end
 
 function RewardSystem:mousepressed(x, y, button)

@@ -25,6 +25,8 @@ local EffectManager      = require("Game.Effects.EffectManager")
 -- Entities & UI
 local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local GUIManager         = require("Game.GUI.GUIManager")
+local Layout             = require("Game.GUI.Layout")
+local Cursor             = require("Game.GUI.Cursor")
 local EnemyRegistry      = require("Game.Spawning.EnemyRegistry")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
@@ -107,6 +109,10 @@ function game:load(saveData, isTesting)
         -- Animation Pool
         self.animations = {}
         self.time_mul = 1
+
+        -- Codex discovery tracking: enemies seen in a wave, turrets ever owned.
+        self.seenEnemies = {}
+        self.ownedTurrets = {}
     end
     
     -- Setup Physics/Collision
@@ -276,6 +282,13 @@ end
 
 function game:draw()
     local healthyboys = {} -- Temporary list for drawing overlays (health bars, etc.)
+    Cursor.reset() -- hover flag is re-set by UI components during this frame's draw
+
+    -- World rendering (steps 1-5) happens inside the centered field viewport so
+    -- existing world coordinates map onto the 16:9-centered battlefield. The HUD
+    -- (gui:draw and below) is drawn afterwards in full-canvas screen space.
+    SetGameScissor(Layout.field.x, Layout.field.y, Layout.field.w, Layout.field.h)
+    Layout.pushWorld()
 
     -- 1. Environment & Grid
     self.ground:draw()
@@ -332,6 +345,56 @@ function game:draw()
         end
     end
 
+    -- Highlight target: a focused (clicked) building/enemy is sticky and wins
+    -- over hover (the user must click elsewhere to dismiss). Only one highlights.
+    local ih = self.inputHandler
+    local hb, he
+    if ih and ih.selectedBuilding and not ih.selectedBuilding.destroyed then
+        hb = ih.selectedBuilding
+    elseif ih and ih.selectedEnemy then
+        he = ih.selectedEnemy
+    else
+        hb = ih and ih.hoveredBuilding
+        he = self.gui and self.gui.tooltips and self.gui.tooltips.hoveredEnemy
+    end
+
+    -- Building: white outline around just the PERIMETER of its occupied cells.
+    if hb and hb.slot and hb.buildGrid and not hb.destroyed and hb.getSlotsFromPattern then
+        local bg = hb.buildGrid
+        local cs = bg.cellSize
+        local occ, cells = {}, {}
+        for _, slot in ipairs(hb:getSlotsFromPattern(hb.slot)) do
+            local i = ((slot - 1) % bg.width) + 1
+            local j = math.ceil(slot / bg.width)
+            occ[i .. "," .. j] = true
+            cells[#cells + 1] = { i = i, j = j }
+        end
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.setLineWidth(2)
+        for _, c in ipairs(cells) do
+            local x0 = bg.x + (c.i - 1) * cs
+            local y0 = bg.y + (c.j - 1) * cs
+            if not occ[c.i .. "," .. (c.j - 1)] then love.graphics.line(x0, y0, x0 + cs, y0) end           -- top
+            if not occ[c.i .. "," .. (c.j + 1)] then love.graphics.line(x0, y0 + cs, x0 + cs, y0 + cs) end  -- bottom
+            if not occ[(c.i - 1) .. "," .. c.j] then love.graphics.line(x0, y0, x0, y0 + cs) end            -- left
+            if not occ[(c.i + 1) .. "," .. c.j] then love.graphics.line(x0 + cs, y0, x0 + cs, y0 + cs) end  -- right
+        end
+        love.graphics.pop()
+    end
+
+    -- Enemy: lighten it by overlaying a faint white fill in its own shape.
+    if he and not he.destroyed and he.drawCustomShape then
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, 0.22)
+        he:drawCustomShape("fill", he.x, he.y)
+        love.graphics.pop()
+    end
+
+    -- End the field viewport; HUD and overlays draw in screen space.
+    Layout.popWorld()
+    SetGameScissor()
+
     self.gui:draw()
     if self.rewardSystem and self.rewardSystem.isActive then
         self.rewardSystem:draw()
@@ -365,10 +428,33 @@ function game:draw()
         love.graphics.print(text, cx - textW / 2, cy - textH / 2)
     end
 
-    local mx, my = love.mouse.getPosition()
-    love.graphics.setColor(1, 0, 0, 1)
-    love.graphics.circle("fill", mx, my, 3)
-    love.graphics.setColor(1, 1, 1, 1)
+    -- Cursor. Skipped while paused (the pause menu draws its own). Over the live
+    -- battlefield we hide the OS cursor and draw a red aim dot; over the HUD and
+    -- any open menu/modal we fall back to the real OS hand/arrow cursor (the same
+    -- crisp pointer the main menu uses).
+    if not (paused == 1) then
+        local mx, my = love.mouse.getPosition()
+        local menuActive = (self.rewardSystem and self.rewardSystem.isActive)
+            or (self.specialUpgradeManager and self.specialUpgradeManager.isActive)
+            or (self.gui and self.gui.mutation and self.gui.mutation.isActive)
+            or (self.gui and self.gui.codex and self.gui.codex.isActive)
+            or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
+            or (self.gui and self.gui.itemPicker and self.gui.itemPicker.isActive)
+            or self:isState("enemy_mutation") or self:isState("upgrade_mutation")
+        -- Over the base build area, use the OS pointer (hand for clickable slots)
+        -- rather than the battlefield crosshair.
+        local overBase = self:isMouseOverBase(mx, my)
+        if overBase and self.base and self.base.hoveredLockedSlot then
+            Cursor.wantHand = true
+        end
+        if (not Cursor.wantHand) and (not menuActive) and (not overBase) and Layout.inFieldScreen(mx, my) then
+            love.mouse.setVisible(false)
+            Cursor.drawAim(mx, my)
+        else
+            Cursor.applyOS()
+        end
+        love.graphics.setColor(1, 1, 1, 1)
+    end
 end
 
 -- -----------------------------------------------------------------------------
@@ -377,6 +463,16 @@ end
 
 function game:addXP(amount)    self.xp = self.xp + amount end
 function game:addTokens(amount) self.tokens = self.tokens + amount end
+
+-- True when the (screen-space) cursor is over the base's build area, used to
+-- swap the battlefield crosshair for the normal OS pointer there.
+function game:isMouseOverBase(screenX, screenY)
+    local b = self.base
+    if not b then return false end
+    local fx, fy = Layout.mouseToField(screenX, screenY)
+    return fx >= b.x - b.w / 2 and fx <= b.x + b.w / 2
+       and fy >= b.y - b.h / 2 and fy <= b.y + b.h / 2
+end
 
 function game:getEnemyDensity(x, y, radius)
     local count = 0
@@ -437,12 +533,16 @@ end
 function game:EnemyDied(enemy)
     self:addXP(enemy.reward)
     self:spawnParticleExplosion(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
+    -- Drain this enemy's slot from the in-progress wave panel (with a flash).
+    if self.WaveSpawner and self.WaveSpawner.notifyEnemyKilled then
+        self.WaveSpawner:notifyEnemyKilled(enemy)
+    end
 end
 
-function game:spawnDamageNumber(amount, x, y, damageType)
+function game:spawnDamageNumber(amount, x, y, damageType, effectiveness)
     if self.showDamageNumbers and amount >= 1 then
         local displayAmount = math.floor(amount + 0.5)
-        table.insert(self.animations, DamageNumber:new(displayAmount, x, y, damageType))
+        table.insert(self.animations, DamageNumber:new(displayAmount, x, y, damageType, nil, nil, effectiveness))
     end
 end
 
@@ -479,6 +579,32 @@ function game:placeBuilding(building, sourceReward)
     self.blueprint = building:new(config)
     self.blueprint.rewardCard = sourceReward
     self.blueprint.showArc = true
+end
+
+--- Picks up a placed building, removing it from the field and returning it to the
+--- inventory deck as a fresh card. The main turret (no reward card) can't be
+--- picked up. Returns true on success.
+function game:pickUpBuilding(building)
+    if not building or (building.isType and building:isType("mainLazer")) then return false end
+    local reward = building.rewardCard
+    if not reward or not reward.building then return false end -- nothing to re-card
+
+    -- Remove the placed instance (frees grid slots / reservations + destroys it).
+    building:remove()
+
+    -- Recreate a fresh blueprint from the reward and drop it back in the deck.
+    local config = { game = self }
+    if reward.shapePattern then config.shapePattern = reward.shapePattern end
+    if reward.color then config.color = reward.color end
+    if reward.turretSlots then config.turretSlots = reward.turretSlots end
+    if reward.isSlotted ~= nil then config.isSlotted = reward.isSlotted end
+
+    local bp = reward.building:new(config)
+    bp.rewardCard = reward
+    self.inventory:add(bp)
+
+    self:recalculateAllBuffs()
+    return true
 end
 
 function game:setState(newState)    self.state = newState end

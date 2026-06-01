@@ -94,7 +94,15 @@ function living_object:takeDamage(amount, damageType, hitX, hitY)
     end
 
     amount = amount * damageMult
-    self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType)
+
+    -- Effectiveness vs this enemy's affinities, for damage-number feedback.
+    local effectiveness = nil
+    if damageMult < 1 then
+        effectiveness = "resist"
+    elseif damageMult > 1 then
+        effectiveness = "weak"
+    end
+    self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness)
 
     local damageTaken = 0
 

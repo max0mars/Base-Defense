@@ -2,3 +2,6 @@
 makelove.toml
 makelove-build/
 binaries/
+.superpowers/
+docs/
+CLAUDE.md

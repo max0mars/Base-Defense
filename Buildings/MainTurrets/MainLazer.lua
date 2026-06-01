@@ -1,4 +1,5 @@
 local Turret = require("Buildings.Turrets.Turret")
+local Layout = require("Game.GUI.Layout")
 local MainLazer = setmetatable({}, { __index = Turret })
 MainLazer.__index = MainLazer
 
@@ -97,7 +98,7 @@ function MainLazer:update(dt)
     if self.upgrades["electric_field"] then
         self:updateElectricField(dt)
     elseif self.autofire and self.game:isState("wave") then
-        local mx, my = love.mouse.getPosition()
+        local mx, my = Layout.mouseToField()
         self:PlayerClick(mx, my)
     end
 end

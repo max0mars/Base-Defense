@@ -1,3 +1,5 @@
+local Layout = require("Game.GUI.Layout")
+
 local InputHandler = {}
 InputHandler.__index = InputHandler
 
@@ -8,6 +10,7 @@ function InputHandler:new(game)
     obj.mouseY = 0
     obj.buildMode = false
     obj.selectedBuilding = nil
+    obj.selectedEnemy = nil
     obj.hoveredBuilding = nil
     obj.destructionTarget = nil
     obj.confirmRect = nil
@@ -21,10 +24,15 @@ function InputHandler:update(dt)
     
     if self.game.base then
         self.game.base.hoverTooltip = nil
+        self.game.base.hoveredLockedSlot = nil
+        self.game.base.hoveredEmptySlot = nil
     end
 
-    self.mouseX, self.mouseY = love.mouse.getPosition()
-    
+    -- Raw (full-canvas) cursor, used for screen-space tooltips and HUD checks.
+    self.screenMouseX, self.screenMouseY = love.mouse.getPosition()
+    -- Field-local cursor, used for all world/grid interactions.
+    self.mouseX, self.mouseY = Layout.mouseToField(self.screenMouseX, self.screenMouseY)
+
 
     
     -- Handle space key hold for showing all firing arcs
@@ -141,10 +149,9 @@ function InputHandler:handleButtonHold()
     if self.destructionTarget then return end
     if game.rewardSystem and game.rewardSystem.isActive then return end
     if self.fireDelay > 0 then return end
-    
-    -- Prevent firing if mouse is over the inventory area (bottom 100 pixels)
-    -- local invHeight = 100
-    -- if self.mouseY >= love.graphics.getHeight() - invHeight then return end
+
+    -- Only fire when the cursor is over the battlefield (not the surrounding HUD).
+    if not Layout.inFieldScreen(self.screenMouseX, self.screenMouseY) then return end
 
     if self.isMouseDown then
         -- Handle left mouse button hold actions here
@@ -251,7 +258,8 @@ function InputHandler:handleBuildingSlotHover()
                 end
                 
                 if totalCost > 0 then
-                    base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot(s) and place building? (" .. totalCost .. " Tokens)", cost = totalCost}
+                    local unit = (totalCost == 1) and " Token)" or " Tokens)"
+                    base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot(s) and place building? (" .. totalCost .. unit, cost = totalCost}
                 end
             end
             
@@ -286,9 +294,15 @@ function InputHandler:handleLockedSlotHover()
        gridY >= 1 and gridY <= buildGrid.height then
         local anchorSlot = (gridY - 1) * buildGrid.width + gridX
         -- Expansion Logic: Only allow interaction if visible
-        if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] and base:isSlotVisible(anchorSlot) then
-            local cost = base:getSlotPrice(anchorSlot)
-            base.hoverTooltip = {x = self.mouseX + 15, y = self.mouseY + 15, text = "Unlock slot? (" .. cost .. " Tokens)", cost = cost}
+        if not buildGrid.buildings[anchorSlot] and base:isSlotVisible(anchorSlot) then
+            if not buildGrid.unlocked[anchorSlot] then
+                local cost = base:getSlotPrice(anchorSlot)
+                local unit = (cost == 1) and " Token)" or " Tokens)"
+                base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot? (" .. cost .. unit, cost = cost}
+                base.hoveredLockedSlot = {slot = anchorSlot, price = cost}
+            else
+                base.hoveredEmptySlot = anchorSlot
+            end
         end
     end
 end
@@ -312,7 +326,11 @@ function InputHandler:mousepressed(x, y, button)
         game.specialUpgradeManager:mousepressed(x, y, button)
         return
     end
-    
+
+    -- Everything below operates in WORLD space (grids, turrets). Convert the
+    -- click to field-local coords; clicks outside the field fail grid bounds.
+    x, y = Layout.mouseToField(x, y)
+
     local base = game.base
     local mainLazer = game.mainLazer
     
@@ -328,11 +346,9 @@ function InputHandler:mousepressed(x, y, button)
                 end
             end
         end
+        -- Right-click picks the building up and returns it to the deck.
         if bestTarget then
-            self.destructionTarget = bestTarget
-            clickedTarget = true
-        else
-            self.destructionTarget = nil
+            game:pickUpBuilding(bestTarget)
         end
         return
     end
@@ -450,23 +466,30 @@ function InputHandler:mousepressed(x, y, button)
     if button == 1 then -- Left click
         local clickedOnBuilding = false
         
-        -- Only allow building selection during preparing phase
-        if game:isState("preparing") then
-            -- Check if clicking on a building (Prioritize Turrets/Passives over Blockers)
-            local selected = nil
-            for _, obj in ipairs(game.objects) do
-                if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainLazer") and not obj.destroyed then
-                    if self:isMouseOverBuilding(obj) then
-                        selected = obj
-                        if obj:isType("turret") or obj:isType("passive") then
-                            break
-                        end
+        -- Click a placed building to focus it (shows in the INSPECT pane and stays
+        -- focused); clicking empty field clears the focus. Works in any state.
+        local selected = nil
+        for _, obj in ipairs(game.objects) do
+            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
+                if self:isMouseOverBuilding(obj) then
+                    selected = obj
+                    if obj:isType("turret") or obj:isType("passive") then
+                        break
                     end
                 end
             end
-            
-            if selected then
-                self:selectBuilding(selected)
+        end
+
+        if selected then
+            self:selectBuilding(selected)
+            clickedOnBuilding = true
+        else
+            -- No building under the cursor: focus a hovered enemy instead, so it
+            -- stays highlighted and pinned in the INSPECT pane.
+            local he = game.gui and game.gui.tooltips and game.gui.tooltips.hoveredEnemy
+            if he and not he.destroyed then
+                self:clearSelection()
+                self.selectedEnemy = he
                 clickedOnBuilding = true
             end
         end
@@ -522,7 +545,9 @@ function InputHandler:clearSelection()
         
         self.selectedBuilding = nil
     end
-    
+
+    self.selectedEnemy = nil
+
     -- Clear buff hover visualization
     self.game.base.buffHoverSlots = nil
 end
@@ -555,6 +580,12 @@ function InputHandler:keypressed(key)
             end
             return
         end
+        if key == "g" then
+            if game.gui.itemPicker then
+                game.gui.itemPicker.isActive = not game.gui.itemPicker.isActive
+            end
+            return
+        end
         if game.gui.enemySpawner and game.gui.enemySpawner.isActive and (key == "return" or key == "enter") then
             local total = 0
             local customWaveList = {}
@@ -581,10 +612,9 @@ function InputHandler:keypressed(key)
     if key == "space" then
         -- Space key now handled in update() for showing all firing arcs
     elseif key == "return" or key == "enter" then
-        -- Start next wave if in preparing state
-        if game:isState("startup") then
-            game:setState("preparing")
-        elseif game:isState("preparing") then
+        -- Start the wave directly from either the initial startup screen or the
+        -- between-wave preparing screen (both show the same single prompt).
+        if game:isState("startup") or game:isState("preparing") then
             game:recalculateAllBuffs() -- Recalculate all buffs before wave starts
             game.WaveSpawner:startNextWave()
             game:setState("wave")

@@ -130,19 +130,27 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY)
         return 0
     end
     
-    local damageMult = 1   
+    local damageMult = 1
     if self.affinities and self.affinities[damageType] then
         damageMult = self.affinities[damageType]
     end
 
     amount = amount * damageMult
-    
+
+    -- Effectiveness vs this enemy's affinities (damage-type matchup), for feedback.
+    local effectiveness = nil
+    if damageMult < 1 then
+        effectiveness = "resist"
+    elseif damageMult > 1 then
+        effectiveness = "weak"
+    end
+
     -- Apply Damage Reduction (from Guardian Aura or other effects)
     local reduction = self:getStat("damageReductionMultiplier", 1)
     amount = amount * reduction
-    
+
     if amount > 1 then
-        self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType)
+        self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness)
     end
 
     -- 1. Check if shield exists

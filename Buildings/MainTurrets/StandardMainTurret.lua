@@ -1,4 +1,5 @@
 local MainLazer = require("Buildings.MainTurrets.MainLazer")
+local Layout = require("Game.GUI.Layout")
 local HitscanBullet = require("Bullets.HitscanBullet")
 local BurnEffect = require("Game.Effects.StatusEffects.Burn")
 local Utils = require("Classes.Utils")
@@ -9,6 +10,7 @@ StandardMainTurret.__index = StandardMainTurret
 StandardMainTurret.template = {
     id = "standard_main",
     name = "Standard Blaster",
+    cardRarity = "common", -- actual rarity of this main gun, shown on its detail card
     size = 20,
     rotation = 0,
     turnSpeed = math.huge,
@@ -87,7 +89,7 @@ function StandardMainTurret:draw()
     drawBase(self.size * 1.1)
 
     -- 2. Draw Aiming Head (Rotating Tesla Coil)
-    local mx, my = love.mouse.getPosition()
+    local mx, my = Layout.mouseToField()
     local angle = math.atan2(my - cy, mx - cx)
     
     love.graphics.push()
@@ -182,7 +184,7 @@ end
 
 function StandardMainTurret:getFirePoint()
     local cx, cy = self:getCenterPosition()
-    local mx, my = love.mouse.getPosition()
+    local mx, my = Layout.mouseToField()
     local angle = math.atan2(my - cy, mx - cx)
     return cx + math.cos(angle) * 20, cy + math.sin(angle) * 20
 end

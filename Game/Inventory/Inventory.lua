@@ -130,6 +130,10 @@ function Inventory:mousepressed(x, y, button)
 end
 
 function Inventory:add(blueprint)
+    -- Codex: mark this turret/building as owned.
+    if self.game and self.game.ownedTurrets and blueprint.rewardCard and blueprint.rewardCard.id then
+        self.game.ownedTurrets[blueprint.rewardCard.id] = true
+    end
     table.insert(self.items, blueprint)
     table.sort(self.items, function(a, b)
         local nameA = a.rewardCard and a.rewardCard.name or "z_fallback"

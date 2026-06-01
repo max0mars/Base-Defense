@@ -37,9 +37,20 @@ function WaveSpawner:update(dt)
         if not self.waveInitialized then
             self.game.wave = self.game.wave + 1
             self.spawnRate = 0.5 * (0.95 ^ (self.game.wave))
-            
-            -- Ask Director for the list of enemies
-            self.waveList = self.game.waveDirector:generateWaveList(self.game.wave)
+
+            -- Use the list previewed during 'preparing' so what spawns matches the
+            -- preview exactly; otherwise generate a fresh one.
+            local summary
+            if self.pendingWaveList and self.pendingWaveNum == self.game.wave then
+                self.waveList = self.pendingWaveList
+                summary = self.pendingSummary
+            else
+                self.waveList, summary = self.game.waveDirector:generateWaveList(self.game.wave)
+            end
+            self:buildLiveRoster(summary)
+            self.pendingWaveList = nil
+            self.pendingSummary = nil
+            self.pendingWaveNum = nil
             self.waveInitialized = true
         else
             if #self.waveList == 0 then
@@ -100,11 +111,16 @@ function WaveSpawner:update(dt)
                 }
                 
                 local enemyInstance = enemyClass:new(spawnConfig)
-                
+
                 -- Apply Mutation Upgrades
                 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
                 EnemyRegistry:applyActiveMutations(enemyInstance)
-                
+
+                -- Codex: mark this enemy type as seen.
+                if self.game.seenEnemies and enemyInstance.name then
+                    self.game.seenEnemies[enemyInstance.name] = true
+                end
+
                 self.game:addObject(enemyInstance)
                 
                 self.spawntimer = self.spawnRate
@@ -124,11 +140,68 @@ function WaveSpawner:startNextWave()
     end
 end
 
+--- Generates and caches the next wave's enemy list + composition summary while idle
+--- (i.e. during the 'preparing'/'startup' phases) so the preview is accurate.
+function WaveSpawner:prepareUpcomingWave()
+    -- Testing mode spawns waves manually (Enemy Spawner), so skip precomputing
+    -- a director wave — it's meaningless there and must not interfere.
+    if self.game.testingMode then return end
+    if self.waveState ~= "idle" then return end
+    local nextWaveNum = self.game.wave + 1
+    if self.pendingWaveNum == nextWaveNum and self.pendingWaveList then return end
+
+    local list, summary = self.game.waveDirector:generateWaveList(nextWaveNum)
+    self.pendingWaveList = list
+    self.pendingSummary = summary
+    self.pendingWaveNum = nextWaveNum
+end
+
+--- Returns the upcoming wave's composition summary and wave number (for the preview UI).
+function WaveSpawner:getUpcomingSummary()
+    self:prepareUpcomingWave()
+    return self.pendingSummary, self.pendingWaveNum
+end
+
+-- ---------------------------------------------------------------------------
+-- Live roster: per-enemy-type kill tracking for the in-progress wave panel.
+-- Buckets are keyed by registry id, which equals the spawned enemy's `name`.
+-- ---------------------------------------------------------------------------
+
+function WaveSpawner:buildLiveRoster(summary)
+    self.liveRoster = {}
+    self.rosterIndex = {}
+    if not summary then return end
+    for _, item in ipairs(summary) do
+        local bucket = { id = item.id, type = item.type, total = item.count, killed = 0, flashUntil = 0 }
+        table.insert(self.liveRoster, bucket)
+        self.rosterIndex[item.id] = bucket
+    end
+end
+
+--- Records a kill against its roster bucket and arms a brief explosion flash on
+--- that card. Extra kills beyond the original count (e.g. from carrier/split
+--- spawns) are ignored so the panel cleanly drains the previewed roster to zero.
+function WaveSpawner:notifyEnemyKilled(enemy)
+    if not self.rosterIndex then return end
+    local bucket = enemy and enemy.name and self.rosterIndex[enemy.name]
+    if not bucket or bucket.killed >= bucket.total then return end
+    bucket.killed = bucket.killed + 1
+    bucket.flashUntil = love.timer.getTime() + 0.55
+end
+
+--- The current wave's roster (or nil if none built yet).
+function WaveSpawner:getLiveRoster()
+    return self.liveRoster
+end
+
 function WaveSpawner:startCustomWave(waveList)
     if self.waveState == "idle" then
         self.waveState = "active"
         self.waveList = waveList
         self.waveInitialized = true
+        self.pendingWaveList = nil
+        self.pendingSummary = nil
+        self.pendingWaveNum = nil
         self.game.wave = self.game.wave + 1
         self.spawnRate = 0.5 * (0.95 ^ (self.game.wave))
     end
@@ -169,7 +242,7 @@ function WaveSpawner:updateActiveSectors()
 end
 
 function WaveSpawner:draw()
-    if self.game:isState("preparing") and self.activeSectors then
+    if (self.game:isState("preparing") or self.game:isState("startup")) and self.activeSectors then
         local grid = self.game.battlefieldGrid
         local minRow = (grid.height > 2) and 2 or 1
         local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height

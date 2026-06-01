@@ -1,3 +1,5 @@
+local Cursor = require("Game.GUI.Cursor")
+
 local MutationUI = {}
 MutationUI.__index = MutationUI
 
@@ -39,7 +41,8 @@ end
 
 function MutationUI:draw()
     if not self.isActive or not self.chosenOption then return end
-    
+    Cursor.wantHand = true -- whole screen is "click anywhere to continue"
+
     -- Dark overlay
     love.graphics.setColor(0, 0, 0, 0.85)
     love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
