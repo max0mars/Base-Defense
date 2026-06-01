@@ -200,6 +200,10 @@ function InfoColumn:previewTarget()
     if ls then
         return "tokenSlot", ls
     end
+    -- A hovered empty (unlocked) build slot.
+    if game.base and game.base.hoveredEmptySlot then
+        return "emptySlot", game.base.hoveredEmptySlot
+    end
     return nil
 end
 
@@ -344,6 +348,8 @@ function InfoColumn:drawPreview(x, y, w, h)
         self:drawBuildingExtras(obj, x, py + cardH + 10, w, (y + h) - (py + cardH + 10))
     elseif kind == "tokenSlot" then
         self:drawTokenSlotCard(obj, cx, py, cardW, cardH)
+    elseif kind == "emptySlot" then
+        self:drawEmptySlotCard(cx, py, cardW, cardH)
     else
         self:drawEnemyCard(obj, cx, py, cardW, cardH)
     end
@@ -382,6 +388,27 @@ function InfoColumn:drawTokenSlotCard(slotInfo, x, y, w, h)
         else love.graphics.setColor(1.0, 0.45, 0.45, 1) end
         love.graphics.printf(string.format("%d %s", price, unit), x + 10, ty, w - 20, "right")
     end
+    love.graphics.pop()
+end
+
+-- Info card for an empty (unlocked) build slot. No rarity.
+function InfoColumn:drawEmptySlotCard(x, y, w, h)
+    local col = {0.5, 0.8, 1.0} -- build-blue
+
+    local function slotGlyph(cx, cy, r, g, b)
+        love.graphics.setColor(r, g, b, 0.9)
+        love.graphics.setLineWidth(1.5)
+        love.graphics.rectangle("line", cx - 8, cy - 8, 16, 16, 2)
+        love.graphics.line(cx - 4, cy, cx + 4, cy) -- a small "+" to suggest building
+        love.graphics.line(cx, cy - 4, cx, cy + 4)
+    end
+
+    local _, contentY = cardFrame(x, y, w, h, col, slotGlyph, "Empty Slot", nil)
+
+    love.graphics.push("all")
+    local desc = "An unlocked, open tile. Select a turret or structure card from your deck, then click here to deploy it."
+    love.graphics.setColor(0.82, 0.86, 0.95, 1)
+    love.graphics.printf(desc, x + 10, contentY, w - 20, "left")
     love.graphics.pop()
 end
 

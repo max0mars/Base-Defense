@@ -157,8 +157,21 @@ function Base:draw()
                         end
                     else
                         love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
+
+                        -- Hover highlight for an empty (unlocked) slot under the cursor.
+                        if self.hoveredEmptySlot == slot then
+                            local sx = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
+                            local sy = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
+                            local cs = self.buildGrid.cellSize
+                            love.graphics.setColor(0.4, 0.7, 1.0, 0.16)
+                            love.graphics.rectangle("fill", sx, sy, cs, cs)
+                            love.graphics.setColor(0.5, 0.8, 1.0, 0.9)
+                            love.graphics.setLineWidth(2)
+                            love.graphics.rectangle("line", sx + 1, sy + 1, cs - 2, cs - 2)
+                            love.graphics.setLineWidth(1)
+                        end
                     end
-                    
+
                     -- Check if this slot should be highlighted
                     local shouldHighlight = false
                     if self.game.inputMode == "placing" and self.selectedSlots then
