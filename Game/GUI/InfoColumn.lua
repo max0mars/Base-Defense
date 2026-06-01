@@ -57,11 +57,13 @@ local function enemyGlyph(cx, cy, r, g, b)
     love.graphics.rectangle("line", cx - 6, cy - 6, 12, 12, 2)
 end
 
--- Reward-style card frame; returns the header band height so callers can place
--- body content. Draws an optional glyph in the band and an optional name/sub.
+-- Reward-style card frame. Draws an optional glyph in the band and an optional
+-- name/sub stacked below it. Returns the band height AND the Y coordinate where
+-- body content may begin (below the name/sub), so callers don't overlap them.
 local function cardFrame(x, y, w, h, col, glyphFn, name, sub)
     local r, g, b = col[1], col[2], col[3]
     local bandH = math.max(20, math.min(32, math.floor(h * 0.34)))
+    local lineH = love.graphics.getFont():getHeight() + 3
     love.graphics.push("all")
     love.graphics.setColor(0.07, 0.08, 0.11, 1)
     love.graphics.rectangle("fill", x, y, w, h, 4)
@@ -74,16 +76,20 @@ local function cardFrame(x, y, w, h, col, glyphFn, name, sub)
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(1.5)
     love.graphics.rectangle("line", x, y, w, h, 4)
+
+    local contentY = y + bandH + 5
     if name then
         love.graphics.setColor(0.92, 0.95, 1.0, 1)
-        love.graphics.printf(name, x + 3, y + bandH + 5, w - 6, "center")
+        love.graphics.printf(name, x + 3, contentY, w - 6, "center")
+        contentY = contentY + lineH
     end
     if sub then
         love.graphics.setColor(r, g, b, 1)
-        love.graphics.printf(sub, x + 3, y + bandH + 19, w - 6, "center")
+        love.graphics.printf(sub, x + 3, contentY, w - 6, "center")
+        contentY = contentY + lineH
     end
     love.graphics.pop()
-    return bandH
+    return bandH, contentY + 3
 end
 
 -- ---------------------------------------------------------------------------
@@ -189,6 +195,11 @@ function InfoColumn:previewTarget()
     if he and not he.destroyed then
         return "enemy", he
     end
+    -- A hovered locked (token) slot, when nothing else is hovered.
+    local ls = game.base and game.base.hoveredLockedSlot
+    if ls then
+        return "tokenSlot", ls
+    end
     return nil
 end
 
@@ -212,13 +223,12 @@ function InfoColumn:drawBuildingCard(b, x, y, w, h)
 
     -- Fallback for non-turret buildings (buffs / blockers): a titled text card.
     local col = b.color or {0.6, 0.7, 0.8}
-    local bandH = cardFrame(x, y, w, h, col, nil, b.name or "Building", nil)
+    local _, ty = cardFrame(x, y, w, h, col, nil, b.name or "Building", nil)
     local strings = {}
     if b.getTooltipStrings then strings = b:getTooltipStrings()
     elseif b.effectManager and b.effectManager.getTooltipStrings then strings = b.effectManager:getTooltipStrings() end
     love.graphics.push("all")
     love.graphics.setColor(0.85, 0.9, 1.0, 1)
-    local ty = y + bandH + 8
     for _, s in ipairs(strings) do
         if ty > y + h - 14 then break end
         love.graphics.printf(s, x + 8, ty, w - 16, "left")
@@ -229,10 +239,10 @@ end
 
 function InfoColumn:drawEnemyCard(e, x, y, w, h)
     local col = e.color or {1.0, 0.3, 0.3}
-    local bandH = cardFrame(x, y, w, h, col, enemyGlyph, e.name or "Enemy", nil)
+    local _, contentY = cardFrame(x, y, w, h, col, enemyGlyph, e.name or "Enemy", nil)
 
     love.graphics.push("all")
-    local tx, ty = x + 12, y + bandH + 8
+    local tx, ty = x + 12, contentY
 
     local maxHp = (e.getStat and e:getStat("maxHp")) or e.maxHp
     if maxHp then
@@ -332,9 +342,47 @@ function InfoColumn:drawPreview(x, y, w, h)
     if kind == "building" then
         self:drawBuildingCard(obj, cx, py, cardW, cardH)
         self:drawBuildingExtras(obj, x, py + cardH + 10, w, (y + h) - (py + cardH + 10))
+    elseif kind == "tokenSlot" then
+        self:drawTokenSlotCard(obj, cx, py, cardW, cardH)
     else
         self:drawEnemyCard(obj, cx, py, cardW, cardH)
     end
+end
+
+-- Info card for a locked (token) build slot. No rarity — these aren't rolled.
+function InfoColumn:drawTokenSlotCard(slotInfo, x, y, w, h)
+    local price = slotInfo.price or 0
+    local affordable = self.game.tokens >= price
+    local col = {0.95, 0.8, 0.2} -- token gold
+
+    local function tokenGlyph(cx, cy, r, g, b)
+        love.graphics.setColor(r, g, b, 1)
+        love.graphics.circle("line", cx, cy, 8)
+        local font = love.graphics.getFont()
+        love.graphics.printf("T", cx - 10, cy - font:getHeight() / 2, 20, "center")
+    end
+
+    local _, contentY = cardFrame(x, y, w, h, col, tokenGlyph, "Unlock Slot", nil)
+
+    love.graphics.push("all")
+    local tx, ty = x + 10, contentY
+    local font = love.graphics.getFont()
+
+    local desc = "A locked tile on your base. Spend tokens to unlock it, then deploy a turret or structure here."
+    love.graphics.setColor(0.82, 0.86, 0.95, 1)
+    love.graphics.printf(desc, tx, ty, w - 20, "left")
+    local _, lines = font:getWrap(desc, w - 20)
+    ty = ty + #lines * 15 + 10
+
+    if ty < y + h - 16 then
+        love.graphics.setColor(0.6, 0.65, 0.72, 1)
+        love.graphics.print("Cost", tx, ty)
+        local unit = (price == 1) and "Token" or "Tokens"
+        if affordable then love.graphics.setColor(0.4, 1.0, 0.5, 1)
+        else love.graphics.setColor(1.0, 0.45, 0.45, 1) end
+        love.graphics.printf(string.format("%d %s", price, unit), x + 10, ty, w - 20, "right")
+    end
+    love.graphics.pop()
 end
 
 function InfoColumn:draw()

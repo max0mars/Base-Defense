@@ -136,9 +136,25 @@ function Base:draw()
                         local char = "T"
                         local charW = font:getWidth(char)
                         local charH = font:getHeight()
-                        love.graphics.print(char, 
-                            self.buildGrid.x + (i - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charW)/2, 
+                        love.graphics.print(char,
+                            self.buildGrid.x + (i - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charW)/2,
                             self.buildGrid.y + (j - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charH)/2 - 2)
+
+                        -- Hover highlight for the locked (token) slot under the cursor.
+                        if self.hoveredLockedSlot and self.hoveredLockedSlot.slot == slot then
+                            local sx = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
+                            local sy = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
+                            local cs = self.buildGrid.cellSize
+                            local affordable = self.game.tokens >= (self.hoveredLockedSlot.price or 0)
+                            if affordable then love.graphics.setColor(0.2, 0.9, 0.4, 0.20)
+                            else love.graphics.setColor(0.9, 0.3, 0.3, 0.20) end
+                            love.graphics.rectangle("fill", sx, sy, cs, cs)
+                            if affordable then love.graphics.setColor(0.3, 1.0, 0.5, 0.95)
+                            else love.graphics.setColor(1.0, 0.4, 0.4, 0.95) end
+                            love.graphics.setLineWidth(2)
+                            love.graphics.rectangle("line", sx + 1, sy + 1, cs - 2, cs - 2)
+                            love.graphics.setLineWidth(1)
+                        end
                     else
                         love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
                     end
@@ -247,20 +263,9 @@ function Base:draw()
         building:draw()
     end
 
-    if self.hoverTooltip then
-        love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
-        local font = love.graphics.getFont()
-        local tw = font:getWidth(self.hoverTooltip.text)
-        local th = font:getHeight()
-        love.graphics.rectangle("fill", self.hoverTooltip.x, self.hoverTooltip.y, tw + 10, th + 10)
-        
-        if self.game.tokens >= self.hoverTooltip.cost then
-            love.graphics.setColor(0, 1, 0, 1)
-        else
-            love.graphics.setColor(1, 0, 0, 1)
-        end
-        love.graphics.print(self.hoverTooltip.text, self.hoverTooltip.x + 5, self.hoverTooltip.y + 5)
-    end
+    -- The unlock-slot hover tooltip is rendered by TooltipManager in screen space
+    -- (drawing it here too — in world space with screen coords — duplicated and
+    -- misplaced it).
 end
 
 function Base:drawHealthBar()

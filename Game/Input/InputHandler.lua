@@ -24,6 +24,7 @@ function InputHandler:update(dt)
     
     if self.game.base then
         self.game.base.hoverTooltip = nil
+        self.game.base.hoveredLockedSlot = nil
     end
 
     -- Raw (full-canvas) cursor, used for screen-space tooltips and HUD checks.
@@ -256,7 +257,8 @@ function InputHandler:handleBuildingSlotHover()
                 end
                 
                 if totalCost > 0 then
-                    base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot(s) and place building? (" .. totalCost .. " Tokens)", cost = totalCost}
+                    local unit = (totalCost == 1) and " Token)" or " Tokens)"
+                    base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot(s) and place building? (" .. totalCost .. unit, cost = totalCost}
                 end
             end
             
@@ -293,7 +295,9 @@ function InputHandler:handleLockedSlotHover()
         -- Expansion Logic: Only allow interaction if visible
         if not buildGrid.buildings[anchorSlot] and not buildGrid.unlocked[anchorSlot] and base:isSlotVisible(anchorSlot) then
             local cost = base:getSlotPrice(anchorSlot)
-            base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot? (" .. cost .. " Tokens)", cost = cost}
+            local unit = (cost == 1) and " Token)" or " Tokens)"
+            base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot? (" .. cost .. unit, cost = cost}
+            base.hoveredLockedSlot = {slot = anchorSlot, price = cost}
         end
     end
 end
