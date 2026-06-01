@@ -8,15 +8,15 @@ function EnemyRegistry:reset(game)
     self.inactivePool = Utils.deepCopy(index.inactivePool)
     self.activePool = Utils.deepCopy(index.activePool)
 
-    self.availableUpgrades = {} -- Upgrades waiting to be picked
-    self.activeUpgrades = {}     -- Picked upgrades currently in effect
+    _G.PersistentState = _G.PersistentState or {}
+    _G.PersistentState.activeMutations = _G.PersistentState.activeMutations or {}
+    _G.PersistentState.discoveredEnemies = _G.PersistentState.discoveredEnemies or { ["Basic"] = true }
 
-    -- Initialize starting enemy upgrades into available pool
-    for _, enemy in ipairs(self.activePool) do
-        if enemy.mutations then
-            for _, mut in ipairs(enemy.mutations) do
-                table.insert(self.availableUpgrades, mut)
-            end
+    -- Move any previously discovered enemies from inactive to active pool
+    for i = #self.inactivePool, 1, -1 do
+        local enemy = self.inactivePool[i]
+        if _G.PersistentState.discoveredEnemies[enemy.id] then
+            table.insert(self.activePool, table.remove(self.inactivePool, i))
         end
     end
 end
@@ -27,51 +27,41 @@ function EnemyRegistry:getAvailableEnemies()
     return self.activePool
 end
 
-function EnemyRegistry:getMutationOptions(count)
-    local options = {}
-    local poolCopy = {}
-    for i, v in ipairs(self.inactivePool) do table.insert(poolCopy, {idx = i, data = v, type = "enemy"}) end
-    
-    for i = 1, math.min(count, #poolCopy) do
-        local r = math.random(1, #poolCopy)
-        table.insert(options, table.remove(poolCopy, r))
-    end
-    return options
-end
-
-function EnemyRegistry:getUpgradeOptions(count)
-    local options = {}
-    local poolCopy = {}
-    for i, v in ipairs(self.availableUpgrades) do table.insert(poolCopy, {idx = i, data = v, type = "upgrade"}) end
-    
-    for i = 1, math.min(count, #poolCopy) do
-        local r = math.random(1, #poolCopy)
-        table.insert(options, table.remove(poolCopy, r))
-    end
-    return options
-end
-
-function EnemyRegistry:activateMutation(option)
-    if option.type == "enemy" then
-        -- option.idx is index in current inactivePool
-        local enemyData = table.remove(self.inactivePool, option.idx)
-        table.insert(self.activePool, enemyData)
-        
-        -- Add this enemy's specific mutations to the available pool
-        if enemyData.mutations then
-            for _, mut in ipairs(enemyData.mutations) do
-                table.insert(self.availableUpgrades, mut)
-            end
+function EnemyRegistry:updatePools(globalDifficulty)
+    local candidates = {}
+    for i, enemy in ipairs(self.inactivePool) do
+        if enemy.dangerLevel and enemy.dangerLevel <= globalDifficulty then
+            table.insert(candidates, {index = i, enemy = enemy})
         end
-    elseif option.type == "upgrade" then
-        -- option.idx is index in availableUpgrades
-        local upgrade = table.remove(self.availableUpgrades, option.idx)
-        table.insert(self.activeUpgrades, upgrade)
+    end
+
+    -- Discover exactly one new enemy if candidates exist
+    if #candidates > 0 then
+        local r = math.random(1, #candidates)
+        local selected = candidates[r]
+        _G.PersistentState.discoveredEnemies[selected.enemy.id] = true
+        table.insert(self.activePool, table.remove(self.inactivePool, selected.index))
+        print("[EnemyRegistry] Discovered new enemy: " .. selected.enemy.id)
+    end
+end
+
+function EnemyRegistry:triggerRandomMutation()
+    if #self.activePool == 0 then return end
+    local r = math.random(1, #self.activePool)
+    local enemy = self.activePool[r]
+    if enemy.mutations and #enemy.mutations > 0 then
+        local mr = math.random(1, #enemy.mutations)
+        local mutation = enemy.mutations[mr]
+        
+        _G.PersistentState.activeMutations = _G.PersistentState.activeMutations or {}
+        table.insert(_G.PersistentState.activeMutations, mutation)
+        print("[EnemyRegistry] Mutation Triggered: " .. mutation.name .. " on " .. enemy.id)
     end
 end
 
 function EnemyRegistry:applyActiveMutations(enemyInstance)
-    for _, upgrade in ipairs(self.activeUpgrades) do
+    if not _G.PersistentState or not _G.PersistentState.activeMutations then return end
+    for _, upgrade in ipairs(_G.PersistentState.activeMutations) do
         if enemyInstance:isType(upgrade.target:lower()) or upgrade.target == "All" then
             if upgrade.modifiers then
                 for stat, modifier in pairs(upgrade.modifiers) do

@@ -16,21 +16,57 @@ end
 function HandUI:draw()
     if not self.game.hand then return end
     
-    local numCards = #self.game.hand
-    if numCards == 0 then return end
+    local numCards = self.game.hand and #self.game.hand or 0
     
     local cardWidth = 100
     local cardHeight = 140
+    
+    local inventoryStartX = 320
+    local inventoryMaxWidth = 740
+    
+    local deckX = inventoryStartX
+    local deckY = VIRTUAL_HEIGHT - cardHeight - 20
+    
+    local handStartX = deckX + cardWidth + 20
+    local maxHandWidth = inventoryMaxWidth - cardWidth - 20
+    
     local spacing = 10
-    local totalWidth = (numCards * cardWidth) + ((numCards - 1) * spacing)
-    local startX = (VIRTUAL_WIDTH - totalWidth) / 2
-    local startY = VIRTUAL_HEIGHT - cardHeight - 20
+    if numCards > 1 then
+        local requiredWidth = numCards * cardWidth + (numCards - 1) * spacing
+        if requiredWidth > maxHandWidth then
+            spacing = (maxHandWidth - numCards * cardWidth) / (numCards - 1)
+        end
+    end
     
     local mx, my = love.mouse.getPosition()
     
+    -- Draw Deck Card
+    local hoverDeck = mx >= deckX and mx <= deckX + cardWidth and my >= deckY and my <= deckY + cardHeight
+    if hoverDeck then Cursor.wantHand = true end
+    
+    love.graphics.setColor(0.1, 0.1, 0.15, 0.9)
+    love.graphics.rectangle("fill", deckX, deckY, cardWidth, cardHeight, 5)
+    
+    love.graphics.setColor(hoverDeck and {0.8, 0.8, 1, 1} or {0.4, 0.4, 0.5, 1})
+    love.graphics.setLineWidth(hoverDeck and 2 or 1)
+    love.graphics.rectangle("line", deckX, deckY, cardWidth, cardHeight, 5)
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("DRAW\nPILE", deckX + 5, deckY + 40, cardWidth - 10, "center")
+    
+    local drawCost = self.game.drawCost or 1
+    local canAffordDraw = (self.game.tokens or 0) >= drawCost
+    love.graphics.setColor(canAffordDraw and {0.2, 0.8, 0.2, 1} or {0.8, 0.2, 0.2, 1})
+    love.graphics.printf(drawCost .. " Tk", deckX, deckY + cardHeight - 40, cardWidth, "center")
+    
+    if self.game.drawPile then
+        love.graphics.setColor(0.7, 0.7, 0.7, 1)
+        love.graphics.printf(#self.game.drawPile .. " Left", deckX, deckY + cardHeight - 20, cardWidth, "center")
+    end
+    
     for i, card in ipairs(self.game.hand) do
-        local cx = startX + (i - 1) * (cardWidth + spacing)
-        local cy = startY
+        local cx = handStartX + (i - 1) * (cardWidth + spacing)
+        local cy = deckY
         local cost = card:getCost()
         
         -- Highlight active card
@@ -86,19 +122,44 @@ function HandUI:mousepressed(x, y, button)
     if button ~= 1 then return false end
     if not self.game.hand then return false end
     
-    local numCards = #self.game.hand
-    if numCards == 0 then return false end
+    local numCards = self.game.hand and #self.game.hand or 0
     
     local cardWidth = 100
     local cardHeight = 140
+    
+    local inventoryStartX = 320
+    local inventoryMaxWidth = 740
+    
+    local deckX = inventoryStartX
+    local deckY = VIRTUAL_HEIGHT - cardHeight - 20
+    
+    local handStartX = deckX + cardWidth + 20
+    local maxHandWidth = inventoryMaxWidth - cardWidth - 20
+    
     local spacing = 10
-    local totalWidth = (numCards * cardWidth) + ((numCards - 1) * spacing)
-    local startX = (VIRTUAL_WIDTH - totalWidth) / 2
-    local startY = VIRTUAL_HEIGHT - cardHeight - 20
+    if numCards > 1 then
+        local requiredWidth = numCards * cardWidth + (numCards - 1) * spacing
+        if requiredWidth > maxHandWidth then
+            spacing = (maxHandWidth - numCards * cardWidth) / (numCards - 1)
+        end
+    end
+    
+    -- Check Draw Deck Card
+    if x >= deckX and x <= deckX + cardWidth and y >= deckY and y <= deckY + cardHeight then
+        local cost = self.game.drawCost or 1
+        if self.game.tokens >= cost then
+            self.game.tokens = self.game.tokens - cost
+            self.game.drawCost = cost + 1
+            self.game:drawCard()
+        else
+            self.game:spawnFloatingText("Not enough tokens!", x, y, {0.8, 0.2, 0.2, 1})
+        end
+        return true
+    end
     
     for i, card in ipairs(self.game.hand) do
-        local cx = startX + (i - 1) * (cardWidth + spacing)
-        local cy = startY
+        local cx = handStartX + (i - 1) * (cardWidth + spacing)
+        local cy = deckY
         if self.game.activeCard == card then
             cy = cy - 20
         end

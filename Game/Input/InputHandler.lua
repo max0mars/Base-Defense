@@ -612,11 +612,8 @@ function InputHandler:keypressed(key)
         game:toggleDamageNumbers()
     end
 
-    if key == "r" then
-        game:attemptPurchaseReward()
     -- elseif key == "a" then
     --     game.autoStartWave = not game.autoStartWave
-    end
 
     if game.testingMode then
         if key == "u" then

@@ -11,11 +11,26 @@ local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 
-function preparation_scene:load()
+function preparation_scene:load(isPostBattle)
     love.mouse.setVisible(true)
     self.handCursor = love.mouse.getSystemCursor("hand")
     self.arrowCursor = love.mouse.getSystemCursor("arrow")
     
+    _G.PersistentState = _G.PersistentState or {}
+    
+    if isPostBattle then
+        _G.PersistentState.battlesCompleted = (_G.PersistentState.battlesCompleted or 0) + 1
+        _G.PersistentState.globalDifficulty = (_G.PersistentState.globalDifficulty or 1) + 1
+        
+        if _G.PersistentState.battlesCompleted % 3 == 0 then
+            local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+            EnemyRegistry:triggerRandomMutation()
+        end
+    end
+    
+    local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+    EnemyRegistry:updatePools(_G.PersistentState.globalDifficulty or 1)
+
     local cx = (VIRTUAL_WIDTH - 240) / 2
     local cy = VIRTUAL_HEIGHT - 60
     
@@ -63,7 +78,7 @@ function preparation_scene:precalculateWaves()
     
     -- Always calculate waves 1 through 5 for the battle
     for i = 1, 5 do
-        local list, summary = wd:generateWaveList(i)
+        local list, summary = wd:generateWaveList(i, _G.PersistentState.globalDifficulty or 1)
         table.insert(_G.PersistentState.upcomingWaves, list)
         table.insert(_G.PersistentState.upcomingSummaries, summary)
         

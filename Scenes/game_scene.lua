@@ -65,7 +65,7 @@ function game_scene:update(dt)
 
     if game.battleComplete then
         game.battleComplete = false
-        self.scene_manager.switch("preparation")
+        self.scene_manager.switch("preparation", true)
         return
     end
 

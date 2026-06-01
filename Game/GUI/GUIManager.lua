@@ -127,11 +127,8 @@ function GUIManager:new(game)
         -- Top-bar controls are right-aligned across the wide 16:9 bar; the stats
         -- panel sits far left and the central gap is reserved for wave status.
         -- Roll / purchase buttons sit in the RIGHT slice of the stored-towers
-        -- tray (stored cards lay out to their left). Rarity odds show on Buy
-        -- Upgrade hover.
-        luckButton       = { x = Layout.W - 188, y = Layout.tray.y + 16,  w = 180, h = 34 },
-        buyButton        = { x = Layout.W - 188, y = Layout.tray.y + 58,  w = 180, h = 34 },
-        buyBlockerButton = { x = Layout.W - 188, y = Layout.tray.y + 100, w = 180, h = 34 },
+        -- tray (stored cards lay out to their left).
+        buyBlockerButton = { x = Layout.W - 188, y = Layout.tray.y + 16, w = 180, h = 34 },
 
         -- Borderless indicators in the top strip (centered in the field's top
         -- margin): toggle LEDs on the left, speed control on the right.
@@ -192,17 +189,8 @@ function GUIManager:update(dt)
     if self.itemPicker then self.itemPicker:update(dt) end
     if self.infoColumn then self.infoColumn:update(dt) end
 
-    -- Rarity odds appear while hovering the Buy Upgrade button (not behind overlays).
     local mx, my = love.mouse.getPosition()
-    local hoverBuy = Layout.inRegion(self.buyButton, mx, my) and not self:overlayActive()
-
-    if hoverBuy then
-        if not self.tooltips.rarityProbs then
-            self.tooltips.rarityProbs = self.game.rewardSystem.poolLogic:getLuckProbabilities(self.game.luck)
-        end
-    else
-        self.tooltips.rarityProbs = nil
-    end
+    self.tooltips.rarityProbs = nil
 end
 
 function GUIManager:draw()
@@ -347,22 +335,7 @@ function GUIManager:drawHUD()
     local buyEnabled = not game.rewardSystem.isActive and game.inputMode == "idle"
 
     -- Luck Offering.
-    local luckCost = game:getLuckCost()
-    local luckMaxed = game.luck >= 10
-    local luckEnabled = not luckMaxed and game.inputMode == "idle"
-    drawActionButton(self.luckButton,
-        luckMaxed and "MAX LUCK" or "LUCK OFFERING",
-        luckMaxed and nil or (luckCost .. " T"),
-        { 1.0, 0.7, 0.1 },
-        Layout.inRegion(self.luckButton, mx, my), luckEnabled,
-        luckCost and game.tokens >= luckCost)
 
-    -- Buy Upgrade (rarity odds appear on hover; see update()).
-    drawActionButton(self.buyButton, "BUY UPGRADE",
-        string.format("%d T", math.floor(game.rewardCost)),
-        { 0.0, 0.85, 1.0 },
-        Layout.inRegion(self.buyButton, mx, my), buyEnabled,
-        game.tokens >= game.rewardCost)
 
     -- Buy Blocker.
     drawActionButton(self.buyBlockerButton, "BUY BLOCKER",
@@ -535,20 +508,6 @@ function GUIManager:mousepressed(x, y, button)
     end
     
     if button == 1 then
-        -- Check Luck Button
-        if x >= self.luckButton.x and x <= self.luckButton.x + self.luckButton.w and
-           y >= self.luckButton.y and y <= self.luckButton.y + self.luckButton.h then
-            self.game:buyLuck()
-            return true
-        end
-        
-        -- Check Buy Button
-        if x >= self.buyButton.x and x <= self.buyButton.x + self.buyButton.w and
-           y >= self.buyButton.y and y <= self.buyButton.y + self.buyButton.h then
-            self.game:attemptPurchaseReward()
-            return true
-        end
-
         -- Check Buy Blocker Button
         if x >= self.buyBlockerButton.x and x <= self.buyBlockerButton.x + self.buyBlockerButton.w and
            y >= self.buyBlockerButton.y and y <= self.buyBlockerButton.y + self.buyBlockerButton.h then

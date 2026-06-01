@@ -141,7 +141,15 @@ function menu_scene:mousepressed(x, y, button)
         for _, btn in ipairs(self.mainButtons) do
             if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
                 if btn.action == "play" then
-                    _G.PersistentState = { baseHP = 200, cash = 0, deck = createStartingDeck() }
+                    _G.PersistentState = { 
+                        baseHP = 200, 
+                        cash = 0, 
+                        deck = createStartingDeck(),
+                        globalDifficulty = 1,
+                        battlesCompleted = 0,
+                        activeMutations = {},
+                        discoveredEnemies = { ["Basic"] = true }
+                    }
                     game.testingMode = false
                     self.scene_manager.switch("preparation")
                 elseif btn.action == "tutorial" then
@@ -164,7 +172,15 @@ function menu_scene:keypressed(key)
     end
 
     if key == "return" then
-        _G.PersistentState = { baseHP = 200, cash = 0, deck = createStartingDeck() }
+        _G.PersistentState = { 
+            baseHP = 200, 
+            cash = 0, 
+            deck = createStartingDeck(),
+            globalDifficulty = 1,
+            battlesCompleted = 0,
+            activeMutations = {},
+            discoveredEnemies = { ["Basic"] = true }
+        }
         game.testingMode = false
         self.scene_manager.switch("preparation")
     elseif key == "t" then

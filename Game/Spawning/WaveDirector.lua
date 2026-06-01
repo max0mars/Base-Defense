@@ -22,18 +22,22 @@ end
 -- Wave 30: 2135
 -- Wave 40: 4155 (Final Challenge)
 
-function WaveDirector:getBudgetForWave(waveNumber)
-    -- Wave 1 starts at exactly baseBudget.
-    -- Subsequent early waves scale linearly, then exponentially after Wave 10.
-    local linearPart = (waveNumber - 1) * self.linearRamp
-    local exponentialPart = (math.max(0, waveNumber - 10) ^ 2) * self.exponentialKicker
+function WaveDirector:getBudgetForWave(waveNumber, globalDifficulty)
+    -- Phase 5 dual-difficulty scaling formula
+    -- baseBudgets for 5 waves
+    local baseBudgets = {30, 45, 65, 95, 150}
     
-    return self.baseBudget + linearPart + exponentialPart
+    local wave = math.max(1, math.min(5, waveNumber))
+    local base = baseBudgets[wave]
+    
+    local multiplier = globalDifficulty ^ (1 + (wave - 1) * 0.15)
+    return math.floor(base * multiplier)
 end
 
-function WaveDirector:generateWaveList(waveNumber)
-    local totalBudget = self:getBudgetForWave(waveNumber)
-    local available = EnemyRegistry:getAvailableEnemies(waveNumber)
+function WaveDirector:generateWaveList(waveNumber, globalDifficulty)
+    globalDifficulty = globalDifficulty or 1
+    local totalBudget = self:getBudgetForWave(waveNumber, globalDifficulty)
+    local available = EnemyRegistry:getAvailableEnemies()
     local waveList = {}
     local currentCounts = {} -- Placeholder for constraints tracker
 

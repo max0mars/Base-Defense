@@ -297,7 +297,18 @@ function Base:initMainLazer(turretClass)
     local centerSlot = (centerRow - 1) * gridWidth + centerCol
     
     self.mainLazer = turretClass:new({game = self.game})
-    self.buildGrid.unlocked[centerSlot] = true 
+    
+    for dr = -1, 1 do
+        for dc = -1, 1 do
+            local r = centerRow + dr
+            local c = centerCol + dc
+            if r >= 1 and r <= gridHeight and c >= 1 and c <= gridWidth then
+                local s = (r - 1) * gridWidth + c
+                self.buildGrid.unlocked[s] = true
+            end
+        end
+    end
+    
     self.game:newBuilding(self.mainLazer, centerSlot)
     
     return self.mainLazer

@@ -69,7 +69,7 @@ function game:load(saveData, isTesting)
         if self.testingMode then
             self.tokens   = 1000
         else
-            self.tokens   = 5
+            self.tokens   = 3
         end
         EnemyRegistry:reset(self)
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
@@ -95,6 +95,7 @@ function game:load(saveData, isTesting)
         -- Configuration
         self.rewardCost           = 2
         self.blockerCost          = 3
+        self.drawCost             = 1
         self.autoStartWave        = false
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.mutationInterval     = 5 -- Waves between enemy mutations
@@ -511,6 +512,7 @@ function game:interest()
     self:addTokens(math.floor(self.tokens * 0.1))
 end
 function game:waveComplete()
+    self.drawCost = 1
     if self.gui and self.gui.incomeFeedback then
         self.gui.incomeFeedback:triggerSequence()
     else
