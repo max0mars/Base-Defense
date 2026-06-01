@@ -51,7 +51,7 @@ function InputHandler:update(dt)
     self:handleBuildingHover()
     
     -- Update selected turret's firing arc direction during preparation phase or when aiming after placement
-    if (game:isState("preparing") or game.inputMode == "aiming") and self.selectedBuilding and self.selectedBuilding.firingArc then
+    if (game:isState("startup") or game:isState("preparing") or game.inputMode == "aiming") and self.selectedBuilding and self.selectedBuilding.firingArc then
         local cx, cy = self.selectedBuilding:getCenterPosition()
         local dx = self.mouseX - cx
         local dy = self.mouseY - cy
@@ -335,6 +335,16 @@ function InputHandler:mousepressed(x, y, button)
     local mainLazer = game.mainLazer
     
     if button == 2 then
+        if game.inputMode == "placing" or game.inputMode == "targeting_card" then
+            if game.activeCard then
+                game:refundCard(game.activeCard)
+            end
+            if game.blueprint then
+                game.blueprint = nil
+            end
+            return
+        end
+
         local bestTarget = nil
         for _, obj in ipairs(game.objects) do
             if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainLazer") and not obj.destroyed then
@@ -363,6 +373,38 @@ function InputHandler:mousepressed(x, y, button)
         game.inputMode = "idle"
         self.fireDelay = 0.15 -- Small delay to prevent accidental firing
         self:clearSelection()
+        return
+    end
+    
+    -- Handle targeting execution
+    if game.inputMode == "targeting_card" and button == 1 then
+        local clickedTarget = nil
+        for _, obj in ipairs(game.objects) do
+            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
+                if self:isMouseOverBuilding(obj) then
+                    clickedTarget = obj
+                    if obj:isType("turret") or obj:isType("passive") then
+                        break
+                    end
+                end
+            end
+        end
+        
+        if clickedTarget then
+            -- We assume the payload contains an effect
+            if game.activeCard and game.activeCard.payload and game.activeCard.payload.effect then
+                if clickedTarget.effectManager then
+                    clickedTarget.effectManager:applyEffect(game.activeCard.payload.effect)
+                    game:consumeCard(game.activeCard)
+                else
+                    game:refundCard(game.activeCard)
+                end
+            end
+        else
+            if game.activeCard then
+                game:refundCard(game.activeCard)
+            end
+        end
         return
     end
     
@@ -434,8 +476,15 @@ function InputHandler:mousepressed(x, y, button)
                 
                 game.blueprint = nil
                 game:recalculateAllBuffs()
+                if game.activeCard then
+                    game:consumeCard(game.activeCard)
+                end
             else
                 print("Cannot place building: required slots are occupied or out of bounds!")
+                if game.activeCard then
+                    game:refundCard(game.activeCard)
+                    game.blueprint = nil
+                end
             end
         end
         return -- Don't process turret selection during building placement

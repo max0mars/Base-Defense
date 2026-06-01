@@ -51,6 +51,7 @@ local state = 0
 local scene_manager = require("Scenes.scene_manager")
 
 scene_manager.scenes.menu = require("Scenes.menu_scene")
+scene_manager.scenes.preparation = require("Scenes.preparation_scene")
 scene_manager.scenes.game = require("Scenes.game_scene")
 scene_manager.scenes.test = require("Scenes.test_scene")
 scene_manager.scenes.tutorial = require("Scenes.tutorial_scene")

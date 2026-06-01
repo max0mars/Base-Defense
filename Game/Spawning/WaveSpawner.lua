@@ -38,19 +38,16 @@ function WaveSpawner:update(dt)
             self.game.wave = self.game.wave + 1
             self.spawnRate = 0.5 * (0.95 ^ (self.game.wave))
 
-            -- Use the list previewed during 'preparing' so what spawns matches the
-            -- preview exactly; otherwise generate a fresh one.
+            -- Use the pre-calculated waves from preparation_scene
             local summary
-            if self.pendingWaveList and self.pendingWaveNum == self.game.wave then
-                self.waveList = self.pendingWaveList
-                summary = self.pendingSummary
+            if _G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0 then
+                self.waveList = table.remove(_G.PersistentState.upcomingWaves, 1)
+                summary = table.remove(_G.PersistentState.upcomingSummaries, 1)
             else
                 self.waveList, summary = self.game.waveDirector:generateWaveList(self.game.wave)
             end
+            
             self:buildLiveRoster(summary)
-            self.pendingWaveList = nil
-            self.pendingSummary = nil
-            self.pendingWaveNum = nil
             self.waveInitialized = true
         else
             if #self.waveList == 0 then

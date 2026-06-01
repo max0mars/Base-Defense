@@ -8,6 +8,7 @@ setmetatable(game_scene, { __index = scene })
 local game = require("Game.Core.GameManager") -- Import the game module
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local Cursor = require("Game.GUI.Cursor")
+local Blocker = require("Buildings.Blockers.Blocker")
 
 function game_scene:load()
     local isTesting = game.testingMode
@@ -60,6 +61,12 @@ function game_scene:update(dt)
     if game:isState("gameover") and not self.gameover then
         self.gameover = true
         self.scene_manager.switch("gameover")
+    end
+
+    if game.battleComplete then
+        game.battleComplete = false
+        self.scene_manager.switch("preparation")
+        return
     end
 
     local effectiveDt = dt * game.time_mul

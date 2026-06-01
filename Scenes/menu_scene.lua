@@ -4,6 +4,33 @@ local scene = require("Scenes.scene") -- Import the base scene class
 local game = require("Game.Core.GameManager")
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local Cursor = require("Game.GUI.Cursor")
+local PlayerDeck = require("Game.Cards.PlayerDeck")
+local Card = require("Game.Cards.Card")
+local ExecutionType = require("Game.Cards.ExecutionType")
+local Sentry = require("Buildings.Turrets.Sentry")
+local Blaster = require("Buildings.Turrets.Blaster")
+
+local function createStartingDeck()
+    local deck = PlayerDeck:new()
+    deck:addCard(Card:new({
+        id = "sentry",
+        name = "Sentry",
+        description = "Balanced range and damage.",
+        executionType = ExecutionType.Placement,
+        quantity = 4,
+        payload = { buildingClass = Sentry, config = {}, rarity = "common" }
+    }))
+    deck:addCard(Card:new({
+        id = "blaster",
+        name = "Blaster",
+        description = "Fires energy bolts.",
+        executionType = ExecutionType.Placement,
+        quantity = 2,
+        payload = { buildingClass = Blaster, config = {}, rarity = "common" }
+    }))
+    return deck
+end
+
 setmetatable(menu_scene, { __index = scene })
 
 -- Vertical offset to center the main-menu title banner on the 720 canvas.
@@ -114,8 +141,9 @@ function menu_scene:mousepressed(x, y, button)
         for _, btn in ipairs(self.mainButtons) do
             if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
                 if btn.action == "play" then
+                    _G.PersistentState = { baseHP = 200, cash = 0, deck = createStartingDeck() }
                     game.testingMode = false
-                    self.scene_manager.switch("game")
+                    self.scene_manager.switch("preparation")
                 elseif btn.action == "tutorial" then
                     self.scene_manager.switch("tutorial")
                 elseif btn.action == "settings" then
@@ -136,8 +164,9 @@ function menu_scene:keypressed(key)
     end
 
     if key == "return" then
+        _G.PersistentState = { baseHP = 200, cash = 0, deck = createStartingDeck() }
         game.testingMode = false
-        self.scene_manager.switch("game")
+        self.scene_manager.switch("preparation")
     elseif key == "t" then
         game.testingMode = true
         self.scene_manager.switch("game")

@@ -78,6 +78,9 @@ function game:load(saveData, isTesting)
         
         -- Initialize Core Gameplay Systems
         self.base            = Base:new({game = self})
+        if _G.PersistentState and _G.PersistentState.baseHP then
+            self.base.hp = _G.PersistentState.baseHP
+        end
         self.battlefieldGrid = BattlefieldGrid:new(self)
         self.inventory       = Inventory:new(self)
         self.inputHandler    = InputHandler:new(self)
@@ -109,6 +112,12 @@ function game:load(saveData, isTesting)
         -- Animation Pool
         self.animations = {}
         self.time_mul = 1
+
+        -- Global Deckbuilder Mechanics
+        self.activeGlobalBuffs = {}
+        
+        self:initBattleDeck()
+        self:drawCard(3)
 
         -- Codex discovery tracking: enemies seen in a wave, turrets ever owned.
         self.seenEnemies = {}
@@ -220,6 +229,16 @@ function game:update(dt)
     -- State Transitions: Wave Completion
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
         self:waveComplete()
+        
+        if self.wave >= 5 then
+            self.battleComplete = true
+            self:clearGlobalBuffs()
+            if _G.PersistentState then
+                _G.PersistentState.baseHP = self.base.hp
+                _G.PersistentState.cash = (_G.PersistentState.cash or 0) + 100
+            end
+            return
+        end
         
         local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
         
@@ -502,6 +521,10 @@ function game:waveComplete()
         self:addTokens(interestAmount)
     end
     
+    if self.wave < 5 then
+        self:drawCard(1)
+    end
+    
     -- Trigger onWaveComplete for other objects (if any)
     for _, obj in ipairs(self.objects) do
         if obj.onWaveComplete and not obj.destroyed then
@@ -610,6 +633,101 @@ end
 function game:setState(newState)    self.state = newState end
 function game:getState()            return self.state end
 function game:isState(checkState)   return self.state == checkState end
+
+function game:registerActiveGlobalBuff(effect)
+    if not self.activeGlobalBuffs then
+        self.activeGlobalBuffs = {}
+    end
+    table.insert(self.activeGlobalBuffs, effect)
+end
+
+function game:clearGlobalBuffs()
+    if self.activeGlobalBuffs and self.playerEffectManager then
+        for _, effect in ipairs(self.activeGlobalBuffs) do
+            self.playerEffectManager:removeEffect(effect)
+        end
+    end
+    self.activeGlobalBuffs = {}
+end
+
+function game:initBattleDeck()
+    self.drawPile = {}
+    self.hand = {}
+    self.consumedPile = {}
+    
+    if _G.PersistentState and _G.PersistentState.deck then
+        local function deepcopy(orig, copies)
+            copies = copies or {}
+            local orig_type = type(orig)
+            local copy
+            if orig_type == 'table' then
+                if copies[orig] then
+                    copy = copies[orig]
+                else
+                    copy = {}
+                    copies[orig] = copy
+                    for orig_key, orig_value in next, orig, nil do
+                        copy[deepcopy(orig_key, copies)] = deepcopy(orig_value, copies)
+                    end
+                    setmetatable(copy, deepcopy(getmetatable(orig), copies))
+                end
+            else
+                copy = orig
+            end
+            return copy
+        end
+        
+        for _, card in ipairs(_G.PersistentState.deck:getCards()) do
+            for i = 1, (card.quantity or 1) do
+                table.insert(self.drawPile, deepcopy(card))
+            end
+        end
+    end
+    
+    -- Shuffle
+    for i = #self.drawPile, 2, -1 do
+        local j = math.random(i)
+        self.drawPile[i], self.drawPile[j] = self.drawPile[j], self.drawPile[i]
+    end
+end
+
+function game:drawCard(amount)
+    amount = amount or 1
+    for i = 1, amount do
+        if #self.hand >= 8 then
+            self:spawnFloatingText("Hand is full!", 400, 300, {0.8, 0.2, 0.2, 1})
+            break
+        end
+        
+        if #self.drawPile == 0 then
+            self:spawnFloatingText("Deck is empty!", 400, 300, {0.8, 0.2, 0.2, 1})
+            break
+        end
+        
+        local card = table.remove(self.drawPile, 1)
+        table.insert(self.hand, card)
+    end
+end
+
+function game:consumeCard(card)
+    for i, c in ipairs(self.hand) do
+        if c == card then
+            table.remove(self.hand, i)
+            table.insert(self.consumedPile, card)
+            break
+        end
+    end
+    self.activeCard = nil
+    self.inputMode = "idle"
+end
+
+function game:refundCard(card)
+    -- Assuming the card wasn't removed from the hand array until consumeCard
+    -- We just refund tokens and clear active card
+    self.tokens = self.tokens + card:getCost()
+    self.activeCard = nil
+    self.inputMode = "idle"
+end
 
 -- -----------------------------------------------------------------------------
 -- Ground Object Implementation
