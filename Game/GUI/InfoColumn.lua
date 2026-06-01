@@ -90,12 +90,51 @@ end
 -- Hoard (incoming enemies)
 -- ---------------------------------------------------------------------------
 
-function InfoColumn:drawHoard(x, y, w, h)
-    sectionHeader("HOARD", x, y, w, {1.0, 0.4, 0.4})
-    local gy = y + 26
+-- Normalized card list for the wave panel + the wave number + whether the wave
+-- is live. During a wave we read the live roster (with remaining counts and
+-- death-flash timers); otherwise the upcoming-wave preview summary.
+function InfoColumn:hoardCards()
+    local game = self.game
+    local spawner = game.WaveSpawner
+    local cards = {}
 
-    local summary = self.game.WaveSpawner and self.game.WaveSpawner:getUpcomingSummary()
-    if not summary or #summary == 0 then
+    if game:isState("wave") and spawner and spawner.getLiveRoster then
+        local roster = spawner:getLiveRoster()
+        if roster and #roster > 0 then
+            for _, b in ipairs(roster) do
+                cards[#cards + 1] = { id = b.id, type = b.type, total = b.total,
+                    remaining = math.max(0, b.total - b.killed), flashUntil = b.flashUntil }
+            end
+            return cards, game.wave, true
+        end
+    end
+
+    local summary, waveNum = spawner and spawner:getUpcomingSummary()
+    if summary then
+        for _, item in ipairs(summary) do
+            cards[#cards + 1] = { id = item.id, type = item.type, total = item.count,
+                remaining = item.count, flashUntil = 0 }
+        end
+    end
+    -- Always show a wave number while planning, even if the summary isn't ready
+    -- yet (e.g. just after a wave finishes or during a mutation menu).
+    return cards, waveNum or (game.wave + 1), false
+end
+
+function InfoColumn:drawHoard(x, y, w, h)
+    local cards, waveNum, inProgress = self:hoardCards()
+
+    local title = waveNum and string.format("INCOMING — WAVE %d", waveNum) or "INCOMING"
+    sectionHeader(title, x, y, w, {1.0, 0.4, 0.4})
+    if inProgress then
+        love.graphics.push("all")
+        love.graphics.setColor(0.5, 0.55, 0.62, 0.85) -- secondary grey
+        love.graphics.printf("in progress…", x, y, w, "right")
+        love.graphics.pop()
+    end
+
+    local gy = y + 26
+    if #cards == 0 then
         love.graphics.setColor(0.4, 0.45, 0.52, 0.8)
         love.graphics.printf("No incoming wave", x, gy + 16, w, "center")
         return
@@ -105,15 +144,23 @@ function InfoColumn:drawHoard(x, y, w, h)
     local gap = 8
     local cardW = math.floor((w - (cols - 1) * gap) / cols)
     local cardH = 60
-    for i, item in ipairs(summary) do
+    for i, c in ipairs(cards) do
         local ci = (i - 1) % cols
         local ri = math.floor((i - 1) / cols)
         local cx = x + ci * (cardW + gap)
         local cy = gy + ri * (cardH + gap)
         if cy + cardH > y + h then break end -- don't overflow the region
-        local col = ENEMY_COLORS[item.id] or {1, 1, 1}
-        local name = ENEMY_NAMES[item.id] or item.type or item.id
-        cardFrame(cx, cy, cardW, cardH, col, enemyGlyph, name, "x" .. tostring(item.count))
+        local col = ENEMY_COLORS[c.id] or {1, 1, 1}
+        local name = ENEMY_NAMES[c.id] or c.type or c.id
+        cardFrame(cx, cy, cardW, cardH, col, enemyGlyph, name, "x" .. tostring(c.remaining))
+
+        -- Cleared types fade to a dim "eliminated" state.
+        if c.remaining <= 0 then
+            love.graphics.push("all")
+            love.graphics.setColor(0.04, 0.05, 0.07, 0.62)
+            love.graphics.rectangle("fill", cx, cy, cardW, cardH, 4)
+            love.graphics.pop()
+        end
     end
 end
 
@@ -311,12 +358,12 @@ function InfoColumn:clickableAt(x, y)
     local rx, rw = col.x + 12, col.w - 24
 
     -- Hoard cards (region y 104..368).
-    local summary = self.game.WaveSpawner and self.game.WaveSpawner:getUpcomingSummary()
-    if summary then
+    local cards = self:hoardCards()
+    if cards then
         local gy = 104 + 26
         local cols, gap, cardH = 3, 8, 60
         local cardW = math.floor((rw - (cols - 1) * gap) / cols)
-        for i, item in ipairs(summary) do
+        for i, item in ipairs(cards) do
             local cx = rx + ((i - 1) % cols) * (cardW + gap)
             local cy = gy + math.floor((i - 1) / cols) * (cardH + gap)
             if cy + cardH <= 104 + 264 and x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then

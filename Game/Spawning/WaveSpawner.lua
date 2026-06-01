@@ -40,11 +40,14 @@ function WaveSpawner:update(dt)
 
             -- Use the list previewed during 'preparing' so what spawns matches the
             -- preview exactly; otherwise generate a fresh one.
+            local summary
             if self.pendingWaveList and self.pendingWaveNum == self.game.wave then
                 self.waveList = self.pendingWaveList
+                summary = self.pendingSummary
             else
-                self.waveList = self.game.waveDirector:generateWaveList(self.game.wave)
+                self.waveList, summary = self.game.waveDirector:generateWaveList(self.game.wave)
             end
+            self:buildLiveRoster(summary)
             self.pendingWaveList = nil
             self.pendingSummary = nil
             self.pendingWaveNum = nil
@@ -157,6 +160,38 @@ end
 function WaveSpawner:getUpcomingSummary()
     self:prepareUpcomingWave()
     return self.pendingSummary, self.pendingWaveNum
+end
+
+-- ---------------------------------------------------------------------------
+-- Live roster: per-enemy-type kill tracking for the in-progress wave panel.
+-- Buckets are keyed by registry id, which equals the spawned enemy's `name`.
+-- ---------------------------------------------------------------------------
+
+function WaveSpawner:buildLiveRoster(summary)
+    self.liveRoster = {}
+    self.rosterIndex = {}
+    if not summary then return end
+    for _, item in ipairs(summary) do
+        local bucket = { id = item.id, type = item.type, total = item.count, killed = 0, flashUntil = 0 }
+        table.insert(self.liveRoster, bucket)
+        self.rosterIndex[item.id] = bucket
+    end
+end
+
+--- Records a kill against its roster bucket and arms a brief explosion flash on
+--- that card. Extra kills beyond the original count (e.g. from carrier/split
+--- spawns) are ignored so the panel cleanly drains the previewed roster to zero.
+function WaveSpawner:notifyEnemyKilled(enemy)
+    if not self.rosterIndex then return end
+    local bucket = enemy and enemy.name and self.rosterIndex[enemy.name]
+    if not bucket or bucket.killed >= bucket.total then return end
+    bucket.killed = bucket.killed + 1
+    bucket.flashUntil = love.timer.getTime() + 0.55
+end
+
+--- The current wave's roster (or nil if none built yet).
+function WaveSpawner:getLiveRoster()
+    return self.liveRoster
 end
 
 function WaveSpawner:startCustomWave(waveList)

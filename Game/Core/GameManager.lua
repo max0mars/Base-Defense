@@ -517,6 +517,10 @@ end
 function game:EnemyDied(enemy)
     self:addXP(enemy.reward)
     self:spawnParticleExplosion(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
+    -- Drain this enemy's slot from the in-progress wave panel (with a flash).
+    if self.WaveSpawner and self.WaveSpawner.notifyEnemyKilled then
+        self.WaveSpawner:notifyEnemyKilled(enemy)
+    end
 end
 
 function game:spawnDamageNumber(amount, x, y, damageType, effectiveness)
