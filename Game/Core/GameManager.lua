@@ -441,7 +441,13 @@ function game:draw()
             or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
             or (self.gui and self.gui.itemPicker and self.gui.itemPicker.isActive)
             or self:isState("enemy_mutation") or self:isState("upgrade_mutation")
-        if (not Cursor.wantHand) and (not menuActive) and Layout.inFieldScreen(mx, my) then
+        -- Over the base build area, use the OS pointer (hand for clickable slots)
+        -- rather than the battlefield crosshair.
+        local overBase = self:isMouseOverBase(mx, my)
+        if overBase and self.base and self.base.hoveredLockedSlot then
+            Cursor.wantHand = true
+        end
+        if (not Cursor.wantHand) and (not menuActive) and (not overBase) and Layout.inFieldScreen(mx, my) then
             love.mouse.setVisible(false)
             Cursor.drawAim(mx, my)
         else
@@ -457,6 +463,16 @@ end
 
 function game:addXP(amount)    self.xp = self.xp + amount end
 function game:addTokens(amount) self.tokens = self.tokens + amount end
+
+-- True when the (screen-space) cursor is over the base's build area, used to
+-- swap the battlefield crosshair for the normal OS pointer there.
+function game:isMouseOverBase(screenX, screenY)
+    local b = self.base
+    if not b then return false end
+    local fx, fy = Layout.mouseToField(screenX, screenY)
+    return fx >= b.x - b.w / 2 and fx <= b.x + b.w / 2
+       and fy >= b.y - b.h / 2 and fy <= b.y + b.h / 2
+end
 
 function game:getEnemyDensity(x, y, radius)
     local count = 0

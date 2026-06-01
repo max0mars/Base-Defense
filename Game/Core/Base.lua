@@ -253,23 +253,27 @@ function Base:draw()
         love.graphics.setLineWidth(1) -- Reset line width
     end
 
-    -- Draw glowing green outline
+    -- Draw the glowing green wall on the right edge only (the side facing the
+    -- incoming enemies); the other three sides are left open.
     local pulse = (math.sin(self.game.pulseTimer * self.game.oscillationSpeed) + 1) / 2 -- Range 0 to 1
     local r, g, b = 0.2, 1, 0.2 -- Green glow
-    
+    local wallX = self.x + self.w / 2
+    local wallTop = self.y - self.h / 2
+    local wallBottom = self.y + self.h / 2
+
     -- Draw multiple layers for glow effect
     for i = 4, 1, -1 do
         local alpha = (0.25 * (1 - i/5)) * (0.6 + pulse * 0.4)
         local width = self.outlineThickness + i * 3 + pulse * 6
         love.graphics.setLineWidth(width)
         love.graphics.setColor(r, g, b, alpha)
-        love.graphics.rectangle("line", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
+        love.graphics.line(wallX, wallTop, wallX, wallBottom)
     end
-    
-    -- Main crisp outline
+
+    -- Main crisp wall line
     love.graphics.setLineWidth(self.outlineThickness)
     love.graphics.setColor(r, g, b, 0.9 + pulse * 0.1)
-    love.graphics.rectangle("line", self.x - self.w / 2, self.y - self.h / 2, self.w, self.h)
+    love.graphics.line(wallX, wallTop, wallX, wallBottom)
     love.graphics.setLineWidth(1)
 
     for _, building in pairs(self.buildGrid.buildings) do
