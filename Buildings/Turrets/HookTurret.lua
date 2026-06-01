@@ -29,7 +29,7 @@ HookTurret.template = {
     bulletShape = "rectangle",
     
     -- Values for effect initialization
-    duration_stun = 2.0,
+    duration_stun = 3,
 }
 
 function HookTurret:new(config)

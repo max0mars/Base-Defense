@@ -6,6 +6,7 @@ function BattlefieldGrid:new(game)
     obj.game = game
     -- Grid configuration
     obj.cellSize = 25
+    obj.baseMarginCells = 5
     obj.x = 0
     obj.y = 100
     obj.width = math.floor(VIRTUAL_WIDTH / obj.cellSize)
@@ -19,7 +20,7 @@ function BattlefieldGrid:new(game)
     for i = 1, obj.width * obj.height do
         local col = ((i - 1) % obj.width) + 1
         -- Reserve last 2 columns for spawning
-        if col >= obj.width - 1 then
+        if col >= obj.width - 2 then
             obj.noBuildZones[i] = 1
         else
             obj.noBuildZones[i] = 0
@@ -38,11 +39,11 @@ function BattlefieldGrid:addBuilding(building, anchorSlot)
         for _, slot in ipairs(slotsToOccupy) do
             self.buildings[slot] = building
         end
+        
+        -- Update noBuildZones (radius logic)
+        local radius = building.noBuildRadius or 1
+        self:updateReservations(slotsToOccupy, radius, 1)
     end
-    
-    -- Update noBuildZones (radius logic)
-    local radius = building.noBuildRadius or 1
-    self:updateReservations(slotsToOccupy, radius, 1)
     
     if building.onPlaced then
         building:onPlaced(anchorSlot)
@@ -55,12 +56,17 @@ function BattlefieldGrid:removeBuilding(building)
     if not building.slot then return end
     
     local slotsToOccupy = building:getSlotsFromPattern(building.slot)
-    for _, slot in ipairs(slotsToOccupy) do
-        self.buildings[slot] = nil
-    end
     
-    local radius = building.noBuildRadius or 1
-    self:updateReservations(slotsToOccupy, radius, -1)
+    if not (building:isType("turret") or building:isType("passive")) then
+        for _, slot in ipairs(slotsToOccupy) do
+            if self.buildings[slot] == building then
+                self.buildings[slot] = nil
+            end
+        end
+        
+        local radius = building.noBuildRadius or 1
+        self:updateReservations(slotsToOccupy, radius, -1)
+    end
     
     if building.onRemoved then
         building:onRemoved()
@@ -126,7 +132,7 @@ function BattlefieldGrid:drawGrid()
             -- 2. Draw no-build zones and base restricted area (UNDER buildings)
             love.graphics.setColor(1, 0, 0, 0.15)
             local baseGrid = self.game.base.buildGrid
-            local margin = 3 * self.cellSize
+            local margin = self.baseMarginCells * self.cellSize
             local left = baseGrid.x - margin
             local right = baseGrid.x + baseGrid.width * baseGrid.cellSize + margin
             local top = baseGrid.y - margin
@@ -237,7 +243,7 @@ function BattlefieldGrid:areSlotsAvailable(building, slotsToCheck, anchorSlot)
             local px = self.x + (i - 1) * self.cellSize
             local py = self.y + (j - 1) * self.cellSize
             
-            local margin = 3 * self.cellSize
+            local margin = self.baseMarginCells * self.cellSize
             local left = baseGrid.x - margin
             local right = baseGrid.x + baseGrid.width * baseGrid.cellSize + margin
             local top = baseGrid.y - margin
@@ -258,7 +264,7 @@ function BattlefieldGrid:areSlotsAvailable(building, slotsToCheck, anchorSlot)
             local px = self.x + (i - 1) * self.cellSize
             local py = self.y + (j - 1) * self.cellSize
             
-            local margin = 3 * self.cellSize
+            local margin = self.baseMarginCells * self.cellSize
             local left = baseGrid.x - margin
             local right = baseGrid.x + baseGrid.width * baseGrid.cellSize + margin
             local top = baseGrid.y - margin
