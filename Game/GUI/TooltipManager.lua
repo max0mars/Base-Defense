@@ -6,23 +6,19 @@ TooltipManager.__index = TooltipManager
 local DAMAGE_TYPE_NAMES = {
     normal         = "Normal",
     poison         = "Poison",
-    armourPiercing = "Armor Piercing",
     trueDamage     = "True",
     fire           = "Fire",
     explosive      = "Explosive",
     energy         = "Energy",
-    electric       = "Electric",
 }
 
 local DAMAGE_TYPE_COLORS = {
     normal         = {1, 1, 1, 1},
     poison         = {0.4, 0.85, 0.3, 1},
-    armourPiercing = {0.9, 0.85, 0.6, 1},
     trueDamage     = {1, 0.4, 0.7, 1},
     fire           = {1, 0.5, 0.2, 1},
     explosive      = {1, 0.55, 0.1, 1},
     energy         = {0.4, 0.7, 1, 1},
-    electric       = {0.6, 0.8, 1, 1},
 }
 
 function TooltipManager:new(game)
