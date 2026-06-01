@@ -151,9 +151,8 @@ function GUIManager:new(game)
         itemPicker = ItemPickerUI:new(game),
         infoColumn = InfoColumn:new(game),
         codex = Codex:new(game),
-
-        -- Codex open button in the top strip (centered between toggles and speed).
-        codexButton = { x = 759, y = math.floor((Layout.field.y - 24) / 2), w = 110, h = 24 },
+        -- The codex is opened from the "BASE JOURNAL" button at the bottom of the
+        -- info column (see InfoColumn).
     }, self)
     return obj
 end
@@ -417,25 +416,10 @@ function GUIManager:drawHUD()
 
     love.graphics.pop()
 
-    -- Codex open button (top strip).
-    do
-        local cb = self.codexButton
-        local hov = mx >= cb.x and mx <= cb.x + cb.w and my >= cb.y and my <= cb.y + cb.h
-        love.graphics.push("all")
-        love.graphics.setColor(0.5, 0.4, 0.75, hov and 0.30 or 0.16)
-        love.graphics.rectangle("fill", cb.x, cb.y, cb.w, cb.h, 4)
-        love.graphics.setColor(0.6, 0.5, 0.9, hov and 1 or 0.7)
-        love.graphics.setLineWidth(1)
-        love.graphics.rectangle("line", cb.x, cb.y, cb.w, cb.h, 4)
-        love.graphics.setColor(0.85, 0.82, 1, 1)
-        love.graphics.printf("CODEX", cb.x, cb.y + cb.h / 2 - 6, cb.w, "center")
-        love.graphics.pop()
-    end
-
     -- Hand cursor over any HUD button (mx is neutralized while an overlay is open).
     for _, btn in ipairs({ self.luckButton, self.buyButton, self.buyBlockerButton,
         self.autoFireButton, self.dmgNumsButton, self.autoWaveButton,
-        self.speedMinusButton, self.speedPlusButton, self.codexButton }) do
+        self.speedMinusButton, self.speedPlusButton }) do
         if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
             Cursor.wantHand = true
             break
@@ -541,16 +525,7 @@ function GUIManager:mousepressed(x, y, button)
         return true
     end
 
-    -- Codex open button (top strip).
-    if button == 1 then
-        if x >= self.codexButton.x and x <= self.codexButton.x + self.codexButton.w and
-           y >= self.codexButton.y and y <= self.codexButton.y + self.codexButton.h then
-            self.codex:open("enemies")
-            return true
-        end
-    end
-
-    -- Clicking a Horde / Inspect card opens its codex entry.
+    -- Clicking a Horde / Inspect card (or the BASE JOURNAL button) opens the codex.
     if self.infoColumn and self.infoColumn.mousepressed then
         local action = self.infoColumn:mousepressed(x, y, button)
         if action then

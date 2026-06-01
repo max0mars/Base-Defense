@@ -31,7 +31,14 @@ local RARITY_COLORS = {
 }
 
 function InfoColumn:new(game)
-    return setmetatable({ game = game }, self)
+    local col = Layout.leftColumn
+    local x, w = col.x + 12, col.w - 24
+    local btnH = 42
+    local btnY = (col.y + col.h) - 14 - btnH
+    return setmetatable({
+        game = game,
+        journalButton = { x = x, y = btnY, w = w, h = btnH },
+    }, self)
 end
 
 function InfoColumn:update(dt) end
@@ -289,10 +296,9 @@ function InfoColumn:drawEnemyCard(e, x, y, w, h)
     love.graphics.pop()
 end
 
--- Lists the building's stacked main-turret upgrades and active buffs (e.g. a
--- nearby range-buff tower's "Range = +25%") below its card.
-function InfoColumn:drawBuildingExtras(b, x, y, w, h)
-    if h < 24 then return end
+-- The building's stacked main-turret upgrades + active buffs as a list of
+-- {text, col} rows (empty if none). Shared by measuring and drawing.
+function InfoColumn:buildingExtrasLines(b)
     local lines = {}
 
     -- Stacked main-turret upgrades (highest rarity first), colored by rarity.
@@ -315,6 +321,13 @@ function InfoColumn:drawBuildingExtras(b, x, y, w, h)
         end
     end
 
+    return lines
+end
+
+-- Lists the building's modifiers (see buildingExtrasLines) below its card.
+function InfoColumn:drawBuildingExtras(b, x, y, w, h)
+    if h < 24 then return end
+    local lines = self:buildingExtrasLines(b)
     if #lines == 0 then return end
 
     sectionHeader("MODIFIERS", x, y, w, {0.5, 0.7, 0.9})
@@ -329,19 +342,38 @@ function InfoColumn:drawBuildingExtras(b, x, y, w, h)
     love.graphics.pop()
 end
 
-function InfoColumn:drawPreview(x, y, w, h)
-    sectionHeader("INSPECT", x, y, w, {0.0, 0.85, 1.0})
-    local py = y + 26
+-- Horizontally + vertically centered card rect for the current preview, within
+-- the inspect content region (below the section header). For buildings the card
+-- and its modifier block are centered together. Returns cx, cardY, cardW, cardH.
+function InfoColumn:previewCardRect(x, y, w, h, kind, obj)
+    local top = y + 26
+    local regionH = h - 26
     local cardW = math.min(190, w)
     local cardH = math.min(h - 30, 200)
     local cx = x + math.floor((w - cardW) / 2)
 
+    local extrasH = 0
+    if kind == "building" then
+        local lines = self:buildingExtrasLines(obj)
+        if #lines > 0 then extrasH = 22 + #lines * 15 end -- header + rows
+    end
+    local blockH = cardH + (extrasH > 0 and (10 + extrasH) or 0)
+    local cardY = top + math.max(0, math.floor((regionH - blockH) / 2))
+    return cx, cardY, cardW, cardH
+end
+
+function InfoColumn:drawPreview(x, y, w, h)
+    sectionHeader("INSPECT", x, y, w, {0.0, 0.85, 1.0})
+
     local kind, obj = self:previewTarget()
     if not kind then
+        local top = y + 26
         love.graphics.setColor(0.4, 0.45, 0.52, 0.8)
-        love.graphics.printf("Hover a turret or enemy", x, py + math.floor(cardH / 2) - 10, w, "center")
+        love.graphics.printf("Hover a turret or enemy", x, top + math.floor((h - 26) / 2) - 7, w, "center")
         return
     end
+
+    local cx, py, cardW, cardH = self:previewCardRect(x, y, w, h, kind, obj)
 
     if kind == "building" then
         self:drawBuildingCard(obj, cx, py, cardW, cardH)
@@ -416,14 +448,56 @@ function InfoColumn:draw()
     local col = Layout.leftColumn
     local x = col.x + 12
     local w = col.w - 24
-    -- Stats panel occupies ~y 12..96; horde then preview fill the rest.
+    local sepY = self.journalButton.y - 14
+
+    -- Stats panel occupies ~y 12..96; horde then preview fill the rest, down to
+    -- the separator above the Base Journal button.
     self:drawHorde(x, 104, w, 264)
-    self:drawPreview(x, 376, w, (col.y + col.h) - 376 - 12)
+    self:drawPreview(x, 376, w, sepY - 376 - 6)
+
+    -- Separator between the inspect area and the button below it.
+    love.graphics.push("all")
+    love.graphics.setColor(0.3, 0.5, 0.7, 0.35)
+    love.graphics.setLineWidth(1)
+    love.graphics.line(x, sepY, x + w, sepY)
+    love.graphics.pop()
+
+    self:drawJournalButton()
 
     if not (self.game.gui and self.game.gui:overlayActive()) then
         local mx, my = love.mouse.getPosition()
-        if self:clickableAt(mx, my) then Cursor.wantHand = true end
+        local b = self.journalButton
+        local overBtn = mx >= b.x and mx <= b.x + b.w and my >= b.y and my <= b.y + b.h
+        if overBtn or self:clickableAt(mx, my) then Cursor.wantHand = true end
     end
+end
+
+-- "BASE JOURNAL" button at the bottom of the column; opens the codex.
+function InfoColumn:drawJournalButton()
+    local b = self.journalButton
+    local mx, my = love.mouse.getPosition()
+    local hov = mx >= b.x and mx <= b.x + b.w and my >= b.y and my <= b.y + b.h
+        and not (self.game.gui and self.game.gui:overlayActive())
+
+    love.graphics.push("all")
+    -- Body + border (violet, brighter on hover).
+    love.graphics.setColor(0.42, 0.34, 0.66, hov and 0.34 or 0.18)
+    love.graphics.rectangle("fill", b.x, b.y, b.w, b.h, 6)
+    love.graphics.setColor(0.7, 0.6, 1.0, hov and 1.0 or 0.65)
+    love.graphics.setLineWidth(hov and 2 or 1)
+    love.graphics.rectangle("line", b.x, b.y, b.w, b.h, 6)
+
+    -- Little book emblem to the left of the label.
+    local cy = b.y + b.h / 2
+    local bx = b.x + 18
+    love.graphics.setColor(0.85, 0.8, 1.0, 1)
+    love.graphics.setLineWidth(1.5)
+    love.graphics.rectangle("line", bx - 8, cy - 7, 16, 14, 1)
+    love.graphics.line(bx, cy - 7, bx, cy + 7) -- spine
+
+    love.graphics.setColor(0.92, 0.88, 1.0, 1)
+    love.graphics.printf("BASE JOURNAL", b.x + 16, cy - 7, b.w - 16, "center")
+    love.graphics.pop()
 end
 
 -- The codex action for a point over a Horde enemy card or the Inspect card:
@@ -447,17 +521,17 @@ function InfoColumn:clickableAt(x, y)
         end
     end
 
-    -- Preview card (region y 376..).
+    -- Preview card (region y 376..), using the same centered rect as draw().
     local h = (col.y + col.h) - 376 - 12
-    local cardW = math.min(190, rw)
-    local cardH = math.min(h - 30, 200)
-    local cx, cy = rx + math.floor((rw - cardW) / 2), 376 + 26
-    if x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then
-        local kind, obj = self:previewTarget()
-        if kind == "building" then
-            return { tab = "turrets", id = (obj.rewardCard and obj.rewardCard.id) or obj.id }
-        elseif kind == "enemy" then
-            return { tab = "enemies", id = obj.name }
+    local kind, obj = self:previewTarget()
+    if kind then
+        local cx, cy, cardW, cardH = self:previewCardRect(rx, 376, rw, h, kind, obj)
+        if x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then
+            if kind == "building" then
+                return { tab = "turrets", id = (obj.rewardCard and obj.rewardCard.id) or obj.id }
+            elseif kind == "enemy" then
+                return { tab = "enemies", id = obj.name }
+            end
         end
     end
     return nil
@@ -465,6 +539,11 @@ end
 
 function InfoColumn:mousepressed(x, y, button)
     if button ~= 1 then return nil end
+    -- Base Journal button → open the codex (enemies tab by default).
+    local b = self.journalButton
+    if x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h then
+        return { tab = "enemies" }
+    end
     return self:clickableAt(x, y)
 end
 

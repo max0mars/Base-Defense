@@ -254,7 +254,7 @@ function Codex:draw()
 
     -- Title.
     love.graphics.setColor(0.3, 0.7, 1, 1)
-    love.graphics.print("CODEX", p.x + 24, p.y + 16)
+    love.graphics.print("BASE JOURNAL", p.x + 24, p.y + 16)
 
     -- Tabs.
     local tabs = self:tabRects()
