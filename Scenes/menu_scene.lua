@@ -23,6 +23,8 @@ function menu_scene:load()
           color = {0.3, 0.2, 0.55, 1}, hoverColor = {0.48, 0.32, 0.8, 1}, borderColor = {0.7, 0.5, 1, 1} },
         { x = cx, y = 400, w = 240, h = 45, label = "SETTINGS", type = "main", action = "settings",
           color = {0.18, 0.32, 0.45, 1}, hoverColor = {0.28, 0.5, 0.7, 1}, borderColor = {0.4, 0.7, 0.95, 1} },
+        { x = cx, y = 480, w = 240, h = 45, label = "QUIT GAME", type = "main", action = "quit",
+          color = {0.3, 0.18, 0.2, 1}, hoverColor = {0.5, 0.28, 0.3, 1}, borderColor = {0.9, 0.5, 0.5, 1} },
     }
 
     self.settings = SettingsPanel:new({
@@ -118,6 +120,8 @@ function menu_scene:mousepressed(x, y, button)
                     self.scene_manager.switch("tutorial")
                 elseif btn.action == "settings" then
                     self.page = "settings"
+                elseif btn.action == "quit" then
+                    love.event.quit()
                 end
                 break
             end
