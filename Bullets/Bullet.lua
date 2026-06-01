@@ -212,6 +212,13 @@ function Bullet:died()
                 bSpeed = 50 -- Ensure bounce has consistent horizontal momentum
             end
 
+            local childHitCache = {}
+            if self.hitCache then
+                for k, v in pairs(self.hitCache) do
+                    childHitCache[k] = v
+                end
+            end
+
             local config = {
                 name = self.name,
                 x = self.x,
@@ -239,7 +246,7 @@ function Bullet:died()
                 canDirectHit = self.canDirectHit,
                 tags = self.tags,
                 types = self.types,
-                hitCache = self.hitCache -- Clones share the hit history to avoid hitting the same target instantly
+                hitCache = childHitCache -- Clones inherit hit history but maintain independent caches
             }
 
             -- Reset Z for Lobbed/Mortar bullets to effect a "bounce"
