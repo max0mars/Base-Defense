@@ -53,23 +53,12 @@ end
 
 function Bank:getTooltipStrings()
     local strings = {}
-    if self:isSurrounded() then
-        table.insert(strings, "+1 token per wave")
-    end
+    table.insert(strings, "+1 Energy per turn")
     return strings
 end
 
 function Bank:checkPayout()
-    self.wavesSinceLastToken = self.wavesSinceLastToken + 1
-    
-    if self.wavesSinceLastToken >= self.cycleWaves then
-        self.wavesSinceLastToken = 0
-        
-        if self:isSurrounded() then
-            return self.tokensPerCycle
-        end
-    end
-    
+    -- No longer used, max tokens are calculated dynamically in GameManager
     return 0
 end
 

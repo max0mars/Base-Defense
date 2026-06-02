@@ -71,6 +71,7 @@ function game:load(saveData, isTesting)
         else
             self.tokens   = _G.PersistentState and _G.PersistentState.startingTokens or 3
         end
+        self.maxTokens    = 3
         EnemyRegistry:reset(self)
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
         self.wave         = 0
@@ -486,6 +487,16 @@ end
 -- Helpers
 -- -----------------------------------------------------------------------------
 
+function game:getMaxTokens()
+    local max = self.maxTokens or 3
+    for _, obj in ipairs(self.objects) do
+        if obj.name == "Bank" and not obj.destroyed then
+            max = max + 1
+        end
+    end
+    return max
+end
+
 function game:addXP(amount)    self.xp = self.xp + amount end
 function game:addTokens(amount) self.tokens = self.tokens + amount end
 
@@ -518,19 +529,22 @@ function game:interest()
 end
 function game:waveComplete()
     self.drawCost = 1
+    
+    -- Wave-Transition Economy (Token Reset)
+    self.tokens = self:getMaxTokens()
+    
+    -- Wave-Transition Hand Wiping
+    for _, card in ipairs(self.hand) do
+        table.insert(self.discardPile, card)
+    end
+    self.hand = {}
+    
     if self.gui and self.gui.incomeFeedback then
         self.gui.incomeFeedback:triggerSequence()
-    else
-        -- Fallback if GUI/manager isn't initialized yet
-        local baseIncome = _G.PersistentState and _G.PersistentState.incomeTokens or 3
-        local interestAmount = math.floor(self.tokens * 0.1)
-        self:addTokens(baseIncome)
-        self:addTokens(interestAmount)
     end
     
-    if self.wave < 5 then
-        self:drawCard(1)
-    end
+    -- Draw 4 new cards for the next wave
+    self:drawCard(4)
     
     -- Trigger onWaveComplete for other objects (if any)
     for _, obj in ipairs(self.objects) do
@@ -661,6 +675,7 @@ function game:initBattleDeck()
     self.drawPile = {}
     self.hand = {}
     self.consumedPile = {}
+    self.discardPile = {}
     
     if _G.PersistentState and _G.PersistentState.deck then
         local function deepcopy(orig, copies)
@@ -708,8 +723,23 @@ function game:drawCard(amount)
         end
         
         if #self.drawPile == 0 then
-            self:spawnFloatingText("Deck is empty!", 400, 300, {0.8, 0.2, 0.2, 1})
-            break
+            if #self.discardPile > 0 then
+                -- Reshuffle Discard Pile into Draw Pile
+                for _, c in ipairs(self.discardPile) do
+                    table.insert(self.drawPile, c)
+                end
+                self.discardPile = {}
+                
+                for j = #self.drawPile, 2, -1 do
+                    local r = math.random(j)
+                    self.drawPile[j], self.drawPile[r] = self.drawPile[r], self.drawPile[j]
+                end
+                
+                self:spawnFloatingText("Deck Reshuffled!", 400, 300, {0.4, 0.8, 1.0, 1})
+            else
+                -- Both piles empty
+                break
+            end
         end
         
         local card = table.remove(self.drawPile, 1)
@@ -723,7 +753,15 @@ function game:consumeCard(card)
     for i, c in ipairs(self.hand) do
         if c == card then
             table.remove(self.hand, i)
-            table.insert(self.consumedPile, card)
+            
+            local execType = card.executionType
+            local ExecutionType = require("Game.Cards.ExecutionType")
+            if execType == "Global" or execType == "Targeted" or 
+               execType == ExecutionType.Global or execType == ExecutionType.Targeted then
+                table.insert(self.discardPile, card)
+            else
+                table.insert(self.consumedPile, card)
+            end
             break
         end
     end

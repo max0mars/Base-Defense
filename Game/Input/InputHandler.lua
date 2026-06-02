@@ -335,7 +335,7 @@ function InputHandler:mousepressed(x, y, button)
     local mainLazer = game.mainLazer
     
     if button == 2 then
-        if game.inputMode == "placing" or game.inputMode == "targeting_card" then
+        if game.inputMode == "placing" or game.inputMode == "targeting_card" or game.inputMode == "targeting_global" then
             if game.activeCard then
                 game:refundCard(game.activeCard)
             end
@@ -377,6 +377,34 @@ function InputHandler:mousepressed(x, y, button)
         return
     end
     
+    -- Handle global targeting execution
+    if game.inputMode == "targeting_global" and button == 1 then
+        local hoverBattlefield = self:isMouseOverGrid(game.battlefieldGrid)
+        local hoverBase = self:isMouseOverGrid(game.base.buildGrid)
+        
+        if hoverBattlefield or hoverBase then
+            local card = game.activeCard
+            if card then
+                if type(card.execute) == "function" then
+                    local success = card:execute(game)
+                    if success ~= false then
+                        game:consumeCard(card)
+                    else
+                        game:refundCard(card)
+                    end
+                else
+                    game:refundCard(card)
+                end
+            end
+        else
+            if game.activeCard then
+                game:refundCard(game.activeCard)
+            end
+        end
+        game.inputMode = "idle"
+        return
+    end
+
     -- Handle targeting execution
     if game.inputMode == "targeting_card" and button == 1 then
         local clickedTarget = nil

@@ -11,6 +11,7 @@ local ItemPickerUI = require("Game.GUI.ItemPickerUI")
 local InfoColumn = require("Game.GUI.InfoColumn")
 local Codex = require("Game.GUI.Codex")
 local Cursor = require("Game.GUI.Cursor")
+local DeckViewerUI = require("Game.GUI.DeckViewerUI")
 
 -- =============================================================================
 -- Local Helpers for Tron/Neon UI Aesthetics
@@ -148,6 +149,7 @@ function GUIManager:new(game)
         itemPicker = ItemPickerUI:new(game),
         infoColumn = InfoColumn:new(game),
         codex = Codex:new(game),
+        deckViewer = DeckViewerUI:new(game),
         -- The codex is opened from the "BASE JOURNAL" button at the bottom of the
         -- info column (see InfoColumn).
     }, self)
@@ -163,6 +165,7 @@ function GUIManager:isConsumingInput(x, y)
     if game:isState("upgrade_mutation") then return true end
     if self.enemySpawner and self.enemySpawner.isActive then return true end
     if self.itemPicker and self.itemPicker.isActive then return true end
+    if self.deckViewer and self.deckViewer.isActive then return true end
 
     -- Top HUD area blocks click/hover completely
     if y <= 100 then return true end
@@ -188,6 +191,7 @@ function GUIManager:update(dt)
     if self.wavePreview then self.wavePreview:update(dt) end
     if self.itemPicker then self.itemPicker:update(dt) end
     if self.infoColumn then self.infoColumn:update(dt) end
+    if self.deckViewer then self.deckViewer:update(dt) end
 
     local mx, my = love.mouse.getPosition()
     self.tooltips.rarityProbs = nil
@@ -208,6 +212,7 @@ function GUIManager:draw()
     if self.itemPicker then self.itemPicker:draw() end
     self.tooltips:draw()     -- Draw tips above everything
     if self.codex then self.codex:draw() end -- Codex overlays everything
+    if self.deckViewer then self.deckViewer:draw() end
 end
 
 -- True when a modal/overlay is open over the HUD (so background HUD buttons
@@ -220,6 +225,7 @@ function GUIManager:overlayActive()
         or (self.enemySpawner and self.enemySpawner.isActive)
         or (self.itemPicker and self.itemPicker.isActive)
         or (self.confirmation and self.confirmation.active)
+        or (self.deckViewer and self.deckViewer.isActive)
         or (paused == 1)
 end
 
@@ -248,11 +254,7 @@ function GUIManager:drawHUD()
     end
     love.graphics.pop()
 
-    -- Tray label.
-    love.graphics.push("all")
-    love.graphics.setColor(0.25, 0.55, 0.7, 0.7)
-    love.graphics.print("STORED TOWERS", L.tray.x + 12, L.tray.y + 6)
-    love.graphics.pop()
+
 
     -- 1. Draw glowing borders (moved from GameManager)
     self:drawBorders()
@@ -479,6 +481,11 @@ end
 
 function GUIManager:mousepressed(x, y, button)
     -- Handle input in reverse draw order (top to bottom)
+
+    if self.deckViewer and self.deckViewer.isActive then
+        self.deckViewer:mousepressed(x, y, button)
+        return true
+    end
 
     -- Codex overlays everything and captures all input while open.
     if self.codex and self.codex.isActive then

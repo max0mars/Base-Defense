@@ -32,14 +32,14 @@ local RewardIndex = {
         --     type = "building",
         --     iconCategory = "blocker"
         -- },
-        {
-            id = "rangeBuff",
-            name = "Radar Tower",
-            description = "Increases range of adjacent turrets by 25%.",
-            type = "building",
-            building = require("Buildings.Buffs.RangeBuff"),
-            iconCategory = "buff"
-        },
+        -- {
+        --     id = "rangeBuff",
+        --     name = "Radar Tower",
+        --     description = "Increases range of adjacent turrets by 25%.",
+        --     type = "building",
+        --     building = require("Buildings.Buffs.RangeBuff"),
+        --     iconCategory = "buff"
+        -- },
         {
             id = "shotgunTurret",
             name = "Shotgun Turret",

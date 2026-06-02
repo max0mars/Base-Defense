@@ -40,77 +40,18 @@ end
 
 -- Triggers the end-of-wave sequential income feedback
 function IncomeFeedbackManager:triggerSequence()
-    -- Reset any active sequence
     self.queue = {}
     self.timer = 0
     
     local game = self.game
-    local initialTokens = game.tokens
     
-    -- 1. Calculate Base Wave Income
-    local baseIncome = 3
-    
-    -- 2. Calculate Interest Income (10% of tokens before wave payouts)
-    local interestAmount = math.floor(initialTokens * 0.1)
-    
-    -- 3. Calculate and collect Bank yields
-    local bankPayouts = {}
-    local totalBankYield = 0
-    
-    for _, obj in ipairs(game.objects) do
-        if obj.name == "Bank" and not obj.destroyed then
-            if obj.checkPayout then
-                local payout = obj:checkPayout()
-                if payout > 0 then
-                    table.insert(bankPayouts, { bank = obj, amount = payout })
-                    totalBankYield = totalBankYield + payout
-                end
-            end
-        end
-    end
-    
-    -- Step 1: Base Wave Income
+    -- Queue simple feedback for Energy Refill
     self:queueFeedback(0.6, function()
-        game:addTokens(baseIncome)
         if AUDIO then AUDIO:playSFX("money_01") end
-        
         local cx = (VIRTUAL_WIDTH or 800) / 2
         local cy = (VIRTUAL_HEIGHT or 600) / 2
-        game:spawnFloatingText("+" .. baseIncome .. " Wave Income", cx, cy - 20, {1, 0.84, 0, 1})
+        game:spawnFloatingText("Energy Refilled", cx, cy - 20, {0.2, 0.9, 1.0, 1})
     end)
-    
-    -- Step 2: Interest Income (only queued if > 0)
-    if interestAmount > 0 then
-        self:queueFeedback(0.6, function()
-            game:addTokens(interestAmount)
-            if AUDIO then AUDIO:playSFX("money_01") end
-            
-            local cx = (VIRTUAL_WIDTH or 800) / 2
-            local cy = (VIRTUAL_HEIGHT or 600) / 2
-            game:spawnFloatingText("+" .. interestAmount .. " Interest", cx, cy - 20, {0.4, 0.9, 0.4, 1})
-        end)
-    end
-    
-    -- Step 3: Bank Buildings Feedback (only queued if > 0)
-    if totalBankYield > 0 then
-        self:queueFeedback(0.6, function()
-            game:addTokens(totalBankYield)
-            if AUDIO then AUDIO:playSFX("money_01") end
-            
-            for _, payout in ipairs(bankPayouts) do
-                -- Default to base position if the bank was somehow destroyed during sequence delay
-                local cx, cy = game.base.x, game.base.y
-                if game.base.getCenterPosition then
-                    cx, cy = game.base:getCenterPosition()
-                end
-                
-                if not payout.bank.destroyed then
-                    cx, cy = payout.bank:getCenterPosition()
-                end
-                game:spawnFloatingText("+" .. payout.amount .. " token", cx, cy - 20, {1, 0.84, 0, 1})
-            end
-        end)
-    end
 end
 
 return IncomeFeedbackManager

@@ -368,13 +368,13 @@ function EffectManager:getTooltipStrings()
                 isRepresented = true
             end
 
-            -- Add generic named effects if not already shown via modifiers/abilities
-            if displayName and not effect.hidden and not isRepresented then
-                if not seenAbilities[displayName] then
-                    table.insert(strings, displayName)
-                    seenAbilities[displayName] = true
-                end
-            end
+            -- -- Add generic named effects
+            -- if displayName and not effect.hidden then
+            --     if not seenAbilities[displayName] then
+            --         table.insert(strings, displayName)
+            --         seenAbilities[displayName] = true
+            --     end
+            -- end
         end
         if em.parent then processEffects(em.parent) end
     end

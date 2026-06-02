@@ -349,7 +349,6 @@ function InfoColumn:previewCardRect(x, y, w, h, kind, obj)
     local top = y + 26
     local regionH = h - 26
     local cardW = math.min(190, w)
-    local cardH = math.min(h - 30, 200)
     local cx = x + math.floor((w - cardW) / 2)
 
     local extrasH = 0
@@ -357,7 +356,12 @@ function InfoColumn:previewCardRect(x, y, w, h, kind, obj)
         local lines = self:buildingExtrasLines(obj)
         if #lines > 0 then extrasH = 22 + #lines * 15 end -- header + rows
     end
-    local blockH = cardH + (extrasH > 0 and (10 + extrasH) or 0)
+    
+    local gap = (extrasH > 0) and 10 or 0
+    local maxCardH = regionH - gap - extrasH
+    local cardH = math.max(60, math.min(maxCardH, 200))
+
+    local blockH = cardH + gap + extrasH
     local cardY = top + math.max(0, math.floor((regionH - blockH) / 2))
     return cx, cardY, cardW, cardH
 end
