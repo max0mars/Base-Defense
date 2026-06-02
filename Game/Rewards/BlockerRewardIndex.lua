@@ -35,6 +35,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {1,0}, {0,1} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         },
         {
@@ -47,6 +49,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {-1,0}, {1,0}, {0,1} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         },
         {
@@ -59,6 +63,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {0,1}, {0,2} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         },
         {
@@ -71,6 +77,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {1,0}, {0,1}, {1,1} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         },
         {
@@ -83,6 +91,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {1,0}, {2,0}, {0,1} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         },
         {
@@ -95,6 +105,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {-1,0}, {1,0}, {0,1}, {0,2} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         },
         {
@@ -107,6 +119,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {0,1}, {0,2}, {0,3} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         },
         {
@@ -119,6 +133,8 @@ local BlockerRewardIndex = {
             shapePattern = { {0,0}, {-1,0}, {1,0}, {2,0}, {0,1} },
             color = {0.9, 0.5, 0.1, 1},
             rarity = "blocker",
+            cost = 1,
+            affectedSlots = {{0,0}},
             onGenerate = applyRandomRotation
         }
     }

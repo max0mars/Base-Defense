@@ -9,6 +9,9 @@ local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local Sentry = require("Buildings.Turrets.Sentry")
 local Blaster = require("Buildings.Turrets.Blaster")
+local AutoCannon = require("Buildings.Turrets.AutoCannon")
+local ShotgunTurret = require("Buildings.Turrets.ShotgunTurret")
+local HeavyGun = require("Buildings.Turrets.HeavyGun")
 
 local function createStartingDeck()
     local deck = PlayerDeck:new()
@@ -27,6 +30,30 @@ local function createStartingDeck()
         executionType = ExecutionType.Placement,
         quantity = 2,
         payload = { buildingClass = Blaster, config = {}, rarity = "common" }
+    }))
+    deck:addCard(Card:new({
+        id = "autoCannon",
+        name = "Auto Cannon",
+        description = "High fire rate, low damage, short range.",
+        executionType = ExecutionType.Placement,
+        quantity = 1,
+        payload = { buildingClass = AutoCannon, config = {}, rarity = "common" }
+    }))
+    deck:addCard(Card:new({
+        id = "shotgunTurret",
+        name = "Shotgun Turret",
+        description = "Shreds close-range targets.",
+        executionType = ExecutionType.Placement,
+        quantity = 1,
+        payload = { buildingClass = ShotgunTurret, config = {}, rarity = "common" }
+    }))
+    deck:addCard(Card:new({
+        id = "heavygun",
+        name = "Heavy Gun",
+        description = "Long range, high damage.",
+        executionType = ExecutionType.Placement,
+        quantity = 1,
+        payload = { buildingClass = HeavyGun, config = {}, rarity = "common" }
     }))
     deck:addCard(Card:new({
         id = "unstable_laser",

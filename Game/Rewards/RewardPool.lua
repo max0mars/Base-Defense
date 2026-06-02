@@ -86,6 +86,23 @@ function RewardPool:getRandomRewardFromTier(rarity, excludedIds)
                     end
                 end
                 
+                if self.game and self.game.base and self.game.base.mainLazer then
+                    local ml = self.game.base.mainLazer
+                    if ml.upgradeRewards and ml.upgradeRewards[r] then
+                        for _, item in ipairs(ml.upgradeRewards[r]) do
+                            if not excludedIds[item.id or item.name] then
+                                local eligible = true
+                                if item.isEligible then
+                                    eligible = item.isEligible(self.game)
+                                end
+                                if eligible then
+                                    table.insert(available, item)
+                                end
+                            end
+                        end
+                    end
+                end
+                
                 if #available > 0 then
                     local choice = available[math.random(1, #available)]
                     

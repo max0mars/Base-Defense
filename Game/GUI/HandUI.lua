@@ -61,8 +61,8 @@ function HandUI:draw()
     
     local numCards = self.game.hand and #self.game.hand or 0
     
-    local cardWidth = 100
-    local cardHeight = 140
+    local cardWidth = 150
+    local cardHeight = 210
     
     local inventoryStartX = 320
     local inventoryMaxWidth = 740
@@ -90,9 +90,10 @@ function HandUI:draw()
     local drawPileCount = self.game.drawPile and #self.game.drawPile or 0
     local discardPileCount = self.game.discardPile and #self.game.discardPile or 0
     
-    local drawCardBtn = { x = deckX, y = deckY + 16, w = 180, h = 34 }
-    local viewDrawBtn = { x = deckX, y = deckY + 16 + 34 + 8, w = 180, h = 34 }
-    local viewDiscardBtn = { x = deckX, y = deckY + 16 + 68 + 16, w = 180, h = 34 }
+    local buttonStartY = VIRTUAL_HEIGHT - 144
+    local drawCardBtn = { x = deckX, y = buttonStartY, w = 180, h = 34 }
+    local viewDrawBtn = { x = deckX, y = buttonStartY + 42, w = 180, h = 34 }
+    local viewDiscardBtn = { x = deckX, y = buttonStartY + 84, w = 180, h = 34 }
     
     local inRegion = function(btn) return mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h end
     
@@ -122,54 +123,42 @@ function HandUI:draw()
         local isHovered = mx >= cx and mx <= cx + cardWidth and my >= cy and my <= cy + cardHeight
         if isHovered then Cursor.wantHand = true end
         
-        local rcolors = {
-            common = {0.5, 0.5, 0.5},
-            uncommon = {0.2, 0.8, 0.2},
-            rare = {0.2, 0.5, 1.0},
-            epic = {0.7, 0.3, 0.9},
-            legendary = {1.0, 0.7, 0.1}
-        }
-        local rarity = card.payload and card.payload.rarity or card.rarity or "common"
-        local rCol = rcolors[rarity:lower()] or rcolors.common
-        
-        -- Draw Card Background
-        love.graphics.setColor(rCol[1]*0.2, rCol[2]*0.2, rCol[3]*0.2, 0.95)
-        love.graphics.rectangle("fill", cx, cy, cardWidth, cardHeight, 5)
-        
-        -- Border
-        if self.game.activeCard == card then
-            love.graphics.setColor(1, 1, 1, 1) -- White for active
-            love.graphics.setLineWidth(3)
-        elseif isHovered then
-            love.graphics.setColor(rCol[1]*1.2, rCol[2]*1.2, rCol[3]*1.2, 1)
-            love.graphics.setLineWidth(2)
+        if card.getCardDraw and card:getCardDraw() then
+            card:getCardDraw():draw(cx, cy, cardWidth, cardHeight, isHovered or (self.game.activeCard == card))
+            
+            -- Draw unaffordable tint on top if necessary
+            -- local canAfford = self.game.tokens >= cost
+            -- if not canAfford then
+            --     love.graphics.setColor(1, 0, 0, 0.3)
+            --     love.graphics.rectangle("fill", cx, cy, cardWidth, cardHeight, 5)
+            --     local scaleX = cardWidth / 250
+            --     local scaleY = cardHeight / 350
+            --     love.graphics.circle("fill", cx + 15 * scaleX, cy + 35 * scaleY, 25 * scaleX)
+            --     love.graphics.setColor(1, 1, 1, 1)
+            -- end
         else
-            love.graphics.setColor(rCol[1]*0.8, rCol[2]*0.8, rCol[3]*0.8, 1)
+            -- Fallback
+            love.graphics.setColor(0.2, 0.2, 0.2, 0.95)
+            love.graphics.rectangle("fill", cx, cy, cardWidth, cardHeight, 5)
+            if self.game.activeCard == card then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setLineWidth(3)
+            elseif isHovered then
+                love.graphics.setColor(0.5, 0.5, 0.5, 1)
+                love.graphics.setLineWidth(2)
+            else
+                love.graphics.setColor(0.3, 0.3, 0.3, 1)
+                love.graphics.setLineWidth(1)
+            end
+            love.graphics.rectangle("line", cx, cy, cardWidth, cardHeight, 5)
             love.graphics.setLineWidth(1)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf(card.name, cx + 5, cy + 10, cardWidth - 10, "center")
+            
+            local canAfford = self.game.tokens >= cost
+            if canAfford then love.graphics.setColor(0.2, 0.8, 0.2, 1) else love.graphics.setColor(0.8, 0.2, 0.2, 1) end
+            love.graphics.printf(cost .. " Tk", cx, cy + cardHeight - 20, cardWidth, "center")
         end
-        love.graphics.rectangle("line", cx, cy, cardWidth, cardHeight, 5)
-        love.graphics.setLineWidth(1)
-        
-        -- Text
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(card.name, cx + 5, cy + 10, cardWidth - 10, "center")
-        
-        -- Type
-        local typeStr = "Place"
-        if card.executionType == ExecutionType.Global or card.executionType == "Global" then typeStr = "Global"
-        elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then typeStr = "Target" end
-        
-        love.graphics.setColor(0.7, 0.7, 0.7, 1)
-        love.graphics.printf(typeStr, cx + 5, cy + 40, cardWidth - 10, "center")
-        
-        -- Cost
-        local canAfford = self.game.tokens >= cost
-        if canAfford then
-            love.graphics.setColor(0.2, 0.8, 0.2, 1)
-        else
-            love.graphics.setColor(0.8, 0.2, 0.2, 1)
-        end
-        love.graphics.printf(cost .. " Tk", cx, cy + cardHeight - 20, cardWidth, "center")
     end
 end
 
@@ -179,8 +168,8 @@ function HandUI:mousepressed(x, y, button)
     
     local numCards = self.game.hand and #self.game.hand or 0
     
-    local cardWidth = 100
-    local cardHeight = 140
+    local cardWidth = 150
+    local cardHeight = 210
     
     local inventoryStartX = 320
     local inventoryMaxWidth = 740
@@ -199,9 +188,10 @@ function HandUI:mousepressed(x, y, button)
         end
     end
     
-    local drawCardBtn = { x = deckX, y = deckY + 16, w = 180, h = 34 }
-    local viewDrawBtn = { x = deckX, y = deckY + 16 + 34 + 8, w = 180, h = 34 }
-    local viewDiscardBtn = { x = deckX, y = deckY + 16 + 68 + 16, w = 180, h = 34 }
+    local buttonStartY = VIRTUAL_HEIGHT - 144
+    local drawCardBtn = { x = deckX, y = buttonStartY, w = 180, h = 34 }
+    local viewDrawBtn = { x = deckX, y = buttonStartY + 42, w = 180, h = 34 }
+    local viewDiscardBtn = { x = deckX, y = buttonStartY + 84, w = 180, h = 34 }
     
     local inRegion = function(btn) return x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h end
     

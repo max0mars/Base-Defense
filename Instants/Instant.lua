@@ -26,6 +26,31 @@ function Instant.new(config)
     return self
 end
 
+function Instant:getCardDraw()
+    if not self.rewardCard then
+        local CardDraw = require("Game.Cards.CardDraw")
+        local isTargeted = self.executionType == Instant.ExecutionType.Targeted or self.executionType == "Targeted"
+        local isGlobal = self.executionType == Instant.ExecutionType.Global or self.executionType == "Global"
+        
+        local data = {
+            name = self.name,
+            description = self.description,
+            cost = self.cost or 1,
+            rarity = self.rarity or "Common",
+            type = (isGlobal or isTargeted) and "effect" or "building",
+            iconCategory = (isGlobal or isTargeted) and "upgrade" or "turret",
+            damageBars = 0,
+            rangeBars = 0,
+            firerateBars = 0,
+            affectedSlots = {},
+            isTargeted = isTargeted,
+            isGlobal = isGlobal
+        }
+        self.rewardCard = CardDraw.new(0, 0, data)
+    end
+    return self.rewardCard
+end
+
 function Instant:getCost()
     return self.cost or 1
 end

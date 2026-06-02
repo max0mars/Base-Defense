@@ -239,10 +239,8 @@ function game:update(dt)
             if _G.PersistentState then
                 _G.PersistentState.baseHP = self.base.hp
                 local reward = 100
-                if not self.damageTakenThisBattle or self.damageTakenThisBattle == 0 then
-                    reward = reward + 25
-                end
                 _G.PersistentState.cash = (_G.PersistentState.cash or 0) + reward
+                self.battleReward = reward
             end
             return
         end

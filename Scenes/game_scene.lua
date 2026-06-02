@@ -31,6 +31,12 @@ function game_scene:load()
 end
 
 function game_scene:mousepressed(x, y, button)
+    if self.showingSummary then
+        self.showingSummary = false
+        self.scene_manager.switch("preparation", true)
+        return
+    end
+
     if paused == 1 then
         local action = self.settings:mousepressed(x, y, button)
         if action == "resume" then
@@ -65,9 +71,26 @@ function game_scene:update(dt)
 
     if game.battleComplete then
         game.battleComplete = false
-        self.scene_manager.switch("preparation", true)
+        self.showingSummary = true
+        self.summaryDamage = game.damageTakenThisBattle or 0
+        self.summaryIncome = game.battleReward or 0
+        self.summaryPerfectBonus = (self.summaryDamage == 0) and 25 or 0
+        
+        local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
+        local cashBeforeBattle = currentCash - self.summaryIncome
+        if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
+        self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
+        
+        if _G.PersistentState then
+            _G.PersistentState.cash = currentCash + self.summaryInterest + self.summaryPerfectBonus
+            self.summaryTotalCash = _G.PersistentState.cash
+        else
+            self.summaryTotalCash = 0
+        end
         return
     end
+    
+    if self.showingSummary then return end
 
     local effectiveDt = dt * game.time_mul
     
@@ -99,7 +122,26 @@ function game_scene:draw()
         -- Real OS hand/arrow cursor over the pause menu (matches the main menu).
         Cursor.applyOS()
     end
-    love.graphics.setColor(1, 1, 1, 1)
+    if self.showingSummary then
+        love.graphics.setColor(0, 0, 0, 0.85)
+        love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("BATTLE COMPLETE", 0, VIRTUAL_HEIGHT / 2 - 100, VIRTUAL_WIDTH, "center")
+        
+        love.graphics.printf("Damage Taken: " .. self.summaryDamage, 0, VIRTUAL_HEIGHT / 2 - 50, VIRTUAL_WIDTH, "center")
+        love.graphics.setColor(0.2, 0.8, 0.2, 1)
+        love.graphics.printf("Income: +$" .. self.summaryIncome, 0, VIRTUAL_HEIGHT / 2 - 20, VIRTUAL_WIDTH, "center")
+        love.graphics.printf("Perfect Bonus: +$" .. self.summaryPerfectBonus, 0, VIRTUAL_HEIGHT / 2 + 10, VIRTUAL_WIDTH, "center")
+        love.graphics.printf("Interest: +$" .. self.summaryInterest, 0, VIRTUAL_HEIGHT / 2 + 40, VIRTUAL_WIDTH, "center")
+        
+        love.graphics.setColor(0.2, 1.0, 0.2, 1)
+        love.graphics.printf("Total Cash: $" .. self.summaryTotalCash, 0, VIRTUAL_HEIGHT / 2 + 80, VIRTUAL_WIDTH, "center")
+        
+        love.graphics.setColor(0.6, 0.6, 0.6, 1)
+        love.graphics.printf("Click anywhere to continue", 0, VIRTUAL_HEIGHT / 2 + 120, VIRTUAL_WIDTH, "center")
+    end
+    
     -- love.graphics.print("Tokens: " .. game.tokens, 10, 10)
     -- --love.graphics.print("Time Multiplier: " .. string.format("%.1f", time_mul) .. "x", 10, 30)
     -- love.graphics.print("Wave: " .. game.wave, 10, 30)

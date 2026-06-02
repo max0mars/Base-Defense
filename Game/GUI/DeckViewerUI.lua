@@ -43,6 +43,7 @@ function DeckViewerUI:open(pileType, cards, sourceBtn)
     end)
     
     self.scrollOffset = 0
+    self.deckPage = 1
 end
 
 function DeckViewerUI:close()
@@ -60,81 +61,100 @@ function DeckViewerUI:draw()
     love.graphics.setColor(0, 0, 0, 0.85)
     love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
     
+    local mx, my = love.mouse.getPosition()
+    
     local title = self.pileType == "DrawPile" and "DRAW PILE" or "DISCARD PILE"
     local font = love.graphics.getFont()
     
     love.graphics.setColor(0.9, 0.9, 1.0, 1)
     love.graphics.printf(title .. " (" .. #self.cards .. " Cards)", 0, 30, VIRTUAL_WIDTH, "center")
     
-    -- Close button
-    local cb = self.closeButton
-    local mx, my = love.mouse.getPosition()
-    local hoverClose = mx >= cb.x and mx <= cb.x + cb.w and my >= cb.y and my <= cb.y + cb.h
-    love.graphics.setColor(hoverClose and {1, 0.3, 0.3, 1} or {0.6, 0.2, 0.2, 1})
-    love.graphics.rectangle("fill", cb.x, cb.y, cb.w, cb.h, 4)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("X", cb.x, cb.y + 10, cb.w, "center")
+
     
     -- Draw grid of cards
-    local cols = 6
-    local cardW = 100
-    local cardH = 140
-    local spacingX = 20
+    local cols = 4
+    local cardW = 200
+    local cardH = 280
+    local spacingX = 40
     local spacingY = 20
     local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
-    local startY = 100
+    local startY = 80
     
-    for i, card in ipairs(self.cards) do
-        local col = ((i - 1) % cols)
-        local row = math.floor((i - 1) / cols)
+    local maxPerPage = 8
+    local totalPages = math.max(1, math.ceil(#self.cards / maxPerPage))
+    self.deckPage = self.deckPage or 1
+    if self.deckPage > totalPages then self.deckPage = totalPages end
+    if self.deckPage < 1 then self.deckPage = 1 end
+    
+    local startIndex = (self.deckPage - 1) * maxPerPage + 1
+    local endIndex = math.min(self.deckPage * maxPerPage, #self.cards)
+    
+    for i = startIndex, endIndex do
+        local displayIndex = i - startIndex
+        local card = self.cards[i]
+        local col = (displayIndex % cols)
+        local row = math.floor(displayIndex / cols)
         
         local cx = startX + col * (cardW + spacingX)
-        local cy = startY + row * (cardH + spacingY) - self.scrollOffset
+        local cy = startY + row * (cardH + spacingY)
         
-        -- Draw Card Background
-        local rcolors = {
-            common = {0.5, 0.5, 0.5}, uncommon = {0.2, 0.8, 0.2},
-            rare = {0.2, 0.5, 1.0}, epic = {0.7, 0.3, 0.9}, legendary = {1.0, 0.7, 0.1}
-        }
-        local rarity = card.payload and card.payload.rarity or card.rarity or "common"
-        local rCol = rcolors[rarity:lower()] or rcolors.common
-        
-        love.graphics.setColor(rCol[1]*0.2, rCol[2]*0.2, rCol[3]*0.2, 0.95)
-        love.graphics.rectangle("fill", cx, cy, cardW, cardH, 5)
-        
-        -- Border
-        love.graphics.setColor(rCol[1]*0.8, rCol[2]*0.8, rCol[3]*0.8, 1)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", cx, cy, cardW, cardH, 5)
-        love.graphics.setLineWidth(1)
-        
-        -- Text
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(card.name, cx + 5, cy + 10, cardW - 10, "center")
-        
-        -- Type
-        local typeStr = "Place"
-        if card.executionType == ExecutionType.Global or card.executionType == "Global" then typeStr = "Global"
-        elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then typeStr = "Target" end
-        
-        love.graphics.setColor(0.7, 0.7, 0.7, 1)
-        love.graphics.printf(typeStr, cx + 5, cy + 40, cardW - 10, "center")
-        
-        -- Cost
-        local cost = card.getCost and card:getCost() or card.cost or 0
-        love.graphics.setColor(0.9, 0.9, 0.2, 1)
-        love.graphics.printf(cost .. " Tk", cx, cy + cardH - 20, cardW, "center")
+        if card.getCardDraw and card:getCardDraw() then
+            local isHovered = mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH
+            card:getCardDraw():draw(cx, cy, cardW, cardH, isHovered)
+        end
     end
+    
+    self.prevPageBtn = { x = 120, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Prev Page" }
+    self.nextPageBtn = { x = VIRTUAL_WIDTH - 240, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Next Page" }
+    
+    if self.deckPage > 1 then
+        local isHovered = mx >= self.prevPageBtn.x and mx <= self.prevPageBtn.x + self.prevPageBtn.w and my >= self.prevPageBtn.y and my <= self.prevPageBtn.y + self.prevPageBtn.h
+        love.graphics.setColor(isHovered and {0.4, 0.6, 0.9, 1} or {0.3, 0.5, 0.8, 1})
+        love.graphics.rectangle("fill", self.prevPageBtn.x, self.prevPageBtn.y, self.prevPageBtn.w, self.prevPageBtn.h, 5)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf(self.prevPageBtn.label, self.prevPageBtn.x, self.prevPageBtn.y + 12, self.prevPageBtn.w, "center")
+    end
+    
+    if self.deckPage < totalPages then
+        local isHovered = mx >= self.nextPageBtn.x and mx <= self.nextPageBtn.x + self.nextPageBtn.w and my >= self.nextPageBtn.y and my <= self.nextPageBtn.y + self.nextPageBtn.h
+        love.graphics.setColor(isHovered and {0.4, 0.6, 0.9, 1} or {0.3, 0.5, 0.8, 1})
+        love.graphics.rectangle("fill", self.nextPageBtn.x, self.nextPageBtn.y, self.nextPageBtn.w, self.nextPageBtn.h, 5)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf(self.nextPageBtn.label, self.nextPageBtn.x, self.nextPageBtn.y + 12, self.nextPageBtn.w, "center")
+    end
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("Page " .. self.deckPage .. " / " .. totalPages, 0, VIRTUAL_HEIGHT - 75, VIRTUAL_WIDTH, "center")
+    
+    love.graphics.setColor(0.6, 0.6, 0.6, 1)
+    love.graphics.printf("Click anywhere else to close", 0, VIRTUAL_HEIGHT - 45, VIRTUAL_WIDTH, "center")
 end
 
 function DeckViewerUI:mousepressed(x, y, button)
     if not self.isActive then return false end
     
     if button == 1 then
-        local cb = self.closeButton
-        if x >= cb.x and x <= cb.x + cb.w and y >= cb.y and y <= cb.y + cb.h then
-            self:close()
+        if self.deckPage and self.deckPage > 1 and self.prevPageBtn then
+            local btn = self.prevPageBtn
+            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                self.deckPage = self.deckPage - 1
+                return true
+            end
         end
+        
+        if self.deckPage and self.nextPageBtn then
+            local totalPages = math.max(1, math.ceil(#self.cards / 8))
+            if self.deckPage < totalPages then
+                local btn = self.nextPageBtn
+                if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                    self.deckPage = self.deckPage + 1
+                    return true
+                end
+            end
+        end
+        
+        -- Click anywhere else closes the viewer
+        self:close()
     end
     
     return true -- Block all clicks when active

@@ -300,4 +300,47 @@ function MainLazer:drawFiringArc(a1, a2, a3)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+MainLazer.upgradeRewards = {
+    rare = {
+        {
+            id = "unstable_laser",
+            name = "Unstable Laser",
+            description = "Gives your big lazer a 20% chance to burn enemies.",
+            type = "main_upgrade",
+            iconCategory = "upgrade",
+            cost = 2,
+            isEligible = function(game)
+                local mt = game.base and game.base.mainLazer
+                return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
+            end
+        },
+        {
+            id = "low_power_operating",
+            name = "Low Power Ops",
+            description = "Your big lazer shoots much faster but does a little less damage.",
+            type = "main_upgrade",
+            iconCategory = "upgrade",
+            cost = 2,
+            isEligible = function(game)
+                local mt = game.base and game.base.mainLazer
+                return mt and mt.id == "standard_main" and not mt.upgrades["low_power_operating"]
+            end
+        }
+    },
+    legendary = {
+        {
+            id = "electric_field",
+            name = "PROJECT STORMBREAKER",
+            description = "zzzZap!",
+            type = "main_upgrade",
+            iconCategory = "upgrade",
+            cost = 4,
+            isEligible = function(game)
+                local mt = game.base and game.base.mainLazer
+                return mt and not mt.upgrades["electric_field"]
+            end
+        }
+    }
+}
+
 return MainLazer

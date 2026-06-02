@@ -1,5 +1,6 @@
 -- Reward.lua - Template class for individual rewards
 local TurretStatBars = require("Game.GUI.TurretStatBars")
+local CardDraw = require("Game.Cards.CardDraw")
 
 local Reward = {}
 Reward.__index = Reward
@@ -44,6 +45,9 @@ function Reward:new(config)
             print("Failed to instantiate dummy building for reward: " .. tostring(reward.id))
         end
     end
+    
+    -- Instantiate the new scalable CardDraw UI element
+    reward.rewardCard = CardDraw.new(0, 0, reward)
     
     return reward
 end

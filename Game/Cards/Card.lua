@@ -43,6 +43,50 @@ function Card:getClonedPayload()
     return deepcopy(self.payload)
 end
 
+function Card:getCardDraw()
+    if not self.payload then self.payload = {} end
+    if not self.payload.rewardCard then
+        local CardDraw = require("Game.Cards.CardDraw")
+        local isTargeted = self.executionType == require("Game.Cards.ExecutionType").Targeted or self.executionType == "Targeted"
+        local isGlobal = self.executionType == require("Game.Cards.ExecutionType").Global or self.executionType == "Global"
+        
+        local dmgBars, rngBars, frBars = 0, 0, 0
+        local affSlots = {}
+        
+        local success, rewardIndex = pcall(require, "Game.Rewards.NormalRewardIndex")
+        if success and rewardIndex then
+            for _, category in pairs(rewardIndex) do
+                for _, reward in ipairs(category) do
+                    if reward.id == self.id then
+                        dmgBars = reward.damageBars or dmgBars
+                        rngBars = reward.rangeBars or rngBars
+                        frBars = reward.firerateBars or frBars
+                        affSlots = reward.affectedSlots or affSlots
+                        break
+                    end
+                end
+            end
+        end
+
+        local data = {
+            name = self.name,
+            description = self.description,
+            cost = self:getCost(),
+            rarity = self.payload.rarity or self.rarity or "common",
+            type = self.payload.isMainUpgrade and "main_upgrade" or ((isGlobal or isTargeted) and "effect" or "building"),
+            iconCategory = (isGlobal or isTargeted) and "upgrade" or "turret",
+            damageBars = dmgBars,
+            rangeBars = rngBars,
+            firerateBars = frBars,
+            affectedSlots = affSlots,
+            isTargeted = isTargeted,
+            isGlobal = isGlobal
+        }
+        self.payload.rewardCard = CardDraw.new(0, 0, data)
+    end
+    return self.payload.rewardCard
+end
+
 function Card:getCost()
     local rarity = self.payload.rarity or self.rarity or "common"
     local costs = {

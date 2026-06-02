@@ -10,7 +10,9 @@ local SpecialRewardIndex = {
                 name = "Damage Buff",
                 statModifiers = {damage = {mult = 0.05}},
                 duration = math.huge
-            }
+            },
+            cost = 1,
+            affectedSlots = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
         },
         {   id = "fireRateBuff",
             name = "Fire Rate Buff",
@@ -22,7 +24,9 @@ local SpecialRewardIndex = {
                 name = "Fire Rate Buff",
                 statModifiers = {fireRate = {mult = 0.05}},
                 duration = math.huge
-            }
+            },
+            cost = 1,
+            affectedSlots = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
         },
 
         {   id = "rangeBuff",
@@ -35,7 +39,9 @@ local SpecialRewardIndex = {
                 name = "Range Buff",
                 statModifiers = {range = {mult = 0.05}},
                 duration = math.huge
-            }
+            },
+            cost = 1,
+            affectedSlots = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
         },
     },
     uncommon = {
