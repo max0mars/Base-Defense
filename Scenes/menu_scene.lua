@@ -207,7 +207,7 @@ function menu_scene:mousepressed(x, y, button)
                         upgradeCostIncome = 20
                     }
                     game.testingMode = false
-                    self.scene_manager.switch("preparation")
+                    self.scene_manager.switch("new_game")
                 elseif btn.action == "tutorial" then
                     self.scene_manager.switch("tutorial")
                 elseif btn.action == "settings" then
@@ -244,7 +244,7 @@ function menu_scene:keypressed(key)
             upgradeCostIncome = 20
         }
         game.testingMode = false
-        self.scene_manager.switch("preparation")
+        self.scene_manager.switch("new_game")
     elseif key == "t" then
         game.testingMode = true
         self.scene_manager.switch("game")
