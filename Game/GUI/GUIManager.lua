@@ -338,11 +338,19 @@ function GUIManager:drawHUD()
 
 
     -- Buy Blocker.
-    drawActionButton(self.buyBlockerButton, "BUY BLOCKER",
-        string.format("%d T", math.floor(game.blockerCost)),
-        { 0.95, 0.55, 0.15 },
-        Layout.inRegion(self.buyBlockerButton, mx, my), buyEnabled,
-        game.tokens >= game.blockerCost)
+    local isPlacingBlocker = game.inputMode == "placing" and game.blueprint and game.blueprint:isType("blocker")
+    if isPlacingBlocker then
+        drawActionButton(self.buyBlockerButton, "DISCARD", "BLOCKER",
+            { 0.8, 0.2, 0.2 },
+            Layout.inRegion(self.buyBlockerButton, mx, my), true,
+            true)
+    else
+        drawActionButton(self.buyBlockerButton, "BUY BLOCKER",
+            string.format("%d T", math.floor(game.blockerCost)),
+            { 0.95, 0.55, 0.15 },
+            Layout.inRegion(self.buyBlockerButton, mx, my), buyEnabled,
+            game.tokens >= game.blockerCost)
+    end
 
     -- ==========================================
     -- RIGHT PANEL: Toggles (AutoFire, Dmg Nums, AutoWave)
@@ -511,7 +519,12 @@ function GUIManager:mousepressed(x, y, button)
         -- Check Buy Blocker Button
         if x >= self.buyBlockerButton.x and x <= self.buyBlockerButton.x + self.buyBlockerButton.w and
            y >= self.buyBlockerButton.y and y <= self.buyBlockerButton.y + self.buyBlockerButton.h then
-            self.game:attemptPurchaseBlocker()
+            if self.game.inputMode == "placing" and self.game.blueprint and self.game.blueprint:isType("blocker") then
+                self.game.blueprint = nil
+                self.game.inputMode = "idle"
+            else
+                self.game:attemptPurchaseBlocker()
+            end
             return true
         end
 

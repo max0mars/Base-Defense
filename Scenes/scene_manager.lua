@@ -1,10 +1,10 @@
 local M = { scenes = {}, current = nil }
 
 
-function M.switch(name)
+function M.switch(name, ...)
     assert(M.scenes[name])
     M.current = M.scenes[name]
-    if M.current.load then M.current:load() end
+    if M.current.load then M.current:load(...) end
 end
 
 function M:load()

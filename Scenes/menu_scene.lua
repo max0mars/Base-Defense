@@ -28,6 +28,29 @@ local function createStartingDeck()
         quantity = 2,
         payload = { buildingClass = Blaster, config = {}, rarity = "common" }
     }))
+    deck:addCard(Card:new({
+        id = "unstable_laser",
+        name = "Unstable Laser",
+        description = "Gives your big lazer a 20% chance to burn enemies.",
+        executionType = ExecutionType.Targeted,
+        quantity = 1,
+        payload = { isMainUpgrade = true, rarity = "rare" }
+    }))
+    
+    local InstantCardRegistry = require("Instants.InstantCardRegistry")
+    
+    local overclock = InstantCardRegistry.Overclock
+    overclock.quantity = 2
+    deck:addCard(overclock)
+    
+    local rangeFinder = InstantCardRegistry.RangeFinder
+    rangeFinder.quantity = 2
+    deck:addCard(rangeFinder)
+    
+    local frenzy = InstantCardRegistry.Frenzy
+    frenzy.quantity = 2
+    deck:addCard(frenzy)
+    
     return deck
 end
 
@@ -148,7 +171,13 @@ function menu_scene:mousepressed(x, y, button)
                         globalDifficulty = 1,
                         battlesCompleted = 0,
                         activeMutations = {},
-                        discoveredEnemies = { ["Basic"] = true }
+                        discoveredEnemies = { ["Basic"] = true },
+                        startingTokens = 3,
+                        startingHandSize = 3,
+                        incomeTokens = 3,
+                        upgradeCostTokens = 20,
+                        upgradeCostHand = 20,
+                        upgradeCostIncome = 20
                     }
                     game.testingMode = false
                     self.scene_manager.switch("preparation")
@@ -179,7 +208,13 @@ function menu_scene:keypressed(key)
             globalDifficulty = 1,
             battlesCompleted = 0,
             activeMutations = {},
-            discoveredEnemies = { ["Basic"] = true }
+            discoveredEnemies = { ["Basic"] = true },
+            startingTokens = 3,
+            startingHandSize = 3,
+            incomeTokens = 3,
+            upgradeCostTokens = 20,
+            upgradeCostHand = 20,
+            upgradeCostIncome = 20
         }
         game.testingMode = false
         self.scene_manager.switch("preparation")

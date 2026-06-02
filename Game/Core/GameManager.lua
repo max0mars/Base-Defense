@@ -69,7 +69,7 @@ function game:load(saveData, isTesting)
         if self.testingMode then
             self.tokens   = 1000
         else
-            self.tokens   = 3
+            self.tokens   = _G.PersistentState and _G.PersistentState.startingTokens or 3
         end
         EnemyRegistry:reset(self)
         self.luck         = 1         -- Influences reward quality (Scale 1-10)
@@ -118,7 +118,8 @@ function game:load(saveData, isTesting)
         self.activeGlobalBuffs = {}
         
         self:initBattleDeck()
-        self:drawCard(3)
+        -- Starting Draw
+        self:drawCard(_G.PersistentState and _G.PersistentState.startingHandSize or 3)
 
         -- Codex discovery tracking: enemies seen in a wave, turrets ever owned.
         self.seenEnemies = {}
@@ -236,7 +237,11 @@ function game:update(dt)
             self:clearGlobalBuffs()
             if _G.PersistentState then
                 _G.PersistentState.baseHP = self.base.hp
-                _G.PersistentState.cash = (_G.PersistentState.cash or 0) + 100
+                local reward = 100
+                if not self.damageTakenThisBattle or self.damageTakenThisBattle == 0 then
+                    reward = reward + 25
+                end
+                _G.PersistentState.cash = (_G.PersistentState.cash or 0) + reward
             end
             return
         end
@@ -517,7 +522,7 @@ function game:waveComplete()
         self.gui.incomeFeedback:triggerSequence()
     else
         -- Fallback if GUI/manager isn't initialized yet
-        local baseIncome = 3
+        local baseIncome = _G.PersistentState and _G.PersistentState.incomeTokens or 3
         local interestAmount = math.floor(self.tokens * 0.1)
         self:addTokens(baseIncome)
         self:addTokens(interestAmount)
@@ -695,6 +700,7 @@ end
 
 function game:drawCard(amount)
     amount = amount or 1
+    local drawn = 0
     for i = 1, amount do
         if #self.hand >= 8 then
             self:spawnFloatingText("Hand is full!", 400, 300, {0.8, 0.2, 0.2, 1})
@@ -708,7 +714,9 @@ function game:drawCard(amount)
         
         local card = table.remove(self.drawPile, 1)
         table.insert(self.hand, card)
+        drawn = drawn + 1
     end
+    return drawn
 end
 
 function game:consumeCard(card)

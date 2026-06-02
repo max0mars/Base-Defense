@@ -1,10 +1,10 @@
 # Turret List
 
 ## Sentry
-- **Damage**: 20
+- **Damage**: 10
 - **Range**: 500
 - **Fire Rate**: 1.0
-- **DPS**: 20.0
+- **DPS**: 10.0
 - **Description**: Standard basic defense turret.
 
 ## Sniper Turret
@@ -15,10 +15,10 @@
 - **Description**: Slow firing but deals massive damage at extremely long range.
 
 ## Shotgun Turret
-- **Damage**: 8 (per pellet)
+- **Damage**: 4 (per pellet)
 - **Range**: 200
 - **Fire Rate**: 0.7
-- **DPS**: 5.6 (per pellet) | 56.0 (Max Theoretical DPS)
+- **DPS**: 2.8 (per pellet) | 28.0 (Max Theoretical DPS)
 - **Description**: Lethal close-range weapon that fires a wide spread of 10 pellets.
 
 ## Plasma Scattershot
@@ -29,17 +29,17 @@
 - **Description**: Legendary energy variant of the shotgun. Fires high-velocity plasma bolts rapidly and has an internal ammo reload mechanic.
 
 ## Auto Cannon
-- **Damage**: 6
+- **Damage**: 3
 - **Range**: 350
 - **Fire Rate**: 5.0
-- **DPS**: 30.0
+- **DPS**: 15.0
 - **Description**: Fast firing twin-barrel cannon.
 
 ## Heavy Gun
-- **Damage**: 85
+- **Damage**: 42
 - **Range**: 600
 - **Fire Rate**: 0.25
-- **DPS**: 21.25
+- **DPS**: 10.5
 - **Description**: Slow firing weapon that shoots a high damage projectile.
 
 ## Gator (GTR-55)
@@ -50,10 +50,10 @@
 - **Description**: Standard turret variant with high pierce, able to hit multiple enemies.
 
 ## Blaster
-- **Damage**: 8
+- **Damage**: 4
 - **Range**: 450
 - **Fire Rate**: 0.7
-- **DPS**: 5.6 (per bolt) | 16.8 (Max Theoretical DPS)
+- **DPS**: 2.8 (per bolt) | 8.4 (Max Theoretical DPS)
 - **Description**: Energy turret that fires 3-bolt bursts.
 
 ## Flux Cannon

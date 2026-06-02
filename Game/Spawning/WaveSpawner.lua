@@ -44,7 +44,7 @@ function WaveSpawner:update(dt)
                 self.waveList = table.remove(_G.PersistentState.upcomingWaves, 1)
                 summary = table.remove(_G.PersistentState.upcomingSummaries, 1)
             else
-                self.waveList, summary = self.game.waveDirector:generateWaveList(self.game.wave)
+                self.waveList, summary = self.game.waveDirector:generateWaveList(self.game.wave, _G.PersistentState and _G.PersistentState.globalDifficulty or 1)
             end
             
             self:buildLiveRoster(summary)
@@ -146,8 +146,7 @@ function WaveSpawner:prepareUpcomingWave()
     if self.waveState ~= "idle" then return end
     local nextWaveNum = self.game.wave + 1
     if self.pendingWaveNum == nextWaveNum and self.pendingWaveList then return end
-
-    local list, summary = self.game.waveDirector:generateWaveList(nextWaveNum)
+    local list, summary = self.game.waveDirector:generateWaveList(nextWaveNum, _G.PersistentState and _G.PersistentState.globalDifficulty or 1)
     self.pendingWaveList = list
     self.pendingSummary = summary
     self.pendingWaveNum = nextWaveNum
@@ -207,9 +206,9 @@ end
 function WaveSpawner:updateActiveSectors()
     local nextWave = (self.game and self.game.wave) and (self.game.wave + 1) or 1
     local numLanes = 1
-    if nextWave >= 6 and nextWave <= 15 then
+    if nextWave == 3 or nextWave == 4 then
         numLanes = 2
-    elseif nextWave > 15 then
+    elseif nextWave >= 5 then
         numLanes = 3
     end
     

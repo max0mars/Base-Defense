@@ -77,19 +77,29 @@ function HandUI:draw()
         local isHovered = mx >= cx and mx <= cx + cardWidth and my >= cy and my <= cy + cardHeight
         if isHovered then Cursor.wantHand = true end
         
+        local rcolors = {
+            common = {0.5, 0.5, 0.5},
+            uncommon = {0.2, 0.8, 0.2},
+            rare = {0.2, 0.5, 1.0},
+            epic = {0.7, 0.3, 0.9},
+            legendary = {1.0, 0.7, 0.1}
+        }
+        local rarity = card.payload and card.payload.rarity or card.rarity or "common"
+        local rCol = rcolors[rarity:lower()] or rcolors.common
+        
         -- Draw Card Background
-        love.graphics.setColor(0.15, 0.15, 0.2, 0.9)
+        love.graphics.setColor(rCol[1]*0.2, rCol[2]*0.2, rCol[3]*0.2, 0.95)
         love.graphics.rectangle("fill", cx, cy, cardWidth, cardHeight, 5)
         
         -- Border
         if self.game.activeCard == card then
-            love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold for active
+            love.graphics.setColor(1, 1, 1, 1) -- White for active
             love.graphics.setLineWidth(3)
         elseif isHovered then
-            love.graphics.setColor(0.8, 0.8, 1, 1)
+            love.graphics.setColor(rCol[1]*1.2, rCol[2]*1.2, rCol[3]*1.2, 1)
             love.graphics.setLineWidth(2)
         else
-            love.graphics.setColor(0.5, 0.5, 0.6, 1)
+            love.graphics.setColor(rCol[1]*0.8, rCol[2]*0.8, rCol[3]*0.8, 1)
             love.graphics.setLineWidth(1)
         end
         love.graphics.rectangle("line", cx, cy, cardWidth, cardHeight, 5)
@@ -101,8 +111,8 @@ function HandUI:draw()
         
         -- Type
         local typeStr = "Place"
-        if card.executionType == ExecutionType.Global then typeStr = "Global"
-        elseif card.executionType == ExecutionType.Targeted then typeStr = "Target" end
+        if card.executionType == ExecutionType.Global or card.executionType == "Global" then typeStr = "Global"
+        elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then typeStr = "Target" end
         
         love.graphics.setColor(0.7, 0.7, 0.7, 1)
         love.graphics.printf(typeStr, cx + 5, cy + 40, cardWidth - 10, "center")
@@ -148,9 +158,11 @@ function HandUI:mousepressed(x, y, button)
     if x >= deckX and x <= deckX + cardWidth and y >= deckY and y <= deckY + cardHeight then
         local cost = self.game.drawCost or 1
         if self.game.tokens >= cost then
-            self.game.tokens = self.game.tokens - cost
-            self.game.drawCost = cost + 1
-            self.game:drawCard()
+            local drawn = self.game:drawCard(1)
+            if drawn > 0 then
+                self.game.tokens = self.game.tokens - cost
+                self.game.drawCost = cost + 1
+            end
         else
             self.game:spawnFloatingText("Not enough tokens!", x, y, {0.8, 0.2, 0.2, 1})
         end
@@ -188,7 +200,7 @@ function HandUI:mousepressed(x, y, button)
                 self.game.tokens = self.game.tokens - cost
                 self.game.activeCard = card
                 
-                if card.executionType == ExecutionType.Global then
+                if card.executionType == ExecutionType.Global or card.executionType == "Global" then
                     card:execute(self.game)
                     self.game:consumeCard(card)
                 elseif card.executionType == ExecutionType.Placement then
@@ -202,7 +214,7 @@ function HandUI:mousepressed(x, y, button)
                     config.game = self.game
                     self.game.blueprint = card.payload.buildingClass:new(config)
                     self.game.blueprint.showArc = true
-                elseif card.executionType == ExecutionType.Targeted then
+                elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then
                     self.game.inputMode = "targeting_card"
                 end
             else

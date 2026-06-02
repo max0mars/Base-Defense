@@ -9,11 +9,11 @@ local default = {
     color = {1, 0.84, 0, 1}, -- Neon Gold
     types = { building = true, economy = true, passive = true },
     shapePattern = {{0,0}},
-    affectedSlots = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}},
+    --affectedSlots = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}},
     -- Explicitly no buff effect so the base Buff class never applies damage buffs
     effect = false,
     
-    -- Economy specific
+    -- Economy specific`
     tokensPerCycle = 1,
     cycleWaves = 1
 }

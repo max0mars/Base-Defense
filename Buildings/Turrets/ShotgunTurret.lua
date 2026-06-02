@@ -27,7 +27,7 @@ ShotgunTurret.template = {
     -- Bullet Properties
     bulletName = "Shotgun Pellet",
     bulletSpeed = 480,
-    damage = 8,      -- High total burst damage (10 * 8 = 80), low individual pellet damage
+    damage = 4,      -- High total burst damage (10 * 4 = 40), low individual pellet damage
     damageType = "normal",
     pierce = 1,
     lifespan = 0.8,  -- Short-range drop-off

@@ -82,6 +82,8 @@ function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTag
         self.damageTracker[wave][enemyName].damage = self.damageTracker[wave][enemyName].damage + amount
     end
 
+    self.game.damageTakenThisBattle = (self.game.damageTakenThisBattle or 0) + amount
+
     return living_object.takeDamage(self, amount, damageType, hitX, hitY, damageTags)
 end
 
@@ -298,13 +300,18 @@ function Base:initMainLazer(turretClass)
     
     self.mainLazer = turretClass:new({game = self.game})
     
-    for dr = -1, 1 do
-        for dc = -1, 1 do
-            local r = centerRow + dr
-            local c = centerCol + dc
-            if r >= 1 and r <= gridHeight and c >= 1 and c <= gridWidth then
-                local s = (r - 1) * gridWidth + c
-                self.buildGrid.unlocked[s] = true
+    for dr = -1, 2 do
+        for dc = -1, 2 do
+            -- Skip the 4 corners of the 4x4 area
+            if not ((dr == -1 and dc == -1) or (dr == -1 and dc == 2) or
+                    (dr == 2 and dc == -1) or (dr == 2 and dc == 2)) then
+                
+                local r = centerRow + dr
+                local c = centerCol + dc
+                if r >= 1 and r <= gridHeight and c >= 1 and c <= gridWidth then
+                    local s = (r - 1) * gridWidth + c
+                    self.buildGrid.unlocked[s] = true
+                end
             end
         end
     end

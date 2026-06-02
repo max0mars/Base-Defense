@@ -342,6 +342,7 @@ function InputHandler:mousepressed(x, y, button)
             if game.blueprint then
                 game.blueprint = nil
             end
+            game.inputMode = "idle"
             return
         end
 
@@ -391,13 +392,39 @@ function InputHandler:mousepressed(x, y, button)
         end
         
         if clickedTarget then
-            -- We assume the payload contains an effect
-            if game.activeCard and game.activeCard.payload and game.activeCard.payload.effect then
-                if clickedTarget.effectManager then
-                    clickedTarget.effectManager:applyEffect(game.activeCard.payload.effect)
-                    game:consumeCard(game.activeCard)
+            local card = game.activeCard
+            if card then
+                if card.payload then
+                    if card.payload.isMainUpgrade then
+                        if clickedTarget:isType("mainLazer") then
+                            clickedTarget:applyUpgrade({ id = card.id, name = card.name })
+                            game:consumeCard(card)
+                        else
+                            game:spawnFloatingText("Must be used on Main Turret!", x, y, {0.8, 0.2, 0.2, 1})
+                            game:refundCard(card)
+                        end
+                    elseif card.payload.effect then
+                        if clickedTarget.effectManager then
+                            clickedTarget.effectManager:applyEffect(card.payload.effect)
+                            game:consumeCard(card)
+                        else
+                            game:spawnFloatingText("Invalid target!", x, y, {0.8, 0.2, 0.2, 1})
+                            game:refundCard(card)
+                        end
+                    else
+                        game:refundCard(card)
+                    end
+                elseif type(card.execute) == "function" then
+                    -- This is likely an Instant card
+                    local success = card:execute(clickedTarget)
+                    if success then
+                        game:consumeCard(card)
+                    else
+                        game:spawnFloatingText("Invalid target!", x, y, {0.8, 0.2, 0.2, 1})
+                        game:refundCard(card)
+                    end
                 else
-                    game:refundCard(game.activeCard)
+                    game:refundCard(card)
                 end
             end
         else

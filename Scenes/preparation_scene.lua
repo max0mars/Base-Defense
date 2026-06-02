@@ -10,6 +10,7 @@ local RewardIndex = require("Game.Rewards.NormalRewardIndex")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
+local SettingsPanel = require("Game.GUI.SettingsPanel")
 
 function preparation_scene:load(isPostBattle)
     love.mouse.setVisible(true)
@@ -34,6 +35,16 @@ function preparation_scene:load(isPostBattle)
     local cx = (VIRTUAL_WIDTH - 240) / 2
     local cy = VIRTUAL_HEIGHT - 60
     
+    self.settings = SettingsPanel:new({
+        title = "PAUSED",
+        bottomButtons = {
+            { label = "RESUME", action = "resume",
+              color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1} },
+            { label = "EXIT", action = "exit",
+              color = {0.4, 0.18, 0.2, 1}, hoverColor = {0.6, 0.28, 0.3, 1}, borderColor = {0.95, 0.45, 0.45, 1} },
+        },
+    })
+    
     self.startButton = {
         x = cx, y = cy, w = 240, h = 45, label = "START NEXT BATTLE",
         color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1}
@@ -52,6 +63,21 @@ function preparation_scene:load(isPostBattle)
     self.buyLuckButton = {
         x = 200, y = 140, w = 160, h = 40, label = "Buy Luck (-50$)",
         color = {0.5, 0.1, 0.5, 1}, hoverColor = {0.7, 0.2, 0.7, 1}, borderColor = {0.9, 0.3, 0.9, 1}
+    }
+
+    self.upgradeTokensButton = {
+        x = 20, y = 185, w = 210, h = 30, label = "",
+        color = {0.2, 0.4, 0.6, 1}, hoverColor = {0.3, 0.5, 0.7, 1}, borderColor = {0.4, 0.6, 0.8, 1}
+    }
+    
+    self.upgradeHandButton = {
+        x = 240, y = 185, w = 210, h = 30, label = "",
+        color = {0.2, 0.4, 0.6, 1}, hoverColor = {0.3, 0.5, 0.7, 1}, borderColor = {0.4, 0.6, 0.8, 1}
+    }
+    
+    self.upgradeIncomeButton = {
+        x = 460, y = 185, w = 210, h = 30, label = "",
+        color = {0.2, 0.4, 0.6, 1}, hoverColor = {0.3, 0.5, 0.7, 1}, borderColor = {0.4, 0.6, 0.8, 1}
     }
 
     self.viewingDeck = false
@@ -103,14 +129,17 @@ function preparation_scene:rollShop()
     
     self.shopItems = {}
     
+    local prices = { common = 20, uncommon = 30, rare = 40, epic = 50, legendary = 75 }
     local startX = (VIRTUAL_WIDTH - (3 * 220)) / 2 + 10
     
     for i, choice in ipairs(choices) do
         local isGlobal = choice.type == "main_upgrade"
+        local rarity = choice.rarity or "common"
+        local itemCost = prices[rarity] or 50
         
-        local cardPayload = { rarity = choice.rarity or "common" }
+        local cardPayload = { rarity = rarity }
         if isGlobal then
-            cardPayload.effect = { name = choice.name, isGlobalUpgrade = true } -- placeholder effect
+            cardPayload.isMainUpgrade = true
         else
             cardPayload.buildingClass = choice.building
             cardPayload.config = {}
@@ -120,7 +149,7 @@ function preparation_scene:rollShop()
             id = choice.id,
             name = choice.name,
             description = choice.description,
-            executionType = isGlobal and ExecutionType.Global or ExecutionType.Placement,
+            executionType = isGlobal and ExecutionType.Targeted or ExecutionType.Placement,
             payload = cardPayload
         })
         
@@ -130,13 +159,17 @@ function preparation_scene:rollShop()
             w = 200,
             h = 250,
             card = card,
-            cost = 50,
+            cost = itemCost,
             purchased = false
         })
     end
 end
 
 function preparation_scene:update(dt)
+    if paused == 1 and self.settings then
+        self.settings:update(dt)
+        return
+    end
 end
 
 function preparation_scene:drawButton(btn, mx, my)
@@ -158,6 +191,25 @@ function preparation_scene:drawButton(btn, mx, my)
     love.graphics.printf(btn.label, btn.x, btn.y + btn.h / 2 - 7, btn.w, "center")
 end
 
+function preparation_scene:drawUpgrades(mx, my)
+    local state = _G.PersistentState
+    
+    self.upgradeTokensButton.label = string.format("Tokens: %d (+1: $%d)", state.startingTokens or 3, state.upgradeCostTokens or 20)
+    
+    local hSize = state.startingHandSize or 3
+    if hSize >= 8 then
+        self.upgradeHandButton.label = string.format("Hand: %d (MAX)", hSize)
+    else
+        self.upgradeHandButton.label = string.format("Hand: %d (+1: $%d)", hSize, state.upgradeCostHand or 20)
+    end
+    
+    self.upgradeIncomeButton.label = string.format("Income: %d (+1: $%d)", state.incomeTokens or 3, state.upgradeCostIncome or 20)
+    
+    self:drawButton(self.upgradeTokensButton, mx, my)
+    self:drawButton(self.upgradeHandButton, mx, my)
+    self:drawButton(self.upgradeIncomeButton, mx, my)
+end
+
 function preparation_scene:drawShop(mx, my)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf("SHOP", 0, 100, VIRTUAL_WIDTH, "center")
@@ -167,10 +219,24 @@ function preparation_scene:drawShop(mx, my)
             local isHovered = mx >= item.x and mx <= item.x + item.w and my >= item.y and my <= item.y + item.h
             if isHovered then Cursor.wantHand = true end
             
-            love.graphics.setColor(0.15, 0.15, 0.2, 1)
+            local rcolors = {
+                common = {0.5, 0.5, 0.5},
+                uncommon = {0.2, 0.8, 0.2},
+                rare = {0.2, 0.5, 1.0},
+                epic = {0.7, 0.3, 0.9},
+                legendary = {1.0, 0.7, 0.1}
+            }
+            local rarity = item.card.payload and item.card.payload.rarity or "common"
+            local rCol = rcolors[rarity] or rcolors.common
+            
+            love.graphics.setColor(rCol[1]*0.15, rCol[2]*0.15, rCol[3]*0.15, 1)
             love.graphics.rectangle("fill", item.x, item.y, item.w, item.h, 10)
             
-            love.graphics.setColor(isHovered and {0.8, 0.8, 1, 1} or {0.5, 0.5, 0.6, 1})
+            if isHovered then
+                love.graphics.setColor(math.min(1, rCol[1]*1.2), math.min(1, rCol[2]*1.2), math.min(1, rCol[3]*1.2), 1)
+            else
+                love.graphics.setColor(rCol[1]*0.8, rCol[2]*0.8, rCol[3]*0.8, 1)
+            end
             love.graphics.rectangle("line", item.x, item.y, item.w, item.h, 10)
             
             love.graphics.setColor(1, 1, 1, 1)
@@ -223,7 +289,18 @@ function preparation_scene:drawDeck()
         local cards = _G.PersistentState.deck:getCards()
         local yOff = 120
         for i, card in ipairs(cards) do
-            love.graphics.printf(card.quantity .. "x " .. card.name .. " (" .. (card.executionType == ExecutionType.Global and "Global" or "Placement") .. ")", 120, yOff, VIRTUAL_WIDTH - 240, "left")
+            local rcolors = {
+                common = {0.7, 0.7, 0.7},
+                uncommon = {0.3, 0.9, 0.3},
+                rare = {0.3, 0.6, 1.0},
+                epic = {0.8, 0.4, 1.0},
+                legendary = {1.0, 0.8, 0.2}
+            }
+            local rarity = card.payload and card.payload.rarity or "common"
+            local rCol = rcolors[rarity] or rcolors.common
+            love.graphics.setColor(rCol[1], rCol[2], rCol[3], 1)
+            local typeLabel = (card.executionType == ExecutionType.Placement) and "Building" or "Instant"
+            love.graphics.printf(card.quantity .. "x " .. card.name .. " (" .. typeLabel .. ")", 120, yOff, VIRTUAL_WIDTH - 240, "left")
             yOff = yOff + 25
         end
     end
@@ -233,6 +310,11 @@ function preparation_scene:drawDeck()
 end
 
 function preparation_scene:draw()
+    if paused == 1 and self.settings then
+        self.settings:draw()
+        return
+    end
+    
     Cursor.reset()
     local mx, my = love.mouse.getPosition()
     
@@ -242,12 +324,12 @@ function preparation_scene:draw()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf("PREPARATION PHASE", 0, 20, VIRTUAL_WIDTH, "center")
     
-    local hp = _G.PersistentState and _G.PersistentState.baseHP or 100
+    local hp = _G.PersistentState and _G.PersistentState.baseHP or 200
     local cash = _G.PersistentState and _G.PersistentState.cash or 0
     local luck = _G.PersistentState and _G.PersistentState.luck or 1
     
     love.graphics.setColor(0.8, 0.2, 0.2, 1)
-    love.graphics.printf("Base HP: " .. hp .. " / 100", 20, 20, 200, "left")
+    love.graphics.printf("Base HP: " .. hp .. " / 200", 20, 20, 200, "left")
     
     love.graphics.setColor(0.2, 0.8, 0.2, 1)
     love.graphics.printf("Cash: $" .. cash, 20, 45, 200, "left")
@@ -260,6 +342,8 @@ function preparation_scene:draw()
     
     self:drawButton(self.rerollButton, mx, my)
     self:drawButton(self.buyLuckButton, mx, my)
+    self:drawUpgrades(mx, my)
+    
     self:drawButton(self.startButton, mx, my)
     self:drawButton(self.deckButton, mx, my)
     
@@ -272,6 +356,17 @@ function preparation_scene:draw()
 end
 
 function preparation_scene:mousepressed(x, y, button)
+    if paused == 1 and self.settings then
+        local action = self.settings:mousepressed(x, y, button)
+        if action == "resume" then
+            paused = 0
+        elseif action == "exit" then
+            paused = 0
+            self.scene_manager.switch("menu")
+        end
+        return
+    end
+    
     if button ~= 1 then return end
     
     if self.viewingDeck then
@@ -300,6 +395,38 @@ function preparation_scene:mousepressed(x, y, button)
         return
     end
     
+    local state = _G.PersistentState
+    
+    btn = self.upgradeTokensButton
+    if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+        if (state.cash or 0) >= (state.upgradeCostTokens or 20) then
+            state.cash = state.cash - (state.upgradeCostTokens or 20)
+            state.startingTokens = (state.startingTokens or 3) + 1
+            state.upgradeCostTokens = (state.upgradeCostTokens or 20) + 20
+        end
+        return
+    end
+
+    btn = self.upgradeHandButton
+    if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+        if (state.startingHandSize or 3) < 8 and (state.cash or 0) >= (state.upgradeCostHand or 20) then
+            state.cash = state.cash - (state.upgradeCostHand or 20)
+            state.startingHandSize = (state.startingHandSize or 3) + 1
+            state.upgradeCostHand = (state.upgradeCostHand or 20) + 20
+        end
+        return
+    end
+
+    btn = self.upgradeIncomeButton
+    if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+        if (state.cash or 0) >= (state.upgradeCostIncome or 20) then
+            state.cash = state.cash - (state.upgradeCostIncome or 20)
+            state.incomeTokens = (state.incomeTokens or 3) + 1
+            state.upgradeCostIncome = (state.upgradeCostIncome or 20) + 20
+        end
+        return
+    end
+    
     btn = self.buyLuckButton
     if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
         if (_G.PersistentState.cash or 0) >= 50 then
@@ -323,7 +450,18 @@ function preparation_scene:mousepressed(x, y, button)
     end
 end
 
+function preparation_scene:mousereleased(x, y, button)
+    if paused == 1 and self.settings then
+        self.settings:mousereleased(x, y, button)
+    end
+end
+
 function preparation_scene:keypressed(key)
+    if key == "escape" or key == "p" then
+        paused = paused == 1 and 0 or 1
+        return
+    end
+
     if key == "return" and not self.viewingDeck then
         self.scene_manager.switch("game")
     end
