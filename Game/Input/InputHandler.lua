@@ -348,7 +348,7 @@ function InputHandler:mousepressed(x, y, button)
 
         local bestTarget = nil
         for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainLazer") and not obj.destroyed then
+            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainturret") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     bestTarget = obj
                     if obj:isType("turret") or obj:isType("passive") then
@@ -424,7 +424,7 @@ function InputHandler:mousepressed(x, y, button)
             if card then
                 if card.payload then
                     if card.payload.isMainUpgrade then
-                        if clickedTarget:isType("mainLazer") then
+                        if clickedTarget:isType("mainturret") then
                             clickedTarget:applyUpgrade({ id = card.id, name = card.name })
                             game:consumeCard(card)
                         else
@@ -432,7 +432,10 @@ function InputHandler:mousepressed(x, y, button)
                             game:refundCard(card)
                         end
                     elseif card.payload.effect then
-                        if clickedTarget.effectManager then
+                        if card.payload.requiredType and not clickedTarget:isType(card.payload.requiredType) then
+                            game:spawnFloatingText("Must be used on " .. card.payload.requiredType, x, y, {0.8, 0.2, 0.2, 1})
+                            game:refundCard(card)
+                        elseif clickedTarget.effectManager then
                             clickedTarget.effectManager:applyEffect(card.payload.effect)
                             game:consumeCard(card)
                         else
@@ -600,7 +603,7 @@ function InputHandler:mousepressed(x, y, button)
         
         -- Handle MainLazer clicking (firing only, not selectable)
         for _, obj in ipairs(game.objects) do
-            if obj:isType("mainLazer") and not obj.destroyed then
+            if obj:isType("mainturret") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     -- Handle MainLazer firing (only in wave state)
                     obj:PlayerClick(x, y)

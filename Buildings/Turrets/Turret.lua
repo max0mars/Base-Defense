@@ -87,7 +87,8 @@ function Turret:fire(args)
         end
     end
 
-    local offset = love.math.random() * self.spread * 2 - self.spread
+    local currentSpread = self:getStat("spread") or 0
+    local offset = love.math.random() * currentSpread * 2 - currentSpread
     local x, y
     -- Use provided position or default to fire point
     if args and args.fireX and args.fireY then
@@ -128,7 +129,7 @@ function Turret:fire(args)
         name = self:getStat("bulletName"),
         x = x,
         y = y,
-        angle = self.rotation + offset, -- Add spread to the angle
+        angle = (args and args.angle or self.rotation) + offset, -- Add spread to the angle
         bulletSpeed = self:getStat("bulletSpeed"), -- Speed of the bullet
         damage = self:getStat("damage"), -- Damage dealt by the bullet
         pierce = self:getStat("pierce"),
@@ -165,7 +166,9 @@ function Turret:fire(args)
     -- If args has extra keys, override config
     if args then
         for k, v in pairs(args) do
-            config[k] = v
+            if k ~= "angle" then
+                config[k] = v
+            end
         end
     end
 

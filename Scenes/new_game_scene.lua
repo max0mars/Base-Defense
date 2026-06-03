@@ -25,7 +25,7 @@ function new_game_scene:load()
         {
             id = "MainLazer",
             name = "Heavy Laser",
-            description = "Fires strong Laser shots at a slow rates.",
+            description = "Fires strong laser shots at a slow rates.",
             cost = 0,
             rarity = "main_weapon",
             type = "building",
@@ -33,6 +33,18 @@ function new_game_scene:load()
             damageBars = 4,
             rangeBars = 5,
             firerateBars = 2
+        },
+        {
+            id = "FastMainTurret",
+            name = "Machine Gun",
+            description = "Fires rapid bullets at enemies. Not very accurate.",
+            cost = 0,
+            rarity = "main_weapon",
+            type = "building",
+            iconCategory = "turret",
+            damageBars = 1,
+            rangeBars = 4,
+            firerateBars = 5
         }
     }
     self.currentIndex = 1

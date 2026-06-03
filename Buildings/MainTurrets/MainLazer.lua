@@ -6,12 +6,6 @@ local Utils = require("Classes.Utils")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
-local Sentry = require("Buildings.Turrets.Sentry")
-local Blaster = require("Buildings.Turrets.Blaster")
-local AutoCannon = require("Buildings.Turrets.AutoCannon")
-local ShotgunTurret = require("Buildings.Turrets.ShotgunTurret")
-local HeavyGun = require("Buildings.Turrets.HeavyGun")
-local InstantCardRegistry = require("Instants.InstantCardRegistry")
 local InstantCard = require("Instants.instant")
 
 local MainLazer = setmetatable({}, { __index = StandardMainTurret })
@@ -298,61 +292,23 @@ end
 
 function MainLazer.getStartingDeck()
     local deck = PlayerDeck:new()
-    local RewardIndex = require("Game.Rewards.NormalRewardIndex")
     
-    local function findRewardById(id)
-        for _, rarityList in pairs(RewardIndex) do
-            if type(rarityList) == "table" then
-                for _, item in ipairs(rarityList) do
-                    if item.id == id then
-                        return item
-                    end
-                end
-            end
-        end
-        return nil
-    end
-
-    local function addBuildingCard(id, quantity, rarity)
-        local reward = findRewardById(id)
-        if reward then
-            deck:addCard(Card:new({
-                id = reward.id, 
-                name = reward.name, 
-                description = reward.description,
-                executionType = ExecutionType.Placement, 
-                quantity = quantity,
-                payload = { buildingClass = reward.building, config = {}, rarity = rarity }
-            }))
-        end
-    end
-
-    addBuildingCard("sentry", 2, "common")
-    addBuildingCard("blaster", 4, "common")
+    StandardMainTurret.addCard(deck, "sentry", 2, "common")
+    StandardMainTurret.addCard(deck, "blaster", 4, "common")
 
     
     deck:addCard(Card:new({
         id = "unstable_laser",
         name = "Unstable Laser",
-        description = "Gives your big lazer a 20% chance to burn enemies.",
+        description = "Give your Heavy Laser a 25% chance to burn enemies.",
         executionType = ExecutionType.Targeted,
         quantity = 1,
         payload = { isMainUpgrade = true, rarity = "uncommon" }
     }))
     
-    local function addInstantCard(id, quantity)
-        for _, instant in pairs(InstantCardRegistry) do
-            if type(instant) == "table" and instant.id == id then
-                instant.quantity = quantity
-                deck:addCard(instant)
-                return
-            end
-        end
-    end
-    
-    addInstantCard("inst_overclock_1", 4)
-    addInstantCard("inst_range_1", 2)
-    addInstantCard("inst_frenzy_1", 1)
+    StandardMainTurret.addCard(deck, "inst_overclock_1", 4)
+    StandardMainTurret.addCard(deck, "inst_range_1", 2)
+    StandardMainTurret.addCard(deck, "inst_frenzy_1", 1)
     
     local energySurge = InstantCard.new({
         id = "inst_energy_surge_1",
@@ -419,7 +375,7 @@ function MainLazer.getUniqueCards()
                 description = "zzzZap!",
                 type = "main_upgrade",
                 iconCategory = "upgrade",
-                cost = 4,
+                cost = 3,
                 isEligible = function(game)
                     local mt = game.base and game.base.mainLazer
                     return mt and not mt.upgrades["electric_field"]

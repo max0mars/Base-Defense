@@ -1,13 +1,20 @@
 local Turret = require("Buildings.Turrets.Turret")
 local Layout = require("Game.GUI.Layout")
+local Card = require("Game.Cards.Card")
+local ExecutionType = require("Game.Cards.ExecutionType")
+local InstantCardRegistry = require("Instants.InstantCardRegistry")
+local RewardIndex = require("Game.Rewards.NormalRewardIndex")
 
 local StandardMainTurret = setmetatable({}, { __index = Turret })
 StandardMainTurret.__index = StandardMainTurret
 
 function StandardMainTurret:new(config)
+    config = config or {}
+    config.types = config.types or {}
+    config.types.mainturret = true
+
     local t = Turret:new(config)
     setmetatable(t, { __index = self })
-    t.isMainTurret = true
     t.autofire = config.autofire or false
     t.upgrades = {} -- Persistent weapon upgrades
     
@@ -141,5 +148,45 @@ end
 -- Abstract methods to override
 function StandardMainTurret.getStartingDeck() return nil end
 function StandardMainTurret.getUniqueCards() return {} end
+
+function StandardMainTurret.addCard(deck, id, quantity, rarity)
+    -- Check if it's an instant card
+    for _, instant in pairs(InstantCardRegistry) do
+        if type(instant) == "table" and instant.id == id then
+            instant.quantity = quantity
+            deck:addCard(instant)
+            return true
+        end
+    end
+    
+    -- Check if it's a building card in RewardIndex
+    local function findRewardById(rewardId)
+        for _, rarityList in pairs(RewardIndex) do
+            if type(rarityList) == "table" then
+                for _, item in ipairs(rarityList) do
+                    if item.id == rewardId then
+                        return item
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    local reward = findRewardById(id)
+    if reward then
+        deck:addCard(Card:new({
+            id = reward.id, 
+            name = reward.name, 
+            description = reward.description,
+            executionType = ExecutionType.Placement, 
+            quantity = quantity,
+            payload = { buildingClass = reward.building, config = {}, rarity = rarity or "common" }
+        }))
+        return true
+    end
+    
+    return false
+end
 
 return StandardMainTurret

@@ -22,6 +22,7 @@ function Instant.new(config)
     self.executionType = config.executionType or Instant.ExecutionType.Targeted
     self.statModifiers = config.statModifiers or {}
     self.customExecute = config.customExecute or nil
+    self.requiredType = config.requiredType or nil
     
     return self
 end
@@ -65,6 +66,10 @@ function Instant:isValidTarget(targetEntity)
     -- For targeted cards, fail if they clicked empty grass or a non-turret
     if not targetEntity or type(targetEntity.isType) ~= "function" or not targetEntity:isType("turret") then
         return false 
+    end
+
+    if self.requiredType and not targetEntity:isType(self.requiredType) then
+        return false
     end
 
     -- (Optional) You can add logic here for specific cards, 
