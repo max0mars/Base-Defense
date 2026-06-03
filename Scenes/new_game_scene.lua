@@ -7,9 +7,17 @@ setmetatable(new_game_scene, { __index = scene })
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local CardDraw = require("Game.Cards.CardDraw")
 local Cursor = require("Game.GUI.Cursor")
+local DeckViewerUI = require("Game.GUI.DeckViewerUI")
 
 function new_game_scene:load()
-    self.settings = SettingsPanel:new()
+    self.settings = SettingsPanel:new({
+        title = "SETTINGS",
+        bottomButtons = {
+            { label = "CLOSE", action = "back", color = {0.3, 0.2, 0.22, 1}, hoverColor = {0.5, 0.32, 0.34, 1}, borderColor = {0.9, 0.55, 0.55, 1} },
+            { label = "MAIN MENU", action = "exit", color = {0.6, 0.2, 0.2, 1}, hoverColor = {0.8, 0.3, 0.3, 1}, borderColor = {0.9, 0.4, 0.4, 1} }
+        }
+    })
+    self.deckViewer = DeckViewerUI:new(nil)
     self.isSettingsOpen = false
 
     -- Define available main turrets
@@ -46,6 +54,11 @@ end
 function new_game_scene:update(dt)
     if self.isSettingsOpen then
         self.settings:update(dt)
+        return
+    end
+
+    if self.deckViewer.isActive then
+        self.deckViewer:update(dt)
         return
     end
 end
@@ -109,6 +122,10 @@ function new_game_scene:draw()
     self.hoverViewDeck = drawButton("View Deck", self.viewDeckBtnY)
     self.hoverStart = drawButton("Start Game", self.startBtnY)
 
+    if self.deckViewer.isActive then
+        self.deckViewer:draw()
+    end
+
     -- Instead of relying on global OS cursor here directly, it's generally best to use the Cursor component if game_scene/menu_scene do so, but love.mouse.setCursor is common.
     -- Menu_scene sets wantHand in update and calls setCursor. We will do it here.
     love.mouse.setCursor(Cursor.wantHand and love.mouse.getSystemCursor("hand") or love.mouse.getSystemCursor("arrow"))
@@ -118,6 +135,12 @@ function new_game_scene:mousepressed(x, y, button)
     if self.isSettingsOpen then
         local action = self.settings:mousepressed(x, y, button)
         if action == "back" then self.isSettingsOpen = false end
+        if action == "exit" then self.scene_manager.switch("menu") end
+        return
+    end
+
+    if self.deckViewer.isActive then
+        self.deckViewer:mousepressed(x, y, button)
         return
     end
 
@@ -145,7 +168,19 @@ function new_game_scene:mousepressed(x, y, button)
 
         -- View Deck Button
         if self.hoverViewDeck then
-            print("View Deck clicked")
+            local turretModule = require("Buildings.MainTurrets." .. self.turrets[self.currentIndex].id)
+            if turretModule.getStartingDeck then
+                local deck = turretModule.getStartingDeck()
+                local unrolledCards = {}
+                for _, c in ipairs(deck.cards) do
+                    for i = 1, (c.quantity or 1) do
+                        table.insert(unrolledCards, c)
+                    end
+                end
+                
+                local btnX = cx - self.btnW / 2
+                self.deckViewer:open("Starting Deck", unrolledCards, { x = btnX, y = self.viewDeckBtnY, w = self.btnW, h = self.btnH })
+            end
         end
 
         -- Start Game Button
