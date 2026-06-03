@@ -56,13 +56,15 @@ function Card:getCardDraw()
         local success, rewardIndex = pcall(require, "Game.Rewards.NormalRewardIndex")
         if success and rewardIndex then
             for _, category in pairs(rewardIndex) do
-                for _, reward in ipairs(category) do
-                    if reward.id == self.id then
-                        dmgBars = reward.damageBars or dmgBars
-                        rngBars = reward.rangeBars or rngBars
-                        frBars = reward.firerateBars or frBars
-                        affSlots = reward.affectedSlots or affSlots
-                        break
+                if type(category) == "table" then
+                    for _, reward in ipairs(category) do
+                        if reward.id == self.id then
+                            dmgBars = reward.damageBars or dmgBars
+                            rngBars = reward.rangeBars or rngBars
+                            frBars = reward.firerateBars or frBars
+                            affSlots = reward.affectedSlots or affSlots
+                            break
+                        end
                     end
                 end
             end

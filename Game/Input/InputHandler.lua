@@ -725,6 +725,10 @@ function InputHandler:keypressed(key)
         if game.mainLazer then
             game.mainLazer.autofire = not game.mainLazer.autofire
         end
+    elseif key == "h" then
+        if game.gui and game.gui.hand then
+            game.gui.hand.isHidden = not game.gui.hand.isHidden
+        end
     end
     
     -- Handle selection clearing

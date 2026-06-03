@@ -61,7 +61,7 @@ function tutorial_scene:load()
         { id = 15, type = "buy_box", text = "Let's buy another upgrade.\n\nClick 'Buy Upgrade'.", target = {x = 285, y = 65, angle = math.pi/2} },
         { id = 15.5, type = "select_box", text = "Choose the 'Small Box' (first card) to buy a blocker." },
         { id = 16, type = "place_box", text = "Place the Small Box on the battlefield (e.g. column 12, row 8).\n\nBlockers force enemies to path around them, buying you time!", target = {x = 287.5, y = 260, angle = -math.pi/2} },
-        { id = 17, type = "buy_luck", text = "Now click 'Luck Offering' (costs 1 Token) to increase the chance of getting rarer cards.", target = {x = 285, y = 25, angle = math.pi/2} },
+        -- buy_luck step removed as luck is no longer purchasable in-game
         { id = 17.5, type = "dialog", text = "Tip: Hover over the '?' icon next to 'Buy Upgrade' to view the active card rarity probabilities." },
         { id = 18, type = "buy_cache", text = "Let's grant you 3 extra Tokens! Now buy another upgrade to buff your turrets.\n\nClick 'Buy Upgrade'.", target = {x = 285, y = 65, angle = math.pi/2} },
         { id = 18.5, type = "select_cache", text = "Choose the uncommon 'Ammo Cache' card." },
@@ -338,10 +338,6 @@ function tutorial_scene:isActionAllowed(action, x, y, button, key)
                y >= game.gui.buyButton.y and y <= game.gui.buyButton.y + game.gui.buyButton.h then
                 return false
             end
-            if x >= game.gui.luckButton.x and x <= game.gui.luckButton.x + game.gui.luckButton.w and
-               y >= game.gui.luckButton.y and y <= game.gui.luckButton.y + game.gui.luckButton.h then
-                return false
-            end
             return true
         elseif action == "keypressed" then
             -- Allow Tab to toggle autofire during combat
@@ -363,10 +359,6 @@ function tutorial_scene:isActionAllowed(action, x, y, button, key)
             -- Can shoot, but block clicking Buy/Luck UI
             if x >= game.gui.buyButton.x and x <= game.gui.buyButton.x + game.gui.buyButton.w and
                y >= game.gui.buyButton.y and y <= game.gui.buyButton.y + game.gui.buyButton.h then
-                return false
-            end
-            if x >= game.gui.luckButton.x and x <= game.gui.luckButton.x + game.gui.luckButton.w and
-               y >= game.gui.luckButton.y and y <= game.gui.luckButton.y + game.gui.luckButton.h then
                 return false
             end
             return true
@@ -441,14 +433,7 @@ function tutorial_scene:isActionAllowed(action, x, y, button, key)
             end
             return false
             
-        elseif step.type == "buy_luck" then
-            -- Luck offering button click allowed
-            if x >= game.gui.luckButton.x and x <= game.gui.luckButton.x + game.gui.luckButton.w and
-               y >= game.gui.luckButton.y and y <= game.gui.luckButton.y + game.gui.luckButton.h then
-                return true
-            end
-            return false
-            
+        -- buy_luck removed
         elseif step.type == "place_cache" then
             -- Must place on the base grid
             local baseGrid = game.base.buildGrid
@@ -628,11 +613,7 @@ function tutorial_scene:update(dt)
                 self:advanceStep()
             end
             
-        elseif step.type == "buy_luck" then
-            if game.luck >= 2 then
-                self:advanceStep()
-            end
-            
+        -- buy_luck removed
         elseif step.type == "place_cache" then
             local hasCache = false
             for _, b in pairs(game.base.buildGrid.buildings) do
@@ -749,8 +730,7 @@ function tutorial_scene:draw()
         prompt = "[ Defeat the training targets ]"
     elseif step.type == "place_box" then
         prompt = "[ Place the box on the battlefield ]"
-    elseif step.type == "buy_luck" then
-        prompt = "[ Click 'Luck Offering' ]"
+        -- buy_luck removed
     elseif step.type == "place_cache" then
         prompt = "[ Place Ammo Cache adjacent to turret ]"
     end

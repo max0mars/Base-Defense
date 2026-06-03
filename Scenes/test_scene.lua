@@ -29,7 +29,7 @@ function test_scene:load()
 
     -- 2. Mock GameManager with Luck and Managers
     local mockGame = { 
-        luck = 1,
+        shopLevel = 1,
         wave = 5,
         playerEffectManager = { applyEffect = function() end },
         enemyEffectManager = { applyEffect = function() end }
@@ -45,13 +45,13 @@ function test_scene:load()
     print(string.format("%-4s | %-15s | %-10s", "LUCK", "PAIR RARITY", "MATCHED?"))
     print(string.rep("-", 40))
 
-    for luck = 1, 10 do
-        mockGame.luck = luck
+    for shopLevel = 1, 10 do
+        mockGame.shopLevel = shopLevel
         local stats = { common=0, uncommon=0, rare=0, epic=0, legendary=0 }
         local mismatches = 0
         
         for i = 1, sampleSize do
-            mgr:generatePairs(3, luck)
+            mgr:generatePairs(3, shopLevel)
             for _, pair in ipairs(mgr.currentPairs) do
                 local pRarity = pair.player.rarity
                 local eRarity = pair.enemy.rarity
@@ -74,7 +74,7 @@ function test_scene:load()
         end
 
         print(string.format("%-4d | %-15s | %-10s", 
-            luck, 
+            shopLevel, 
             topRarity:upper(), 
             mismatches == 0 and "YES (100%)" or "FAIL ("..mismatches..")"
         ))

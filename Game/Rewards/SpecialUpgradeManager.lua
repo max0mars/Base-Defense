@@ -72,7 +72,7 @@ end
 function SpecialUpgradeManager:activate()
     self.isActive = true
     self.selectedIndex = 1
-    self:generatePairs(3, self.game.luck or 1)
+    self:generatePairs(3, self.game.shopLevel or 1)
 end
 
 function SpecialUpgradeManager:applyChoice(index)

@@ -1,53 +1,81 @@
-local Turret = require("Buildings.Turrets.Turret")
+local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local Layout = require("Game.GUI.Layout")
-local MainLazer = setmetatable({}, { __index = Turret })
+local HitscanBullet = require("Bullets.HitscanBullet")
+local BurnEffect = require("Game.Effects.StatusEffects.Burn")
+local Utils = require("Classes.Utils")
+local PlayerDeck = require("Game.Cards.PlayerDeck")
+local Card = require("Game.Cards.Card")
+local ExecutionType = require("Game.Cards.ExecutionType")
+local Sentry = require("Buildings.Turrets.Sentry")
+local Blaster = require("Buildings.Turrets.Blaster")
+local AutoCannon = require("Buildings.Turrets.AutoCannon")
+local ShotgunTurret = require("Buildings.Turrets.ShotgunTurret")
+local HeavyGun = require("Buildings.Turrets.HeavyGun")
+local InstantCardRegistry = require("Instants.InstantCardRegistry")
+
+local MainLazer = setmetatable({}, { __index = StandardMainTurret })
 MainLazer.__index = MainLazer
 
+MainLazer.template = {
+    id = "standard_main",
+    name = "Heavy Laser",
+    cardRarity = "main_weapon",
+    size = 20,
+    rotation = 0,
+    turnSpeed = math.huge,
+    fireRate = 0.5,
+    range = 500,
+    barrel = 20,
+    color = {0.3, 0.3, 0.3, 1},
+    types = { turret = true, mainLazer = true, energy = true },
+    shapePattern = {
+        {0, 0}, {1, 0},
+        {0, 1}, {1, 1}
+    },
+    firingArc = { direction = 0, minRange = 0, angle = math.pi },
+    bulletName = "Heavy Laser",
+    bulletColor = {0, 0, 1},
+    bulletSpeed = 400,
+    damage = 45,
+    pierce = 1,
+    lifespan = 1,
+    displayLifespan = 0.5,
+    bulletW = 4, 
+    bulletH = 4,
+    damageType = "energy",
+    bulletShape = "ray",
+    hitEffects = {}
+}
+
 function MainLazer:new(config)
-    local t = Turret:new(config)
+    local baseConfig = Utils.deepCopy(MainLazer.template)
+    if config then
+        for k, v in pairs(config) do baseConfig[k] = v end
+    end
+    baseConfig.bulletType = HitscanBullet
+    
+    local t = StandardMainTurret:new(baseConfig)
     setmetatable(t, { __index = self })
     
-    t.isMainLazer = true
-    t.autofire = config.autofire or false
-    t.upgrades = {} -- Persistent weapon upgrades
     t.electricFieldCooldown = 0
-    t.zapBurstCount = 0 -- Tracks shots in current burst
-    t.zapDelayTimer = 0.3 -- Warm-up delay before first burst shot
-    
-    if t.slot then
-        local cx, cy = t:getCenterPosition()
-        t.x, t.y = cx, cy
-    end
+    t.zapBurstCount = 0
+    t.zapDelayTimer = 0.3
     
     return t
 end
 
-function MainLazer:getStat(statName, defaultVal)
-    local val = Turret.getStat(self, statName, defaultVal)
-    
-    return val
-end
-
 function MainLazer:applyUpgrade(reward)
     if not reward or not reward.id then return end
-    
-    -- Track persistent flag for custom logic
     self.upgrades[reward.id] = true
     
     if reward.id == "low_power_operating" then
-        -- Use built-in Effect System for stat changes
         if self.effectManager then
             self.effectManager:applyEffect({
                 name = "Low Power Operating",
-                statModifiers = {
-                    damage = { mult = -0.2 },
-                    fireRate = { mult = 0.5 }
-                }
+                statModifiers = { damage = { mult = -0.2 }, fireRate = { mult = 0.5 } }
             })
         end
     elseif reward.id == "unstable_laser" then
-        -- Use built-in hitEffects system with proper naming for tooltips
-        local BurnEffect = require("Game.Effects.StatusEffects.Burn")
         local burn = BurnEffect:new({
             name = "burn",
             duration_burn = 3.2,
@@ -56,69 +84,36 @@ function MainLazer:applyUpgrade(reward)
             chance = 0.25
         })
         self:addHitEffect(burn)
-        
-        -- Apply an effect so it shows up in the tooltip
         if self.effectManager then
-            self.effectManager:applyEffect({
-                name = "+Burn Chance"
-            })
+            self.effectManager:applyEffect({ name = "+Burn Chance" })
         end
     elseif reward.id == "electric_field" then
-        -- Apply a named effect for the tooltip
         if self.effectManager then
-            self.effectManager:applyEffect({
-                name = "Electric Field"
-            })
+            self.effectManager:applyEffect({ name = "Electric Field" })
         end
     end
-    
-    -- Print confirmation
     print("Main Turret Upgrade Applied: " .. reward.name)
 end
 
-function MainLazer:getCenterPosition()
-    if not self.slot then
-        return self.x, self.y
-    end
-
-    local anchorSlot = self.slot
-    local anchorX = ((anchorSlot - 1) % self.buildGrid.width) * self.buildGrid.cellSize + self.buildGrid.x
-    local anchorY = (math.ceil(anchorSlot / self.buildGrid.width) - 1) * self.buildGrid.cellSize + self.buildGrid.y
-    
-    -- Main turrets are usually 2x2, so the center is 1 cell size offset
-    local centerX = anchorX + self.buildGrid.cellSize
-    local centerY = anchorY + self.buildGrid.cellSize
-    
-    return centerX, centerY
-end
-
 function MainLazer:update(dt)
-    self.cooldown = self.cooldown - dt
-    
+    StandardMainTurret.update(self, dt)
     if self.upgrades["electric_field"] then
         self:updateElectricField(dt)
-    elseif self.autofire and self.game:isState("wave") then
-        local mx, my = Layout.mouseToField()
-        self:PlayerClick(mx, my)
     end
 end
 
 function MainLazer:updateElectricField(dt)
     if not self.upgrades["electric_field"] then return end
-    
-    -- Progress the cooldown
     if self.electricFieldCooldown > 0 then
         self.electricFieldCooldown = self.electricFieldCooldown - dt
         return
     end
-
     if not self.game:isState("wave") then return end
 
     local cx, cy = self:getCenterPosition()
     local zapRange = self:getStat("range")
     local r2 = zapRange * zapRange
     
-    -- 1. Find potential targets in range
     local potentialTargets = {}
     for _, obj in ipairs(self.game.objects) do
         if obj:isType("enemy") and not obj.destroyed then
@@ -129,161 +124,161 @@ function MainLazer:updateElectricField(dt)
         end
     end
 
-    -- 2. Handle Firing Sequence
     if #potentialTargets > 0 then
-        -- Only the first shot of a burst has the warm-up delay
         if self.zapBurstCount == 0 then
             self.zapDelayTimer = self.zapDelayTimer - dt
         else
-            self.zapDelayTimer = 0 -- Instant firing for subsequent burst shots
+            self.zapDelayTimer = 0
         end
         
         if self.zapDelayTimer <= 0 then
-            -- Pick ONE random target for this shot of the burst
             local target = potentialTargets[love.math.random(1, #potentialTargets)]
-            
-            -- Fire the Zap
             if AUDIO then AUDIO:playSFX("lightning_01") end
-            
             self:applyHitEffects(target)
             target:takeDamage(self:getStat("damage"), "energy", target.x, target.y)
+            if self.game.spawnLightningBolt then self.game:spawnLightningBolt(target.x, target.y) end
+            if self.game.spawnParticleExplosion then self.game:spawnParticleExplosion({0.4, 0.7, 1, 1}, 5, target.x, target.y) end
             
-            if self.game.spawnLightningBolt then
-                self.game:spawnLightningBolt(target.x, target.y)
-            end
-            if self.game.spawnParticleExplosion then
-                self.game:spawnParticleExplosion({0.4, 0.7, 1, 1}, 5, target.x, target.y)
-            end
-            
-            -- Increment burst and set appropriate cooldown
             self.zapBurstCount = self.zapBurstCount + 1
-            
             if self.zapBurstCount < 3 then
-                -- Short delay between burst shots
                 self.electricFieldCooldown = 0.1 
             else
-                -- Full cooldown after the burst
                 self.zapBurstCount = 0
                 self.electricFieldCooldown = 1 / self:getStat("fireRate")
-                self.zapDelayTimer = 0.3 -- Reset warm-up for next burst
+                self.zapDelayTimer = 0.3
             end
         end
     else
-        -- Reset state if no enemies are in range
         self.zapBurstCount = 0
         self.zapDelayTimer = 0.3
     end
 end
 
 function MainLazer:PlayerClick(tX, tY)
-    if self.upgrades["electric_field"] then return false end -- Disabled for lightning field
-    
-    local base = self.game.base
-    local bx1 = base.x - base.w / 2
-    local bx2 = base.x + base.w / 2
-    local by1 = base.y - base.h / 2
-    local by2 = base.y + base.h / 2
-    
-    -- Don't fire if clicking on the base itself
-    if tX >= bx1 and tX <= bx2 and tY >= by1 and tY <= by2 then
-        return false
-    end
-
-    if self.cooldown <= 0 then
-        local currentFireRate = self:getStat("fireRate")
-        if currentFireRate > 0 then
-            local fX, fY = self:getFirePoint()
-            
-            local angle = math.atan2(tY - fY, tX - fX)
-            local range = (self:getStat("range") or 2000) * 2
-            local extendedTx = fX + math.cos(angle) * range
-            local extendedTy = fY + math.sin(angle) * range
-            
-            self:fire({
-                targetX = extendedTx, 
-                targetY = extendedTy,
-                fireX = fX,
-                fireY = fY,
-                angle = angle
-            })
-            self.cooldown = 1 / currentFireRate
-            return true
-        end
-    end
-    return false
-end
-
-function MainLazer:applyHitEffects(target)
-    if not target or not target.effectManager then return end
-    
-    -- 1. Collect all unique effect templates (Base effects + Buffs)
-    local uniqueEffects = {}
-    local seen = {}
-    
-    -- Add base hit effects
-    if self.hitEffects then
-        for _, effect in ipairs(self.hitEffects) do
-            if effect.name and not seen[effect.name] then
-                table.insert(uniqueEffects, effect)
-                seen[effect.name] = true
-            end
-        end
-    end
-    
-    -- Add effects granted by the EffectManager (Buffs/Totems)
-    if self.effectManager then
-        local function collectEffects(em)
-            for _, effect in ipairs(em.activeEffects) do
-                if effect.grantedHitEffect then
-                    local e = effect.grantedHitEffect
-                    if e.name and not seen[e.name] then
-                        table.insert(uniqueEffects, e)
-                        seen[e.name] = true
-                    end
-                end
-            end
-            if em.parent then collectEffects(em.parent) end
-        end
-        collectEffects(self.effectManager)
-    end
-    
-    -- 2. Apply the effects
-    for _, effect in ipairs(uniqueEffects) do
-        if effect.isIndependent then
-            -- Independent effects (Explosions, Shrapnel) are triggered directly
-            if effect.trigger then
-                effect:trigger(target, self)
-            end
-        else
-            -- Status effects (Burn, Poison, Slow) are applied to the target's EffectManager
-            target.effectManager:applyEffect(effect, self)
-        end
-    end
+    if self.upgrades["electric_field"] then return false end
+    return StandardMainTurret.PlayerClick(self, tX, tY)
 end
 
 function MainLazer:fire(args)
      args = args or {}
-     -- Ensure correct angle for hitscan/projectiles if not provided
      if not args.angle then
          local fX, fY = self:getFirePoint()
          args.angle = math.atan2(args.targetY - fY, args.targetX - fX)
      end
      args.displayLifespan = args.displayLifespan or self:getStat("displayLifespan")
      args.color = args.color or self:getStat("bulletColor")
-     
      if AUDIO then AUDIO:playSFX("laser_01") end
-     
-     Turret.fire(self, args)
+     StandardMainTurret.fire(self, args)
 end
 
-function MainLazer:getTargetArc() end
-function MainLazer:isInFiringArc(enemy) return true end
+function MainLazer:getFirePoint()
+    local cx, cy = self:getCenterPosition()
+    local mx, my = Layout.mouseToField()
+    local angle = math.atan2(my - cy, mx - cx)
+    return cx + math.cos(angle) * 20, cy + math.sin(angle) * 20
+end
+
+function MainLazer:draw()
+    local cx, cy = self:getCenterPosition()
+    local r, g, b = unpack(self.color or {0.3, 0.3, 0.3, 1})
+    
+    if self.showArc and self.upgrades["electric_field"] then
+        self:drawFiringArc(0.3)
+    end
+    
+    local function drawBase(radius)
+        local pts = {}
+        for i = 0, 15 do
+            local rad = (i % 2 == 0) and radius or (radius * 0.6)
+            local angle = i * (math.pi * 2 / 16)
+            table.insert(pts, cx + math.cos(angle) * rad)
+            table.insert(pts, cy + math.sin(angle) * rad)
+        end
+        love.graphics.polygon("line", pts)
+    end
+
+    love.graphics.setColor(r, g, b, 0.4)
+    love.graphics.setLineWidth(4)
+    drawBase(self.size * 1.1)
+    love.graphics.setColor(r, g, b, 1)
+    love.graphics.setLineWidth(2)
+    drawBase(self.size * 1.1)
+
+    local mx, my = Layout.mouseToField()
+    local angle = math.atan2(my - cy, mx - cx)
+    
+    love.graphics.push()
+    love.graphics.translate(cx, cy)
+    love.graphics.rotate(angle)
+    
+    local function drawTeslaCoil()
+        local currentFireRate = self:getStat("fireRate")
+        local reloadProgress = 1 - math.max(0, self.cooldown / (1 / currentFireRate))
+        love.graphics.setColor(0.3, 0.3, 0.3, 1)
+        love.graphics.line(0, 0, 20, 0)
+        for i = 1, 3 do
+            local x = i * 5
+            local threshold = i * 0.25
+            if reloadProgress >= threshold then love.graphics.setColor(0.4, 0.7, 1, 1)
+            else love.graphics.setColor(0.3, 0.3, 0.3, 1) end
+            love.graphics.ellipse("line", x, 0, 1.5, 4)
+        end
+        if reloadProgress >= 1 then love.graphics.setColor(0.4, 0.7, 1, 1)
+        else love.graphics.setColor(0.3, 0.3, 0.3, 1) end
+        love.graphics.circle("line", 20, 0, 3.5)
+    end
+    
+    local currentFireRate = self:getStat("fireRate")
+    local reloadProgress = 1 - math.max(0, self.cooldown / (1 / currentFireRate))
+    
+    if not self.upgrades["electric_field"] and reloadProgress > 0.25 then
+        love.graphics.setColor(0, 0.5, 1, 0.3 * reloadProgress)
+        love.graphics.setLineWidth(5)
+        drawTeslaCoil()
+    end
+    
+    if not self.upgrades["electric_field"] then
+        love.graphics.setLineWidth(2)
+        drawTeslaCoil()
+        if reloadProgress >= 1 then
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.circle("fill", 20, 0, 1.5)
+        end
+    else
+        for i = 1, 3 do
+            local ringRadius = 7 + i * 5
+            local threshold = i / 3
+            local isCharged = reloadProgress >= threshold
+            if isCharged then
+                love.graphics.setColor(0.4, 0.7, 1, 0.8)
+                love.graphics.setLineWidth(2)
+            else
+                love.graphics.setColor(0.2, 0.2, 0.3, 0.5)
+                love.graphics.setLineWidth(1)
+            end
+            love.graphics.circle("line", 0, 0, ringRadius)
+            if isCharged then
+                love.graphics.setColor(0.4, 0.7, 1, 0.15)
+                love.graphics.circle("fill", 0, 0, ringRadius)
+            end
+        end
+        local pulse = (math.sin(love.timer.getTime() * 10) + 1) / 2
+        love.graphics.setColor(0.4, 0.7, 1, 0.5 + 0.5 * pulse * reloadProgress)
+        love.graphics.circle("fill", 0, 0, 4 + 2 * pulse)
+    end
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.circle("fill", 0, 0, 3)
+    love.graphics.pop()
+    
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 function MainLazer:drawFiringArc(a1, a2, a3)
     local alpha = (type(a1) == "number" and a1 <= 1 and a1) or a3 or 0.2
     local cx, cy = self:getCenterPosition()
     local range = self:getStat("range")
-    
     if self.upgrades["electric_field"] then
         love.graphics.setColor(0.4, 0.7, 1, alpha)
         love.graphics.setLineWidth(1.5)
@@ -300,47 +295,110 @@ function MainLazer:drawFiringArc(a1, a2, a3)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-MainLazer.upgradeRewards = {
-    rare = {
-        {
-            id = "unstable_laser",
-            name = "Unstable Laser",
-            description = "Gives your big lazer a 20% chance to burn enemies.",
-            type = "main_upgrade",
-            iconCategory = "upgrade",
-            cost = 2,
-            isEligible = function(game)
-                local mt = game.base and game.base.mainLazer
-                return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
+function MainLazer.getStartingDeck()
+    local deck = PlayerDeck:new()
+    local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+    
+    local function findRewardById(id)
+        for _, rarityList in pairs(RewardIndex) do
+            if type(rarityList) == "table" then
+                for _, item in ipairs(rarityList) do
+                    if item.id == id then
+                        return item
+                    end
+                end
             end
+        end
+        return nil
+    end
+
+    local function addBuildingCard(id, quantity, rarity)
+        local reward = findRewardById(id)
+        if reward then
+            deck:addCard(Card:new({
+                id = reward.id, 
+                name = reward.name, 
+                description = reward.description,
+                executionType = ExecutionType.Placement, 
+                quantity = quantity,
+                payload = { buildingClass = reward.building, config = {}, rarity = rarity }
+            }))
+        end
+    end
+
+    addBuildingCard("sentry", 4, "common")
+    addBuildingCard("blaster", 2, "common")
+
+    
+    deck:addCard(Card:new({
+        id = "unstable_laser",
+        name = "Unstable Laser",
+        description = "Gives your big lazer a 20% chance to burn enemies.",
+        executionType = ExecutionType.Targeted,
+        quantity = 1,
+        payload = { isMainUpgrade = true, rarity = "rare" }
+    }))
+    
+    local function addInstantCard(id, quantity)
+        for _, instant in pairs(InstantCardRegistry) do
+            if type(instant) == "table" and instant.id == id then
+                instant.quantity = quantity
+                deck:addCard(instant)
+                return
+            end
+        end
+    end
+    
+    addInstantCard("inst_overclock_1", 4)
+    addInstantCard("inst_range_1", 2)
+    addInstantCard("inst_frenzy_1", 1)
+    
+    return deck
+end
+
+function MainLazer.getUniqueCards()
+    return {
+        rare = {
+            {
+                id = "unstable_laser",
+                name = "Unstable Laser",
+                description = "Gives your big lazer a 20% chance to burn enemies.",
+                type = "main_upgrade",
+                iconCategory = "upgrade",
+                cost = 2,
+                isEligible = function(game)
+                    local mt = game.base and game.base.mainLazer
+                    return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
+                end
+            },
+            {
+                id = "low_power_operating",
+                name = "Low Power Ops",
+                description = "Your big lazer shoots much faster but does a little less damage.",
+                type = "main_upgrade",
+                iconCategory = "upgrade",
+                cost = 2,
+                isEligible = function(game)
+                    local mt = game.base and game.base.mainLazer
+                    return mt and mt.id == "standard_main" and not mt.upgrades["low_power_operating"]
+                end
+            }
         },
-        {
-            id = "low_power_operating",
-            name = "Low Power Ops",
-            description = "Your big lazer shoots much faster but does a little less damage.",
-            type = "main_upgrade",
-            iconCategory = "upgrade",
-            cost = 2,
-            isEligible = function(game)
-                local mt = game.base and game.base.mainLazer
-                return mt and mt.id == "standard_main" and not mt.upgrades["low_power_operating"]
-            end
-        }
-    },
-    legendary = {
-        {
-            id = "electric_field",
-            name = "PROJECT STORMBREAKER",
-            description = "zzzZap!",
-            type = "main_upgrade",
-            iconCategory = "upgrade",
-            cost = 4,
-            isEligible = function(game)
-                local mt = game.base and game.base.mainLazer
-                return mt and not mt.upgrades["electric_field"]
-            end
+        legendary = {
+            {
+                id = "electric_field",
+                name = "PROJECT STORMBREAKER",
+                description = "zzzZap!",
+                type = "main_upgrade",
+                iconCategory = "upgrade",
+                cost = 4,
+                isEligible = function(game)
+                    local mt = game.base and game.base.mainLazer
+                    return mt and not mt.upgrades["electric_field"]
+                end
+            }
         }
     }
-}
+end
 
 return MainLazer

@@ -23,7 +23,7 @@ local Inventory          = require("Game.Inventory.Inventory")
 local EffectManager      = require("Game.Effects.EffectManager")
 
 -- Entities & UI
-local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
+-- Dynamically load the main turret later
 local GUIManager         = require("Game.GUI.GUIManager")
 local Layout             = require("Game.GUI.Layout")
 local Cursor             = require("Game.GUI.Cursor")
@@ -73,7 +73,7 @@ function game:load(saveData, isTesting)
         end
         self.maxTokens    = 3
         EnemyRegistry:reset(self)
-        self.luck         = 1         -- Influences reward quality (Scale 1-10)
+        self.shopLevel    = _G.PersistentState and _G.PersistentState.shopLevel or 1
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
         
@@ -108,7 +108,7 @@ function game:load(saveData, isTesting)
         -- Global Status Effect Managers
         self.playerEffectManager = EffectManager:new(nil, self) 
         self.enemyEffectManager  = EffectManager:new(nil, self)
-        self.luckCosts           = {1, 2, 3, 5, 10, 15, 20, 25, 30, 30}
+        -- self.luckCosts removed since it's no longer purchasable in-game
         self.showDamageNumbers   = true
 
         -- Animation Pool
@@ -135,9 +135,14 @@ function game:load(saveData, isTesting)
     self.ground = ground
     
     -- Spawn Starting Turret via Base
-    self.base:initMainLazer(StandardMainTurret)
+    local MainTurretClass
+    if _G.PersistentState and _G.PersistentState.selectedMainTurret then
+        MainTurretClass = require("Buildings.MainTurrets." .. _G.PersistentState.selectedMainTurret)
+    else
+        MainTurretClass = require("Buildings.MainTurrets.MainLazer")
+    end
+    self.base:initMainLazer(MainTurretClass)
     self.mainLazer = self.base.mainLazer
-    
 
     
     love.mouse.setVisible(false)
@@ -777,55 +782,6 @@ end
 
 -- -----------------------------------------------------------------------------
 -- Ground Object Implementation
--- -----------------------------------------------------------------------------
-
-
-function game:getLuckCost()
-    if self.luck >= 10 then return nil end
-    return self.luckCosts[self.luck]
-end
-
-function game:buyLuck()
-    local cost = self:getLuckCost()
-    if cost and self.tokens >= cost and self.luck < 10 and self.inputMode == "idle" then
-        self.tokens = self.tokens - cost
-        self.luck = self.luck + 1
-        
-        -- Visual & Audio Feedback
-        local btn = self.gui.luckButton
-        local cx, cy = btn.x + btn.w/2, btn.y + btn.h/2
-        
-        -- 1. Particle Effect (Golden Explosion)
-        local explosion = ParticleExplosion:new({1, 0.8, 0.2}, 40, cx, cy, 0.6, 30)
-        explosion.isUI = true
-        table.insert(self.animations, explosion)
-        
-        -- 2. Audio Feedback
-        if AUDIO then AUDIO:playSFX("money_01") end
-        
-        -- 3. Rarity Numbers (Staggered Floating Text)
-        local probs = self.rewardSystem.poolLogic:getLuckProbabilities(self.luck)
-        for i, p in ipairs(probs) do
-            local text = string.format("%d%%", math.floor(p.percent + 0.5))
-            -- Staggered positions and appearance (To the right of the button, horizontally aligned)
-            local delay = (i - 1) * 0.15
-            local spawnX = btn.x + 50 + (i - 1) * 38
-            local spawnY = cy + 90
-            
-            local floatingText = DamageNumber:new(text, spawnX, spawnY, nil, p.color, delay)
-            floatingText.isUI = true
-            floatingText.x = spawnX -- Override random offset from constructor
-            floatingText.y = spawnY
-            floatingText.velX = 0  -- No horizontal drift
-            floatingText.velY = -25 -- Much slower float
-            table.insert(self.animations, floatingText)
-        end
-        
-        return true
-    end
-    return false
-end
-
 function game:attemptPurchaseReward()
     if self.tokens >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
         self.tokens = self.tokens - self.rewardCost

@@ -50,6 +50,7 @@ end
 function HandUI:new(game)
     local obj = setmetatable({}, self)
     obj.game = game
+    obj.isHidden = false
     return obj
 end
 
@@ -97,6 +98,8 @@ function HandUI:draw()
     
     local inRegion = function(btn) return mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h end
     
+    if self.isHidden then return end
+    
     -- Draw Card Button
     drawActionButton(drawCardBtn, "DRAW CARD", drawCost .. " Tk", {0.2, 0.6, 0.9}, inRegion(drawCardBtn), true, canAffordDraw)
     
@@ -110,7 +113,7 @@ function HandUI:draw()
         Cursor.wantHand = true
     end
     
-    for i, card in ipairs(self.game.hand) do
+    local function drawCard(i, card, isTopPass)
         local cx = handStartX + (i - 1) * (cardWidth + spacing)
         local cy = deckY
         local cost = card:getCost()
@@ -123,19 +126,11 @@ function HandUI:draw()
         local isHovered = mx >= cx and mx <= cx + cardWidth and my >= cy and my <= cy + cardHeight
         if isHovered then Cursor.wantHand = true end
         
+        local isTopCard = (isHovered or self.game.activeCard == card)
+        if isTopPass ~= isTopCard then return end
+        
         if card.getCardDraw and card:getCardDraw() then
-            card:getCardDraw():draw(cx, cy, cardWidth, cardHeight, isHovered or (self.game.activeCard == card))
-            
-            -- Draw unaffordable tint on top if necessary
-            -- local canAfford = self.game.tokens >= cost
-            -- if not canAfford then
-            --     love.graphics.setColor(1, 0, 0, 0.3)
-            --     love.graphics.rectangle("fill", cx, cy, cardWidth, cardHeight, 5)
-            --     local scaleX = cardWidth / 250
-            --     local scaleY = cardHeight / 350
-            --     love.graphics.circle("fill", cx + 15 * scaleX, cy + 35 * scaleY, 25 * scaleX)
-            --     love.graphics.setColor(1, 1, 1, 1)
-            -- end
+            card:getCardDraw():draw(cx, cy, cardWidth, cardHeight, isTopCard)
         else
             -- Fallback
             love.graphics.setColor(0.2, 0.2, 0.2, 0.95)
@@ -159,6 +154,16 @@ function HandUI:draw()
             if canAfford then love.graphics.setColor(0.2, 0.8, 0.2, 1) else love.graphics.setColor(0.8, 0.2, 0.2, 1) end
             love.graphics.printf(cost .. " Tk", cx, cy + cardHeight - 20, cardWidth, "center")
         end
+    end
+
+    -- First pass: draw normal cards
+    for i, card in ipairs(self.game.hand) do
+        drawCard(i, card, false)
+    end
+
+    -- Second pass: draw hovered/active cards on top
+    for i, card in ipairs(self.game.hand) do
+        drawCard(i, card, true)
     end
 end
 
@@ -194,6 +199,8 @@ function HandUI:mousepressed(x, y, button)
     local viewDiscardBtn = { x = deckX, y = buttonStartY + 84, w = 180, h = 34 }
     
     local inRegion = function(btn) return x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h end
+    
+    if self.isHidden then return false end
     
     if inRegion(drawCardBtn) then
         local cost = self.game.drawCost or 1

@@ -24,6 +24,11 @@ function preparation_scene:load(isPostBattle)
         _G.PersistentState.battlesCompleted = (_G.PersistentState.battlesCompleted or 0) + 1
         _G.PersistentState.globalDifficulty = (_G.PersistentState.globalDifficulty or 1) + 1
         
+        -- Give 1 XP after each battle, except the first one (where it starts at level 1 with 0 XP)
+        if _G.PersistentState.battlesCompleted > 1 then
+            self:addShopXP(1)
+        end
+        
         if _G.PersistentState.battlesCompleted % 3 == 0 then
             local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
             EnemyRegistry:triggerRandomMutation()
@@ -61,8 +66,8 @@ function preparation_scene:load(isPostBattle)
         color = {0.4, 0.3, 0.1, 1}, hoverColor = {0.6, 0.45, 0.15, 1}, borderColor = {0.8, 0.6, 0.2, 1}
     }
 
-    self.buyLuckButton = {
-        x = 200, y = 140, w = 160, h = 40, label = "Buy Luck (50$)",
+    self.buyXPButton = {
+        x = 200, y = 140, w = 160, h = 40, label = "Buy XP (30$)",
         color = {0.5, 0.1, 0.5, 1}, hoverColor = {0.7, 0.2, 0.7, 1}, borderColor = {0.9, 0.3, 0.9, 1}
     }
 
@@ -101,8 +106,35 @@ function preparation_scene:precalculateWaves()
     end
 end
 
+function preparation_scene:getRequiredXP(level)
+    if level < 4 then return 1 end
+    if level < 6 then return 2 end
+    return 3
+end
+
+function preparation_scene:addShopXP(amount)
+    if not _G.PersistentState.shopLevel then _G.PersistentState.shopLevel = 1 end
+    if not _G.PersistentState.shopXP then _G.PersistentState.shopXP = 0 end
+    
+    if _G.PersistentState.shopLevel >= 10 then return end
+    
+    _G.PersistentState.shopXP = _G.PersistentState.shopXP + amount
+    local req = self:getRequiredXP(_G.PersistentState.shopLevel)
+    
+    while _G.PersistentState.shopXP >= req do
+        _G.PersistentState.shopXP = _G.PersistentState.shopXP - req
+        _G.PersistentState.shopLevel = math.min(10, _G.PersistentState.shopLevel + 1)
+        
+        if _G.PersistentState.shopLevel >= 10 then
+            _G.PersistentState.shopXP = 0
+            break
+        end
+        req = self:getRequiredXP(_G.PersistentState.shopLevel)
+    end
+end
+
 function preparation_scene:rollShop()
-    local luck = _G.PersistentState.luck or 1
+    local shopLevel = _G.PersistentState.shopLevel or 1
     
     -- Mock game for eligibility
     local dummyGame = {
@@ -112,7 +144,7 @@ function preparation_scene:rollShop()
     }
     
     local poolLogic = RewardPool:new(RewardIndex, dummyGame)
-    local choices = poolLogic:generateChoices(3, luck)
+    local choices = poolLogic:generateChoices(3, shopLevel)
     
     self.shopItems = {}
     
@@ -332,7 +364,8 @@ function preparation_scene:draw()
     
     local hp = _G.PersistentState and _G.PersistentState.baseHP or 200
     local cash = _G.PersistentState and _G.PersistentState.cash or 0
-    local luck = _G.PersistentState and _G.PersistentState.luck or 1
+    local shopLevel = _G.PersistentState and _G.PersistentState.shopLevel or 1
+    local shopXP = _G.PersistentState and _G.PersistentState.shopXP or 0
     
     love.graphics.setColor(0.8, 0.2, 0.2, 1)
     love.graphics.printf("Base HP: " .. hp .. " / 200", 20, 20, 200, "left")
@@ -341,13 +374,38 @@ function preparation_scene:draw()
     love.graphics.printf("Cash: $" .. cash, 20, 45, 200, "left")
     
     love.graphics.setColor(0.8, 0.2, 0.8, 1)
-    love.graphics.printf("Luck: " .. luck, 20, 70, 200, "left")
+    love.graphics.printf("Shop Level: " .. shopLevel, 20, 70, 200, "left")
+    
+    -- Draw XP circles
+    if shopLevel < 10 then
+        local reqXP = self:getRequiredXP(shopLevel)
+        local startX = 20
+        local cy = 95
+        local radius = 6
+        local spacing = 18
+        
+        for i = 1, reqXP do
+            local drawX = startX + (i - 1) * spacing
+            if i <= shopXP then
+                love.graphics.setColor(0.8, 0.2, 0.8, 1)
+                love.graphics.circle("fill", drawX, cy, radius)
+            else
+                love.graphics.setColor(0.8, 0.2, 0.8, 1)
+                love.graphics.circle("line", drawX, cy, radius)
+                love.graphics.setColor(0.2, 0.05, 0.2, 1)
+                love.graphics.circle("fill", drawX, cy, radius - 1)
+            end
+        end
+    else
+        love.graphics.setColor(0.8, 0.2, 0.8, 1)
+        love.graphics.printf("MAX LEVEL", 20, 90, 200, "left")
+    end
     
     self:drawForecast()
     self:drawShop(mx, my)
     
     self:drawButton(self.rerollButton, mx, my)
-    self:drawButton(self.buyLuckButton, mx, my)
+    self:drawButton(self.buyXPButton, mx, my)
     
     self:drawButton(self.startButton, mx, my)
     self:drawButton(self.deckButton, mx, my)
@@ -422,11 +480,11 @@ function preparation_scene:mousepressed(x, y, button)
     end
     
 
-    btn = self.buyLuckButton
+    btn = self.buyXPButton
     if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-        if (_G.PersistentState.cash or 0) >= 50 then
-            _G.PersistentState.cash = _G.PersistentState.cash - 50
-            _G.PersistentState.luck = (_G.PersistentState.luck or 1) + 1
+        if (_G.PersistentState.cash or 0) >= 30 and (_G.PersistentState.shopLevel or 1) < 10 then
+            _G.PersistentState.cash = _G.PersistentState.cash - 30
+            self:addShopXP(1)
         end
         return
     end

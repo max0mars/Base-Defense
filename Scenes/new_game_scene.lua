@@ -1,5 +1,8 @@
 local new_game_scene = {}
 new_game_scene.__index = new_game_scene
+local scene = require("Scenes.scene")
+
+setmetatable(new_game_scene, { __index = scene })
 
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local CardDraw = require("Game.Cards.CardDraw")
@@ -12,13 +15,16 @@ function new_game_scene:load()
     -- Define available main turrets
     self.turrets = {
         {
-            id = "StandardMainTurret",
-            name = "Standard Base",
-            description = "A reliable base equipped with a standard laser.",
+            id = "MainLazer",
+            name = "Heavy Laser",
+            description = "Fires strong Laser shots at a slow rates.",
             cost = 0,
-            rarity = "common",
+            rarity = "main_weapon",
             type = "building",
-            iconCategory = "turret"
+            iconCategory = "turret",
+            damageBars = 4,
+            rangeBars = 5,
+            firerateBars = 2
         }
     }
     self.currentIndex = 1
@@ -145,6 +151,17 @@ function new_game_scene:mousepressed(x, y, button)
         -- Start Game Button
         if self.hoverStart then
             _G.PersistentState.selectedMainTurret = self.turrets[self.currentIndex].id
+            
+            -- Set up starting deck and inject unique cards
+            local turretModule = require("Buildings.MainTurrets." .. _G.PersistentState.selectedMainTurret)
+            if turretModule.getStartingDeck then
+                _G.PersistentState.deck = turretModule.getStartingDeck()
+            end
+            if turretModule.getUniqueCards then
+                local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+                RewardIndex.injectCards(turretModule.getUniqueCards())
+            end
+            
             self.scene_manager.switch("game")
         end
     end

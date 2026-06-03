@@ -10,7 +10,7 @@ local RewardIndex = {
             cost = 1,
             damageBars = 2,
             rangeBars = 3,
-            firerateBars = 2
+            firerateBars = 3
         },
         {
             id = "blaster",
@@ -290,5 +290,15 @@ local RewardIndex = {
         }
     }
 }
+function RewardIndex.injectCards(cards)
+    if not cards then return end
+    for rarity, rarityCards in pairs(cards) do
+        if RewardIndex[rarity] then
+            for _, card in ipairs(rarityCards) do
+                table.insert(RewardIndex[rarity], card)
+            end
+        end
+    end
+end
 
 return RewardIndex

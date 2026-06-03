@@ -47,7 +47,13 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     self.nextRevealIndex = 1
     
     local count = numCards or 3
-    local luck = self.game.luck or 1
+    local shopLevel = self.game.shopLevel or 1
+    
+    local isSpecial = false
+    local specialInterval = self.game.specialWaveInterval or 5
+    if self.game.wave and (self.game.wave % specialInterval == 0) then
+        isSpecial = true
+    end
     
     local indexToUse = RewardIndex
     if poolLogicMode == "blocker" then
@@ -55,7 +61,7 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     end
     
     self.poolLogic = RewardPool:new(indexToUse, self.game)
-    local choices = self.poolLogic:generateChoices(count, luck)
+    local choices = self.poolLogic:generateChoices(count, shopLevel)
     
     local totalWidth = (count * self.cardWidth) + ((count - 1) * self.cardSpacing)
     local startX = (VIRTUAL_WIDTH - totalWidth) / 2

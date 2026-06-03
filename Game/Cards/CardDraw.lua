@@ -12,7 +12,8 @@ local rarityColors = {
     uncommon = {0.2, 0.9, 0.2},    -- Green
     rare = {0.2, 0.6, 1.0},        -- Blue
     epic = {0.7, 0.2, 0.9},        -- Purple
-    legendary = {1.0, 0.6, 0.0}    -- Orange
+    legendary = {1.0, 0.6, 0.0},   -- Orange
+    main_weapon = {0.0, 1.0, 0.8}  -- Cyan/Teal
 }
 
 -- Constructor to create a new card instance

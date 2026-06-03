@@ -13,73 +13,7 @@ local AutoCannon = require("Buildings.Turrets.AutoCannon")
 local ShotgunTurret = require("Buildings.Turrets.ShotgunTurret")
 local HeavyGun = require("Buildings.Turrets.HeavyGun")
 
-local function createStartingDeck()
-    local deck = PlayerDeck:new()
-    deck:addCard(Card:new({
-        id = "sentry",
-        name = "Sentry",
-        description = "Balanced range and damage.",
-        executionType = ExecutionType.Placement,
-        quantity = 4,
-        payload = { buildingClass = Sentry, config = {}, rarity = "common" }
-    }))
-    deck:addCard(Card:new({
-        id = "blaster",
-        name = "Blaster",
-        description = "Fires energy bolts.",
-        executionType = ExecutionType.Placement,
-        quantity = 2,
-        payload = { buildingClass = Blaster, config = {}, rarity = "common" }
-    }))
-    deck:addCard(Card:new({
-        id = "autoCannon",
-        name = "Auto Cannon",
-        description = "High fire rate, low damage, short range.",
-        executionType = ExecutionType.Placement,
-        quantity = 1,
-        payload = { buildingClass = AutoCannon, config = {}, rarity = "common" }
-    }))
-    deck:addCard(Card:new({
-        id = "shotgunTurret",
-        name = "Shotgun Turret",
-        description = "Shreds close-range targets.",
-        executionType = ExecutionType.Placement,
-        quantity = 1,
-        payload = { buildingClass = ShotgunTurret, config = {}, rarity = "common" }
-    }))
-    deck:addCard(Card:new({
-        id = "heavygun",
-        name = "Heavy Gun",
-        description = "Long range, high damage.",
-        executionType = ExecutionType.Placement,
-        quantity = 1,
-        payload = { buildingClass = HeavyGun, config = {}, rarity = "common" }
-    }))
-    deck:addCard(Card:new({
-        id = "unstable_laser",
-        name = "Unstable Laser",
-        description = "Gives your big lazer a 20% chance to burn enemies.",
-        executionType = ExecutionType.Targeted,
-        quantity = 1,
-        payload = { isMainUpgrade = true, rarity = "rare" }
-    }))
-    
-    local InstantCardRegistry = require("Instants.InstantCardRegistry")
-    
-    local overclock = InstantCardRegistry.Overclock
-    overclock.quantity = 2
-    deck:addCard(overclock)
-    
-    local rangeFinder = InstantCardRegistry.RangeFinder
-    rangeFinder.quantity = 2
-    deck:addCard(rangeFinder)
-    
-    local frenzy = InstantCardRegistry.Frenzy
-    frenzy.quantity = 2
-    deck:addCard(frenzy)
-    
-    return deck
-end
+-- Starting deck creation has been moved to individual Main Turret classes.
 
 setmetatable(menu_scene, { __index = scene })
 
@@ -194,7 +128,7 @@ function menu_scene:mousepressed(x, y, button)
                     _G.PersistentState = { 
                         baseHP = 200, 
                         cash = 0, 
-                        deck = createStartingDeck(),
+                        deck = nil, -- Will be set in new_game_scene
                         globalDifficulty = 1,
                         battlesCompleted = 0,
                         activeMutations = {},
@@ -231,7 +165,9 @@ function menu_scene:keypressed(key)
         _G.PersistentState = { 
             baseHP = 200, 
             cash = 0, 
-            deck = createStartingDeck(),
+            deck = nil, -- Will be set in new_game_scene
+            shopLevel = 1,
+            shopXP = 0,
             globalDifficulty = 1,
             battlesCompleted = 0,
             activeMutations = {},

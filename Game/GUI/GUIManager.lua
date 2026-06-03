@@ -130,6 +130,7 @@ function GUIManager:new(game)
         -- Roll / purchase buttons sit in the RIGHT slice of the stored-towers
         -- tray (stored cards lay out to their left).
         buyBlockerButton = { x = Layout.W - 188, y = Layout.tray.y + 16, w = 180, h = 34 },
+        toggleHandButton = { x = Layout.W - 188, y = Layout.tray.y + 16 + 34 + 8, w = 180, h = 34 },
 
         -- Borderless indicators in the top strip (centered in the field's top
         -- margin): toggle LEDs on the left, speed control on the right.
@@ -348,11 +349,15 @@ function GUIManager:drawHUD()
             true)
     else
         drawActionButton(self.buyBlockerButton, "BUY BLOCKER",
-            string.format("%d T", math.floor(game.blockerCost)),
-            { 0.95, 0.55, 0.15 },
+            game.blockerCost .. " Tk",
+            { 0.2, 0.4, 0.6 },
             Layout.inRegion(self.buyBlockerButton, mx, my), buyEnabled,
             game.tokens >= game.blockerCost)
     end
+
+    -- Toggle Hand Button
+    local toggleLabel = self.hand.isHidden and "SHOW HAND (H)" or "HIDE HAND (H)"
+    drawActionButton(self.toggleHandButton, toggleLabel, nil, {0.5, 0.5, 0.5}, Layout.inRegion(self.toggleHandButton, mx, my), true, true)
 
     -- ==========================================
     -- RIGHT PANEL: Toggles (AutoFire, Dmg Nums, AutoWave)
@@ -400,7 +405,7 @@ function GUIManager:drawHUD()
     love.graphics.pop()
 
     -- Hand cursor over any HUD button (mx is neutralized while an overlay is open).
-    for _, btn in ipairs({ self.luckButton, self.buyButton, self.buyBlockerButton,
+    for _, btn in ipairs({ self.buyBlockerButton, self.toggleHandButton,
         self.autoFireButton, self.dmgNumsButton, self.autoWaveButton,
         self.speedMinusButton, self.speedPlusButton }) do
         if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
@@ -532,6 +537,13 @@ function GUIManager:mousepressed(x, y, button)
             else
                 self.game:attemptPurchaseBlocker()
             end
+            return true
+        end
+
+        -- Check Toggle Hand Button
+        if x >= self.toggleHandButton.x and x <= self.toggleHandButton.x + self.toggleHandButton.w and
+           y >= self.toggleHandButton.y and y <= self.toggleHandButton.y + self.toggleHandButton.h then
+            self.hand.isHidden = not self.hand.isHidden
             return true
         end
 

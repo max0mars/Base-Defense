@@ -30,7 +30,7 @@ function WaveDirector:getBudgetForWave(waveNumber, globalDifficulty)
     local wave = math.max(1, math.min(5, waveNumber))
     local base = baseBudgets[wave]
     
-    local multiplier = globalDifficulty ^ (1 + (wave - 1) * 0.15)
+    local multiplier = 1 + (globalDifficulty - 1) * (0.3 + (wave - 1) * 0.1)
     return math.floor(base * multiplier)
 end
 
