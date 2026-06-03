@@ -14,7 +14,7 @@ Blaster.template = {
     range = 450,
     barrel = 10,
     color = {0.2, 0.8, 1, 1},
-    types = { turret = true, blaster = true },
+    types = { turret = true, energy = true },
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,

@@ -12,6 +12,7 @@ local AutoCannon = require("Buildings.Turrets.AutoCannon")
 local ShotgunTurret = require("Buildings.Turrets.ShotgunTurret")
 local HeavyGun = require("Buildings.Turrets.HeavyGun")
 local InstantCardRegistry = require("Instants.InstantCardRegistry")
+local InstantCard = require("Instants.instant")
 
 local MainLazer = setmetatable({}, { __index = StandardMainTurret })
 MainLazer.__index = MainLazer
@@ -326,8 +327,8 @@ function MainLazer.getStartingDeck()
         end
     end
 
-    addBuildingCard("sentry", 4, "common")
-    addBuildingCard("blaster", 2, "common")
+    addBuildingCard("sentry", 2, "common")
+    addBuildingCard("blaster", 4, "common")
 
     
     deck:addCard(Card:new({
@@ -336,7 +337,7 @@ function MainLazer.getStartingDeck()
         description = "Gives your big lazer a 20% chance to burn enemies.",
         executionType = ExecutionType.Targeted,
         quantity = 1,
-        payload = { isMainUpgrade = true, rarity = "rare" }
+        payload = { isMainUpgrade = true, rarity = "uncommon" }
     }))
     
     local function addInstantCard(id, quantity)
@@ -352,6 +353,33 @@ function MainLazer.getStartingDeck()
     addInstantCard("inst_overclock_1", 4)
     addInstantCard("inst_range_1", 2)
     addInstantCard("inst_frenzy_1", 1)
+    
+    local energySurge = InstantCard.new({
+        id = "inst_energy_surge_1",
+        name = "Energy Surge",
+        description = "All energy turrets gain +20% damage.",
+        cost = 2,
+        rarity = "rare",
+        executionType = InstantCard.ExecutionType.Global,
+        customExecute = function(gameObj)
+            local buff = {
+                name = "energy_surge_damage",
+                displayName = "Energy Surge",
+                statModifiers = { damage = { mult = 0.20 } }
+            }
+            if gameObj and gameObj.objects then
+                for _, obj in ipairs(gameObj.objects) do
+                    if obj.isType and obj:isType("turret") and obj:isType("energy") then
+                        if obj.effectManager then
+                            obj.effectManager:applyEffect(buff)
+                        end
+                    end
+                end
+            end
+        end
+    })
+    energySurge.quantity = 1
+    deck:addCard(energySurge)
     
     return deck
 end
