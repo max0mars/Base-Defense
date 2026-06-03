@@ -428,7 +428,7 @@ function GUIManager:drawHUD()
 
     -- Single "press enter" call-to-action, shown before wave 1 (startup) and
     -- between waves (preparing), in a bordered panel centered on the battlefield.
-    if game:isState("startup") or game:isState("preparing") then
+    if (game:isState("startup") or game:isState("preparing")) and not game.suppressWaveUI then
         local f = Layout.field
         local boxW, boxH = 320, 60
         local bx = f.x + (f.w - boxW) / 2
