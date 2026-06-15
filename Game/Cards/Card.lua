@@ -90,15 +90,41 @@ function Card:getCardDraw()
 end
 
 function Card:getCost()
-    local rarity = self.payload.rarity or self.rarity or "common"
-    local costs = {
-        common = 1,
-        uncommon = 2,
-        rare = 3,
-        epic = 4,
-        legendary = 5
-    }
-    return costs[rarity] or 1
+    if self._computedCost then return self._computedCost end
+    if self.cost then 
+        self._computedCost = self.cost
+        return self._computedCost 
+    end
+    
+    local idToLookFor = self.id
+    local foundCost = nil
+    
+    -- Dynamically look up cost from Reward Indices
+    local function searchIndex(modName)
+        local success, index = pcall(require, modName)
+        if success and index then
+            for _, category in pairs(index) do
+                if type(category) == "table" then
+                    for _, reward in ipairs(category) do
+                        if reward.id == idToLookFor and reward.cost then
+                            return reward.cost
+                        end
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    foundCost = searchIndex("Game.Rewards.NormalRewardIndex") or 
+                searchIndex("Game.Rewards.BlockerRewardIndex") or 
+                searchIndex("Game.Rewards.SpecialRewardIndex")
+                
+    if foundCost then
+        self._computedCost = foundCost
+        return self._computedCost
+    end
+    return -1
 end
 
 function Card:execute(game)

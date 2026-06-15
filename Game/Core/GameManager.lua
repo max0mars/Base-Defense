@@ -769,7 +769,9 @@ function game:consumeCard(card)
         end
     end
     self.activeCard = nil
-    self.inputMode = "idle"
+    if self.inputMode ~= "aiming" then
+        self.inputMode = "idle"
+    end
 end
 
 function game:refundCard(card)
