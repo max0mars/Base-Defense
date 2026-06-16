@@ -242,7 +242,8 @@ function WaveSpawner:updateActiveSectors()
 end
 
 function WaveSpawner:draw()
-    if (self.game:isState("preparing") or self.game:isState("startup")) and self.activeSectors then
+    if (self.game:isState("preparing") or self.game:isState("startup")) and self.activeSectors
+       and not self.game.suppressWaveUI then
         local grid = self.game.battlefieldGrid
         local minRow = (grid.height > 2) and 2 or 1
         local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
