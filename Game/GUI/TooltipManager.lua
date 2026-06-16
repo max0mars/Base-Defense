@@ -44,7 +44,7 @@ function TooltipManager:findHoveredEnemy()
 
     -- Don't show enemy info over buildings, while placing, or behind a menu.
     if self.hoveredBuilding then return nil end
-    if game.inputMode == "placing" then return nil end
+    if game.inputMode == "placing" or game.inputMode == "targeting_spell" then return nil end
     if game.rewardSystem and game.rewardSystem.isActive then return nil end
     if game.specialUpgradeManager and game.specialUpgradeManager.isActive then return nil end
     if game.gui and game.gui.mutation and game.gui.mutation.isActive then return nil end

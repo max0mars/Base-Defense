@@ -335,7 +335,7 @@ function InputHandler:mousepressed(x, y, button)
     local mainLazer = game.mainLazer
     
     if button == 2 then
-        if game.inputMode == "placing" or game.inputMode == "targeting_card" or game.inputMode == "targeting_global" then
+        if game.inputMode == "placing" or game.inputMode == "targeting_card" or game.inputMode == "targeting_global" or game.inputMode == "targeting_spell" then
             if game.activeCard then
                 game:refundCard(game.activeCard)
             end
@@ -393,6 +393,29 @@ function InputHandler:mousepressed(x, y, button)
                         game:refundCard(card)
                     end
                 else
+                    game:refundCard(card)
+                end
+            end
+        else
+            if game.activeCard then
+                game:refundCard(game.activeCard)
+            end
+        end
+        game.inputMode = "idle"
+        return
+    end
+
+    -- Handle spell targeting execution
+    if game.inputMode == "targeting_spell" and button == 1 then
+        local mx, my = love.mouse.getPosition()
+        if Layout.inFieldScreen(mx, my) then
+            local card = game.activeCard
+            if card then
+                local success = card:execute(x, y, game)
+                if success then
+                    game:consumeCard(card)
+                else
+                    game:spawnFloatingText("Invalid target!", mx, my, {0.8, 0.2, 0.2, 1})
                     game:refundCard(card)
                 end
             end

@@ -367,6 +367,44 @@ function game:draw()
         self.blueprint:draw(drawX, drawY)
         self.blueprint.isPreview = false
     end
+
+    if self.inputMode == "targeting_spell" and self.activeCard then
+        local radius = self.activeCard.radius or 50
+        local drawX = self.inputHandler.mouseX
+        local drawY = self.inputHandler.mouseY
+        
+        love.graphics.push("all")
+        
+        -- Draw the 'x' at target location
+        love.graphics.setColor(0.9, 0.1, 0.1, 0.8)
+        love.graphics.setLineWidth(2)
+        love.graphics.line(drawX - 8, drawY - 8, drawX + 8, drawY + 8)
+        love.graphics.line(drawX - 8, drawY + 8, drawX + 8, drawY - 8)
+        
+        -- Draw dotted circle indicating radius (only if NOT a global spell)
+        if not self.activeCard.isGlobalSpell then
+            local circumference = 2 * math.pi * radius
+            local dashLength = 6
+            local gapLength = 6
+            local totalSegments = math.floor(circumference / (dashLength + gapLength))
+            if totalSegments > 0 then
+                local angleStep = (2 * math.pi) / totalSegments
+                for i = 0, totalSegments - 1 do
+                    local startAngle = i * angleStep
+                    local endAngle = startAngle + (angleStep * (dashLength / (dashLength + gapLength)))
+                    
+                    local x1 = drawX + math.cos(startAngle) * radius
+                    local y1 = drawY + math.sin(startAngle) * radius
+                    local x2 = drawX + math.cos(endAngle) * radius
+                    local y2 = drawY + math.sin(endAngle) * radius
+                    
+                    love.graphics.line(x1, y1, x2, y2)
+                end
+            end
+        end
+        
+        love.graphics.pop()
+    end
     
     if self.inputMode == "placing" or self.debugMode then
         if self.battlefieldGrid then

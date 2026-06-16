@@ -3,6 +3,7 @@ local Layout = require("Game.GUI.Layout")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local InstantCardRegistry = require("Instants.InstantCardRegistry")
+local SpellCardRegistry = require("Spells.SpellCardRegistry")
 local RewardIndex = require("Game.Rewards.NormalRewardIndex")
 
 local StandardMainTurret = setmetatable({}, { __index = Turret })
@@ -155,6 +156,15 @@ function StandardMainTurret.addCard(deck, id, quantity, rarity)
         if type(instant) == "table" and instant.id == id then
             instant.quantity = quantity
             deck:addCard(instant)
+            return true
+        end
+    end
+
+    -- Check if it's a spell card
+    for _, spell in pairs(SpellCardRegistry) do
+        if type(spell) == "table" and spell.id == id then
+            spell.quantity = quantity
+            deck:addCard(spell)
             return true
         end
     end

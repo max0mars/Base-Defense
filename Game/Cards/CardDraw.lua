@@ -34,10 +34,12 @@ function CardDraw.new(x, y, data)
     -- removed per user request
     -- Adapter Logic for mapping existing properties
     self.cardType = "Building"
-    if data.type == "main_upgrade" or data.type == "effect" then
+    if data.type == "main_upgrade" or data.type == "effect" or data.type == "spell" then
         self.cardType = "Instant"
         if data.type == "main_upgrade" then
             self.instantType = "MainUpgrade"
+        elseif data.type == "spell" then
+            self.instantType = "Spell"
         elseif data.isTargeted then
             self.instantType = "SingleBuff"
         else

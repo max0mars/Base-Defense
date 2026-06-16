@@ -263,6 +263,8 @@ function HandUI:mousepressed(x, y, button)
                 
                 if card.executionType == ExecutionType.Global or card.executionType == "Global" then
                     self.game.inputMode = "targeting_global"
+                elseif card.executionType == ExecutionType.Spell or card.executionType == "Spell" then
+                    self.game.inputMode = "targeting_spell"
                 elseif card.executionType == ExecutionType.Placement then
                     self.game.inputMode = "placing"
                     local config = {}
