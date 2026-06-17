@@ -20,7 +20,7 @@ CardRegistry.RangeFinder = InstantCard.new({
     id = "inst_range_1",
     name = "Range Finder",
     description = "Give a turret +100 Range.",
-    cost = 2,
+    cost = 1,
     rarity = "Common",
     executionType = InstantCard.ExecutionType.Targeted,
     statModifiers = { range = { add = 100 } }
@@ -31,7 +31,7 @@ CardRegistry.RangeFinder = InstantCard.new({
 -- ==========================================
 CardRegistry.Frenzy = InstantCard.new({
     id = "inst_frenzy_1",
-    name = "Global Frenzy",
+    name = "Frenzy",
     description = "All turrets fire 15% faster.",
     cost = 3,
     rarity = "Uncommon",
@@ -45,8 +45,9 @@ CardRegistry.Frenzy = InstantCard.new({
 CardRegistry.EmergencyRepairs = InstantCard.new({
     id = "inst_repair_1",
     name = "Emergency Repairs",
-    description = "Heal your Base for 10 HP. Cannot exceed Max HP.",
-    cost = 2,
+    description = "Heal your Base for 10 HP. Consume.",
+    cost = 1,
+    isConsume = true,
     rarity = "Rare",
     executionType = InstantCard.ExecutionType.Global,
     

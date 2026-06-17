@@ -3,8 +3,8 @@
 ## Sentry
 - **Damage**: 10
 - **Range**: 500
-- **Fire Rate**: 1.0
-- **DPS**: 10.0
+- **Fire Rate**: 0.85
+- **DPS**: 8.5
 - **Description**: Standard basic defense turret.
 
 ## Sniper Turret
@@ -26,7 +26,7 @@
 - **Range**: 200
 - **Fire Rate**: 2.0
 - **DPS**: 20.0 (per bolt) | 120.0 (Max Burst DPS)
-- **Description**: Legendary energy variant of the shotgun. Fires high-velocity plasma bolts rapidly and has an internal ammo reload mechanic.
+- **Description**: Energy variant of the shotgun. Fires high-velocity plasma bolts rapidly and has an internal ammo reload mechanic.
 
 ## Auto Cannon
 - **Damage**: 3
@@ -45,8 +45,8 @@
 ## Gator (GTR-55)
 - **Damage**: 40
 - **Range**: 500
-- **Fire Rate**: 0.8
-- **DPS**: 32.0
+- **Fire Rate**: 0.7
+- **DPS**: 28.0
 - **Description**: Standard turret variant with high pierce, able to hit multiple enemies.
 
 ## Blaster
@@ -63,7 +63,7 @@
 - **DPS**: 42.0
 - **Description**: Strong single-shot energy turret.
 
-## Chain Laserge
+## Chain Laser
 - **Damage**: 30
 - **Range**: 500
 - **Fire Rate**: 0.65
@@ -78,10 +78,10 @@
 - **Description**: Advanced turret that continuously spins up, increasing its fire rate the longer it shoots at a target.
 
 ## Poison Turret
-- **Damage**: 5
+- **Damage**: 5 (Direct)
 - **Range**: 400
 - **Fire Rate**: 0.5
-- **DPS**: 2.5 (Direct)
+- **DPS**: 2.5 (Direct) | 15.0 (Poison DoT for 4.1s)
 - **Description**: Deals low direct damage but applies a poison status effect that deals damage over time.
 
 ## Mortar
@@ -106,10 +106,10 @@
 - **Description**: Shells explode in the air for area damage.
 
 ## Missile Launcher
-- **Damage**: 10 (Direct) / 20 (Explosion)
+- **Damage**: 25 (Direct) / 25 (Explosion)
 - **Range**: 450
 - **Fire Rate**: 0.4
-- **DPS**: 4.0 (Direct) / 8.0 (Explosion) | 12.0 (Max Theoretical DPS)
+- **DPS**: 10.0 (Direct) / 10.0 (Explosion) | 20.0 (Max Theoretical DPS)
 - **Description**: Fires missiles that explode on impact, dealing double damage in a radius.
 
 ## The Hook
@@ -121,7 +121,7 @@
 
 ## Slush Cannon
 - **Damage**: 5
-- **Range**: 350
+- **Range**: 450
 - **Fire Rate**: 0.25
 - **DPS**: 1.25
 - **Description**: Fires heavy clumps of slush that slow enemies on impact.
