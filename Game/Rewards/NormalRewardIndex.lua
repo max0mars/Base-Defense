@@ -290,6 +290,64 @@ local RewardIndex = {
         }
     }
 }
+function RewardIndex.injectSpells(registry)
+    if not registry then return end
+    for _, spell in pairs(registry) do
+        if type(spell) == "table" and spell.id and spell.rarity then
+            local rarityKey = spell.rarity:lower()
+            if RewardIndex[rarityKey] then
+                -- Avoid duplicates
+                local exists = false
+                for _, item in ipairs(RewardIndex[rarityKey]) do
+                    if item.id == spell.id then
+                        exists = true
+                        break
+                    end
+                end
+                if not exists then
+                    table.insert(RewardIndex[rarityKey], {
+                        id = spell.id,
+                        name = spell.name,
+                        description = spell.description,
+                        type = "spell",
+                        cost = spell.cost or 1,
+                        rarity = rarityKey
+                    })
+                end
+            end
+        end
+    end
+end
+
+function RewardIndex.injectInstants(registry)
+    if not registry then return end
+    for _, inst in pairs(registry) do
+        if type(inst) == "table" and inst.id and inst.rarity then
+            local rarityKey = inst.rarity:lower()
+            if RewardIndex[rarityKey] then
+                -- Avoid duplicates
+                local exists = false
+                for _, item in ipairs(RewardIndex[rarityKey]) do
+                    if item.id == inst.id then
+                        exists = true
+                        break
+                    end
+                end
+                if not exists then
+                    table.insert(RewardIndex[rarityKey], {
+                        id = inst.id,
+                        name = inst.name,
+                        description = inst.description,
+                        type = "instant",
+                        cost = inst.cost or 1,
+                        rarity = rarityKey
+                    })
+                end
+            end
+        end
+    end
+end
+
 function RewardIndex.injectCards(cards)
     if not cards then return end
     for rarity, rarityCards in pairs(cards) do

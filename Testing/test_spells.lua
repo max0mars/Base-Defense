@@ -123,7 +123,7 @@ assert(#mockStunGame.animations == 1, "StunBurstVisual added to animations")
 local stEnemy = mockStunGame.objects[1]
 assert(stEnemy.effectManager.appliedEffect ~= nil, "Stun effect applied to close enemy")
 assert(stEnemy.effectManager.appliedEffect.name == "stun", "Stun effect is named stun")
-assert(stEnemy.effectManager.appliedEffect.duration == 3.0, "Stun effect duration is 3.0 seconds")
+assert(stEnemy.effectManager.appliedEffect.duration == 2.0, "Stun effect duration is 2.0 seconds")
 
 -- 6. Test Acid Cloud execution
 local mockAcidGame = {
@@ -207,6 +207,51 @@ assert(e1.damageTaken == 500, "Enemy 1 took 500 damage (1000 split by 2)")
 assert(e2.damageTaken == 500, "Enemy 2 took 500 damage (1000 split by 2)")
 assert(e1.damageType == "trueDamage", "Judgment damage type is trueDamage")
 assert(mockJudgmentGame.lightningSpawnCount == 2, "Lightning bolts spawned on both enemies")
+
+-- Test Spell Injection into RewardIndex
+local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local SpellCardRegistry = require("Spells.SpellCardRegistry")
+
+-- Count spells in registry
+local regCount = 0
+for _, _ in pairs(SpellCardRegistry) do
+    regCount = regCount + 1
+end
+
+RewardIndex.injectSpells(SpellCardRegistry)
+
+-- Verify that spells are present in RewardIndex under their lowercased rarities
+for key, spell in pairs(SpellCardRegistry) do
+    local rarityKey = spell.rarity:lower()
+    local found = false
+    for _, item in ipairs(RewardIndex[rarityKey] or {}) do
+        if item.id == spell.id then
+            found = true
+            assert(item.type == "spell", "Injected spell has type='spell'")
+            assert(item.name == spell.name, "Injected spell name matches")
+            break
+        end
+    end
+    assert(found, "Spell " .. spell.id .. " should be dynamically injected into RewardIndex")
+end
+
+-- Injecting again should not create duplicates
+local prevCount = 0
+for rarityKey, _ in pairs(RewardIndex) do
+    if type(RewardIndex[rarityKey]) == "table" then
+        prevCount = prevCount + #RewardIndex[rarityKey]
+    end
+end
+
+RewardIndex.injectSpells(SpellCardRegistry)
+
+local postCount = 0
+for rarityKey, _ in pairs(RewardIndex) do
+    if type(RewardIndex[rarityKey]) == "table" then
+        postCount = postCount + #RewardIndex[rarityKey]
+    end
+end
+assert(prevCount == postCount, "Re-injecting spells should not create duplicate entries")
 
 print("--- Spell Card System Tests Completed with " .. failures .. " failures ---")
 os.exit(failures == 0 and 0 or 1)

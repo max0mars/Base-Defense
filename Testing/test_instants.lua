@@ -128,4 +128,49 @@ local initialHp = _G.Base.hp
 InstantCardRegistry.EmergencyRepairs:execute(nil)
 assert(_G.Base.hp == initialHp + 10, "Emergency Repairs healed the base")
 
+-- Test Instant Injection into RewardIndex
+local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local prevCount = 0
+for rarityKey, _ in pairs(RewardIndex) do
+    if type(RewardIndex[rarityKey]) == "table" then
+        prevCount = prevCount + #RewardIndex[rarityKey]
+    end
+end
+
+RewardIndex.injectInstants(InstantCardRegistry)
+
+-- Verify that instants are present in RewardIndex under their lowercased rarities
+for key, inst in pairs(InstantCardRegistry) do
+    local rarityKey = inst.rarity:lower()
+    local found = false
+    for _, item in ipairs(RewardIndex[rarityKey] or {}) do
+        if item.id == inst.id then
+            found = true
+            assert(item.type == "instant", "Injected instant " .. inst.id .. " has type='instant'")
+            assert(item.name == inst.name, "Injected instant name matches")
+            break
+        end
+    end
+    assert(found, "Instant " .. inst.id .. " should be dynamically injected into RewardIndex")
+end
+
+-- Injecting again should not create duplicates
+local prevCount2 = 0
+for rarityKey, _ in pairs(RewardIndex) do
+    if type(RewardIndex[rarityKey]) == "table" then
+        prevCount2 = prevCount2 + #RewardIndex[rarityKey]
+    end
+end
+
+RewardIndex.injectInstants(InstantCardRegistry)
+
+local postCount = 0
+for rarityKey, _ in pairs(RewardIndex) do
+    if type(RewardIndex[rarityKey]) == "table" then
+        postCount = postCount + #RewardIndex[rarityKey]
+    end
+end
+assert(prevCount2 == postCount, "Re-injecting instants should not create duplicate entries")
+
 print("--- Instant Cards Tests Completed with " .. failures .. " failures ---")
+os.exit(failures == 0 and 0 or 1)
