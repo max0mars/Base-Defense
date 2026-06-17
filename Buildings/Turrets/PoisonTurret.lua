@@ -25,9 +25,6 @@ PoisonTurret.template = {
     damage = 5,
     pierce = 1,
     lifespan = 2,
-    bulletW = 4, 
-    bulletH = 4, 
-    bulletShape = "rectangle",
     
     -- Values for effect initialization (can be overridden by inherent buff or external buffs)
     duration_poison = 4.1,

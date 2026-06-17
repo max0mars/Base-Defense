@@ -15,7 +15,7 @@ PlasmaScattershot.template = {
     color = {0.2, 0.6, 1, 1}, -- Neon blue core aesthetic
     baseShape = "square",
     barrelShape = "flared",
-    types = { turret = true, legendary = true, energy = true },
+    types = { turret = true, energy = true, shotgun = true },
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,
@@ -32,9 +32,6 @@ PlasmaScattershot.template = {
     damageType = "energy",
     pierce = 1,
     lifespan = 1,
-    bulletW = 4,
-    bulletH = 4,
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

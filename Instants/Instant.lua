@@ -1,16 +1,23 @@
-local Instant = {}
+local object = require("Classes.object")
+local Instant = setmetatable({}, { __index = object })
 Instant.__index = Instant -- This tells Lua where to look for methods
 
 -- Enum for clarity
 Instant.ExecutionType = {
     Global = "Global",
+    Group = "Group",
     Targeted = "Targeted"
 }
 
 -- The Constructor
 function Instant.new(config)
+    config = config or {}
+    config.types = config.types or {}
+    config.types.instant = true
+    config.effectManager = true
+
     -- Create a new empty table and attach the Instant methods to it
-    local self = setmetatable({}, Instant)
+    local self = setmetatable(object:new(config), { __index = Instant })
     
     -- Standard Card Meta Data
     self.id = config.id
@@ -23,6 +30,10 @@ function Instant.new(config)
     self.statModifiers = config.statModifiers or {}
     self.customExecute = config.customExecute or nil
     self.requiredType = config.requiredType or nil
+    self.targetTypes = config.targetTypes or nil
+    
+    self.isConsume = config.isConsume or false
+    self.isExile = config.isExile or false
     
     return self
 end
@@ -32,11 +43,12 @@ function Instant:getCardDraw()
         local CardDraw = require("Game.Cards.CardDraw")
         local isTargeted = self.executionType == Instant.ExecutionType.Targeted or self.executionType == "Targeted"
         local isGlobal = self.executionType == Instant.ExecutionType.Global or self.executionType == "Global"
+                         or self.executionType == Instant.ExecutionType.Group or self.executionType == "Group"
         
         local data = {
             name = self.name,
             description = self.description,
-            cost = self.cost or 1,
+            cost = self:getCost(),
             rarity = self.rarity or "Common",
             type = (isGlobal or isTargeted) and "effect" or "building",
             iconCategory = (isGlobal or isTargeted) and "upgrade" or "turret",
@@ -53,14 +65,14 @@ function Instant:getCardDraw()
 end
 
 function Instant:getCost()
-    return self.cost or 1
+    return self:getStat("cost", self.cost or 1)
 end
 
 -- 1. TARGET VALIDATION
 -- Called when the player is holding the card and hovering over a tile
 function Instant:isValidTarget(targetEntity)
-    if self.executionType == Instant.ExecutionType.Global then
-        return true -- Global cards don't need a specific map target
+    if self.executionType == Instant.ExecutionType.Global or self.executionType == Instant.ExecutionType.Group then
+        return true -- Global/Group cards don't need a specific map target
     end
 
     -- For targeted cards, fail if they clicked empty grass or a non-turret
@@ -85,6 +97,9 @@ function Instant:execute(targetEntity)
         if not self:isValidTarget(targetEntity) then return false end
         self:applyTargetedEffect(targetEntity)
         
+    elseif self.executionType == Instant.ExecutionType.Group then
+        self:applyGroupEffect(targetEntity)
+
     elseif self.executionType == Instant.ExecutionType.Global then
         self:applyGlobalEffect(targetEntity)
     end
@@ -102,7 +117,8 @@ function Instant:applyTargetedEffect(targetEntity)
         local buff = {
             name = self.id,
             displayName = self.name,
-            statModifiers = self.statModifiers
+            statModifiers = self.statModifiers,
+            targetTypes = self.targetTypes
         }
         targetEntity.effectManager:applyEffect(buff)
     else
@@ -110,12 +126,63 @@ function Instant:applyTargetedEffect(targetEntity)
     end
 end
 
-function Instant:applyGlobalEffect(gameObj)
-    if gameObj and gameObj.playerEffectManager then
+function Instant:applyGroupEffect(gameObj)
+    if not self.statModifiers or next(self.statModifiers) == nil then
+        return
+    end
+
+    if not gameObj then
+        print("WARNING: gameObj is nil for Group Instant!")
+        return
+    end
+
+    if gameObj.objects then
         local buff = {
             name = self.id,
             displayName = self.name,
-            statModifiers = self.statModifiers
+            statModifiers = self.statModifiers,
+            targetTypes = self.targetTypes
+        }
+        for _, obj in ipairs(gameObj.objects) do
+            if obj and not obj.destroyed and obj:isType("turret") and obj.effectManager then
+                local matches = true
+                if self.targetTypes then
+                    matches = false
+                    for tType, val in pairs(self.targetTypes) do
+                        if val and obj:isType(tType) then
+                            matches = true
+                            break
+                        end
+                    end
+                end
+                
+                if matches then
+                    obj.effectManager:applyEffect(buff)
+                    obj.effectManager:recalculateStats()
+                end
+            end
+        end
+    else
+        print("WARNING: GameManager or objects list not found for Group Instant!")
+    end
+end
+
+function Instant:applyGlobalEffect(gameObj)
+    if not self.statModifiers or next(self.statModifiers) == nil then
+        return
+    end
+
+    if not gameObj then
+        print("WARNING: gameObj is nil for Global Instant!")
+        return
+    end
+
+    if gameObj.playerEffectManager then
+        local buff = {
+            name = self.id,
+            displayName = self.name,
+            statModifiers = self.statModifiers,
+            targetTypes = self.targetTypes
         }
         gameObj.playerEffectManager:applyEffect(buff)
         if type(gameObj.registerActiveGlobalBuff) == "function" then
@@ -124,6 +191,20 @@ function Instant:applyGlobalEffect(gameObj)
     else
         print("WARNING: GameManager or playerEffectManager not linked for Global Instant!")
     end
+end
+
+function Instant:Consume(game)
+    table.insert(game.consumedPile, self)
+end
+
+function Instant:Exile(game)
+    if _G.PersistentState and _G.PersistentState.deck then
+        _G.PersistentState.deck:removeCard(self.id, 1)
+    end
+    if not game.exiledPile then
+        game.exiledPile = {}
+    end
+    table.insert(game.exiledPile, self)
 end
 
 return Instant

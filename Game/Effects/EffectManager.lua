@@ -40,33 +40,48 @@ function EffectManager:recalculateStats()
     
     local function processManager(em, isParent)
         for _, effect in ipairs(em.activeEffects) do
-            -- Only collect tickers from local manager to avoid double-updates
-            if not isParent and (effect.onUpdate or effect.duration) then
-                table.insert(self.tickerEffects, effect)
+            local matches = true
+            if effect.targetTypes and self.owner then
+                matches = false
+                if type(self.owner.isType) == "function" then
+                    for t, req in pairs(effect.targetTypes) do
+                        if req and self.owner:isType(t) then
+                            matches = true
+                            break
+                        end
+                    end
+                end
             end
             
-            if effect.statModifiers then
-                for statName, mod in pairs(effect.statModifiers) do
-                    if effect.targetTags and #effect.targetTags > 0 then
-                        if not self.taggedModifiers[statName] then self.taggedModifiers[statName] = {} end
-                        table.insert(self.taggedModifiers[statName], {
-                            tags = effect.targetTags,
-                            add = mod.add or mod.additive or 0,
-                            mult = mod.mult or mod.multiplier or 0,
-                            max = mod.max or 0
-                        })
-                    else
-                        if not self.currentModifiers[statName] then
-                            self.currentModifiers[statName] = {add = 0, mult = 0, max = 0, compoundMult = 1}
-                        end
-                        local m = self.currentModifiers[statName]
-                        m.add = m.add + (mod.add or mod.additive or 0)
-                        m.mult = m.mult + (mod.mult or mod.multiplier or 0)
-                        if mod.compoundMult then
-                            m.compoundMult = m.compoundMult * mod.compoundMult
-                        end
-                        if mod.max then
-                            m.max = math.max(m.max, mod.max)
+            if matches then
+                -- Only collect tickers from local manager to avoid double-updates
+                if not isParent and (effect.onUpdate or effect.duration) then
+                    table.insert(self.tickerEffects, effect)
+                end
+                
+                if effect.statModifiers then
+                    for statName, mod in pairs(effect.statModifiers) do
+                        if effect.targetTags and #effect.targetTags > 0 then
+                            if not self.taggedModifiers[statName] then self.taggedModifiers[statName] = {} end
+                            table.insert(self.taggedModifiers[statName], {
+                                tags = effect.targetTags,
+                                add = mod.add or mod.additive or 0,
+                                mult = mod.mult or mod.multiplier or 0,
+                                max = mod.max or 0
+                            })
+                        else
+                            if not self.currentModifiers[statName] then
+                                self.currentModifiers[statName] = {add = 0, mult = 0, max = 0, compoundMult = 1}
+                            end
+                            local m = self.currentModifiers[statName]
+                            m.add = m.add + (mod.add or mod.additive or 0)
+                            m.mult = m.mult + (mod.mult or mod.multiplier or 0)
+                            if mod.compoundMult then
+                                m.compoundMult = m.compoundMult * mod.compoundMult
+                            end
+                            if mod.max then
+                                m.max = math.max(m.max, mod.max)
+                            end
                         end
                     end
                 end

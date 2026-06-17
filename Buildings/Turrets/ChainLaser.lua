@@ -1,10 +1,12 @@
 local Turret = require("Buildings.Turrets.Turret")
 local BounceEffect = require("Game.Effects.IndependantEffects.bounce")
+local Utils = require("Classes.Utils")
 
 local ChainLaser = setmetatable({}, { __index = Turret })
 ChainLaser.__index = ChainLaser
 
-local template = {
+-- Source of Truth: All stats in a single flat table
+ChainLaser.template = {
     name = "Chain Laser",
     rotation = 0,
     turnSpeed = 5,
@@ -29,21 +31,13 @@ local template = {
     damageType = "energy",
     bouncesLeft = 10,
     cost = 500, -- Legendary price
-    types = { turret = true, legendary = true, energy = true, laser = true },
+    types = { turret = true, legendary = true, energy = true},
     sfx = "laser_02"
 }
 
 function ChainLaser:new(config)
     -- Deep copy the template to avoid shared table references
-    local baseConfig = {}
-    for k, v in pairs(template) do
-        if type(v) == "table" then
-            baseConfig[k] = {}
-            for k2, v2 in pairs(v) do baseConfig[k][k2] = v2 end
-        else
-            baseConfig[k] = v
-        end
-    end
+    local baseConfig = Utils.deepCopy(ChainLaser.template)
 
     if config then
         for k, v in pairs(config) do

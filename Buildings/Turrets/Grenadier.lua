@@ -18,7 +18,7 @@ Grenadier.template = {
     color = {0.3, 0.8, 0.3, 1},
     baseShape = "circle",
     barrelShape = "thick",
-    types = { turret = true, grenadier = true },
+    types = { turret = true, explosive = true , lobber = true},
     sfx = "gunshot_04",
     shapePattern = {{0,0}},
     firingArc = {
@@ -41,7 +41,6 @@ Grenadier.template = {
     lifespan = 3,
     bulletW = 6,
     bulletH = 6,
-    bulletShape = "rectangle",
     hitEffects = {
         ExplosionEffect:new({explosionDamage = 0, radius = 0}) -- 0 values here because they will flow from the bullet/turret
     }

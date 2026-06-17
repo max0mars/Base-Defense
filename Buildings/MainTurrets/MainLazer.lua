@@ -303,7 +303,7 @@ function MainLazer.getStartingDeck()
         description = "Give your Heavy Laser a 25% chance to burn enemies.",
         executionType = ExecutionType.Targeted,
         quantity = 1,
-        payload = { isMainUpgrade = true, rarity = "uncommon" }
+        payload = { isMainUpgrade = true, rarity = "rare" }
     }))
     
     StandardMainTurret.addCard(deck, "inst_overclock_1", 4)
@@ -318,26 +318,13 @@ function MainLazer.getStartingDeck()
     local energySurge = InstantCard.new({
         id = "inst_energy_surge_1",
         name = "Energy Surge",
-        description = "All energy turrets gain +20% damage.",
+        description = "All energy turrets gain +20% damage. Consume.",
         cost = 2,
         rarity = "rare",
-        executionType = InstantCard.ExecutionType.Global,
-        customExecute = function(gameObj)
-            local buff = {
-                name = "energy_surge_damage",
-                displayName = "Energy Surge",
-                statModifiers = { damage = { mult = 0.20 } }
-            }
-            if gameObj and gameObj.objects then
-                for _, obj in ipairs(gameObj.objects) do
-                    if obj.isType and obj:isType("turret") and obj:isType("energy") then
-                        if obj.effectManager then
-                            obj.effectManager:applyEffect(buff)
-                        end
-                    end
-                end
-            end
-        end
+        isConsume = true,
+        executionType = InstantCard.ExecutionType.Group,
+        statModifiers = { damage = { mult = 0.20 } },
+        targetTypes = { energy = true }
     })
     energySurge.quantity = 1
     deck:addCard(energySurge)
@@ -351,7 +338,7 @@ function MainLazer.getUniqueCards()
             {
                 id = "unstable_laser",
                 name = "Unstable Laser",
-                description = "Gives your big lazer a 20% chance to burn enemies.",
+                description = "Give your Heavy Laser a 25% chance to burn enemies.",
                 type = "main_upgrade",
                 iconCategory = "upgrade",
                 cost = 2,

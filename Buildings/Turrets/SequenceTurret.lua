@@ -37,7 +37,6 @@ SequenceTurret.template = {
     lifespan = 1.5,
     bulletW = 6,
     bulletH = 6,
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

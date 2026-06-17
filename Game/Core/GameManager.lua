@@ -369,7 +369,7 @@ function game:draw()
     end
 
     if self.inputMode == "targeting_spell" and self.activeCard then
-        local radius = self.activeCard.radius or 50
+        local radius = self.activeCard:getStat("radius") or 50
         local drawX = self.inputHandler.mouseX
         local drawY = self.inputHandler.mouseY
         
@@ -717,6 +717,7 @@ function game:initBattleDeck()
     self.hand = {}
     self.consumedPile = {}
     self.discardPile = {}
+    self.exiledPile = {}
     
     if _G.PersistentState and _G.PersistentState.deck then
         local function deepcopy(orig, copies)
@@ -784,6 +785,15 @@ function game:drawCard(amount)
         end
         
         local card = table.remove(self.drawPile, 1)
+        card.game = self
+        if card.effectManager then
+            card.effectManager.game = self
+            card.effectManager.owner = card
+            if self.playerEffectManager then
+                card.effectManager.parent = self.playerEffectManager
+            end
+            card.effectManager:recalculateStats()
+        end
         table.insert(self.hand, card)
         drawn = drawn + 1
     end
@@ -797,11 +807,22 @@ function game:consumeCard(card)
             
             local execType = card.executionType
             local ExecutionType = require("Game.Cards.ExecutionType")
-            if execType == "Global" or execType == "Targeted" or 
-               execType == ExecutionType.Global or execType == ExecutionType.Targeted then
-                table.insert(self.discardPile, card)
+            
+            if card.isExile then
+                if type(card.Exile) == "function" then
+                    card:Exile(self)
+                else
+                    if not self.exiledPile then self.exiledPile = {} end
+                    table.insert(self.exiledPile, card)
+                end
+            elseif card.isConsume or execType == ExecutionType.Placement or execType == "Placement" then
+                if type(card.Consume) == "function" then
+                    card:Consume(self)
+                else
+                    table.insert(self.consumedPile, card)
+                end
             else
-                table.insert(self.consumedPile, card)
+                table.insert(self.discardPile, card)
             end
             break
         end

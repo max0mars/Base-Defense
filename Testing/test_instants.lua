@@ -22,7 +22,8 @@ _G.GameManager = {
     },
     registerActiveGlobalBuff = function(self, buff)
         -- mock
-    end
+    end,
+    objects = {}
 }
 
 local failures = 0
@@ -42,7 +43,7 @@ assert(InstantCardRegistry.EmergencyRepairs ~= nil, "EmergencyRepairs card loade
 
 -- 2. Test Execution Type validation
 assert(InstantCardRegistry.Overclock.executionType == InstantCard.ExecutionType.Targeted, "Overclock is Targeted")
-assert(InstantCardRegistry.Frenzy.executionType == InstantCard.ExecutionType.Global, "Frenzy is Global")
+assert(InstantCardRegistry.Frenzy.executionType == InstantCard.ExecutionType.Group, "Frenzy is Group")
 
 -- 3. Test isValidTarget
 local overclock = InstantCardRegistry.Overclock
@@ -52,7 +53,8 @@ local validTurret = {
         applyEffect = function(self, buff)
             self.parent.buffs = self.parent.buffs or {}
             table.insert(self.parent.buffs, buff)
-        end
+        end,
+        recalculateStats = function() end
     }
 }
 validTurret.effectManager.parent = validTurret
@@ -64,15 +66,62 @@ assert(overclock:isValidTarget(invalidTarget) == false, "Overclock rejects inval
 assert(overclock:isValidTarget(nil) == false, "Overclock rejects nil target")
 
 local frenzy = InstantCardRegistry.Frenzy
-assert(frenzy:isValidTarget(nil) == true, "Global Frenzy allows nil target")
+assert(frenzy:isValidTarget(nil) == true, "Group Frenzy allows nil target")
 
 -- Test Targeted execute
 overclock:execute(validTurret)
 assert(validTurret.buffs and validTurret.buffs[1].statModifiers.damage.mult == 0.10, "Overclock applied buff to target")
 
--- Test Global execute
+-- Test Group execute
+_G.GameManager.objects = { validTurret }
 frenzy:execute(_G.GameManager)
-assert(_G.GlobalBuffs and _G.GlobalBuffs[1].statModifiers.fireRate.mult == 0.15, "Frenzy applied global buff")
+assert(validTurret.buffs and validTurret.buffs[2].statModifiers.fireRate.mult == 0.15, "Frenzy applied group buff to active turret")
+
+-- Test Global execute (affects playerEffectManager)
+local mockGlobal = InstantCard.new({
+    id = "mock_global",
+    executionType = InstantCard.ExecutionType.Global,
+    statModifiers = { damage = { mult = 0.50 } }
+})
+mockGlobal:execute(_G.GameManager)
+assert(_G.GlobalBuffs and _G.GlobalBuffs[1].statModifiers.damage.mult == 0.50, "Global card applied buff to playerEffectManager")
+
+-- Test Group execute with targetTypes filtering (e.g. Energy Surge)
+local energySurge = InstantCard.new({
+    id = "inst_energy_surge_1",
+    executionType = InstantCard.ExecutionType.Group,
+    statModifiers = { damage = { mult = 0.20 } },
+    targetTypes = { energy = true }
+})
+local energyTurret = {
+    isType = function(self, t) return t == "turret" or t == "energy" end,
+    effectManager = {
+        applyEffect = function(self, buff)
+            self.parent.buffs = self.parent.buffs or {}
+            table.insert(self.parent.buffs, buff)
+        end,
+        recalculateStats = function() end
+    }
+}
+energyTurret.effectManager.parent = energyTurret
+
+local ballisticTurret = {
+    isType = function(self, t) return t == "turret" or t == "ballistic" end,
+    effectManager = {
+        applyEffect = function(self, buff)
+            self.parent.buffs = self.parent.buffs or {}
+            table.insert(self.parent.buffs, buff)
+        end,
+        recalculateStats = function() end
+    }
+}
+ballisticTurret.effectManager.parent = ballisticTurret
+
+_G.GameManager.objects = { energyTurret, ballisticTurret }
+energySurge:execute(_G.GameManager)
+
+assert(energyTurret.buffs and #energyTurret.buffs == 1 and energyTurret.buffs[1].statModifiers.damage.mult == 0.20, "Energy Surge successfully applied to energy turret")
+assert(ballisticTurret.buffs == nil or #ballisticTurret.buffs == 0, "Energy Surge ignored ballistic turret")
 
 -- Test custom execute
 local initialHp = _G.Base.hp

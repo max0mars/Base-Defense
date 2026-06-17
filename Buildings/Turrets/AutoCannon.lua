@@ -31,7 +31,6 @@ AutoCannon.template = {
     lifespan = .8,
     bulletW = 3, 
     bulletH = 3, 
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

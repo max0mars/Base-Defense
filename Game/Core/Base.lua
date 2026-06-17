@@ -65,13 +65,26 @@ function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTag
     if sourceEntity then
         local enemyName = sourceEntity.name or "Enemy"
         
-        local wave = self.game.wave or 0
-        if not self.damageTracker[wave] then
-            self.damageTracker[wave] = {}
+        local level = 1
+        local tracker = self.damageTracker
+        if _G.PersistentState then
+            if not _G.PersistentState.damageTracker then
+                _G.PersistentState.damageTracker = {}
+            end
+            tracker = _G.PersistentState.damageTracker
+            level = (_G.PersistentState.battlesCompleted or 0) + 1
+        else
+            if not self.damageTracker then
+                self.damageTracker = {}
+            end
         end
         
-        if not self.damageTracker[wave][enemyName] then
-            self.damageTracker[wave][enemyName] = {
+        if not tracker[level] then
+            tracker[level] = {}
+        end
+        
+        if not tracker[level][enemyName] then
+            tracker[level][enemyName] = {
                 damage = 0,
                 color = sourceEntity.color,
                 w = sourceEntity.w or 20,
@@ -79,7 +92,7 @@ function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTag
                 shape = sourceEntity.shape or "rectangle"
             }
         end
-        self.damageTracker[wave][enemyName].damage = self.damageTracker[wave][enemyName].damage + amount
+        tracker[level][enemyName].damage = tracker[level][enemyName].damage + amount
     end
 
     self.game.damageTakenThisBattle = (self.game.damageTakenThisBattle or 0) + amount
@@ -88,26 +101,33 @@ function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTag
 end
 
 function Base:getProcessedDamageHistory()
+    local tracker = self.damageTracker
+    if _G.PersistentState and _G.PersistentState.damageTracker then
+        tracker = _G.PersistentState.damageTracker
+    end
+    
     local history = {}
-    for wave, enemies in pairs(self.damageTracker) do
-        for name, data in pairs(enemies) do
-            table.insert(history, {
-                wave = wave,
-                name = name,
-                damage = data.damage,
-                color = data.color,
-                w = data.w,
-                h = data.h,
-                shape = data.shape
-            })
+    if tracker then
+        for level, enemies in pairs(tracker) do
+            for name, data in pairs(enemies) do
+                table.insert(history, {
+                    level = level,
+                    name = name,
+                    damage = data.damage,
+                    color = data.color,
+                    w = data.w,
+                    h = data.h,
+                    shape = data.shape
+                })
+            end
         end
     end
     
     table.sort(history, function(a, b)
-        if a.wave == b.wave then
+        if a.level == b.level then
             return a.damage > b.damage
         end
-        return a.wave < b.wave
+        return a.level < b.level
     end)
     
     return history

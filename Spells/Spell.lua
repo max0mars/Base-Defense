@@ -1,8 +1,14 @@
-local Spell = {}
+local object = require("Classes.object")
+local Spell = setmetatable({}, { __index = object })
 Spell.__index = Spell
 
 function Spell.new(config)
-    local self = setmetatable({}, Spell)
+    config = config or {}
+    config.types = config.types or {}
+    config.types.spell = true
+    config.effectManager = true
+
+    local self = setmetatable(object:new(config), { __index = Spell })
     
     self.id = config.id
     self.name = config.name or "Unknown Spell"
@@ -16,6 +22,9 @@ function Spell.new(config)
     self.executionType = config.executionType or ExecutionType.Spell
     self.customExecute = config.customExecute or nil
     
+    self.isConsume = config.isConsume or false
+    self.isExile = config.isExile or false
+    
     return self
 end
 
@@ -26,7 +35,7 @@ function Spell:getCardDraw()
         local data = {
             name = self.name,
             description = self.description,
-            cost = self.cost or 1,
+            cost = self:getCost(),
             rarity = self.rarity or "Common",
             type = "spell", -- Maps self.instantType to "Spell" in CardDraw
             iconCategory = "upgrade",
@@ -43,7 +52,7 @@ function Spell:getCardDraw()
 end
 
 function Spell:getCost()
-    return self.cost or 1
+    return self:getStat("cost", self.cost or 1)
 end
 
 function Spell:isValidTarget(x, y)
@@ -64,10 +73,24 @@ function Spell:execute(x, y, game)
     if not self:isValidTarget(x, y) then return false end
     
     if self.customExecute then
-        self.customExecute(x, y, game)
-    end
+        self.customExecute(self, x, y, game)
+     end
     
     return true
+end
+
+function Spell:Consume(game)
+    table.insert(game.consumedPile, self)
+end
+
+function Spell:Exile(game)
+    if _G.PersistentState and _G.PersistentState.deck then
+        _G.PersistentState.deck:removeCard(self.id, 1)
+    end
+    if not game.exiledPile then
+        game.exiledPile = {}
+    end
+    table.insert(game.exiledPile, self)
 end
 
 return Spell

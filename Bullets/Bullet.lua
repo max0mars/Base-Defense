@@ -9,7 +9,7 @@ function Bullet:new(config)
         error("Developer Error: Bullet:new called with nil config.")
     end
 
-    local required = {"name", "bulletSpeed", "damage", "pierce", "lifespan", "w", "h", "shape"}
+    local required = {"name", "bulletSpeed", "damage", "pierce", "lifespan"}
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: Bullet [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
@@ -17,10 +17,12 @@ function Bullet:new(config)
     end
 
     if(config.source == nil) then error("Bullet has no source??? Where did it come from then??? (set config.source when creating bullet)") end
+    config.w = config.w or 4
+    config.h = config.h or 4
+    config.shape = config.shape or "rectangle"
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
-    b.tags = config.tags or {} -- Initialize tags table
     b.damageTags = config.damageTags or {} -- Initialize damageTags table
     b.source = config.source -- Track bullet source for stat calculation
     b.damageType = config.damageType or "normal"
@@ -245,7 +247,6 @@ function Bullet:died()
                 explosionDamage = (self.explosionDamage or self.damage or 0) * 0.5,
                 explosion_from_damage = self.explosion_from_damage,
                 canDirectHit = self.canDirectHit,
-                tags = self.tags,
                 damageTags = self.damageTags,
                 types = self.types,
                 hitCache = childHitCache -- Clones inherit hit history but maintain independent caches

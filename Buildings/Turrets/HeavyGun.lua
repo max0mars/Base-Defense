@@ -32,7 +32,6 @@ HeavyGun.template = {
     lifespan = 4,
     bulletW = 8, 
     bulletH = 8, 
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

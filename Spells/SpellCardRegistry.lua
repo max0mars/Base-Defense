@@ -4,16 +4,19 @@ local Spell = require("Spells.Spell")
 local SpellCardRegistry = {}
 
 -- Fireball
+local fireballRadius = 60
+local fireballDamage = 50
 SpellCardRegistry.Fireball = Spell.new({
     id = "spell_fireball",
     name = "Fireball",
-    description = "Deal 80 damage in a 60-radius.",
+    description = "Deal 50 damage in a 60-radius.",
     cost = 1,
     rarity = "Common",
-    radius = 60,
-    customExecute = function(x, y, game)
-        local FireballVisual = require("Graphics.Animations.FireballVisual")
-        table.insert(game.animations, FireballVisual:new(x, y, 60, 80, game))
+    radius = fireballRadius,
+    damage = fireballDamage,
+    customExecute = function(self, x, y, game)
+        local FireballVisual = require("Spells.FireballVisual")
+        table.insert(game.animations, FireballVisual:new(x, y, self:getStat("radius"), self:getStat("damage"), game))
     end
 })
 
@@ -25,10 +28,11 @@ SpellCardRegistry.StunBurst = Spell.new({
     cost = 2,
     rarity = "Uncommon",
     radius = 70,
-    customExecute = function(x, y, game)
+    customExecute = function(self, x, y, game)
         -- Visual
         local StunBurstVisual = require("Graphics.Animations.StunBurstVisual")
-        table.insert(game.animations, StunBurstVisual:new(x, y, 70, 1.5))
+        local r = self:getStat("radius")
+        table.insert(game.animations, StunBurstVisual:new(x, y, r, 1.5))
         
         -- Sound
         if AUDIO then
@@ -37,7 +41,7 @@ SpellCardRegistry.StunBurst = Spell.new({
         
         -- Stun status effect
         local Stun = require("Game.Effects.StatusEffects.Stun")
-        local r2 = 70 * 70
+        local r2 = r * r
         for _, obj in ipairs(game.objects) do
             if obj:isType("enemy") and not obj.destroyed then
                 local dx = obj.x - x
@@ -60,10 +64,12 @@ SpellCardRegistry.AcidCloud = Spell.new({
     cost = 2,
     rarity = "Rare",
     radius = 80,
-    customExecute = function(x, y, game)
+    dps = 25,
+    customExecute = function(self, x, y, game)
         -- Visual
         local AcidCloudVisual = require("Graphics.Animations.AcidCloudVisual")
-        table.insert(game.animations, AcidCloudVisual:new(x, y, 80, 5.0))
+        local r = self:getStat("radius")
+        table.insert(game.animations, AcidCloudVisual:new(x, y, r, 5.0))
         
         -- Register custom duration effect on the global enemyEffectManager
         if game.enemyEffectManager then
@@ -71,8 +77,8 @@ SpellCardRegistry.AcidCloud = Spell.new({
             game.enemyEffectManager:applyEffect(AcidCloudEffect:new({
                 x = x,
                 y = y,
-                radius = 80,
-                dps = 25,
+                radius = r,
+                dps = self:getStat("dps"),
                 duration = 5.0,
                 game = game
             }))
@@ -88,8 +94,9 @@ SpellCardRegistry.Judgment = Spell.new({
     cost = 2,
     rarity = "Rare",
     radius = 0,
+    damage = 1000,
     isGlobalSpell = true,
-    customExecute = function(x, y, game)
+    customExecute = function(self, x, y, game)
         local activeEnemies = {}
         for _, obj in ipairs(game.objects) do
             if obj:isType("enemy") and not obj.destroyed then
@@ -99,7 +106,7 @@ SpellCardRegistry.Judgment = Spell.new({
         
         local numEnemies = #activeEnemies
         if numEnemies > 0 then
-            local damagePerEnemy = 1000 / numEnemies
+            local damagePerEnemy = self:getStat("damage") / numEnemies
             for _, enemy in ipairs(activeEnemies) do
                 -- Apply damage
                 enemy:takeDamage(damagePerEnemy, "trueDamage")

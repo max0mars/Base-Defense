@@ -11,6 +11,9 @@ function Card:new(config)
     obj.executionType = config.executionType or ExecutionType.Placement
     obj.quantity = config.quantity or 1
     
+    obj.isConsume = config.isConsume or false
+    obj.isExile = config.isExile or false
+    
     -- payload contains the building class and configuration or the effect definition
     obj.payload = config.payload
     
@@ -146,6 +149,20 @@ function Card:execute(game)
     end
     
     return nil
+end
+
+function Card:Consume(game)
+    table.insert(game.consumedPile, self)
+end
+
+function Card:Exile(game)
+    if _G.PersistentState and _G.PersistentState.deck then
+        _G.PersistentState.deck:removeCard(self.id, 1)
+    end
+    if not game.exiledPile then
+        game.exiledPile = {}
+    end
+    table.insert(game.exiledPile, self)
 end
 
 return Card

@@ -35,7 +35,7 @@ CardRegistry.Frenzy = InstantCard.new({
     description = "All turrets fire 15% faster.",
     cost = 3,
     rarity = "Uncommon",
-    executionType = InstantCard.ExecutionType.Global,
+    executionType = InstantCard.ExecutionType.Group,
     statModifiers = { fireRate = { mult = 0.15 } }
 })
 

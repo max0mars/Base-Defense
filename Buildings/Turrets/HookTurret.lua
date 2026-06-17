@@ -15,7 +15,7 @@ HookTurret.template = {
     firingArc = { direction = 0, minRange = 0, angle = math.pi/4 },
     shapePattern = {{0,0}},
     color = {0.7, 0.4, 0.4, 1},
-    types = { turret = true, physical = true },
+    types = { turret = true, stun = true},
     
     -- Bullet Properties
     bulletName = "Heavy Hook",
@@ -26,7 +26,6 @@ HookTurret.template = {
     lifespan = 2,
     bulletW = 8, 
     bulletH = 8, 
-    bulletShape = "rectangle",
     
     -- Values for effect initialization
     duration_stun = 3,

@@ -14,7 +14,7 @@ Gator.template = {
     range = 500,
     barrel = 15,
     color = {0.15, 0.5, 0.15, 1}, -- Dark Green
-    types = { turret = true, gator = true },
+    types = { turret = true},
     shapePattern = {{0,0}},
     sfx = "gunshot_02",
     firingArc = {
@@ -32,7 +32,6 @@ Gator.template = {
     lifespan = 3,
     bulletW = 8,
     bulletH = 8,
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

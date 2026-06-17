@@ -261,7 +261,7 @@ function HandUI:mousepressed(x, y, button)
                 self.game.tokens = self.game.tokens - cost
                 self.game.activeCard = card
                 
-                if card.executionType == ExecutionType.Global or card.executionType == "Global" then
+                if card.executionType == ExecutionType.Global or card.executionType == "Global" or card.executionType == ExecutionType.Group or card.executionType == "Group" then
                     self.game.inputMode = "targeting_global"
                 elseif card.executionType == ExecutionType.Spell or card.executionType == "Spell" then
                     self.game.inputMode = "targeting_spell"

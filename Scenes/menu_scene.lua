@@ -131,6 +131,7 @@ function menu_scene:mousepressed(x, y, button)
                         deck = nil, -- Will be set in new_game_scene
                         globalDifficulty = 1,
                         battlesCompleted = 0,
+                        damageTracker = {},
                         activeMutations = {},
                         discoveredEnemies = { ["Basic"] = true },
                         startingTokens = 3,
@@ -170,6 +171,7 @@ function menu_scene:keypressed(key)
             shopXP = 0,
             globalDifficulty = 1,
             battlesCompleted = 0,
+            damageTracker = {},
             activeMutations = {},
             discoveredEnemies = { ["Basic"] = true },
             startingTokens = 3,

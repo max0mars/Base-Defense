@@ -15,7 +15,7 @@ MissileLauncher.template = {
     color = {0.7, 0.2, 0.9, 1}, -- Vibrant neon purple theme
     baseShape = "square",
     barrelShape = "single",
-    types = { turret = true },
+    types = { turret = true, explosive = true },
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,
@@ -35,7 +35,6 @@ MissileLauncher.template = {
     lifespan = 5,
     bulletW = 6,
     bulletH = 4,
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

@@ -59,9 +59,9 @@ function game_over_scene:draw()
             love.graphics.setColor(0, 0.85, 1.0, 0.2)
             love.graphics.rectangle("line", startX + col * cellW, startY + row * cellH, cellW, cellH, 4)
             
-            -- Draw Wave
+            -- Draw Level
             love.graphics.setColor(1, 1, 1, 0.8)
-            love.graphics.printf("Wave: " .. tostring(item.wave), startX + col * cellW, startY + row * cellH + 5, cellW, "center")
+            love.graphics.printf("Level: " .. tostring(item.level), startX + col * cellW, startY + row * cellH + 5, cellW, "center")
             
             -- Draw Sprite
             local drawW = item.w or 20

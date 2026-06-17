@@ -14,7 +14,7 @@ ShotgunTurret.template = {
     color = {1, 0.4, 0, 1}, -- Bright fiery neon orange
     baseShape = "square",
     barrelShape = "flared",
-    types = { turret = true },
+    types = { turret = true, shotgun = true },
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,
@@ -33,7 +33,6 @@ ShotgunTurret.template = {
     lifespan = 0.8,  -- Short-range drop-off
     bulletW = 3,
     bulletH = 3,
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

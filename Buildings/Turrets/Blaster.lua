@@ -30,9 +30,6 @@ Blaster.template = {
     damage = 4, 
     pierce = 1,
     lifespan = 2,
-    bulletW = 4,
-    bulletH = 4,
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 

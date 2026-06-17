@@ -1,42 +1,52 @@
 local Turret = require("Buildings.Turrets.Turret")
 local EnergyBullet = require("Bullets.EnergyBullet")
+local Utils = require("Classes.Utils")
+
 local FluxCannon = setmetatable({}, { __index = Turret })
 FluxCannon.__index = FluxCannon
 
-function FluxCannon:new(config)
-    config = config or {}
-    
-    -- Configure Flux Cannon Stats
-    config.name = "Flux Cannon"
-    config.color = {0, 1, 1, 1} -- Bright Cyan
-    config.rotation = config.rotation or 0
-    config.turnSpeed = 4
-    config.fireRate = 1.2
-    config.damage = 35
-    config.bulletSpeed = 450
-    config.range = 400
-    config.barrel = 12
-    config.bulletW = 12
-    config.bulletH = 4
-    config.bulletShape = "pill"
-    config.damageType = "energy"
-    config.bulletName = "Energy Bolt"
-    config.lifespan = 1.5
-    config.pierce = 1
-    config.types = { turret = true, energy = true, building = true }
-    config.sfx = "laser_02"
-    
-    config.firingArc = config.firingArc or {
-        direction = config.rotation,
+-- Source of Truth: All stats in a single flat table
+FluxCannon.template = {
+    name = "Flux Cannon",
+    color = {0, 1, 1, 1}, -- Bright Cyan
+    rotation = 0,
+    turnSpeed = 4,
+    fireRate = 1.2,
+    damage = 35,
+    bulletSpeed = 450,
+    range = 400,
+    barrel = 12,
+    bulletW = 12,
+    damageType = "energy",
+    bulletName = "Energy Bolt",
+    lifespan = 1.5,
+    pierce = 1,
+    types = { turret = true, energy = true },
+    sfx = "laser_02",
+    firingArc = {
+        direction = 0,
         minRange = 0,
         angle = math.pi/8
-    }
-    
-    config.shapePattern = {
+    },
+    shapePattern = {
         {0, 0}
     }
+}
+
+function FluxCannon:new(config)
+    local baseConfig = Utils.deepCopy(FluxCannon.template)
     
-    local instance = Turret:new(config)
+    if config then
+        for k, v in pairs(config) do
+            if type(v) == "table" and baseConfig[k] then
+                for k2, v2 in pairs(v) do baseConfig[k][k2] = v2 end
+            else
+                baseConfig[k] = v
+            end
+        end
+    end
+    
+    local instance = Turret:new(baseConfig)
     setmetatable(instance, FluxCannon)
     
     instance.bulletType = EnergyBullet

@@ -49,9 +49,9 @@ function Turret:new(config)
     t.lifespan = config.lifespan or 1
     t.displayLifespan = config.displayLifespan or 0.1
     t.pierce = config.pierce or 1
-    t.bulletW = config.bulletW or 4
-    t.bulletH = config.bulletH or 4
-    t.bulletShape = config.bulletShape or "rectangle"
+    t.bulletW = config.bulletW
+    t.bulletH = config.bulletH
+    t.bulletShape = config.bulletShape
     t.damageType = config.damageType or "normal"
     -- Effect Stats (Initialized from config, defaulting to 0)
     t.dps_poison = config.dps_poison or 0
@@ -158,7 +158,6 @@ function Turret:fire(args)
         game = self.game, -- Reference to the game object
         source = self,
         color = self.color, -- Pass turret color to bullet
-        tags = {"bullet"},
         types = { bullet = true },
         targetX = args and args.targetX or nil,
         targetY = args and args.targetY or nil,

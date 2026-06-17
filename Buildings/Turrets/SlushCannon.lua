@@ -16,7 +16,7 @@ SlushCannon.template = {
     color = {0.8, 0.95, 1, 1}, -- Icy/watery white-blue
     baseShape = "hexagon",
     barrelShape = "thick",
-    types = { turret = true, ice = true },
+    types = { turret = true, slow = true },
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,
@@ -34,7 +34,6 @@ SlushCannon.template = {
     lifespan = 2.0,
     bulletW = 16,
     bulletH = 16,
-    bulletShape = "rectangle",
     
     -- Values for effect initialization
     duration = 4.1,

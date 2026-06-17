@@ -31,8 +31,7 @@ AirburstTurret.template = {
     pierce = 1,
     lifespan = 3,
     bulletW = 8, 
-    bulletH = 8, 
-    bulletShape = "rectangle"
+    bulletH = 8
 }
 
 function AirburstTurret:new(config)

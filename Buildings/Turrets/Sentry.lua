@@ -14,7 +14,7 @@ Sentry.template = {
     range = 500,
     barrel = 10,
     color = {1, 1, 1, 1},
-    types = { turret = true, sentry = true },
+    types = { turret = true},
     shapePattern = {{0,0}},
     firingArc = {
         direction = 0,
@@ -29,9 +29,6 @@ Sentry.template = {
     damage = 10, 
     pierce = 1,
     lifespan = 3,
-    bulletW = 4,
-    bulletH = 4,
-    bulletShape = "rectangle",
     hitEffects = {}
 }
 
