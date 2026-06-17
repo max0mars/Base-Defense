@@ -17,6 +17,7 @@ local default = {
     -- },
     -- vibrant neon green color
     color = {0.2, 0.9, 0.3, 1},
+    isGlobal = false,
 }
 
 -- buff provides either a stat boost or an on hit ability to nearby towers
@@ -32,6 +33,7 @@ function Buff:new(config)
     b.effect = config.effect
     b.affectedSlots = config.affectedSlots
     b.color = config.color
+    b.isGlobal = config.isGlobal
     return b
 end
 
@@ -161,11 +163,24 @@ function Buff:applyBuffs()
     -- Apply this buff to all turrets in affected slots using the EffectManager
     if not self.slot or self.destroyed then return end
     
-    local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
     local base = self.game.base
+    local targets = {}
     
-    for _, slot in ipairs(affectedSlots) do
-        local target = base.buildGrid.buildings[slot]
+    if self.isGlobal then
+        if self.game and self.game.playerEffectManager then
+            table.insert(targets, { effectManager = self.game.playerEffectManager })
+        end
+    else
+        local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
+        for _, slot in ipairs(affectedSlots) do
+            local target = base.buildGrid.buildings[slot]
+            if target then
+                table.insert(targets, target)
+            end
+        end
+    end
+    
+    for _, target in ipairs(targets) do
         if target and target.effectManager then
             local effectToApply = {}
             -- Shallow copy the effect provided in configuration

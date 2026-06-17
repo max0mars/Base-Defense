@@ -324,6 +324,20 @@ function MainLazer.getStartingDeck()
     })
     energySurge.quantity = 1
     deck:addCard(energySurge)
+
+    deck:addCard(Card:new({
+        id = "industrialBattery",
+        name = "Industrial Battery",
+        description = "Increases all Energy damage by 20% when adjacent to the Main Turret.",
+        executionType = ExecutionType.Placement,
+        quantity = 2,
+        payload = {
+            buildingClass = require("Buildings.Buffs.IndustrialBattery"),
+            config = {},
+            rarity = "rare",
+            iconCategory = "buff"
+        }
+    }))
     
     return deck
 end
@@ -354,6 +368,16 @@ function MainLazer.getUniqueCards()
                     local mt = game.base and game.base.mainLazer
                     return mt and mt.id == "standard_main" and not mt.upgrades["low_power_operating"]
                 end
+            },
+            {
+                id = "industrialBattery",
+                name = "Industrial Battery",
+                description = "Increases all Energy damage by 50% when adjacent to the Main Turret.",
+                type = "building",
+                building = require("Buildings.Buffs.IndustrialBattery"),
+                iconCategory = "buff",
+                cost = 2,
+                affectedSlots = {}
             }
         },
         legendary = {

@@ -164,6 +164,16 @@ local RewardIndex = {
             cost = 2,
             affectedSlots = {{1,0},{-1,0},{0,1},{0,-1}}
         },
+        -- {
+        --     id = "industrialBattery",
+        --     name = "Industrial Battery",
+        --     description = "Increases all Energy damage by 50% when adjacent to the Main Turret.",
+        --     type = "building",
+        --     building = require("Buildings.Buffs.IndustrialBattery"),
+        --     iconCategory = "buff",
+        --     cost = 2,
+        --     affectedSlots = {}
+        -- },
         {
             id = "gator",
             name = "GTR-55 Gator",

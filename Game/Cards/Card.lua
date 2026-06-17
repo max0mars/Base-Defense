@@ -55,6 +55,7 @@ function Card:getCardDraw()
         
         local dmgBars, rngBars, frBars = 0, 0, 0
         local affSlots = {}
+        local iconCat = self.payload.iconCategory or "turret"
         
         local success, rewardIndex = pcall(require, "Game.Rewards.NormalRewardIndex")
         if success and rewardIndex then
@@ -66,6 +67,7 @@ function Card:getCardDraw()
                             rngBars = reward.rangeBars or rngBars
                             frBars = reward.firerateBars or frBars
                             affSlots = reward.affectedSlots or affSlots
+                            iconCat = reward.iconCategory or iconCat
                             break
                         end
                     end
@@ -79,7 +81,7 @@ function Card:getCardDraw()
             cost = self:getCost(),
             rarity = self.payload.rarity or self.rarity or "common",
             type = self.payload.isMainUpgrade and "main_upgrade" or ((isGlobal or isTargeted) and "effect" or "building"),
-            iconCategory = (isGlobal or isTargeted) and "upgrade" or "turret",
+            iconCategory = (isGlobal or isTargeted) and "upgrade" or iconCat,
             damageBars = dmgBars,
             rangeBars = rngBars,
             firerateBars = frBars,

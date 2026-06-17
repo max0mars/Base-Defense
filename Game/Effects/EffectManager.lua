@@ -349,47 +349,54 @@ function EffectManager:getTooltipStrings()
     
     local function processEffects(em)
         for _, effect in ipairs(em.activeEffects) do
-            local displayName = effect.displayName or effect.name
-            if displayName then
-                -- Strip trailing _ID if present and no explicit displayName
-                if not effect.displayName then
-                    displayName = displayName:gsub("_%d+$", "")
-                end
-            end
-
-            local isRepresented = false
-
-            if effect.statModifiers then
-                for statName, mod in pairs(effect.statModifiers) do
-                    if not mod.hidden then
-                        nameMap[statName] = true
-                        flatMap[statName] = (flatMap[statName] or 0) + (mod.add or mod.additive or 0)
-                        multMap[statName] = (multMap[statName] or 0) + (mod.mult or mod.multiplier or 0)
-                        maxMap[statName] = math.max(maxMap[statName] or 0, mod.max or 0)
-                        isRepresented = true
+            local matches = true
+            if effect.targetTypes and self.owner then
+                matches = false
+                if type(self.owner.isType) == "function" then
+                    for t, req in pairs(effect.targetTypes) do
+                        if req and self.owner:isType(t) then
+                            matches = true
+                            break
+                        end
                     end
                 end
             end
 
-            if effect.grantedHitEffect then
-                local rawName = effect.grantedHitEffect.name or "Ability"
-                local abilityName = rawName:gsub("^%l", string.upper)
-                local abilityString = string.format("%s on Hit", abilityName)
-                
-                if not seenAbilities[abilityString] then
-                    table.insert(strings, abilityString)
-                    seenAbilities[abilityString] = true
+            if matches then
+                local displayName = effect.displayName or effect.name
+                if displayName then
+                    -- Strip trailing _ID if present and no explicit displayName
+                    if not effect.displayName then
+                        displayName = displayName:gsub("_%d+$", "")
+                    end
                 end
-                isRepresented = true
-            end
 
-            -- -- Add generic named effects
-            -- if displayName and not effect.hidden then
-            --     if not seenAbilities[displayName] then
-            --         table.insert(strings, displayName)
-            --         seenAbilities[displayName] = true
-            --     end
-            -- end
+                local isRepresented = false
+
+                if effect.statModifiers then
+                    for statName, mod in pairs(effect.statModifiers) do
+                        if not mod.hidden then
+                            nameMap[statName] = true
+                            flatMap[statName] = (flatMap[statName] or 0) + (mod.add or mod.additive or 0)
+                            multMap[statName] = (multMap[statName] or 0) + (mod.mult or mod.multiplier or 0)
+                            maxMap[statName] = math.max(maxMap[statName] or 0, mod.max or 0)
+                            isRepresented = true
+                        end
+                    end
+                end
+
+                if effect.grantedHitEffect then
+                    local rawName = effect.grantedHitEffect.name or "Ability"
+                    local abilityName = rawName:gsub("^%l", string.upper)
+                    local abilityString = string.format("%s on Hit", abilityName)
+                    
+                    if not seenAbilities[abilityString] then
+                        table.insert(strings, abilityString)
+                        seenAbilities[abilityString] = true
+                    end
+                    isRepresented = true
+                end
+            end
         end
         if em.parent then processEffects(em.parent) end
     end

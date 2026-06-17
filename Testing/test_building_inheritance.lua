@@ -145,6 +145,7 @@ local buffs = {
     { path = "Buildings.Buffs.RangeBuff", name = "RangeBuff" },
     { path = "Buildings.Buffs.ShardBullets", name = "ShardBullets" },
     { path = "Buildings.Buffs.ToxicTotem", name = "ToxicTotem" },
+    { path = "Buildings.Buffs.IndustrialBattery", name = "IndustrialBattery" },
 }
 
 for _, b in ipairs(buffs) do

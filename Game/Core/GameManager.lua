@@ -164,10 +164,18 @@ function game:addObject(obj)
     end
 end
 
---- Iterates through objects and reapplies buffs (e.g., when a buff building is placed/removed)
 function game:recalculateAllBuffs()
     for _, obj in ipairs(self.objects) do
         if obj.clearAllBuffs then obj:clearAllBuffs() end
+    end
+    
+    if self.playerEffectManager and self.playerEffectManager.activeEffects then
+        for i = #self.playerEffectManager.activeEffects, 1, -1 do
+            local effect = self.playerEffectManager.activeEffects[i]
+            if effect.isBuffTotem then
+                table.remove(self.playerEffectManager.activeEffects, i)
+            end
+        end
     end
     
     for _, obj in ipairs(self.objects) do
