@@ -13,6 +13,7 @@ function Card:new(config)
     
     obj.isConsume = config.isConsume or false
     obj.isExile = config.isExile or false
+    obj.cost = config.cost
     
     -- payload contains the building class and configuration or the effect definition
     obj.payload = config.payload
@@ -54,7 +55,7 @@ function Card:getCardDraw()
         local isGlobal = self.executionType == require("Game.Cards.ExecutionType").Global or self.executionType == "Global"
         
         local dmgBars, rngBars, frBars = 0, 0, 0
-        local affSlots = {}
+        local affSlots = self.payload.affectedSlots or {}
         local iconCat = self.payload.iconCategory or "turret"
         
         local success, rewardIndex = pcall(require, "Game.Rewards.NormalRewardIndex")
@@ -99,6 +100,10 @@ function Card:getCost()
     if self.cost then 
         self._computedCost = self.cost
         return self._computedCost 
+    end
+    if self.payload and self.payload.cost then
+        self._computedCost = self.payload.cost
+        return self._computedCost
     end
     
     local idToLookFor = self.id

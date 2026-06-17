@@ -110,11 +110,12 @@ function FastMainTurret.getStartingDeck()
     deck:addCard(InstantCard.new({
         id = "stabilizing_shots",
         name = "Stabilizing Shots",
-        description = "Reduces the Machine Gun's spread by 80%.",
+        description = "Reduces the Machine Gun's spread.",
         cost = 1,
         rarity = "uncommon",
+        isConsume = true,
         executionType = InstantCard.ExecutionType.Targeted,
-        statModifiers = { spread = { mult = -0.80 } },
+        statModifiers = { spread = { mult = -0.60 } },
         requiredType = "mainturret"
     }))
     
@@ -124,24 +125,24 @@ end
 function FastMainTurret.getUniqueCards()
     return {
         uncommon = {
-            {
-                id = "stabilizing_shots",
-                name = "Stabilizing Shots",
-                description = "Reduces the Machine Gun's spread by 50%.",
-                type = "effect",
-                iconCategory = "upgrade",
-                cost = 1,
-                payload = {
-                    requiredType = "mainturret",
-                    effect = {
-                        name = "Stabilizing Shots",
-                        statModifiers = { spread = { mult = -0.80 } }
-                    }
-                },
-                isEligible = function(game)
-                    return true
-                end
-            }
+            -- {
+            --     id = "stabilizing_shots",
+            --     name = "Stabilizing Shots",
+            --     description = "Reduces the Machine Gun's spread by 50%.",
+            --     type = "effect",
+            --     iconCategory = "upgrade",
+            --     cost = 1,
+            --     payload = {
+            --         requiredType = "mainturret",
+            --         effect = {
+            --             name = "Stabilizing Shots",
+            --             statModifiers = { spread = { mult = -0.80 } }
+            --         }
+            --     },
+            --     isEligible = function(game)
+            --         return true
+            --     end
+            -- }
         }
     }
 end

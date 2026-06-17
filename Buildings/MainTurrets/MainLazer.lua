@@ -309,6 +309,7 @@ function MainLazer.getStartingDeck()
     StandardMainTurret.addCard(deck, "inst_overclock_1", 4)
     StandardMainTurret.addCard(deck, "inst_range_1", 2)
     StandardMainTurret.addCard(deck, "inst_frenzy_1", 1)
+    StandardMainTurret.addCard(deck, "inst_hasty_1", 1)
 
     
     local energySurge = InstantCard.new({
@@ -330,12 +331,14 @@ function MainLazer.getStartingDeck()
         name = "Industrial Battery",
         description = "Increases all Energy damage by 20% when adjacent to the Main Turret.",
         executionType = ExecutionType.Placement,
+        cost = 2,
         quantity = 2,
         payload = {
             buildingClass = require("Buildings.Buffs.IndustrialBattery"),
             config = {},
             rarity = "rare",
-            iconCategory = "buff"
+            iconCategory = "buff",
+            affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
         }
     }))
     
@@ -377,7 +380,7 @@ function MainLazer.getUniqueCards()
                 building = require("Buildings.Buffs.IndustrialBattery"),
                 iconCategory = "buff",
                 cost = 2,
-                affectedSlots = {}
+                affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
             }
         },
         legendary = {

@@ -206,5 +206,31 @@ assert(mockEnergyTurret:getStat("damage") == 10, "Energy turret damage remains u
 assert(mockEnergySpell:getStat("damage") == 20, "Energy spell damage remains unmodified (20) when battery is NOT adjacent")
 assert(mockEnergyInstant:getStat("damage") == 30, "Energy instant damage remains unmodified (30) when battery is NOT adjacent")
 
+-- Test Card affectedSlots retrieval
+local Card = require("Game.Cards.Card")
+local ibCard = Card:new({
+    id = "industrialBattery",
+    name = "Industrial Battery",
+    executionType = require("Game.Cards.ExecutionType").Placement,
+    payload = {
+        buildingClass = IndustrialBattery,
+        rarity = "rare",
+        iconCategory = "buff",
+        affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
+    }
+})
+local cardDraw = ibCard:getCardDraw()
+assert(#cardDraw.affectedSlots == 4, "Industrial Battery CardDraw object contains 4 affectedSlots")
+assert(cardDraw.affectedSlots[1][1] == -1 and cardDraw.affectedSlots[1][2] == 0, "First affectedSlot is {-1, 0}")
+
+-- Check cost resolution
+local deckCard = Card:new({
+    id = "industrialBattery",
+    name = "Industrial Battery",
+    cost = 2,
+    payload = { rarity = "rare" }
+})
+assert(deckCard:getCost() == 2, "Industrial Battery Card returns correct cost (2)")
+
 print("--- Industrial Battery Tests Completed: " .. failures .. " failures ---")
 os.exit(failures == 0 and 0 or 1)

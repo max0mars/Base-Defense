@@ -62,4 +62,47 @@ CardRegistry.EmergencyRepairs = InstantCard.new({
     end
 })
 
+CardRegistry.HastyDefenses = InstantCard.new({
+    id = "inst_hasty_1",
+    name = "Hasty Defenses",
+    description = "Spawn 3 Sentries in random unoccupied slots on the base.",
+    cost = 2,
+    isConsume = true,
+    rarity = "Uncommon",
+    executionType = InstantCard.ExecutionType.Global,
+    
+    customExecute = function(gameObj)
+        if not gameObj or not gameObj.base or not gameObj.base.buildGrid then return end
+        
+        local grid = gameObj.base.buildGrid
+        local emptySlots = {}
+        
+        -- The condition is that slots are not already occupied.
+        -- We loop through all possible slots on the grid (width * height).
+        local totalSlots = grid.width * grid.height
+        for i = 1, totalSlots do
+            if not grid.buildings[i] then
+                table.insert(emptySlots, i)
+            end
+        end
+        
+        local SentryClass = require("Buildings.Turrets.Sentry")
+        
+        local count = 0
+        -- Pick 3 random empty slots and spawn sentries
+        while count < 3 and #emptySlots > 0 do
+            local randIndex = love.math.random(1, #emptySlots)
+            local slot = emptySlots[randIndex]
+            table.remove(emptySlots, randIndex)
+            
+            -- Force unlock the slot so Base:addBuilding's visibility check doesn't fail
+            grid.unlocked[slot] = true
+            
+            local newSentry = SentryClass:new({game = gameObj})
+            gameObj:newBuilding(newSentry, slot)
+            count = count + 1
+        end
+    end
+})
+
 return CardRegistry
