@@ -189,6 +189,16 @@ local RewardIndex = {
 
 
         {
+            id = "unstable_laser",
+            name = "Unstable Laser",
+            description = "Increases adjacent Energy Turrets' attacks with a 25% chance to burn enemies.",
+            type = "building",
+            building = require("Buildings.Buffs.UnstableLaser"),
+            iconCategory = "buff",
+            cost = 2,
+            affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
+        },
+        {
             id = "missileLauncher",
             name = "Missile Launcher",
             description = "Wouldn't want to get in the way of one of these.",

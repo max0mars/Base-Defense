@@ -70,18 +70,6 @@ function MainLazer:applyUpgrade(reward)
                 statModifiers = { damage = { mult = -0.2 }, fireRate = { mult = 0.5 } }
             })
         end
-    elseif reward.id == "unstable_laser" then
-        local burn = BurnEffect:new({
-            name = "burn",
-            duration_burn = 3.2,
-            dps_burn = 10,
-            maxStacks = 5,
-            chance = 0.25
-        })
-        self:addHitEffect(burn)
-        if self.effectManager then
-            self.effectManager:applyEffect({ name = "+Burn Chance" })
-        end
     elseif reward.id == "electric_field" then
         if self.effectManager then
             self.effectManager:applyEffect({ name = "Electric Field" })
@@ -300,10 +288,17 @@ function MainLazer.getStartingDeck()
     deck:addCard(Card:new({
         id = "unstable_laser",
         name = "Unstable Laser",
-        description = "Give your Heavy Laser a 25% chance to burn enemies.",
-        executionType = ExecutionType.Targeted,
+        description = "Increases adjacent Energy Turrets' attacks with a 25% chance to burn enemies.",
+        executionType = ExecutionType.Placement,
+        cost = 2,
         quantity = 1,
-        payload = { isMainUpgrade = true, rarity = "rare" }
+        payload = {
+            buildingClass = require("Buildings.Buffs.UnstableLaser"),
+            config = {},
+            rarity = "rare",
+            iconCategory = "buff",
+            affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
+        }
     }))
     
     StandardMainTurret.addCard(deck, "inst_overclock_1", 4)
@@ -348,18 +343,6 @@ end
 function MainLazer.getUniqueCards()
     return {
         rare = {
-            {
-                id = "unstable_laser",
-                name = "Unstable Laser",
-                description = "Give your Heavy Laser a 25% chance to burn enemies.",
-                type = "main_upgrade",
-                iconCategory = "upgrade",
-                cost = 2,
-                isEligible = function(game)
-                    local mt = game.base and game.base.mainLazer
-                    return mt and mt.id == "standard_main" and not mt.upgrades["unstable_laser"]
-                end
-            },
             {
                 id = "low_power_operating",
                 name = "Low Power Ops",

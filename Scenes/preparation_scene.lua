@@ -166,7 +166,7 @@ function preparation_scene:rollShop()
                 end
             end
             if baseSpell then
-                local Utils = require("Libraries.utils")
+                local Utils = require("Classes.Utils")
                 card = Utils.deepCopy(baseSpell)
                 card.quantity = 1
             end
@@ -180,7 +180,7 @@ function preparation_scene:rollShop()
                 end
             end
             if baseInstant then
-                local Utils = require("Libraries.utils")
+                local Utils = require("Classes.Utils")
                 card = Utils.deepCopy(baseInstant)
                 card.quantity = 1
             end
