@@ -98,7 +98,13 @@ function HandUI:draw()
     
     local inRegion = function(btn) return mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h end
     
-    if self.isHidden then return end
+    if self.isHidden then
+        local r, g, b, a = love.graphics.getColor()
+        love.graphics.setColor(1, 1, 1, 0.5)
+        love.graphics.printf("Hand Hidden", handStartX, deckY + cardHeight / 2 - 10, maxHandWidth, "center")
+        love.graphics.setColor(r, g, b, a)
+        return
+    end
     
     -- Draw Card Button
     drawActionButton(drawCardBtn, "DRAW CARD", drawCost .. " Tk", {0.2, 0.6, 0.9}, inRegion(drawCardBtn), true, canAffordDraw)
