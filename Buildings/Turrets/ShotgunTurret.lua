@@ -22,7 +22,7 @@ ShotgunTurret.template = {
         angle = math.rad(100)
     },
     sfx = "gunshot_03",
-    spread = math.rad(20), -- Base full spread cone angle in radians
+    spread = math.rad(15), -- Base full spread cone angle in radians
     
     -- Bullet Properties
     bulletName = "Shotgun Pellet",
