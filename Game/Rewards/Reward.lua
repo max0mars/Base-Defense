@@ -81,9 +81,10 @@ function Reward:resolveIconCat()
     if self.type == "main_upgrade" or self.type == "effect" or self.type == "upgrade" then
         return "upgrade"
     elseif self.type == "building" then
-        if self.id and (self.id:find("buff") or self.id:find("Buff") or self.id:find("Cache") or self.id == "bank" or self.id:find("Coating") or self.id:find("Rounds") or self.id:find("rounds")) then
+        local idStr = self.id and tostring(self.id) or ""
+        if self.id and (idStr:find("buff") or idStr:find("Buff") or idStr:find("Cache") or idStr == "bank" or idStr:find("Coating") or idStr:find("Rounds") or idStr:find("rounds")) then
             return "buff"
-        elseif self.id and (self.id:find("box") or self.id:find("fence") or self.id:find("Blocker")) then
+        elseif self.id and (idStr:find("box") or idStr:find("fence") or idStr:find("Blocker")) then
             return "blocker"
         else
             return "turret"

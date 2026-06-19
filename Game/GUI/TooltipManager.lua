@@ -244,9 +244,10 @@ function TooltipManager:buildingCardFor(b)
         
         local iconCat = "turret"
         if b.isType and not b:isType("turret") then
-            if b.id and (b.id:find("buff") or b.id:find("Buff") or b.id:find("Cache") or b.id == "bank" or b.id:find("Coating") or b.id:find("Rounds") or b.id:find("rounds")) then
+            local idStr = b.id and tostring(b.id) or ""
+            if b.id and (idStr:find("buff") or idStr:find("Buff") or idStr:find("Cache") or idStr == "bank" or idStr:find("Coating") or idStr:find("Rounds") or idStr:find("rounds")) then
                 iconCat = "buff"
-            elseif b.id and (b.id:find("box") or b.id:find("fence") or b.id:find("Blocker")) then
+            elseif b.id and (idStr:find("box") or idStr:find("fence") or idStr:find("Blocker")) then
                 iconCat = "blocker"
             end
         end
