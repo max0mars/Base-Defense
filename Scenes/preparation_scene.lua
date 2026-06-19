@@ -526,7 +526,7 @@ function preparation_scene:mousepressed(x, y, button)
                 _G.PersistentState.cash = _G.PersistentState.cash - item.cost
                 item.purchased = true
                 
-                local qty = math.random(1, 3)
+                local qty = 1
                 item.card.quantity = qty
                 _G.PersistentState.deck:addCard(item.card)
             end

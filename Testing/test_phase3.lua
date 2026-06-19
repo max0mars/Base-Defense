@@ -50,14 +50,14 @@ local shopCard = {
 
 if cash >= cost then
     cash = cash - cost
-    local quantity = math.random(1, 3)
+    local quantity = 1
     shopCard.quantity = quantity
     deck:addCard(shopCard)
 end
 
 local ownedCards = deck:getCards()
-if cash == 50 and #ownedCards == 1 and ownedCards[1].quantity >= 1 and ownedCards[1].quantity <= 3 then
-    print("[PASS] Shop purchase successfully deducted cash and added randomized quantity to deck.")
+if cash == 50 and #ownedCards == 1 and ownedCards[1].quantity == 1 then
+    print("[PASS] Shop purchase successfully deducted cash and added quantity of 1 to deck.")
 else
     print("[FAIL] Shop purchase logic failed.")
 end
