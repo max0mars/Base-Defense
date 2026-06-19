@@ -95,7 +95,7 @@ function BattleDirector:updateDiscoveryPool(selectedTemplate)
 
     local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
 
-    local function getDangerLevel(tierName)
+    local function getTier(tierName)
         local tierNum = tonumber(tierName:match("tier(%d+)"))
         if not tierNum then return nil end
         return tierNum + 2
@@ -104,7 +104,7 @@ function BattleDirector:updateDiscoveryPool(selectedTemplate)
     for key, reqMin in pairs(selectedTemplate.battleDangerTiers) do
         local tierName = key:match("^(tier%d+)min$")
         if tierName then
-            local targetDanger = getDangerLevel(tierName)
+            local targetDanger = getTier(tierName)
             if targetDanger then
                 local currentCount = 0
                 for _, enemyId in ipairs(self.discoveredEnemies) do
@@ -112,7 +112,7 @@ function BattleDirector:updateDiscoveryPool(selectedTemplate)
                     for _, e in ipairs(EnemyRegistry.allEnemies) do
                         if e.id == enemyId then enemyData = e break end
                     end
-                    if enemyData and enemyData.dangerLevel == targetDanger then
+                    if enemyData and enemyData.tier == targetDanger then
                         currentCount = currentCount + 1
                     end
                 end
@@ -122,7 +122,7 @@ function BattleDirector:updateDiscoveryPool(selectedTemplate)
                     while needed > 0 do
                         local candidates = {}
                         for _, e in ipairs(EnemyRegistry.allEnemies) do
-                            if e.dangerLevel == targetDanger and not EnemyRegistry.discoveredEnemiesMap[e.id] then
+                            if e.tier == targetDanger and not EnemyRegistry.discoveredEnemiesMap[e.id] then
                                 table.insert(candidates, e)
                             end
                         end
@@ -162,7 +162,7 @@ function BattleDirector:buildBattleRoster(selectedTemplate)
         end
     end
 
-    local function getDangerLevel(tierName)
+    local function getTier(tierName)
         local tierNum = tonumber(tierName:match("tier(%d+)"))
         if not tierNum then return nil end
         return tierNum + 2
@@ -203,7 +203,7 @@ function BattleDirector:buildBattleRoster(selectedTemplate)
         end
 
         for tierName, limits in pairs(tiers) do
-            local targetDanger = getDangerLevel(tierName)
+            local targetDanger = getTier(tierName)
             if targetDanger then
                 local minLimit = limits.min or 0
                 local maxLimit = limits.max or minLimit
@@ -219,7 +219,7 @@ function BattleDirector:buildBattleRoster(selectedTemplate)
                         end
                     end
 
-                    if enemyData and enemyData.dangerLevel == targetDanger and matchesAllowedTypes(enemyData) then
+                    if enemyData and enemyData.tier == targetDanger and matchesAllowedTypes(enemyData) then
                         table.insert(candidates, enemyData)
                     end
                 end

@@ -34,19 +34,104 @@ function WaveDirector:getBudgetForWave(waveNumber, globalDifficulty)
     return math.floor(base * multiplier)
 end
 
-function WaveDirector:generateWaveList(waveNumber, globalDifficulty)
-    globalDifficulty = globalDifficulty or 1
-    local totalBudget = self:getBudgetForWave(waveNumber, globalDifficulty)
-    local available = EnemyRegistry:getAvailableEnemies()
-    local waveList = {}
-    local currentCounts = {} -- Placeholder for constraints tracker
+function WaveDirector:generateWaveList(waveIndex, battleRoster, template, globalDifficulty)
+    if type(battleRoster) == "number" then
+        globalDifficulty = battleRoster
+        battleRoster = nil
+    end
 
-    -- Composition tracking for the wave preview UI (counts spawn-events per enemy id)
-    local summaryCounts = {} -- [id] = count
-    local summaryMeta = {}   -- [id] = index entry
-    local summaryOrder = {}  -- ids in order of first appearance
+    globalDifficulty = globalDifficulty or 1
+    local totalBudget = self:getBudgetForWave(waveIndex, globalDifficulty)
+    local laneCount = 1
+
+    if template then
+        if template.getLanesForWave then
+            laneCount = template:getLanesForWave(waveIndex)
+        elseif template.lanesPerWave then
+            laneCount = template.lanesPerWave[waveIndex] or template.lanesPerWave[#template.lanesPerWave] or 1
+        end
+
+        if template.relativeDifficulty and template.relativeDifficulty[waveIndex] then
+            totalBudget = math.floor(totalBudget * template.relativeDifficulty[waveIndex])
+        end
+    end
+
+    if not battleRoster then
+        battleRoster = EnemyRegistry:getAvailableEnemies()
+    end
+
+    local available = {}
+    if template and template.waveDangerTiers and template.waveDangerTiers[waveIndex] then
+        local allowedTiers = {}
+        for key, _ in pairs(template.waveDangerTiers[waveIndex]) do
+            local tierName = key:match("^(tier%d+)m[axin]+$")
+            if tierName then
+                local tierNum = tonumber(tierName:match("tier(%d+)"))
+                if tierNum then
+                    allowedTiers[tierNum + 2] = true
+                end
+            end
+        end
+
+        for _, e in ipairs(battleRoster) do
+            if allowedTiers[e.tier] then
+                table.insert(available, e)
+            end
+        end
+    else
+        available = battleRoster
+    end
+
+    local waveList = {}
+    local currentCounts = {}
+    local summaryCounts = {}
+    local summaryMeta = {}
+    local summaryOrder = {}
 
     local remainingBudget = totalBudget
+
+    local function addEnemySpawns(enemy, count)
+        if count <= 0 then return end
+        for _ = 1, count do
+            table.insert(waveList, enemy.class)
+        end
+        remainingBudget = remainingBudget - (count * enemy.spawnCost)
+        currentCounts[enemy.type] = (currentCounts[enemy.type] or 0) + count
+
+        if not summaryMeta[enemy.id] then
+            summaryMeta[enemy.id] = enemy
+            summaryCounts[enemy.id] = 0
+            table.insert(summaryOrder, enemy.id)
+        end
+        summaryCounts[enemy.id] = summaryCounts[enemy.id] + count
+    end
+
+    if template and template.specificWaveEnemies and template.specificWaveEnemies[waveIndex] then
+        local composition = template.specificWaveEnemies[waveIndex]
+        local function findEnemy(name)
+            local lowerName = name:lower()
+            for _, e in ipairs(battleRoster) do
+                if e.id:lower() == lowerName or e.type:lower() == lowerName then
+                    return e
+                end
+            end
+            for _, e in ipairs(EnemyRegistry.allEnemies) do
+                if e.id:lower() == lowerName or e.type:lower() == lowerName then
+                    return e
+                end
+            end
+            return nil
+        end
+
+        for name, ratio in pairs(composition) do
+            local enemy = findEnemy(name)
+            if enemy then
+                local allocated = totalBudget * ratio
+                local count = math.floor(allocated / enemy.spawnCost)
+                addEnemySpawns(enemy, count)
+            end
+        end
+    end
 
     while remainingBudget > 0 do
         local affordable = {}
@@ -59,37 +144,24 @@ function WaveDirector:generateWaveList(waveNumber, globalDifficulty)
             end
         end
 
-        -- Stop if no more enemies can be afforded
         if #affordable == 0 then break end
 
-        -- Weighted random selection
         local r = math.random(1, totalWeight)
         local runningWeight = 0
         for _, e in ipairs(affordable) do
             runningWeight = runningWeight + (e.spawnWeight or 10)
             if r <= runningWeight then
-                table.insert(waveList, e.class)
-                remainingBudget = remainingBudget - e.spawnCost
-                currentCounts[e.type] = (currentCounts[e.type] or 0) + 1
-
-                if not summaryMeta[e.id] then
-                    summaryMeta[e.id] = e
-                    summaryCounts[e.id] = 0
-                    table.insert(summaryOrder, e.id)
-                end
-                summaryCounts[e.id] = summaryCounts[e.id] + 1
+                addEnemySpawns(e, 1)
                 break
             end
         end
     end
 
-    -- Shuffle waveList for variety (optional but recommended)
     for i = #waveList, 2, -1 do
         local j = math.random(i)
         waveList[i], waveList[j] = waveList[j], waveList[i]
     end
 
-    -- Build an ordered summary, hardest (most expensive) enemies first
     local summary = {}
     for _, id in ipairs(summaryOrder) do
         local e = summaryMeta[id]
@@ -102,8 +174,8 @@ function WaveDirector:generateWaveList(waveNumber, globalDifficulty)
     end
     table.sort(summary, function(a, b) return a.spawnCost > b.spawnCost end)
 
-    print(string.format("[WaveDirector] Wave %d | Budget: %d | Enemies: %d", waveNumber, totalBudget, #waveList))
-    return waveList, summary
+    print(string.format("[WaveDirector] Wave %d | Budget: %d | Enemies: %d | Lanes: %d", waveIndex, totalBudget, #waveList, laneCount))
+    return waveList, summary, laneCount
 end
 
 function WaveDirector:checkConstraints(enemy, currentCounts)

@@ -64,7 +64,7 @@ function EnemyRegistry:updatePools(globalDifficulty)
     local candidates = {}
     for _, enemy in ipairs(self.allEnemies) do
         if not self.discoveredEnemiesMap[enemy.id] then
-            if enemy.dangerLevel and enemy.dangerLevel <= globalDifficulty then
+            if enemy.tier and enemy.tier <= globalDifficulty then
                 table.insert(candidates, enemy)
             end
         end
