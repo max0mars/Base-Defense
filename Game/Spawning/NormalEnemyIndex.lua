@@ -3,9 +3,9 @@ local NormalEnemyIndex = {
         {
             id = "Speeder",
             type = "Speeder",
-            class = require("Enemies.SpeederGroup"),
+            class = require("Enemies.Speeder"),
             dangerLevel = 2,
-            spawnCost = 25,
+            spawnCost = 10,
             spawnWeight = 45,
             description = "Fast but fragile. Often spawns in large numbers.",
             mutations = {
