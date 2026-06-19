@@ -50,7 +50,6 @@ end
 function HandUI:new(game)
     local obj = setmetatable({}, self)
     obj.game = game
-    obj.isHidden = false
     return obj
 end
 
@@ -98,22 +97,16 @@ function HandUI:draw()
     
     local inRegion = function(btn) return mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h end
     
-    if self.isHidden then
-        local r, g, b, a = love.graphics.getColor()
-        love.graphics.setColor(1, 1, 1, 0.5)
-        love.graphics.printf("Hand Hidden", handStartX, deckY + cardHeight / 2 - 10, maxHandWidth, "center")
-        love.graphics.setColor(r, g, b, a)
-        return
-    end
+    -- Hand is always visible
     
     -- Draw Card Button
     drawActionButton(drawCardBtn, "DRAW CARD", drawCost .. " Tk", {0.2, 0.6, 0.9}, inRegion(drawCardBtn), true, canAffordDraw)
     
     -- View Drawpile Button
-    drawActionButton(viewDrawBtn, "VIEW DRAW", drawPileCount .. " C", {0.3, 0.4, 0.8}, inRegion(viewDrawBtn), drawPileCount > 0, true)
+    drawActionButton(viewDrawBtn, "VIEW DRAW", drawPileCount .. " Cards", {0.3, 0.4, 0.8}, inRegion(viewDrawBtn), drawPileCount > 0, true)
     
     -- View Discards Button
-    drawActionButton(viewDiscardBtn, "VIEW DISCARDS", discardPileCount .. " C", {0.6, 0.4, 0.6}, inRegion(viewDiscardBtn), discardPileCount > 0, true)
+    drawActionButton(viewDiscardBtn, "VIEW DISCARDS", discardPileCount .. " Cards", {0.6, 0.4, 0.6}, inRegion(viewDiscardBtn), discardPileCount > 0, true)
     
     if inRegion(drawCardBtn) or inRegion(viewDrawBtn) or inRegion(viewDiscardBtn) then
         Cursor.wantHand = true
@@ -206,7 +199,7 @@ function HandUI:mousepressed(x, y, button)
     
     local inRegion = function(btn) return x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h end
     
-    if self.isHidden then return false end
+    -- Hand is always visible
     
     if inRegion(drawCardBtn) then
         local cost = self.game.drawCost or 1

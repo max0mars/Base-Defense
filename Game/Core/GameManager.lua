@@ -97,7 +97,6 @@ function game:load(saveData, isTesting)
         self.rewardCost           = 2
         self.blockerCost          = 3
         self.drawCost             = 1
-        self.autoStartWave        = false
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.mutationInterval     = 5 -- Waves between enemy mutations
         self.inputMode            = "idle"
@@ -285,11 +284,7 @@ function game:update(dt)
     
     -- State Transitions: Start Next Wave
     if self:isState("preparing") then
-        if self.autoStartWave and self.WaveSpawner.waveState == "idle" then
-            self:recalculateAllBuffs()
-            self.WaveSpawner:startNextWave()
-            self:setState("wave")
-        end
+        -- Auto-wave is disabled; the user must manually trigger the wave via the UI.
     end
     -- Component Updates
     if self.rewardSystem then

@@ -125,23 +125,15 @@ function GUIManager:new(game)
         hand = HandUI:new(game),
         tooltips = TooltipManager:new(game),
         confirmation = ConfirmationUI:new(game),
-        -- Top-bar controls are right-aligned across the wide 16:9 bar; the stats
-        -- panel sits far left and the central gap is reserved for wave status.
-        -- Roll / purchase buttons sit in the RIGHT slice of the stored-towers
-        -- tray (stored cards lay out to their left).
+        -- Controls are placed on the right side of the bottom tray
         buyBlockerButton = { x = Layout.W - 188, y = Layout.tray.y + 16, w = 180, h = 34 },
-        toggleHandButton = { x = Layout.W - 188, y = Layout.tray.y + 16 + 34 + 8, w = 180, h = 34 },
 
-        -- Borderless indicators in the top strip (centered in the field's top
-        -- margin): toggle LEDs on the left, speed control on the right.
-        autoFireButton = { x = Layout.field.x + 24,  y = math.floor((Layout.field.y - 24) / 2), w = 116, h = 24 },
-        dmgNumsButton  = { x = Layout.field.x + 148, y = math.floor((Layout.field.y - 24) / 2), w = 116, h = 24 },
-        autoWaveButton = { x = Layout.field.x + 272, y = math.floor((Layout.field.y - 24) / 2), w = 116, h = 24 },
+        autoFireButton   = { x = Layout.W - 188, y = Layout.tray.y + 66, w = 180, h = 24 },
+        dmgNumsButton    = { x = Layout.W - 188, y = Layout.tray.y + 94, w = 180, h = 24 },
 
-        -- Speed control: [-] chevrons [+], no borders.
-        speedMinusButton = { x = Layout.W - 130, y = math.floor((Layout.field.y - 24) / 2), w = 24, h = 24 },
-        speedPanel       = { x = Layout.W - 102, y = math.floor((Layout.field.y - 24) / 2), w = 62, h = 24 },
-        speedPlusButton  = { x = Layout.W - 36,  y = math.floor((Layout.field.y - 24) / 2), w = 24, h = 24 },
+        speedMinusButton = { x = Layout.W - 188, y = Layout.tray.y + 122, w = 24, h = 24 },
+        speedPanel       = { x = Layout.W - 188 + 28, y = Layout.tray.y + 122, w = 120, h = 24 },
+        speedPlusButton  = { x = Layout.W - 188 + 156, y = Layout.tray.y + 122, w = 24, h = 24 },
         
         mutation = MutationUI:new(game),
         incomeFeedback = IncomeFeedbackManager:new(game),
@@ -355,24 +347,17 @@ function GUIManager:drawHUD()
             game.tokens >= game.blockerCost)
     end
 
-    -- Toggle Hand Button
-    local toggleLabel = self.hand.isHidden and "SHOW HAND (H)" or "HIDE HAND (H)"
-    drawActionButton(self.toggleHandButton, toggleLabel, nil, {0.5, 0.5, 0.5}, Layout.inRegion(self.toggleHandButton, mx, my), true, true)
-
     -- ==========================================
-    -- RIGHT PANEL: Toggles (AutoFire, Dmg Nums, AutoWave)
+    -- TRAY TOGGLES: AutoFire, Dmg Nums
     -- ==========================================
     local hoverAutoFire = mx >= self.autoFireButton.x and mx <= self.autoFireButton.x + self.autoFireButton.w and
                           my >= self.autoFireButton.y and my <= self.autoFireButton.y + self.autoFireButton.h
     local hoverDmgNums = mx >= self.dmgNumsButton.x and mx <= self.dmgNumsButton.x + self.dmgNumsButton.w and
                          my >= self.dmgNumsButton.y and my <= self.dmgNumsButton.y + self.dmgNumsButton.h
-    local hoverAutoWave = mx >= self.autoWaveButton.x and mx <= self.autoWaveButton.x + self.autoWaveButton.w and
-                          my >= self.autoWaveButton.y and my <= self.autoWaveButton.y + self.autoWaveButton.h
 
     local autofireEnabled = game.mainLazer and game.mainLazer.autofire or false
     drawToggle(self.autoFireButton, "AUTO-FIRE", autofireEnabled, hoverAutoFire, pulse * 0.4)
     drawToggle(self.dmgNumsButton, "DMG NUMS", game.showDamageNumbers, hoverDmgNums, pulse * 0.4)
-    drawToggle(self.autoWaveButton, "AUTO-WAVE", game.autoStartWave, hoverAutoWave, pulse * 0.4)
 
     -- ==========================================
     -- TOP STRIP: Speed control  ( -  >>  + ), borderless
@@ -405,8 +390,8 @@ function GUIManager:drawHUD()
     love.graphics.pop()
 
     -- Hand cursor over any HUD button (mx is neutralized while an overlay is open).
-    for _, btn in ipairs({ self.buyBlockerButton, self.toggleHandButton,
-        self.autoFireButton, self.dmgNumsButton, self.autoWaveButton,
+    for _, btn in ipairs({ self.buyBlockerButton,
+        self.autoFireButton, self.dmgNumsButton,
         self.speedMinusButton, self.speedPlusButton }) do
         if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
             Cursor.wantHand = true
@@ -540,13 +525,6 @@ function GUIManager:mousepressed(x, y, button)
             return true
         end
 
-        -- Check Toggle Hand Button
-        if x >= self.toggleHandButton.x and x <= self.toggleHandButton.x + self.toggleHandButton.w and
-           y >= self.toggleHandButton.y and y <= self.toggleHandButton.y + self.toggleHandButton.h then
-            self.hand.isHidden = not self.hand.isHidden
-            return true
-        end
-
         -- Check AutoFire Button
         if x >= self.autoFireButton.x and x <= self.autoFireButton.x + self.autoFireButton.w and
            y >= self.autoFireButton.y and y <= self.autoFireButton.y + self.autoFireButton.h then
@@ -560,13 +538,6 @@ function GUIManager:mousepressed(x, y, button)
         if x >= self.dmgNumsButton.x and x <= self.dmgNumsButton.x + self.dmgNumsButton.w and
            y >= self.dmgNumsButton.y and y <= self.dmgNumsButton.y + self.dmgNumsButton.h then
             self.game:toggleDamageNumbers()
-            return true
-        end
-
-        -- Check AutoWave Button
-        if x >= self.autoWaveButton.x and x <= self.autoWaveButton.x + self.autoWaveButton.w and
-           y >= self.autoWaveButton.y and y <= self.autoWaveButton.y + self.autoWaveButton.h then
-            self.game.autoStartWave = not self.game.autoStartWave
             return true
         end
 
