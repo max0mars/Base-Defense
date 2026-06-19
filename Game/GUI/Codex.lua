@@ -4,7 +4,7 @@
 -- revealed once that mutation has been activated (EnemyRegistry.activeUpgrades).
 -- Opened from the HUD codex buttons or by clicking a Horde / Inspect card.
 
-local NormalEnemyIndex  = require("Game.Spawning.NormalEnemyIndex")
+local EnemyIndex  = require("Game.Spawning.EnemyIndex")
 local NormalRewardIndex = require("Game.Rewards.NormalRewardIndex")
 local EnemyRegistry     = require("Game.Spawning.EnemyRegistry")
 local Reward            = require("Game.Rewards.Reward")
@@ -38,8 +38,7 @@ function Codex:new(game)
             }
         end
     end
-    addEnemies(NormalEnemyIndex.activePool)
-    addEnemies(NormalEnemyIndex.inactivePool)
+    addEnemies(EnemyIndex)
 
     -- Turret entries from the reward index (build a drawable Reward for each).
     obj.turretEntries = {}

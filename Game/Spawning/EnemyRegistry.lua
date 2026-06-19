@@ -2,53 +2,86 @@ local EnemyRegistry = {}
 
 function EnemyRegistry:reset(game)
     local isTesting = game and game.testingMode
-    local index = isTesting and require("Game.Spawning.TestingEnemyIndex") or require("Game.Spawning.NormalEnemyIndex")
+    local index = isTesting and require("Game.Spawning.TestingEnemyIndex") or require("Game.Spawning.EnemyIndex")
     
     local Utils = require("Classes.Utils")
-    self.inactivePool = Utils.deepCopy(index.inactivePool)
-    self.activePool = Utils.deepCopy(index.activePool)
+    self.allEnemies = Utils.deepCopy(index)
 
     _G.PersistentState = _G.PersistentState or {}
     _G.PersistentState.activeMutations = _G.PersistentState.activeMutations or {}
+    
+    -- Ensure discoveredEnemies exists in persistent state as a set
     _G.PersistentState.discoveredEnemies = _G.PersistentState.discoveredEnemies or { ["Basic"] = true }
-
-    -- Move any previously discovered enemies from inactive to active pool
-    for i = #self.inactivePool, 1, -1 do
-        local enemy = self.inactivePool[i]
+    
+    -- Sync local discovered lists
+    self.discoveredEnemiesMap = {}
+    self.discoveredEnemies = {}
+    
+    -- Load from persistent state
+    for _, enemy in ipairs(self.allEnemies) do
         if _G.PersistentState.discoveredEnemies[enemy.id] then
-            table.insert(self.activePool, table.remove(self.inactivePool, i))
+            self.discoveredEnemiesMap[enemy.id] = true
+            table.insert(self.discoveredEnemies, enemy.id)
+        end
+    end
+    
+    -- Safety: always make sure at least "Basic" is discovered if it exists
+    if not self.discoveredEnemiesMap["Basic"] then
+        for _, enemy in ipairs(self.allEnemies) do
+            if enemy.id == "Basic" then
+                self.discoveredEnemiesMap["Basic"] = true
+                table.insert(self.discoveredEnemies, "Basic")
+                _G.PersistentState.discoveredEnemies["Basic"] = true
+                break
+            end
         end
     end
 end
 
-EnemyRegistry:reset()
-
 function EnemyRegistry:getAvailableEnemies()
-    return self.activePool
+    local Utils = require("Classes.Utils")
+    local active = {}
+    for _, enemy in ipairs(self.allEnemies) do
+        if self.discoveredEnemiesMap[enemy.id] then
+            local copy = Utils.deepCopy(enemy)
+            self:applyActiveMutations(copy)
+            table.insert(active, copy)
+        end
+    end
+    return active
+end
+
+function EnemyRegistry:discoverEnemy(enemyId)
+    if not self.discoveredEnemiesMap[enemyId] then
+        self.discoveredEnemiesMap[enemyId] = true
+        table.insert(self.discoveredEnemies, enemyId)
+        _G.PersistentState.discoveredEnemies[enemyId] = true
+        print("[EnemyRegistry] Discovered new enemy: " .. enemyId)
+    end
 end
 
 function EnemyRegistry:updatePools(globalDifficulty)
     local candidates = {}
-    for i, enemy in ipairs(self.inactivePool) do
-        if enemy.dangerLevel and enemy.dangerLevel <= globalDifficulty then
-            table.insert(candidates, {index = i, enemy = enemy})
+    for _, enemy in ipairs(self.allEnemies) do
+        if not self.discoveredEnemiesMap[enemy.id] then
+            if enemy.dangerLevel and enemy.dangerLevel <= globalDifficulty then
+                table.insert(candidates, enemy)
+            end
         end
     end
 
-    -- Discover exactly one new enemy if candidates exist
     if #candidates > 0 then
         local r = math.random(1, #candidates)
         local selected = candidates[r]
-        _G.PersistentState.discoveredEnemies[selected.enemy.id] = true
-        table.insert(self.activePool, table.remove(self.inactivePool, selected.index))
-        print("[EnemyRegistry] Discovered new enemy: " .. selected.enemy.id)
+        self:discoverEnemy(selected.id)
     end
 end
 
 function EnemyRegistry:triggerRandomMutation()
-    if #self.activePool == 0 then return end
-    local r = math.random(1, #self.activePool)
-    local enemy = self.activePool[r]
+    local activePool = self:getAvailableEnemies()
+    if #activePool == 0 then return end
+    local r = math.random(1, #activePool)
+    local enemy = activePool[r]
     if enemy.mutations and #enemy.mutations > 0 then
         local mr = math.random(1, #enemy.mutations)
         local mutation = enemy.mutations[mr]
@@ -85,5 +118,8 @@ function EnemyRegistry:applyActiveMutations(enemyInstance)
         end
     end
 end
+
+-- Initialize self
+EnemyRegistry:reset()
 
 return EnemyRegistry
