@@ -112,7 +112,7 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
         if self.buildingType == "Turret" then
             local startX = 25
             local startY = 75
-            local labels = {"Damage", "Range", "Firerate"}
+            local labels = {"Dmg", "Range", "Firerate"}
             local stats = {self.damageBars, self.rangeBars, self.firerateBars}
             for j = 1, 3 do
                 table.insert(deferredText, {t = labels[j], x = startX, y = startY + (j-1)*30, w = 80, a = "left"})
@@ -245,9 +245,17 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
     -- Render Description Text
     local boxHeight = 150
     local descLimit = CardDraw.WIDTH - 50
-    local _, wrappedText = love.graphics.getFont():getWrap(self.description, descLimit)
-    local textHeight = #wrappedText * love.graphics.getFont():getHeight()
-    local textY = 155 + (boxHeight - textHeight) / 2
+    
+    -- Calculate wrapped text height using the scaled limit that printf will use
+    local screenLimit = descLimit * scaleX
+    local _, wrappedText = love.graphics.getFont():getWrap(self.description, screenLimit)
+    local screenTextHeight = #wrappedText * love.graphics.getFont():getHeight()
+    
+    -- Calculate center in screen space, then map back to local Y
+    local screenBoxHeight = boxHeight * scaleY
+    local screenBoxCenter = 175 * scaleY + screenBoxHeight / 2
+    local screenTextY = screenBoxCenter - screenTextHeight / 2
+    local textY = screenTextY / scaleY
     
     table.insert(deferredText, {t = self.description, x = 25, y = textY, w = descLimit, a = "center"})
 

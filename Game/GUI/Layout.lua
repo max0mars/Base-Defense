@@ -38,7 +38,7 @@ Layout.FIELD_H = 400
 -- (stats + controls + horde + preview); there is no top bar. The battlefield
 -- fills the rest, with a stored-towers tray under it.
 local TOPBAR_H     = 0
-local TRAY_H       = 150
+local TRAY_H       = 230
 local LEFTCOL_W    = 300
 local RIGHT_MARGIN = 0   -- battlefield runs flush to the right screen edge
 
@@ -50,9 +50,9 @@ Layout.scale  = math.min(AVAIL_W / Layout.FIELD_W, AVAIL_H / Layout.FIELD_H)
 local SCALED_W = Layout.FIELD_W * Layout.scale
 local SCALED_H = Layout.FIELD_H * Layout.scale
 local FIELD_X  = LEFTCOL_W + math.floor((AVAIL_W - SCALED_W) / 2)
--- Pin the field's bottom flush to the tray top (no gap above the stored towers);
--- the leftover vertical space sits in the top strip where the controls live.
-local FIELD_Y  = (Layout.H - TRAY_H) - SCALED_H
+-- Pin the field's top flush to the top bar (which is 0);
+-- the leftover vertical space sits in the bottom tray where the controls live.
+local FIELD_Y  = TOPBAR_H
 
 -- Regions (screen/virtual coords). field.w/h are the SCALED on-screen sizes.
 -- The left column spans the full height of the left strip; the stored-towers

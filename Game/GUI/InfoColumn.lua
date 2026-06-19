@@ -216,19 +216,42 @@ end
 
 function InfoColumn:drawBuildingCard(b, x, y, w, h)
     local card = b.rewardCard
-    if not (card and card.draw and card.getRarityColor) and b.isType and b:isType("turret") then
-        card = self.game.gui.tooltips:turretCardFor(b)
+    if not card and b.isType then
+        card = self.game.gui.tooltips:buildingCardFor(b)
     end
-    if card and card.draw and card.getRarityColor then
-        -- Point a turret card at the live building so DPS/bars reflect current stats.
+    
+    local drawObj = nil
+    if card and card.getCardDraw then
+        drawObj = card:getCardDraw()
+    elseif card and card.rewardCard then
+        drawObj = card.rewardCard
+    elseif card and card.draw then
+        drawObj = card
+    end
+
+    if drawObj and drawObj.draw then
         if b.isType and b:isType("turret") then
-            local saved = card.dummyBuilding
-            card.dummyBuilding = b
-            card:draw(x, y, w, h, false)
-            card.dummyBuilding = saved
+            -- Update live stats for CardDraw so it reflects current buffs
+            local TurretStatBars = require("Game.GUI.TurretStatBars")
+            local rows = TurretStatBars.rows(b, self.game, 5)
+            for _, row in ipairs(rows) do
+                if row.label == "DMG" then drawObj.damageBars = row.tier end
+                if row.label == "RNG" then drawObj.rangeBars = row.tier end
+                if row.label == "SPD" then drawObj.firerateBars = row.tier end
+            end
         else
-            card:draw(x, y, w, h, false)
+            -- Clear bars for non-turrets
+            drawObj.damageBars = 0
+            drawObj.rangeBars = 0
+            drawObj.firerateBars = 0
         end
+
+        -- Ensure buffer cards get their shape footprints dynamically
+        if drawObj.buildingType == "Buffer" then
+            drawObj.affectedSlots = b.affectedSlots or {}
+        end
+
+        drawObj:draw(x, y, w, h, false)
         return
     end
 

@@ -222,35 +222,47 @@ end
 -- from a reward (e.g. the player's main turret). Its identity reflects the
 -- highest-rarity applied main-turret upgrade (e.g. legendary PROJECT STORMBREAKER)
 -- instead of staying a plain common turret; live stats come from the turret.
-function TooltipManager:turretCardFor(turret)
-    local name = turret.name or "Turret"
-    local rarity = turret.cardRarity or "common"
-    local desc = turret.description
+function TooltipManager:buildingCardFor(b)
+    local name = b.name or "Building"
+    local rarity = b.cardRarity or "common"
+    local desc = b.description
 
-    local best = self:bestMainUpgrade(turret)
+    local best = self:bestMainUpgrade(b)
     if best then
         name, rarity, desc = best.name, best.rarity, best.description
     end
     if not desc or desc == "" then
-        desc = turret:isType("mainLazer") and "Aim and fire manually to defend the core." or ""
+        if b.isType and b:isType("mainLazer") then
+            desc = "Aim and fire manually to defend the core."
+        end
     end
 
-    -- Rebuild the cached card whenever the resolved identity changes (e.g. a new
-    -- upgrade is applied mid-run).
+    -- Rebuild the cached card whenever the resolved identity changes
     local sig = name .. "|" .. rarity
-    if not turret._detailCard or turret._detailCardSig ~= sig then
+    if not b._detailCard or b._detailCardSig ~= sig then
         local Reward = require("Game.Rewards.Reward")
-        turret._detailCard = Reward:new({
+        
+        local iconCat = "turret"
+        if b.isType and not b:isType("turret") then
+            if b.id and (b.id:find("buff") or b.id:find("Buff") or b.id:find("Cache") or b.id == "bank" or b.id:find("Coating") or b.id:find("Rounds") or b.id:find("rounds")) then
+                iconCat = "buff"
+            elseif b.id and (b.id:find("box") or b.id:find("fence") or b.id:find("Blocker")) then
+                iconCat = "blocker"
+            end
+        end
+
+        b._detailCard = Reward:new({
             name = name,
             description = desc,
             type = "building",
-            iconCategory = "turret",
+            iconCategory = iconCat,
             rarity = rarity,
-            game = turret.game,
+            game = b.game,
         })
-        turret._detailCardSig = sig
+        b._detailCard.dummyBuilding = b
+        b._detailCardSig = sig
     end
-    return turret._detailCard
+    return b._detailCard
 end
 
 function TooltipManager:drawBuildingCard(building, card)
