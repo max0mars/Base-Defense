@@ -9,7 +9,7 @@ Blaster.template = {
     name = "Blaster",
     size = 15,
     rotation = 0,
-    turnSpeed = math.huge,
+
     fireRate = 0.7,
     range = 450,
     barrel = 10,

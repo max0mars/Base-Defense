@@ -9,7 +9,7 @@ Gator.template = {
     name = "GTR-55 Gator",
     size = 18,
     rotation = 0,
-    turnSpeed = math.huge,
+
     fireRate = 0.7,
     range = 500,
     barrel = 15,

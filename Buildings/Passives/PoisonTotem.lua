@@ -1,4 +1,4 @@
-local Buff = require("Buildings.Buffs.Buff")
+local Buff = require("Buildings.Passives.Buff")
 local PoisonEffect = require("Game.Effects.StatusEffects.Poison")
 
 local PoisonTotem = setmetatable({}, Buff)

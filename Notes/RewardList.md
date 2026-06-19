@@ -5,22 +5,22 @@ Common
 - Sentry [Buildings.Turrets.Sentry]: Balanced range and damage.
 - Auto Cannon [Buildings.Turrets.AutoCannon]: High fire rate, low damage, short range.
 - Small Box [Buildings.Blockers.SmallBox]: Gets in the enemy's way.
-- Radar Tower [Buildings.Buffs.RangeBuff]: Increases range of adjacent turrets by 25%.
+- Radar Tower [Buildings.Passives.RangeBuff]: Increases range of adjacent turrets by 25%.
 - Shotgun Turret [Buildings.Turrets.ShotgunTurret]: Shreds close-range targets.
 - Heavy Gun [Buildings.Turrets.HeavyGun]: Long range, high damage.
 
 Uncommon
 - Airburst Turret [Buildings.Turrets.AirburstTurret]: Fires shells that explode mid-air into shrapnel.
 - Small Fence [Buildings.Blockers.SmallFence]: Redirect Enemy movement.
-- Ammo Cache [Buildings.Buffs.Buff]: Increase nearby turret damage by 20%
-- Recursive Rounds [Buildings.Buffs.ShardBullets]: Bullets will now split on inpact.
+- Ammo Cache [Buildings.Passives.Buff]: Increase nearby turret damage by 20%
+- Recursive Rounds [Buildings.Passives.ShardBullets]: Bullets will now split on inpact.
 - Flux Cannon [Buildings.Turrets.FluxCannon]: Energy damage that ignores heavy armor.
-- Bank [Buildings.Buffs.Bank]: Generates 1 Token per wave if adjacent slots are occupied.
+- Bank [Buildings.Passives.Bank]: Generates 1 Token per wave if adjacent slots are occupied.
 - Grenadier [Buildings.Turrets.Grenadier]: Lobs grenades that explode after a short delay.
 - Slush Cannon [Buildings.Turrets.SlushCannon]: Fires heavy clumps of slush that slow enemies on impact.
 
 Rare
-- Chem Lab [Buildings.Buffs.ToxicTotem]: Spreads deadly toxins. Highly contagious.
+- Chem Lab [Buildings.Passives.ToxicTotem]: Spreads deadly toxins. Highly contagious.
 - GTR-55 Gator [Buildings.Turrets.Gator]: Hard hitting rounds go right through enemies.
 - Unstable Laser [main_upgrade]: Gives your big lazer a 20% chance to burn enemies.
 - Missile Launcher [Buildings.Turrets.MissileLauncher]: Wouldn't want to get in the way of one of these.
@@ -33,7 +33,7 @@ Rare
 Epic
 - Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.
 - Mortar [Buildings.Turrets.Mortar]: KABOOM!
-- Explosive Bullets [Buildings.Buffs.ExplosiveTotem]: Adds a little extra something to nearby turrets.
+- Explosive Bullets [Buildings.Passives.ExplosiveTotem]: Adds a little extra something to nearby turrets.
 - Low Power Ops [main_upgrade]: Your big lazer shoots much faster but does a little less damage.
 
 Legendary

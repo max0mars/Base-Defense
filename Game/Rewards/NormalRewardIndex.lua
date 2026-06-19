@@ -69,10 +69,20 @@ local RewardIndex = {
             type = "building",
             building = require("Buildings.Turrets.PoisonTurret"),
             iconCategory = "turret",
-            cost = 1,
+            cost = 2,
             damageBars = 1,
             rangeBars = 3,
             firerateBars = 3
+        },
+        {
+            id = "unstable_laser",
+            name = "Unstable Laser",
+            description = "Increases adjacent Energy Turrets' attacks with a 25% chance to burn enemies.",
+            type = "building",
+            building = require("Buildings.Passives.UnstableLaser"),
+            iconCategory = "buff",
+            cost = 2,
+            affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
         },
         {
             id = "airburst",
@@ -91,7 +101,7 @@ local RewardIndex = {
             name = "Ammo Cache",
             description = "Increase nearby turret damage by 30%",
             type = "building",
-            building = require("Buildings.Buffs.Buff"),
+            building = require("Buildings.Passives.Buff"),
             iconCategory = "buff",
             cost = 2,
             affectedSlots = {{1,0},{-1,0},{0,1},{0,-1}}
@@ -101,7 +111,7 @@ local RewardIndex = {
             name = "Recursive Rounds",
             description = "Bullets will now split on inpact.",
             type = "building",
-            building = require("Buildings.Buffs.ShardBullets"),
+            building = require("Buildings.Passives.ShardBullets"),
             iconCategory = "buff",
             cost = 2,
             affectedSlots = {{-1, 0}, {1, 0}}
@@ -123,7 +133,7 @@ local RewardIndex = {
             name = "Bank",
             description = "Generates 1 Token per wave if adjacent slots are occupied.",
             type = "building",
-            building = require("Buildings.Buffs.Bank"),
+            building = require("Buildings.Passives.Bank"),
             iconCategory = "buff",
             cost = 2,
             affectedSlots = {{1,0},{-1,0},{0,1},{0,-1}}
@@ -159,7 +169,7 @@ local RewardIndex = {
             name = "Chem Lab",
             description = "Spreads deadly toxins. Highly contagious.",
             type = "building",
-            building = require("Buildings.Buffs.ToxicTotem"),
+            building = require("Buildings.Passives.ToxicTotem"),
             iconCategory = "buff",
             cost = 2,
             affectedSlots = {{1,0},{-1,0},{0,1},{0,-1}}
@@ -169,7 +179,7 @@ local RewardIndex = {
         --     name = "Industrial Battery",
         --     description = "Increases all Energy damage by 50% when adjacent to the Main Turret.",
         --     type = "building",
-        --     building = require("Buildings.Buffs.IndustrialBattery"),
+        --     building = require("Buildings.Passives.IndustrialBattery"),
         --     iconCategory = "buff",
         --     cost = 2,
         --     affectedSlots = {}
@@ -185,18 +195,6 @@ local RewardIndex = {
             damageBars = 3,
             rangeBars = 3,
             firerateBars = 3
-        },
-
-
-        {
-            id = "unstable_laser",
-            name = "Unstable Laser",
-            description = "Increases adjacent Energy Turrets' attacks with a 25% chance to burn enemies.",
-            type = "building",
-            building = require("Buildings.Buffs.UnstableLaser"),
-            iconCategory = "buff",
-            cost = 2,
-            affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
         },
         {
             id = "missileLauncher",
@@ -287,7 +285,7 @@ local RewardIndex = {
             name = "Explosive Bullets",
             description = "Adds a little extra something to nearby turrets.",
             type = "building",
-            building = require("Buildings.Buffs.ExplosiveTotem"),
+            building = require("Buildings.Passives.ExplosiveTotem"),
             iconCategory = "buff",
             cost = 2,
             affectedSlots = {{1, 0}, {2, 0}}

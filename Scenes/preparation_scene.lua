@@ -4,7 +4,7 @@ local scene = require("Scenes.scene")
 setmetatable(preparation_scene, { __index = scene })
 
 local Cursor = require("Game.GUI.Cursor")
-local WaveDirector = require("Game.Spawning.WaveDirector")
+local BattleDirector = require("Game.Spawning.BattleDirector")
 local RewardPool = require("Game.Rewards.RewardPool")
 local RewardIndex = require("Game.Rewards.NormalRewardIndex")
 local Card = require("Game.Cards.Card")
@@ -79,31 +79,22 @@ function preparation_scene:load(isPostBattle)
 end
 
 function preparation_scene:precalculateWaves()
-    -- Create dummy game for WaveDirector
+    -- Create dummy game for BattleDirector
     local dummyGame = {}
-    local wd = WaveDirector:new(dummyGame)
+    local bd = BattleDirector:new(dummyGame)
     
     _G.PersistentState = _G.PersistentState or {}
-    _G.PersistentState.upcomingWaves = {}
-    _G.PersistentState.upcomingSummaries = {}
+    
+    local upcomingWaves, upcomingSummaries, forecastTotals = bd:generateBattle(_G.PersistentState.globalDifficulty or 1)
+    _G.PersistentState.upcomingWaves = upcomingWaves
+    _G.PersistentState.upcomingSummaries = upcomingSummaries
     
     self.forecast = {
         low = 0,
         medium = 0,
         high = 0,
-        totals = {}
+        totals = forecastTotals
     }
-    
-    -- Always calculate waves 1 through 5 for the battle
-    for i = 1, 5 do
-        local list, summary = wd:generateWaveList(i, _G.PersistentState.globalDifficulty or 1)
-        table.insert(_G.PersistentState.upcomingWaves, list)
-        table.insert(_G.PersistentState.upcomingSummaries, summary)
-        
-        for _, s in ipairs(summary) do
-            self.forecast.totals[s.type] = (self.forecast.totals[s.type] or 0) + s.count
-        end
-    end
 end
 
 function preparation_scene:getRequiredXP(level)

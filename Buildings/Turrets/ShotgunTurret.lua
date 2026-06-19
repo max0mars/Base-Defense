@@ -7,7 +7,7 @@ ShotgunTurret.__index = ShotgunTurret
 ShotgunTurret.template = {
     name = "Shotgun Turret",
     rotation = 0,
-    turnSpeed = 6,
+
     fireRate = 0.7, -- 1 shot every ~1.5 seconds
     range = 200,     -- Lethal close-range spread weapon
     barrel = 10,

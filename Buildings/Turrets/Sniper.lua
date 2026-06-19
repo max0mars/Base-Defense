@@ -9,7 +9,7 @@ Sniper.__index = Sniper
 Sniper.template = {
     name = "Sniper Turret",
     rotation = 0,
-    turnSpeed = 2,
+
     fireRate = 0.2,
     range = 1000,
     barrel = 12,

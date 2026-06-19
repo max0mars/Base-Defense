@@ -10,7 +10,7 @@ FluxCannon.template = {
     name = "Flux Cannon",
     color = {0, 1, 1, 1}, -- Bright Cyan
     rotation = 0,
-    turnSpeed = 4,
+
     fireRate = 1.2,
     damage = 35,
     bulletSpeed = 450,

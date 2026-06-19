@@ -11,7 +11,6 @@ Grenadier.template = {
     name = "Grenadier",
     size = 15,
     rotation = 0,
-    turnSpeed = math.huge,
     fireRate = 0.35,
     range = 500,
     barrel = 10,

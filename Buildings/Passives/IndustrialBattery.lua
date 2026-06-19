@@ -1,4 +1,4 @@
-local Buff = require("Buildings.Buffs.Buff")
+local Buff = require("Buildings.Passives.Buff")
 
 local IndustrialBattery = setmetatable({}, Buff)
 IndustrialBattery.__index = IndustrialBattery

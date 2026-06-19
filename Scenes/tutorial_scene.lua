@@ -225,7 +225,7 @@ function tutorial_scene:load()
                     name = "Ammo Cache",
                     description = "Increase nearby turret damage by 20%",
                     type = "building",
-                    building = require("Buildings.Buffs.Buff"),
+                    building = require("Buildings.Passives.Buff"),
                     rarity = "uncommon",
                     iconCategory = "buff"
                 },

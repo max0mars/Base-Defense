@@ -8,7 +8,7 @@ AirburstTurret.__index = AirburstTurret
 AirburstTurret.template = {
     name = "Airburst Turret",
     rotation = 0,
-    turnSpeed = 10,
+
     fireRate = 0.8,
     range = 550,
     barrel = 12,

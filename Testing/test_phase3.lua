@@ -3,27 +3,15 @@
 
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local ExecutionType = require("Game.Cards.ExecutionType")
-local WaveDirector = require("Game.Spawning.WaveDirector")
+local BattleDirector = require("Game.Spawning.BattleDirector")
 
 print("--- Starting Phase 3 Tests ---")
 
 -- Test 1: Forecasting & Precalculation
 local mockGame = {}
-local wd = WaveDirector:new(mockGame)
+local bd = BattleDirector:new(mockGame)
 
-local upcomingWaves = {}
-local upcomingSummaries = {}
-local totals = {}
-
-for i = 1, 5 do
-    local list, summary = wd:generateWaveList(i)
-    table.insert(upcomingWaves, list)
-    table.insert(upcomingSummaries, summary)
-    
-    for _, s in ipairs(summary) do
-        totals[s.type] = (totals[s.type] or 0) + s.count
-    end
-end
+local upcomingWaves, upcomingSummaries, totals = bd:generateBattle(1)
 
 if #upcomingWaves == 5 and #upcomingSummaries == 5 then
     print("[PASS] Successfully pre-calculated exactly 5 waves.")

@@ -7,7 +7,6 @@ HeavyGun.__index = HeavyGun
 HeavyGun.template = {
     name = "Heavy Gun",
     rotation = 0,
-    turnSpeed = 3,
     fireRate = 0.25,
     range = 600,
     barrel = 12,

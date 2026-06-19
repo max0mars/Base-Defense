@@ -14,7 +14,7 @@ FastMainTurret.template = {
     cardRarity = "main_weapon",
     size = 20,
     rotation = 0,
-    turnSpeed = math.huge,
+
     fireRate = 8, -- fast fire rate
     range = 450,
     barrel = 20,

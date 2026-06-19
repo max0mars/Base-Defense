@@ -9,7 +9,7 @@ SlushCannon.__index = SlushCannon
 SlushCannon.template = {
     name = "Slush Cannon",
     rotation = 0,
-    turnSpeed = 6,
+
     fireRate = 0.25,
     range = 450,
     barrel = 14,

@@ -50,7 +50,7 @@ local function verifyBuilding(classPath, name, customConfig)
         types = { test = true },
         name = name,
         rotation = 0,
-        turnSpeed = 1,
+
         fireRate = 1,
         damage = 10,
         bulletSpeed = 100,
@@ -138,14 +138,14 @@ end
 -- 2. Buffs/Totems/Banks
 -- Buffs are passive, so affectedSlots are required
 local buffs = {
-    { path = "Buildings.Buffs.Buff", name = "Base Buff" },
-    { path = "Buildings.Buffs.Bank", name = "Bank" },
-    { path = "Buildings.Buffs.ExplosiveTotem", name = "ExplosiveTotem" },
-    { path = "Buildings.Buffs.PoisonTotem", name = "PoisonTotem" },
-    { path = "Buildings.Buffs.RangeBuff", name = "RangeBuff" },
-    { path = "Buildings.Buffs.ShardBullets", name = "ShardBullets" },
-    { path = "Buildings.Buffs.ToxicTotem", name = "ToxicTotem" },
-    { path = "Buildings.Buffs.IndustrialBattery", name = "IndustrialBattery" },
+    { path = "Buildings.Passives.Buff", name = "Base Buff" },
+    { path = "Buildings.Passives.Bank", name = "Bank" },
+    { path = "Buildings.Passives.ExplosiveTotem", name = "ExplosiveTotem" },
+    { path = "Buildings.Passives.PoisonTotem", name = "PoisonTotem" },
+    { path = "Buildings.Passives.RangeBuff", name = "RangeBuff" },
+    { path = "Buildings.Passives.ShardBullets", name = "ShardBullets" },
+    { path = "Buildings.Passives.ToxicTotem", name = "ToxicTotem" },
+    { path = "Buildings.Passives.IndustrialBattery", name = "IndustrialBattery" },
 }
 
 for _, b in ipairs(buffs) do

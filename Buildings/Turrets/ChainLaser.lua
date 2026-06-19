@@ -9,7 +9,7 @@ ChainLaser.__index = ChainLaser
 ChainLaser.template = {
     name = "Chain Laser",
     rotation = 0,
-    turnSpeed = 5,
+
     fireRate = 0.65,
     damage = 30,
     bulletSpeed = 600,

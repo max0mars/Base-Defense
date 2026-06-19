@@ -8,7 +8,7 @@ PlasmaScattershot.__index = PlasmaScattershot
 PlasmaScattershot.template = {
     name = "Plasma Scattershot",
     rotation = 0,
-    turnSpeed = 6,
+
     fireRate = 2,  -- High-tech variant firing significantly faster (2.5 vs 0.7)
     range = 200,     -- Slightly higher range than base shotgun
     barrel = 10,

@@ -8,7 +8,7 @@ MissileLauncher.__index = MissileLauncher
 MissileLauncher.template = {
     name = "Missile Launcher",
     rotation = 0,
-    turnSpeed = 4,
+
     fireRate = 0.4,  -- Extremely heavy and deliberate: 1 shot every 5 seconds
     range = 450,     -- Exceptional standoff capability
     barrel = 10,

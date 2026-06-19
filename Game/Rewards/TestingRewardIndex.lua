@@ -13,7 +13,7 @@ local RewardIndex = {
             name = "Explosive Bullets",
             description = "Adds a little extra something to nearby turrets.",
             type = "building",
-            building = require("Buildings.Buffs.ExplosiveTotem"),
+            building = require("Buildings.Passives.ExplosiveTotem"),
             iconCategory = "buff"
         },
         {

@@ -1,4 +1,4 @@
-local Buff = require("Buildings.Buffs.Buff")
+local Buff = require("Buildings.Passives.Buff")
 
 local RangeBuff = setmetatable({}, Buff)
 RangeBuff.__index = RangeBuff

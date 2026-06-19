@@ -1,4 +1,4 @@
-local Buff = require("Buildings.Buffs.Buff")
+local Buff = require("Buildings.Passives.Buff")
 local BurnEffect = require("Game.Effects.StatusEffects.Burn")
 
 local UnstableLaser = setmetatable({}, Buff)

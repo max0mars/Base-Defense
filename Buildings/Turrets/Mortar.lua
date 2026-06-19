@@ -11,7 +11,7 @@ Mortar.template = {
     name = "Mortar",
     size = 15,
     rotation = 0,
-    turnSpeed = math.huge,
+
     fireRate = 0.2,
     range = 500,
     barrel = 10,

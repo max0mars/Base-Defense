@@ -17,7 +17,7 @@ MainLazer.template = {
     cardRarity = "main_weapon",
     size = 20,
     rotation = 0,
-    turnSpeed = math.huge,
+
     fireRate = 0.5,
     range = 500,
     barrel = 20,
@@ -293,7 +293,7 @@ function MainLazer.getStartingDeck()
         cost = 2,
         quantity = 1,
         payload = {
-            buildingClass = require("Buildings.Buffs.UnstableLaser"),
+            buildingClass = require("Buildings.Passives.UnstableLaser"),
             config = {},
             rarity = "rare",
             iconCategory = "buff",
@@ -329,7 +329,7 @@ function MainLazer.getStartingDeck()
         cost = 2,
         quantity = 2,
         payload = {
-            buildingClass = require("Buildings.Buffs.IndustrialBattery"),
+            buildingClass = require("Buildings.Passives.IndustrialBattery"),
             config = {},
             rarity = "rare",
             iconCategory = "buff",
@@ -360,7 +360,7 @@ function MainLazer.getUniqueCards()
                 name = "Industrial Battery",
                 description = "Increases all Energy damage by 50% when adjacent to the Main Turret.",
                 type = "building",
-                building = require("Buildings.Buffs.IndustrialBattery"),
+                building = require("Buildings.Passives.IndustrialBattery"),
                 iconCategory = "buff",
                 cost = 2,
                 affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}

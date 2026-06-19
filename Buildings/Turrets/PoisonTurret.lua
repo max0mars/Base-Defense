@@ -9,7 +9,7 @@ PoisonTurret.__index = PoisonTurret
 PoisonTurret.template = {
     name = "Poison Turret",
     rotation = 0,
-    turnSpeed = 5,
+
     fireRate = 0.5,
     range = 400,
     barrel = 12,

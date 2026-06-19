@@ -8,7 +8,7 @@ local default = {
     damage = 15,
     maxHp = 300,
     color = {0.3, 0.6, 0.9, 1}, -- Blueish Metallic Steel
-    types = { armored = true, tank = true },
+    types = { armored = true },
     size = 20,
     reward = 50,
     affinities = {

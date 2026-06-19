@@ -7,7 +7,7 @@ AutoCannon.__index = AutoCannon
 AutoCannon.template = {
     name = "Auto Cannon",
     rotation = 0,
-    turnSpeed = 10,
+
     fireRate = 5,
     range = 350,
     barrel = 15,

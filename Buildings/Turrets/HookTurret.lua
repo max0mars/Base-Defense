@@ -8,7 +8,7 @@ HookTurret.__index = HookTurret
 HookTurret.template = {
     name = "The Hook",
     rotation = 0,
-    turnSpeed = 3,
+
     fireRate = 0.2,
     range = 300,
     barrel = 15,

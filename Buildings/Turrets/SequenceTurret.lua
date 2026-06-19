@@ -7,7 +7,7 @@ SequenceTurret.__index = SequenceTurret
 SequenceTurret.template = {
     name = "CSR-8 Sequence",
     rotation = 0,
-    turnSpeed = 5,
+
     fireRate = 0.5, -- Slow starting RPM mapped to native Shots Per Second metric
     range = 450,        -- Long-range design profile
     barrel = 12,

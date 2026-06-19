@@ -9,7 +9,7 @@ function Turret:new(config)
         error("Developer Error: Turret:new called with nil config.")
     end
 
-    local required = {"name", "rotation", "turnSpeed", "fireRate", "damage", "bulletSpeed", "range", "barrel", "firingArc", "shapePattern", "color"}
+    local required = {"name", "rotation", "fireRate", "damage", "bulletSpeed", "range", "barrel", "firingArc", "shapePattern", "color"}
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: Turret [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
@@ -446,43 +446,7 @@ function Turret:lookAt(x, y, dt)
     local dx = x - cx
     local dy = y - cy
     self.targetRotation = math.atan2(dy, dx)
-    
-    if true then -- fast turning
-        self.rotation = self.targetRotation
-        return
-    end
-
-    -- Normalize targetRotation to [0, 2π]
-    if self.targetRotation < 0 then
-        self.targetRotation = self.targetRotation + 2 * math.pi
-    end
-
-    if self.turnSpeed > 10 then
-        self.rotation = self.targetRotation
-        return
-    end
-    local angle = self.targetRotation - self.rotation
-    local sign = 1
-    if angle < 0 then -- convert the angle to a positive
-        sign = -1
-        angle = angle * -1
-    end
-
-    if angle > math.pi then -- if the angle is > pi than it is faster to rotate the other way
-        sign = sign * -1
-    end
-
-    if math.abs(angle) < self.turnSpeed * dt then -- angle is too small
-        self.rotation = self.targetRotation -- Snap to target rotation
-        return 0
-    end
-
-    self.rotation = self.rotation + sign * self.turnSpeed * dt -- Rotate towards the target angle
-    if self.rotation > math.pi*2 then
-        self.rotation = self.rotation - math.pi*2 -- Wrap around to keep rotation in range
-    elseif self.rotation < 0 then
-        self.rotation = self.rotation + math.pi*2 -- Wrap around to keep rotation in range
-    end
+    self.rotation = self.targetRotation
 end
 
 
@@ -550,36 +514,8 @@ function Turret:lookAtTarget(dt)
         end
     end
 
-
     self.targetRotation = target_angle
-
-    if self.turnSpeed > 10 then
-        self.rotation = self.targetRotation
-        return
-    end
-
-    local angle = self.targetRotation - self.rotation
-    local sign = 1
-    if angle < 0 then -- convert the angle to a positive
-        sign = -1
-        angle = angle * -1
-    end
-
-    if angle > math.pi then -- if the angle is > pi than it is faster to rotate the other way
-        sign = sign * -1
-    end
-
-    if math.abs(angle) < self.turnSpeed * dt then -- angle is too small
-        self.rotation = self.targetRotation -- Snap to target rotation
-        return 0
-    end
-
-    self.rotation = self.rotation + sign * self.turnSpeed * dt -- Rotate towards the target angle
-    if self.rotation > math.pi*2 then
-        self.rotation = self.rotation - math.pi*2 -- Wrap around to keep rotation in range
-    elseif self.rotation < 0 then
-        self.rotation = self.rotation + math.pi*2 -- Wrap around to keep rotation in range
-    end
+    self.rotation = self.targetRotation
 end
 
 return Turret

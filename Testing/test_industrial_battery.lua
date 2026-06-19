@@ -1,6 +1,6 @@
 -- Testing/test_industrial_battery.lua
 local EffectManager = require("Game.Effects.EffectManager")
-local IndustrialBattery = require("Buildings.Buffs.IndustrialBattery")
+local IndustrialBattery = require("Buildings.Passives.IndustrialBattery")
 
 print("--- Starting Industrial Battery Tests ---")
 

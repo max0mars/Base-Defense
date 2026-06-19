@@ -8,7 +8,6 @@ local Stats = {
     speed = 25,
     damage = 10,
     reward = 25,
-    armour = 0,
     size = 20, -- Default size for basic enemies
     shape = "rectangle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies

@@ -1,4 +1,4 @@
-local Buff = require("Buildings.Buffs.Buff")
+local Buff = require("Buildings.Passives.Buff")
 local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
 
 local ExplosiveTotem = setmetatable({}, Buff)

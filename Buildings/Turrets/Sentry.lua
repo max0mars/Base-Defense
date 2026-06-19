@@ -9,7 +9,7 @@ Sentry.template = {
     name = "Sentry",
     size = 15,
     rotation = 0,
-    turnSpeed = math.huge,
+
     fireRate = 0.85,
     range = 500,
     barrel = 10,
