@@ -12,10 +12,29 @@ local default = {
 
 function Spawner:new(config)
     config = config or {}
+    
+    local isTesting = config.game and config.game.testingMode
+    local index = isTesting and require("Game.Spawning.TestingEnemyIndex") or require("Game.Spawning.EnemyIndex")
+    local name = config.name or default.name
+    local base = nil
+    for _, entry in ipairs(index) do
+        if entry.id == name or entry.type == name then
+            base = entry
+            break
+        end
+    end
+
     if not config.types then config.types = {} end
     for key, value in pairs(default) do
-        config[key] = config[key] or value
+        config[key] = config[key] or (base and base[key]) or value
     end
+    
+    if base then
+        config.spawnFrequency = config.spawnFrequency or base.spawnFrequency
+        config.spawnAmount = config.spawnAmount or base.spawnAmount
+        config.spawnReference = config.spawnReference or base.spawnReference
+    end
+
     for key in pairs(default.types or {}) do
         config.types[key] = true
     end
@@ -24,7 +43,7 @@ function Spawner:new(config)
     config.h = config.size
     
     local instance = Enemy:new(config)
-    setmetatable(instance, Spawner)
+    setmetatable(instance, self)
     
     instance.spawnTimer = 0
     instance.spawnQueue = 0
@@ -69,7 +88,18 @@ function Spawner:spawnOneReinforcement()
     local isTesting = self.game and self.game.testingMode
     local nameStr = self:getStat("spawnReference") or (isTesting and "Speeder" or "Scout")
     
-    local spawnedInstance = Enemy:new({
+    local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+    local enemyClass = Enemy
+    if EnemyRegistry and EnemyRegistry.allEnemies then
+        for _, e in ipairs(EnemyRegistry.allEnemies) do
+            if e.id == nameStr or e.type == nameStr then
+                if e.class then enemyClass = e.class end
+                break
+            end
+        end
+    end
+    
+    local spawnedInstance = enemyClass:new({
         game = self.game,
         x = rx,
         y = ry,
@@ -77,7 +107,6 @@ function Spawner:spawnOneReinforcement()
     })
     
     -- Apply any active upgrades to the spawned enemy
-    local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
     EnemyRegistry:applyActiveMutations(spawnedInstance)
     
     self.game:addObject(spawnedInstance)

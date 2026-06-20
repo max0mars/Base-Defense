@@ -104,8 +104,11 @@ end
 
 function FastMainTurret.getStartingDeck()
     local deck = PlayerDeck:new()
-    StandardMainTurret.addCard(deck, "sentry", 4)
+    StandardMainTurret.addCard(deck, "autoCannon", 2)
     StandardMainTurret.addCard(deck, "heavygun", 2)
+    StandardMainTurret.addCard(deck, "inst_overclock_1", 2)
+    StandardMainTurret.addCard(deck, "inst_range_1", 2)
+    StandardMainTurret.addCard(deck, "inst_frenzy_1", 1)
     
     deck:addCard(InstantCard.new({
         id = "stabilizing_shots",

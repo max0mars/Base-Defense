@@ -427,6 +427,15 @@ function Enemy:drawCustomShape(mode, cx, cy)
             cx - size, cy            -- Left
         }
         love.graphics.polygon(mode, pts)
+    elseif self.shape == "soldier" then
+        love.graphics.rectangle(mode, cx - self.w/2, cy - self.h/2, self.w, self.h)
+        local r, g, b, a = love.graphics.getColor()
+        -- Use a grey color with the same alpha as the current rendering layer
+        love.graphics.setColor(0.6, 0.6, 0.6, a)
+        local padW = self.w * 0.2
+        love.graphics.rectangle(mode, cx - self.w/2 - padW, cy - self.h/2, padW, self.h)
+        love.graphics.rectangle(mode, cx + self.w/2, cy - self.h/2, padW, self.h)
+        love.graphics.setColor(r, g, b, a)
     else
         love.graphics.rectangle(mode, cx - self.w/2, cy - self.h/2, self.w, self.h)
     end

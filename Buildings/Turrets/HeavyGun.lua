@@ -7,7 +7,7 @@ HeavyGun.__index = HeavyGun
 HeavyGun.template = {
     name = "Heavy Gun",
     rotation = 0,
-    fireRate = 0.25,
+    fireRate = 0.2,
     range = 600,
     barrel = 12,
     color = {0.8, 0.4, 0.2, 1},
@@ -25,7 +25,7 @@ HeavyGun.template = {
     -- Bullet Properties
     bulletName = "Heavy Shell",
     bulletSpeed = 500,
-    damage = 42,
+    damage = 75,
     damageType = "normal",
     pierce = 1,
     lifespan = 4,

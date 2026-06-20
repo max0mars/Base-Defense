@@ -89,7 +89,7 @@ local EnemyIndex = {
         damage = 12,
         speed = 22,
         color = {1, 0, 0, 1}, -- Red
-        shape = "rectangle",
+        shape = "soldier",
         size = 22,
         types = { enemy = true, red = true, armour = true },
         baseSpawnDelay = 1.0,
