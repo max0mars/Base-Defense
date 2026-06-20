@@ -21,14 +21,14 @@ AutoCannon.template = {
         minRange = 0,
         angle = math.pi/4
     },
-    spread = math.rad(5),
+    spread = math.rad(2),
     -- Bullet Properties
     bulletName = "Cannon Round",
     bulletSpeed = 500,
     damageType = "normal",
     damage = 3,
     pierce = 1,
-    lifespan = .8,
+    lifespan = 1.5,
     bulletW = 3, 
     bulletH = 3, 
     hitEffects = {}

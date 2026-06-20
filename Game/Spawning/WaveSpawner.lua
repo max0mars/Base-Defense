@@ -259,37 +259,13 @@ function WaveSpawner:startCustomWave(waveList)
 end
 
 function WaveSpawner:updateActiveSectors()
-    local nextWave = (self.game and self.game.wave) and (self.game.wave + 1) or 1
-    local numLanes = 1
-    if nextWave == 3 or nextWave == 4 then
-        numLanes = 2
-    elseif nextWave >= 5 then
-        numLanes = 3
-    end
-    
     local sectors = {0, 1, 2}
     for i = 3, 2, -1 do
         local j = math.random(1, i)
         sectors[i], sectors[j] = sectors[j], sectors[i]
     end
     
-    self.activeSectors = {}
-    for i = 1, numLanes do
-        table.insert(self.activeSectors, sectors[i])
-    end
-    
-    self.sectorDeck = {}
-    local amountPerLane = math.floor(6 / numLanes)
-    for _, sector in ipairs(self.activeSectors) do
-        for i = 1, amountPerLane do
-            table.insert(self.sectorDeck, sector)
-        end
-    end
-    
-    for i = #self.sectorDeck, 2, -1 do
-        local j = math.random(1, i)
-        self.sectorDeck[i], self.sectorDeck[j] = self.sectorDeck[j], self.sectorDeck[i]
-    end
+    self.activeSectors = {sectors[1], sectors[2], sectors[3]}
 end
 
 function WaveSpawner:draw()
@@ -300,11 +276,14 @@ function WaveSpawner:draw()
         local totalRows = maxRow - minRow + 1
         local sectorSize = totalRows / 3.0
         
+        local numLanesToDraw = self.pendingWaveList and #self.pendingWaveList or 1
+        
         -- Draw pulsing arrows indicating the active sectors
         local pulse = (math.sin(love.timer.getTime() * 5) + 1) / 2
         love.graphics.setColor(1, 0, 0, 0.5 + 0.5 * pulse)
         
-        for _, sector in ipairs(self.activeSectors) do
+        for i = 1, numLanesToDraw do
+            local sector = self.activeSectors[i]
             local sectorMinRow = minRow + math.floor(sector * sectorSize)
             local sectorMaxRow = minRow + math.floor((sector + 1) * sectorSize) - 1
             if sectorMinRow > sectorMaxRow then sectorMaxRow = sectorMinRow end

@@ -263,11 +263,22 @@ function GUIManager:drawHUD()
     love.graphics.push("all")
     local sx, sy = statPanel.x + 12, statPanel.y + 10
 
-    -- WAVE
+    -- WAVE & LEVEL
     love.graphics.setColor(0, 0.85, 1.0, 0.8)
     love.graphics.print("WAVE", sx, sy)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print(tostring(game.wave), sx + 85, sy)
+    
+    local displayWave = game.wave
+    if game:isState("startup") or game:isState("preparing") or game:isState("enemy_mutation") or game:isState("upgrade_mutation") then
+        displayWave = displayWave + 1
+    end
+    love.graphics.print(tostring(displayWave), sx + 50, sy)
+    
+    local currentLevel = _G.PersistentState and _G.PersistentState.battlesCompleted and (_G.PersistentState.battlesCompleted + 1) or 1
+    love.graphics.setColor(0, 0.85, 1.0, 0.8)
+    love.graphics.print("LEVEL", sx + 90, sy)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print(tostring(currentLevel), sx + 145, sy)
 
     -- TOKENS
     love.graphics.setColor(1.0, 0.7, 0.1, 0.8)

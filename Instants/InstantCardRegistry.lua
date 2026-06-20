@@ -9,17 +9,17 @@ local CardRegistry = {}
 CardRegistry.Overclock = InstantCard.new({
     id = "inst_overclock_1",
     name = "Overclock",
-    description = "Give a turret +10% Damage.",
+    description = "Give a turret +15% Damage.",
     cost = 1,
     rarity = "Common",
     executionType = InstantCard.ExecutionType.Targeted,
-    statModifiers = { damage = { mult = 0.10 } }
+    statModifiers = { damage = { mult = 0.15 } }
 })
 
 CardRegistry.RangeFinder = InstantCard.new({
     id = "inst_range_1",
-    name = "Range Finder",
-    description = "Give a turret +100 Range.",
+    name = "Binoculars",
+    description = "Give a turret extra Range.",
     cost = 1,
     rarity = "Common",
     executionType = InstantCard.ExecutionType.Targeted,

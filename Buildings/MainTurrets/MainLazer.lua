@@ -282,7 +282,7 @@ function MainLazer.getStartingDeck()
     local deck = PlayerDeck:new()
     
     StandardMainTurret.addCard(deck, "sentry", 2, "common")
-    StandardMainTurret.addCard(deck, "blaster", 4, "common")
+    StandardMainTurret.addCard(deck, "blaster", 2, "common")
 
     
     deck:addCard(Card:new({
@@ -301,10 +301,9 @@ function MainLazer.getStartingDeck()
         }
     }))
     
-    StandardMainTurret.addCard(deck, "inst_overclock_1", 4)
+    StandardMainTurret.addCard(deck, "inst_overclock_1", 2)
     StandardMainTurret.addCard(deck, "inst_range_1", 2)
     StandardMainTurret.addCard(deck, "inst_frenzy_1", 1)
-    StandardMainTurret.addCard(deck, "inst_hasty_1", 1)
 
     
     local energySurge = InstantCard.new({
@@ -327,7 +326,7 @@ function MainLazer.getStartingDeck()
         description = "Increases all Energy damage by 20% when adjacent to the Main Turret.",
         executionType = ExecutionType.Placement,
         cost = 2,
-        quantity = 2,
+        quantity = 1,
         payload = {
             buildingClass = require("Buildings.Passives.IndustrialBattery"),
             config = {},
