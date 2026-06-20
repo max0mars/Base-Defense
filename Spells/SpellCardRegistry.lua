@@ -121,4 +121,46 @@ SpellCardRegistry.Judgment = Spell.new({
     end
 })
 
+-- Zap
+SpellCardRegistry.Zap = Spell.new({
+    id = "spell_zap",
+    name = "Zap",
+    description = "Deals 20 damage in a very small area.",
+    cost = 0,
+    rarity = "Common",
+    radius = 25,
+    damage = 20,
+    customExecute = function(self, x, y, game)
+        -- Visuals
+        if game.spawnLightningBolt then
+            game:spawnLightningBolt(x, y)
+        end
+        if game.spawnParticleExplosion then
+            game:spawnParticleExplosion({0.2, 0.8, 1, 1}, 8, x, y, 0.3, 10)
+        end
+        if game.spawnCircleFade then
+            game:spawnCircleFade(x, y, self:getStat("radius"), {0.2, 0.8, 1, 1}, 0.2)
+        end
+
+        -- Sound
+        if AUDIO then
+            AUDIO:playSFX("lightning_01")
+        end
+
+        -- Damage
+        local r = self:getStat("radius")
+        local r2 = r * r
+        local dmg = self:getStat("damage")
+        for _, obj in ipairs(game.objects) do
+            if obj:isType("enemy") and not obj.destroyed then
+                local dx = obj.x - x
+                local dy = obj.y - y
+                if dx*dx + dy*dy <= r2 then
+                    obj:takeDamage(dmg, "energy")
+                end
+            end
+        end
+    end
+})
+
 return SpellCardRegistry

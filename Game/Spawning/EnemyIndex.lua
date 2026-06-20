@@ -77,6 +77,28 @@ local EnemyIndex = {
         debuffAmount = -0.01,
         description = "Gives debuffs that get stronger the longer it lives.",
         mutations = {}
+    },
+    {
+        id = "Soldier",
+        type = "Soldier",
+        class = require("Enemies.Enemy"),
+        tier = 1,
+        spawnCost = 15,
+        spawnWeight = 0.8,
+        maxHp = 150,
+        damage = 12,
+        speed = 22,
+        color = {1, 0, 0, 1}, -- Red
+        shape = "rectangle",
+        size = 22,
+        types = { enemy = true, red = true },
+        baseSpawnDelay = 1.0,
+        affinities = {
+            normal = 0.75,
+            explosive = 0.75
+        },
+        description = "A well-trained combatant with light armour.",
+        mutations = {}
     }
 }
 
