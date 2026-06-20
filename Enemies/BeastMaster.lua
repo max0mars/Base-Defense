@@ -5,13 +5,7 @@ BeastMaster.__index = BeastMaster
 
 local default = {
     name = "Beast Master",
-    speed = 20,
-    maxHp = 350,
-    damage = 25,
     reward = 120,
-    size = 26,
-    color = {0.5, 0.1, 0.5, 1},
-    types = { beastmaster = true },
     -- Summoning defaults
     spawnInterval = 6,
     spawnCount = 3,
@@ -57,7 +51,7 @@ function BeastMaster:update(dt)
     for _, beast in ipairs(self.activeBeasts) do
         local distToMasterX = beast.x - self.x
         if distToMasterX <= beast.formationRadius then
-            local rawSpeed = beast.speed or 140
+            local rawSpeed = beast.speed or beast:getStat("speed") or 140
             local speedMult = (masterSpeed / rawSpeed) - 1
             
             local existing = beast.effectManager:getEffect("hidden_BeastFormationSpeed")

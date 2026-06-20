@@ -218,7 +218,6 @@ function new_game_scene:mousepressed(x, y, button)
                 RewardIndex.injectSpells(SpellCardRegistry)
                 RewardIndex.injectInstants(InstantCardRegistry)
             end
-            
             self.scene_manager.switch("game")
         end
     end

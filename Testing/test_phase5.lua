@@ -16,7 +16,8 @@ _G.PersistentState = {
 }
 
 -- 1. Test updatePools with globalDifficulty = 1
-EnemyRegistry:reset()
+local mockGame = { testingMode = true }
+EnemyRegistry:reset(mockGame)
 EnemyRegistry:updatePools(_G.PersistentState.globalDifficulty)
 local available = EnemyRegistry:getAvailableEnemies()
 if #available == 1 and available[1].id == "Basic" then
@@ -45,12 +46,13 @@ else
 end
 
 -- 4. Test Dual-Scaling formula
-local wd = WaveDirector:new({})
-local budget1 = wd:getBudgetForWave(1, 1)
-local budget5 = wd:getBudgetForWave(5, 1)
+local BattleDirector = require("Game.Spawning.BattleDirector")
+local bd = BattleDirector:new({})
+local budget1 = bd:getBudgetForWave(1, 1)
+local budget5 = bd:getBudgetForWave(5, 1)
 
-local budget1_hard = wd:getBudgetForWave(1, 4)
-local budget5_hard = wd:getBudgetForWave(5, 4)
+local budget1_hard = bd:getBudgetForWave(1, 4)
+local budget5_hard = bd:getBudgetForWave(5, 4)
 
 if budget5 > budget1 and budget5_hard > budget1_hard and budget5_hard > budget5 then
     print(string.format("[PASS] Dual-scaling works. W1D1: %d, W5D1: %d | W1D4: %d, W5D4: %d", budget1, budget5, budget1_hard, budget5_hard))

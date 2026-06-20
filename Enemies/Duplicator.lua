@@ -4,12 +4,6 @@ Duplicator.__index = Duplicator
 
 local default = {
     name = "Duplicator",
-    speed = 22,
-    damage = 20,
-    maxHp = 150,
-    color = {0.2, 0.8, 0.4, 1}, -- Toxic Green/Cellular color
-    types = { duplicator = true, bio = true },
-    size = 18,
     reward = 10, -- Base reward, splits will also give rewards
     generation = 0, -- Default generation 0
     radius = 80, -- Healing wave radius

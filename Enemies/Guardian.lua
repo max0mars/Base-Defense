@@ -4,16 +4,9 @@ Guardian.__index = Guardian
 
 local Stats = {
     name = "Guardian",
-    speed = 18,
-    damage = 20,
     reward = 50,
     armour = 0,
-    size = 24,
-    shape = "cross",
-    color = {0.2, 0.7, 1, 1}, -- Blueish aura color
-    maxHp = 250,
     hitbox = true,
-    types = { enemy = true, guardian = true },
     effectManager = true,
 }
 

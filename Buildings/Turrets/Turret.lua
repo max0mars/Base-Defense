@@ -176,6 +176,10 @@ function Turret:fire(args)
 end
 
 function Turret:update(dt)
+    if self.effectManager then
+        self.effectManager:update(dt)
+    end
+
     -- Do not acquire targets or shoot while the player is setting the firing arc
     if self.game.inputMode == "aiming" and self.game.inputHandler.selectedBuilding == self then
         if self.firingArc then

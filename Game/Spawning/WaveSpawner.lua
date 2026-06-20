@@ -38,19 +38,47 @@ function WaveSpawner:update(dt)
             self.game.wave = self.game.wave + 1
             self.spawnRate = 0.5 * (0.95 ^ (self.game.wave))
 
-            -- Use the pre-calculated waves from preparation_scene
             local summary
+            if not (_G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0) then
+                local BattleDirector = require("Game.Spawning.BattleDirector")
+                local bd = BattleDirector:new(self.game)
+                local upcomingWaves, upcomingSummaries = bd:generateBattle(_G.PersistentState and _G.PersistentState.globalDifficulty or 1)
+                _G.PersistentState = _G.PersistentState or {}
+                _G.PersistentState.upcomingWaves = upcomingWaves
+                _G.PersistentState.upcomingSummaries = upcomingSummaries
+            end
+            
             if _G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0 then
                 self.waveList = table.remove(_G.PersistentState.upcomingWaves, 1)
                 summary = table.remove(_G.PersistentState.upcomingSummaries, 1)
             else
-                self.waveList, summary = self.game.waveDirector:generateWaveList(self.game.wave, _G.PersistentState and _G.PersistentState.globalDifficulty or 1)
+                self.waveList = {}
+                summary = {}
+            end
+            
+            self.laneTimers = {}
+            local SpawningUtils = require("Game.Spawning.SpawningUtils")
+            local globalDiff = _G.PersistentState and _G.PersistentState.globalDifficulty or 1
+            for i = 1, #self.waveList do
+                local queue = self.waveList[i]
+                if queue and #queue > 0 then
+                    local enemyClass = queue[1]
+                    local baseDelay = enemyClass.baseSpawnDelay or 1.0
+                    self.laneTimers[i] = SpawningUtils.getScaledDelay(baseDelay, globalDiff)
+                else
+                    self.laneTimers[i] = 0
+                end
             end
             
             self:buildLiveRoster(summary)
             self.waveInitialized = true
         else
-            if #self.waveList == 0 then
+            local totalRemaining = 0
+            for _, laneQueue in ipairs(self.waveList) do
+                totalRemaining = totalRemaining + #laneQueue
+            end
+
+            if totalRemaining == 0 then
                 -- Check if all enemies are defeated
                 local enemiesAlive = 0
                 for _, obj in ipairs(self.game.objects) do
@@ -65,62 +93,61 @@ function WaveSpawner:update(dt)
                 return
             end
             
-            self.spawntimer = self.spawntimer - dt
-            if self.spawntimer < 0 then
-                local grid = self.game.battlefieldGrid
-                -- Exclude outermost rows to prevent edge-creeping spawns
-                local minRow = (grid.height > 2) and 2 or 1
-                local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
-                
-                -- Shuffled deck logic for sectors
-                if not self.sectorDeck or #self.sectorDeck == 0 then
-                    self.sectorDeck = {}
-                    local numLanes = #self.activeSectors
-                    local amountPerLane = math.floor(6 / numLanes)
-                    for _, sector in ipairs(self.activeSectors) do
-                        for i = 1, amountPerLane do
-                            table.insert(self.sectorDeck, sector)
+            self.laneTimers = self.laneTimers or {}
+            for laneIndex, queue in ipairs(self.waveList) do
+                if #queue > 0 then
+                    self.laneTimers[laneIndex] = (self.laneTimers[laneIndex] or 0) - dt
+                    if self.laneTimers[laneIndex] <= 0 then
+                        local grid = self.game.battlefieldGrid
+                        -- Exclude outermost rows to prevent edge-creeping spawns
+                        local minRow = (grid.height > 2) and 2 or 1
+                        local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
+                        
+                        local totalRows = maxRow - minRow + 1
+                        local sectorSize = totalRows / 3.0
+                        
+                        local currentSector = self.activeSectors[laneIndex] or 0
+                        local sectorMinRow = minRow + math.floor(currentSector * sectorSize)
+                        local sectorMaxRow = minRow + math.floor((currentSector + 1) * sectorSize) - 1
+                        if sectorMinRow > sectorMaxRow then sectorMaxRow = sectorMinRow end
+                        if sectorMaxRow > maxRow then sectorMaxRow = maxRow end
+                        
+                        local randomRow = math.random(sectorMinRow, sectorMaxRow)
+                        local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
+                        
+                        local enemyClass = table.remove(queue, 1)
+                        local spawnConfig = {
+                            game = self.game,
+                            x = 800,
+                            y = startY
+                        }
+                        
+                        local enemyInstance = enemyClass:new(spawnConfig)
+
+                        -- Apply Mutation Upgrades
+                        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+                        EnemyRegistry:applyActiveMutations(enemyInstance)
+
+                        -- Codex: mark this enemy type as seen.
+                        if self.game.seenEnemies and enemyInstance.name then
+                            self.game.seenEnemies[enemyInstance.name] = true
+                        end
+
+                        self.game:addObject(enemyInstance)
+                        
+                        -- Set timer for the NEXT enemy in the queue
+                        if #queue > 0 then
+                            local nextEnemyClass = queue[1]
+                            local SpawningUtils = require("Game.Spawning.SpawningUtils")
+                            local baseDelay = nextEnemyClass.baseSpawnDelay or 1.0
+                            local globalDiff = _G.PersistentState and _G.PersistentState.globalDifficulty or 1
+                            local nextDelay = SpawningUtils.getScaledDelay(baseDelay, globalDiff)
+                            self.laneTimers[laneIndex] = nextDelay
+                        else
+                            self.laneTimers[laneIndex] = 0
                         end
                     end
-                    for i = #self.sectorDeck, 2, -1 do
-                        local j = math.random(1, i)
-                        self.sectorDeck[i], self.sectorDeck[j] = self.sectorDeck[j], self.sectorDeck[i]
-                    end
                 end
-                local currentSector = table.remove(self.sectorDeck)
-                
-                local totalRows = maxRow - minRow + 1
-                local sectorSize = totalRows / 3.0
-                
-                local sectorMinRow = minRow + math.floor(currentSector * sectorSize)
-                local sectorMaxRow = minRow + math.floor((currentSector + 1) * sectorSize) - 1
-                if sectorMinRow > sectorMaxRow then sectorMaxRow = sectorMinRow end
-                if sectorMaxRow > maxRow then sectorMaxRow = maxRow end
-                
-                local randomRow = math.random(sectorMinRow, sectorMaxRow)
-                local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
-                
-                local enemyClass = table.remove(self.waveList, 1)
-                local spawnConfig = {
-                    game = self.game,
-                    x = 800,
-                    y = startY
-                }
-                
-                local enemyInstance = enemyClass:new(spawnConfig)
-
-                -- Apply Mutation Upgrades
-                local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
-                EnemyRegistry:applyActiveMutations(enemyInstance)
-
-                -- Codex: mark this enemy type as seen.
-                if self.game.seenEnemies and enemyInstance.name then
-                    self.game.seenEnemies[enemyInstance.name] = true
-                end
-
-                self.game:addObject(enemyInstance)
-                
-                self.spawntimer = self.spawnRate
             end
         end
     elseif self.waveState == "complete" then
@@ -146,10 +173,21 @@ function WaveSpawner:prepareUpcomingWave()
     if self.waveState ~= "idle" then return end
     local nextWaveNum = self.game.wave + 1
     if self.pendingWaveNum == nextWaveNum and self.pendingWaveList then return end
-    local list, summary = self.game.waveDirector:generateWaveList(nextWaveNum, _G.PersistentState and _G.PersistentState.globalDifficulty or 1)
-    self.pendingWaveList = list
-    self.pendingSummary = summary
-    self.pendingWaveNum = nextWaveNum
+
+    if not (_G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0) then
+        local BattleDirector = require("Game.Spawning.BattleDirector")
+        local bd = BattleDirector:new(self.game)
+        local upcomingWaves, upcomingSummaries = bd:generateBattle(_G.PersistentState and _G.PersistentState.globalDifficulty or 1)
+        _G.PersistentState = _G.PersistentState or {}
+        _G.PersistentState.upcomingWaves = upcomingWaves
+        _G.PersistentState.upcomingSummaries = upcomingSummaries
+    end
+
+    if _G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0 then
+        self.pendingWaveList = _G.PersistentState.upcomingWaves[1]
+        self.pendingSummary = _G.PersistentState.upcomingSummaries[1]
+        self.pendingWaveNum = nextWaveNum
+    end
 end
 
 --- Returns the upcoming wave's composition summary and wave number (for the preview UI).
@@ -193,7 +231,24 @@ end
 function WaveSpawner:startCustomWave(waveList)
     if self.waveState == "idle" then
         self.waveState = "active"
-        self.waveList = waveList
+        if waveList and #waveList > 0 and type(waveList[1]) ~= "table" then
+            self.waveList = { waveList }
+        else
+            self.waveList = waveList or {}
+        end
+        self.laneTimers = {}
+        local SpawningUtils = require("Game.Spawning.SpawningUtils")
+        local globalDiff = _G.PersistentState and _G.PersistentState.globalDifficulty or 1
+        for i = 1, #self.waveList do
+            local queue = self.waveList[i]
+            if queue and #queue > 0 then
+                local enemyClass = queue[1]
+                local baseDelay = enemyClass.baseSpawnDelay or 1.0
+                self.laneTimers[i] = SpawningUtils.getScaledDelay(baseDelay, globalDiff)
+            else
+                self.laneTimers[i] = 0
+            end
+        end
         self.waveInitialized = true
         self.pendingWaveList = nil
         self.pendingSummary = nil

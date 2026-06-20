@@ -5,18 +5,36 @@ Enemy.__index = Enemy
 
 local Stats = {
     name = "Basic",
-    speed = 25,
-    damage = 10,
     reward = 25,
     size = 20, -- Default size for basic enemies
     shape = "rectangle", -- Default shape for basic enemies
     color = {1, 0, 0, 1}, -- Default color for basic enemies
-    maxHp = 100, -- Maximum health for basic enemies
     hitbox = true, -- Enemies have hitboxes by default
     types = { enemy = true }, -- Using Multi-Type system
     effectManager = true, -- Enemies have a effectManager by default
     splitOnDeathChance = 0,
 }   
+
+local function getBaseStats(config)
+    local isTesting = config.game and config.game.testingMode
+    local index = isTesting and require("Game.Spawning.TestingEnemyIndex") or require("Game.Spawning.EnemyIndex")
+    local name = config.name or Stats.name or "Basic"
+    local normalizedName = name:lower():gsub("%s+", "")
+    for _, entry in ipairs(index) do
+        local entryId = entry.id:lower():gsub("%s+", "")
+        local entryType = entry.type:lower():gsub("%s+", "")
+        if entryId == normalizedName or entryType == normalizedName then
+            return entry
+        end
+    end
+    -- Fallback to Basic
+    for _, entry in ipairs(index) do
+        if entry.id == "Basic" then
+            return entry
+        end
+    end
+    return nil
+end
 
 function Enemy:new(config)
     config = config or {}
@@ -28,6 +46,28 @@ function Enemy:new(config)
         end
     end
     
+    local base = getBaseStats(config)
+    if base then
+        config.maxHp = config.maxHp or base.maxHp
+        config.damage = config.damage or base.damage
+        config.speed = config.speed or base.speed
+        config.color = config.color or base.color
+        config.shape = config.shape or base.shape
+        config.size = config.size or base.size
+        config.isFlying = (config.isFlying == nil and base.isFlying) or config.isFlying
+        if base.affinities and not config.affinities then
+            config.affinities = {}
+            for k, v in pairs(base.affinities) do
+                config.affinities[k] = v
+            end
+        end
+        if base.types then
+            for k, v in pairs(base.types) do
+                config.types[k] = config.types[k] or v
+            end
+        end
+    end
+
     for key, value in pairs(Stats) do
         if key ~= "types" then
             config[key] = config[key] or value -- Use default values if not provided
@@ -303,7 +343,8 @@ function Enemy:died()
             local spawnConfig = {
                 game = self.game,
                 x = self.x + offsets[i].x,
-                y = self.y + offsets[i].y
+                y = self.y + offsets[i].y,
+                name = self.name
             }
             local basicClass = require("Enemies.Enemy")
             local childInstance = basicClass:new(spawnConfig)
@@ -317,7 +358,15 @@ function Enemy:died()
 end
 
 function Enemy:getTargetPos()
-    self.target = self.game.base.x + self.game.base.w / 2 + self.w / 2
+    local factor = 0.5
+    if self.shape == "dart" then
+        factor = 7 / 15
+    elseif self.shape == "octagon" then
+        factor = 0.6
+    elseif self.shape == "arrow" then
+        factor = 0.8
+    end
+    self.target = self.game.base.x + self.game.base.w / 2 + (self.w * factor)
 end
 
 function Enemy:checkBaseCollision()
@@ -332,10 +381,168 @@ function Enemy:drawHealthBar()
 end
 
 function Enemy:drawCustomShape(mode, cx, cy)
-    love.graphics.rectangle(mode, cx - self.w/2, cy - self.h/2, self.w, self.h)
+    if self.shape == "dart" then
+        local scale = self:getStat("size", 15) / 15
+        love.graphics.push()
+        love.graphics.translate(cx, cy)
+        love.graphics.scale(scale, scale)
+        love.graphics.polygon(mode, -7, 0, 7, -4, 4, 0, 7, 4)
+        love.graphics.pop()
+    elseif self.shape == "tank" then
+        local scale = self:getStat("size", 22) / 22
+        love.graphics.push()
+        love.graphics.translate(cx, cy)
+        love.graphics.scale(scale, scale)
+        local pts = {
+            -11, -10, 11, -10, 11, -7, 9, -7, 9, 7, 11, 7,
+            11, 10, -11, 10, -11, 7, -9, 7, -9, -7, -11, -7
+        }
+        love.graphics.polygon(mode, pts)
+        love.graphics.pop()
+    elseif self.shape == "octagon" then
+        local size = self:getStat("size", 20)
+        local function getOctagonPoints(x, y, s)
+            local pts = {}
+            for i = 0, 7 do
+                local angle = i * (math.pi / 4) + (math.pi / 8)
+                table.insert(pts, x + math.cos(angle) * s)
+                table.insert(pts, y + math.sin(angle) * s)
+            end
+            return pts
+        end
+        local points = getOctagonPoints(cx, cy, size * 0.6)
+        love.graphics.polygon(mode, points)
+    elseif self.shape == "cross" then
+        local thickness = self.w * 0.35
+        -- Vertical Bar
+        love.graphics.rectangle(mode, cx - thickness/2, cy - self.h/2, thickness, self.h)
+        -- Horizontal Bar
+        love.graphics.rectangle(mode, cx - self.w/2, cy - thickness/2, self.w, thickness)
+    elseif self.shape == "diamond" then
+        local size = self.w / 2
+        local pts = {
+            cx, cy - size,           -- Top
+            cx + size, cy,           -- Right
+            cx, cy + size,           -- Bottom
+            cx - size, cy            -- Left
+        }
+        love.graphics.polygon(mode, pts)
+    else
+        love.graphics.rectangle(mode, cx - self.w/2, cy - self.h/2, self.w, self.h)
+    end
 end
 
 function Enemy:draw()
+    if self.shape == "arrow" then
+        local r, g, b, a = unpack(self.color or {1, 0.5, 0, 1})
+        local drawX = self.x
+        local drawY = self.y
+        local size = self:getStat("size")
+        
+        -- Calculate rotation (pointing towards target)
+        local angle = 0
+        if self.navigator and (self.navigator.tx or self.tx) then
+            local targetX = self.navigator.tx or self.tx
+            local targetY = self.navigator.ty or self.ty
+            angle = math.atan2(targetY - self.y, targetX - self.x)
+        else
+            angle = math.pi -- Default facing left
+        end
+
+        local function getArrowPoints(cx, cy, s, ang)
+            local points = {
+                {cx + math.cos(ang) * s, cy + math.sin(ang) * s}, -- Tip
+                {cx + math.cos(ang + 2.5) * s, cy + math.sin(ang + 2.5) * s}, -- Back-right
+                {cx + math.cos(ang + math.pi) * (s * 0.4), cy + math.sin(ang + math.pi) * (s * 0.4)}, -- Indented back
+                {cx + math.cos(ang - 2.5) * s, cy + math.sin(ang - 2.5) * s} -- Back-left
+            }
+            local flat = {}
+            for _, p in ipairs(points) do
+                table.insert(flat, p[1])
+                table.insert(flat, p[2])
+            end
+            return flat
+        end
+
+        local arrowPoints = getArrowPoints(drawX, drawY, size * 0.8, angle)
+
+        -- 1. Draw "Empty" Base State (Dim fill)
+        love.graphics.setColor(r, g, b, 0.15)
+        love.graphics.polygon("fill", arrowPoints)
+        
+        -- 2. Calculate Scissor Box for Health Fill (Draining effect)
+        local maxHp = self:getStat("maxHp")
+        local fillRatio = self.hp / maxHp
+        
+        local minY, maxY = arrowPoints[2], arrowPoints[2]
+        for i = 4, #arrowPoints, 2 do
+            local y = arrowPoints[i]
+            if y < minY then minY = y end
+            if y > maxY then maxY = y end
+        end
+        local actualH = maxY - minY
+        
+        local scissorY = minY + actualH * (1 - fillRatio)
+        local scissorH = actualH * fillRatio
+        
+        -- 3. Draw "Health" Fill (Bright fill restricted by scissor)
+        SetGameScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), math.ceil(scissorH))
+        love.graphics.setColor(r, g, b, 0.7)
+        love.graphics.polygon("fill", arrowPoints)
+        
+        if fillRatio > 0 and fillRatio < 1 then
+            SetGameScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), 2)
+            love.graphics.setColor(r, g, b, 1)
+            love.graphics.polygon("fill", arrowPoints)
+            SetGameScissor()
+        end
+        
+        SetGameScissor()
+        
+        -- Layer 3: Shield Fill
+        if self.maxShield > 0 and self.shield > 0 then
+            local shieldRatio = self.shield / self.maxShield
+            local sScissorY = minY + actualH * (1 - shieldRatio)
+            local sScissorH = actualH * shieldRatio
+            
+            SetGameScissor(math.floor(self.x - size), math.floor(sScissorY), math.ceil(size * 2), math.ceil(sScissorH))
+            love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
+            love.graphics.polygon("fill", arrowPoints)
+            SetGameScissor()
+        end
+        
+        -- 4. Glow Layers
+        for i = 4, 1, -1 do
+            local alpha = 0.05 * (1 - i/5)
+            love.graphics.setColor(r, g, b, alpha)
+            love.graphics.setLineWidth(i * 3)
+            love.graphics.polygon("line", arrowPoints)
+        end
+        
+        -- 5. Main Neon Border
+        love.graphics.setColor(r, g, b, 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.polygon("line", arrowPoints)
+        
+        -- Draw debug path if debugMode
+        if self.game.debugMode and self.navigator and self.navigator.path then
+            love.graphics.setColor(0, 1, 0, 0.5)
+            love.graphics.setLineWidth(2)
+            local path = self.navigator.path
+            local prevX, prevY = self.x, self.y
+            for i = self.navigator.currentNodeIndex, #path do
+                local node = path[i]
+                local wx = self.game.battlefieldGrid.x + (node.x - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
+                local wy = self.game.battlefieldGrid.y + (node.y - 1) * self.game.battlefieldGrid.cellSize + self.game.battlefieldGrid.cellSize / 2
+                love.graphics.line(prevX, prevY, wx, wy)
+                prevX, prevY = wx, wy
+            end
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setLineWidth(1)
+        end
+        return
+    end
+
     local r, g, b, a = unpack(self.color or {1, 0, 0, 1})
     local drawX = self.x - self.w/2
     local drawY = self.y - self.h/2

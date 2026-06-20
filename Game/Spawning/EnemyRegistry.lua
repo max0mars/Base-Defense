@@ -19,6 +19,19 @@ function EnemyRegistry:reset(game)
     
     -- Load from persistent state
     for _, enemy in ipairs(self.allEnemies) do
+        local baseClass = enemy.class
+        if baseClass then
+            local subclass = setmetatable({}, { __index = baseClass })
+            subclass.__index = subclass
+            subclass.baseSpawnDelay = enemy.baseSpawnDelay or 1.0
+            function subclass:new(config)
+                config = config or {}
+                config.name = config.name or enemy.id
+                return baseClass.new(self, config)
+            end
+            enemy.class = subclass
+        end
+        
         if _G.PersistentState.discoveredEnemies[enemy.id] then
             self.discoveredEnemiesMap[enemy.id] = true
             table.insert(self.discoveredEnemies, enemy.id)

@@ -12,7 +12,8 @@ local BattleTemplate = require("Game.Spawning.BattleTemplate")
 
 print("--- Starting BattleDirector Roster Tests ---")
 
-local bd = BattleDirector:new({})
+local mockGame = { testingMode = true }
+local bd = BattleDirector:new(mockGame)
 
 -- Discover Speeder (tier0), Armored (tier0), Carrier (tier1), Flyer (tier2)
 bd:forceDiscoverEnemy("Speeder")

@@ -1,4 +1,4 @@
-local Speeder = require("Enemies.Speeder")
+local Speeder = require("Enemies.Enemy")
 
 local SpeederGroup = {}
 SpeederGroup.__index = SpeederGroup

@@ -4,13 +4,7 @@ Beast.__index = Beast
 
 local default = {
     name = "Beast",
-    speed = 140,
-    maxHp = 30,
-    damage = 5,
     reward = 5,
-    size = 12,
-    color = {0.8, 0.4, 0.1, 1},
-    types = { beast = true },
     formationRadius = 20
 }
 
@@ -39,7 +33,7 @@ function Beast:update(dt)
     if self.destroyed then return end
     
     if self.master and not self.master.destroyed and not self.enraged then
-        local masterBaseSpeed = self.master.speed or 25
+        local masterBaseSpeed = self.master:getStat("speed") or 20
         local distToMasterX = self.x - self.master.x
         
         if distToMasterX > self.formationRadius then

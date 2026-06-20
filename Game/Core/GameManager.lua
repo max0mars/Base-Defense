@@ -245,7 +245,8 @@ function game:update(dt)
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
         self:waveComplete()
         
-        if self.wave >= 5 then
+        local finished = not (_G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0)
+        if finished then
             self.battleComplete = true
             self:clearGlobalBuffs()
             if _G.PersistentState then

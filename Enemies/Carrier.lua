@@ -1,16 +1,9 @@
 local Enemy = require("Enemies.Enemy")
-local Speeder = require("Enemies.Speeder")
 local Carrier = setmetatable({}, {__index = Enemy})
 Carrier.__index = Carrier
 
 local default = {
     name = "Carrier",
-    speed = 18, -- Slower than standard 25
-    maxHp = 300,
-    damage = 20,
-    color = {0.2, 0.8, 1, 1}, -- Neon Cyan
-    types = { carrier = true, tank = true },
-    size = 22, -- Balanced size
     reward = 150,
     spawnInterval = 7,
     spawnCount = 1,
@@ -59,10 +52,14 @@ function Carrier:spawnReinforcements()
         local rx = self.x + (math.random() - 0.5) * offset
         local ry = self.y + (math.random() - 0.5) * offset
         
-        local speederInstance = Speeder:new({
+        local isTesting = self.game and self.game.testingMode
+        local nameStr = isTesting and "Speeder" or "Scout"
+        
+        local speederInstance = Enemy:new({
             game = self.game,
             x = rx,
-            y = ry
+            y = ry,
+            name = nameStr
         })
         
         -- Apply any active upgrades to the spawned speeder

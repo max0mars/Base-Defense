@@ -8,40 +8,18 @@ function WaveDirector:new(game)
     obj.game = game
     
     -- Accelerated scaling for a 40-wave game (Wave 1 = 30)
-    obj.baseBudget = 30
-    obj.linearRamp = 25
-    obj.exponentialKicker = 3.5
+    -- obj.baseBudget = 30
+    -- obj.linearRamp = 25
+    -- obj.exponentialKicker = 3.5
     
     return obj
 end
 
--- Faster Early Scaling Table (Wave 1 = 30):
--- Wave 1:  30
--- Wave 10: 255 (Fast early ramp)
--- Wave 20: 855
--- Wave 30: 2135
--- Wave 40: 4155 (Final Challenge)
+function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget)
+    assert(battleRoster, "WaveDirector:generateWaveList requires a battleRoster")
+    assert(budget, "WaveDirector:generateWaveList requires a budget")
 
-function WaveDirector:getBudgetForWave(waveNumber, globalDifficulty)
-    -- Phase 5 dual-difficulty scaling formula
-    -- baseBudgets for 5 waves
-    local baseBudgets = {30, 45, 65, 95, 150}
-    
-    local wave = math.max(1, math.min(5, waveNumber))
-    local base = baseBudgets[wave]
-    
-    local multiplier = 1 + (globalDifficulty - 1) * (0.3 + (wave - 1) * 0.1)
-    return math.floor(base * multiplier)
-end
-
-function WaveDirector:generateWaveList(waveIndex, battleRoster, template, globalDifficulty)
-    if type(battleRoster) == "number" then
-        globalDifficulty = battleRoster
-        battleRoster = nil
-    end
-
-    globalDifficulty = globalDifficulty or 1
-    local totalBudget = self:getBudgetForWave(waveIndex, globalDifficulty)
+    local totalBudget = budget
     local laneCount = 1
 
     if template then
@@ -50,14 +28,6 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, global
         elseif template.lanesPerWave then
             laneCount = template.lanesPerWave[waveIndex] or template.lanesPerWave[#template.lanesPerWave] or 1
         end
-
-        if template.relativeDifficulty and template.relativeDifficulty[waveIndex] then
-            totalBudget = math.floor(totalBudget * template.relativeDifficulty[waveIndex])
-        end
-    end
-
-    if not battleRoster then
-        battleRoster = EnemyRegistry:getAvailableEnemies()
     end
 
     local available = {}
@@ -68,7 +38,8 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, global
             if tierName then
                 local tierNum = tonumber(tierName:match("tier(%d+)"))
                 if tierNum then
-                    allowedTiers[tierNum + 2] = true
+                    local offset = (self.game and self.game.testingMode) and 2 or 0
+                    allowedTiers[tierNum + offset] = true
                 end
             end
         end
@@ -146,7 +117,7 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, global
 
         if #affordable == 0 then break end
 
-        local r = math.random(1, totalWeight)
+        local r = math.random() * totalWeight
         local runningWeight = 0
         for _, e in ipairs(affordable) do
             runningWeight = runningWeight + (e.spawnWeight or 10)
@@ -162,6 +133,15 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, global
         waveList[i], waveList[j] = waveList[j], waveList[i]
     end
 
+    local laneQueues = {}
+    for i = 1, laneCount do
+        laneQueues[i] = {}
+    end
+    for i, enemyClass in ipairs(waveList) do
+        local laneIndex = ((i - 1) % laneCount) + 1
+        table.insert(laneQueues[laneIndex], enemyClass)
+    end
+
     local summary = {}
     for _, id in ipairs(summaryOrder) do
         local e = summaryMeta[id]
@@ -175,7 +155,7 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, global
     table.sort(summary, function(a, b) return a.spawnCost > b.spawnCost end)
 
     print(string.format("[WaveDirector] Wave %d | Budget: %d | Enemies: %d | Lanes: %d", waveIndex, totalBudget, #waveList, laneCount))
-    return waveList, summary, laneCount
+    return laneQueues, summary, laneCount
 end
 
 function WaveDirector:checkConstraints(enemy, currentCounts)

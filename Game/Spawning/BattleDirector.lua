@@ -28,6 +28,14 @@ function BattleDirector:new(game)
     return obj
 end
 
+function BattleDirector:getBudgetForWave(waveNumber, globalDifficulty)
+    local baseBudgets = {30, 45, 65, 95, 150}
+    local wave = math.max(1, math.min(5, waveNumber))
+    local base = baseBudgets[wave]
+    local multiplier = 1 + (globalDifficulty - 1) * (0.3 + (wave - 1) * 0.1)
+    return math.floor(base * multiplier)
+end
+
 function BattleDirector:generateBattle(globalDifficulty, profile)
     local wd = WaveDirector:new(self.game)
     
@@ -37,13 +45,27 @@ function BattleDirector:generateBattle(globalDifficulty, profile)
         print("maxDistinctEnemyTypes from profile: nil")
     end
     
+    -- Select template based on current battle number in state
+    local battleNum = _G.PersistentState and _G.PersistentState.battlesCompleted and (_G.PersistentState.battlesCompleted + 1) or 1
+    local template = self:selectTemplate(battleNum)
+    if template then
+        self:updateDiscoveryPool(template)
+    end
+    local roster = self:buildBattleRoster(template)
+
     local upcomingWaves = {}
     local upcomingSummaries = {}
     local forecastTotals = {}
     
-    -- Always calculate waves 1 through 5 for the battle
-    for i = 1, 5 do
-        local list, summary = wd:generateWaveList(i, globalDifficulty)
+    local numWaves = template and template.numWaves or 5
+    for i = 1, numWaves do
+        -- Calculate budget
+        local budget = self:getBudgetForWave(i, globalDifficulty or 1)
+        if template and template.relativeDifficulty and template.relativeDifficulty[i] then
+            budget = math.floor(budget * template.relativeDifficulty[i])
+        end
+
+        local list, summary, lanes = wd:generateWaveList(i, roster, template, budget)
         table.insert(upcomingWaves, list)
         table.insert(upcomingSummaries, summary)
         
@@ -98,7 +120,8 @@ function BattleDirector:updateDiscoveryPool(selectedTemplate)
     local function getTier(tierName)
         local tierNum = tonumber(tierName:match("tier(%d+)"))
         if not tierNum then return nil end
-        return tierNum + 2
+        local offset = (self.game and self.game.testingMode) and 2 or 0
+        return tierNum + offset
     end
 
     for key, reqMin in pairs(selectedTemplate.battleDangerTiers) do
@@ -165,7 +188,8 @@ function BattleDirector:buildBattleRoster(selectedTemplate)
     local function getTier(tierName)
         local tierNum = tonumber(tierName:match("tier(%d+)"))
         if not tierNum then return nil end
-        return tierNum + 2
+        local offset = (self.game and self.game.testingMode) and 2 or 0
+        return tierNum + offset
     end
 
     local function matchesAllowedTypes(enemy)

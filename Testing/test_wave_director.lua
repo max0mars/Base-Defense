@@ -13,8 +13,9 @@ local BattleTemplate = require("Game.Spawning.BattleTemplate")
 
 print("--- Starting WaveDirector Tests ---")
 
-local wd = WaveDirector:new({})
-local bd = BattleDirector:new({})
+local mockGame = { testingMode = true }
+local wd = WaveDirector:new(mockGame)
+local bd = BattleDirector:new(mockGame)
 
 -- Discover Speeder, Armored, Carrier, Flyer
 bd:forceDiscoverEnemy("Speeder")
@@ -43,18 +44,11 @@ local template = BattleTemplate:new({
     }
 })
 
--- Test 1: Fallback / Backwards compatibility (no template, old signature style)
-print("\nTest 1: Backwards compatibility signature:")
-local spawns1, summary1, lanes1 = wd:generateWaveList(1, 1) -- old signature (waveNumber, globalDifficulty)
-if #spawns1 > 0 and summary1 and lanes1 == 1 then
-    print("[PASS] Fallback signature succeeded. Lanes defaulted to 1.")
-else
-    print("[FAIL] Fallback signature failed.")
-end
+
 
 -- Test 2: lanesPerWave & relativeDifficulty
 print("\nTest 2: lanesPerWave and relativeDifficulty:")
-local spawns2, summary2, lanes2 = wd:generateWaveList(2, battleRoster, template, 1)
+local spawns2, summary2, lanes2 = wd:generateWaveList(2, battleRoster, template, 67)
 print("Budget scale (relativeDifficulty index 2 is 1.5) -> lanes = " .. tostring(lanes2))
 if lanes2 == 2 then
     print("[PASS] Successfully fetched lane count of 2 for wave 2.")
@@ -78,7 +72,7 @@ end
 
 -- Test 4: specificWaveEnemies (pre-composed count)
 print("\nTest 4: specificWaveEnemies (wave 3 composition contains Speeder):")
-local spawns3, summary3, lanes3 = wd:generateWaveList(3, battleRoster, template, 1)
+local spawns3, summary3, lanes3 = wd:generateWaveList(3, battleRoster, template, 130)
 local hasSpeeder = false
 for _, s in ipairs(summary3) do
     if s.id == "Speeder" then

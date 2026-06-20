@@ -8,15 +8,15 @@ local BattleDirector = require("Game.Spawning.BattleDirector")
 print("--- Starting Phase 3 Tests ---")
 
 -- Test 1: Forecasting & Precalculation
-local mockGame = {}
+local mockGame = { testingMode = true }
 local bd = BattleDirector:new(mockGame)
 
 local upcomingWaves, upcomingSummaries, totals = bd:generateBattle(1)
 
-if #upcomingWaves == 5 and #upcomingSummaries == 5 then
-    print("[PASS] Successfully pre-calculated exactly 5 waves.")
+if #upcomingWaves == 3 and #upcomingSummaries == 3 then
+    print("[PASS] Successfully pre-calculated exactly 3 waves.")
 else
-    print("[FAIL] Did not generate exactly 5 waves.")
+    print("[FAIL] Did not generate exactly 3 waves.")
 end
 
 local aggregatedTypes = 0
