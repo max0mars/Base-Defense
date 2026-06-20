@@ -91,7 +91,7 @@ local TestingEnemyIndex = {
     {
         id = "Carrier",
         type = "Carrier",
-        class = require("Enemies.Carrier"),
+        class = require("Enemies.Spawner"),
         tier = 3,
         spawnCost = 45,
         spawnWeight = 30,

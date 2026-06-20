@@ -14,7 +14,7 @@ local EnemyIndex = {
         size = 20,
         types = { enemy = true, red = true },
         baseSpawnDelay = 1,
-        description = "Sturdy and expendable.",
+        description = "Nothing special about this guy...",
         mutations = {}
     },
     {
@@ -32,7 +32,7 @@ local EnemyIndex = {
         size = 15,
         types = { enemy = true, yellow = true },
         baseSpawnDelay = 0.5,
-        description = "Fast and light.",
+        description = "Fast, but fragile.",
         mutations = {}
     },
     {
@@ -50,7 +50,7 @@ local EnemyIndex = {
         size = 12,
         types = { enemy = true, green = true },
         baseSpawnDelay = 0.2,
-        description = "Tends to move in groups.",
+        description = "You'll never find just one",
         mutations = {}
     },
     {
@@ -60,13 +60,13 @@ local EnemyIndex = {
         tier = 0,
         spawnCost = 15,
         spawnWeight = 0.7,
-        maxHp = 120,
+        maxHp = 150,
         damage = 10,
         speed = 23,
-        color = {0, 1, 1, 1}, -- Cyan
+        color = {0, 1, 1, 1}, -- Cyan/Blue
         shape = "rectangle",
         size = 20,
-        types = { enemy = true, cyan = true },
+        types = { enemy = true, blue = true },
         baseSpawnDelay = 1.0,
         numTargets = 1,
         debuffStacks = 999,
@@ -75,7 +75,7 @@ local EnemyIndex = {
         stickyTargets = true,
         debuffStat = "fireRate",
         debuffAmount = -0.01,
-        description = "Gives debuffs that get stronger the longer it lives.",
+        description = "Reduces turret efficiency with debuffs.",
         mutations = {}
     },
     {
@@ -91,13 +91,34 @@ local EnemyIndex = {
         color = {1, 0, 0, 1}, -- Red
         shape = "rectangle",
         size = 22,
-        types = { enemy = true, red = true },
+        types = { enemy = true, red = true, armour = true },
         baseSpawnDelay = 1.0,
         affinities = {
             normal = 0.75,
             explosive = 0.75
         },
-        description = "A well-trained combatant with light armour.",
+        description = "A trained combatant with light armour.",
+        mutations = {}
+    },
+    {
+        id = "Broodmother",
+        type = "Broodmother",
+        class = require("Enemies.Spawner"),
+        tier = 1,
+        spawnCost = 25,
+        spawnWeight = 0.5,
+        maxHp = 300,
+        damage = 15,
+        speed = 18,
+        color = {0, 1, 0, 1}, -- Green
+        shape = "hexagon",
+        size = 24,
+        types = { enemy = true, green = true, spawner = true },
+        baseSpawnDelay = 1.5,
+        spawnAmount = 4,
+        spawnFrequency = 5,
+        spawnReference = "Critter",
+        description = "Hatches Critters.",
         mutations = {}
     }
 }
