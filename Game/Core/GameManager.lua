@@ -35,6 +35,8 @@ local DamageNumber       = require("Graphics.Animations.DamageNumber")
 local LightningBolt     = require("Graphics.Animations.LightningBolt")
 local ExpandingCircle   = require("Graphics.Animations.ExpandingCircle")
 local ArmorBreak        = require("Graphics.Animations.ArmorBreak")
+local DebuffArrows      = require("Graphics.Animations.DebuffArrows")
+local DebuffProjectile  = require("Graphics.Animations.DebuffProjectile")
 
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
@@ -601,6 +603,14 @@ end
 
 function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)
     table.insert(self.animations, ParticleExplosion:new(color, size, x, y, lifetime, numParticles))
+end
+
+function game:spawnDebuffArrows(x, y)
+    table.insert(self.animations, DebuffArrows:new(x, y))
+end
+
+function game:spawnDebuffProjectile(x, y, target, onHitCallback, color)
+    table.insert(self.animations, DebuffProjectile:new(x, y, target, onHitCallback, color))
 end
 
 function game:spawnCircleFade(x, y, radius, color, duration)

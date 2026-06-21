@@ -146,12 +146,26 @@ function TurretDebuffer:applyDebuffs()
                 [debuffStat] = { mult = debuffAmount }
             }
         }
-        target.effectManager:applyEffect(debuffTemplate, self)
-        
-        -- Spawn larger cyan particle effects at both the drone and target
+        -- Spawn cyan particle effects at the drone
         if self.game and self.game.spawnParticleExplosion then
             self.game:spawnParticleExplosion(self.color or {0, 1, 1, 1}, 18, self.x, self.y, 0.6, 12)
-            self.game:spawnParticleExplosion(self.color or {0, 1, 1, 1}, 18, target.x, target.y, 0.6, 12)
+        end
+        
+        local gameRef = self.game
+        if gameRef and gameRef.spawnDebuffProjectile then
+            local droneColor = self.color or {0, 1, 1, 1}
+            gameRef:spawnDebuffProjectile(self.x, self.y, target, function()
+                if not target.destroyed and not self.destroyed then
+                    target.effectManager:applyEffect(debuffTemplate, self)
+                    if gameRef.spawnDebuffArrows then
+                        local tx, ty = target.x, target.y
+                        if target.getCenterPosition then
+                            tx, ty = target:getCenterPosition()
+                        end
+                        gameRef:spawnDebuffArrows(tx, ty)
+                    end
+                end
+            end, droneColor)
         end
     end
 end

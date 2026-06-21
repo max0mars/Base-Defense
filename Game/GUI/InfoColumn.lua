@@ -215,107 +215,54 @@ function InfoColumn:previewTarget()
 end
 
 function InfoColumn:drawBuildingCard(b, x, y, w, h)
-    local card = b.rewardCard
-    if not card and b.isType then
-        card = self.game.gui.tooltips:buildingCardFor(b)
+    local name = b.name or "Building"
+    local col = b.color or {0.6, 0.7, 0.8}
+    local desc = ""
+    
+    local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+    local id = (b.rewardCard and b.rewardCard.id) or b.id
+    if not id and b.isType then
+        local card = self.game.gui.tooltips:buildingCardFor(b)
+        if card then id = card.id end
     end
     
-    local drawObj = nil
-    if card and card.getCardDraw then
-        drawObj = card:getCardDraw()
-    elseif card and card.rewardCard then
-        drawObj = card.rewardCard
-    elseif card and card.draw then
-        drawObj = card
-    end
-
-    if drawObj and drawObj.draw then
-        if b.isType and b:isType("turret") then
-            -- Update live stats for CardDraw so it reflects current buffs
-            local TurretStatBars = require("Game.GUI.TurretStatBars")
-            local rows = TurretStatBars.rows(b, self.game, 5)
-            for _, row in ipairs(rows) do
-                if row.label == "DMG" then drawObj.damageBars = row.tier end
-                if row.label == "RNG" then drawObj.rangeBars = row.tier end
-                if row.label == "SPD" then drawObj.firerateBars = row.tier end
+    for _, list in pairs(RewardIndex) do
+        if type(list) == "table" then
+            for _, item in ipairs(list) do
+                if item.id == id or item.name == name then
+                    desc = item.description or desc
+                    break
+                end
             end
-        else
-            -- Clear bars for non-turrets
-            drawObj.damageBars = 0
-            drawObj.rangeBars = 0
-            drawObj.firerateBars = 0
         end
-
-        -- Ensure buffer cards get their shape footprints dynamically
-        if drawObj.buildingType == "Buffer" then
-            drawObj.affectedSlots = b.affectedSlots or {}
-        end
-
-        drawObj:draw(x, y, w, h, false)
-        return
     end
 
-    -- Fallback for non-turret buildings (buffs / blockers): a titled text card.
-    local col = b.color or {0.6, 0.7, 0.8}
-    local _, ty = cardFrame(x, y, w, h, col, nil, b.name or "Building", nil)
-    local strings = {}
-    if b.getTooltipStrings then strings = b:getTooltipStrings()
-    elseif b.effectManager and b.effectManager.getTooltipStrings then strings = b.effectManager:getTooltipStrings() end
+    local _, contentY = cardFrame(x, y, w, h, col, nil, name, nil)
+    
     love.graphics.push("all")
     love.graphics.setColor(0.85, 0.9, 1.0, 1)
-    for _, s in ipairs(strings) do
-        if ty > y + h - 14 then break end
-        love.graphics.printf(s, x + 8, ty, w - 16, "left")
-        ty = ty + 16
-    end
+    love.graphics.printf(desc, x + 8, contentY, w - 16, "left")
     love.graphics.pop()
 end
 
 function InfoColumn:drawEnemyCard(e, x, y, w, h)
+    local name = e.name or e.type or "Enemy"
     local col = e.color or {1.0, 0.3, 0.3}
-    local _, contentY = cardFrame(x, y, w, h, col, enemyGlyph, e.name or "Enemy", nil)
+    local desc = ""
+    
+    local EnemyIndex = require("Game.Spawning.EnemyIndex")
+    for _, item in ipairs(EnemyIndex) do
+        if item.id == name or item.type == name then
+            desc = item.description or desc
+            break
+        end
+    end
+
+    local _, contentY = cardFrame(x, y, w, h, col, enemyGlyph, name, nil)
 
     love.graphics.push("all")
-    local tx, ty = x + 12, contentY
-
-    local maxHp = (e.getStat and e:getStat("maxHp")) or e.maxHp
-    if maxHp then
-        love.graphics.setColor(0.7, 0.85, 1.0, 1)
-        love.graphics.print(string.format("HP %d/%d", math.max(0, math.floor(e.hp or 0)), math.floor(maxHp)), tx, ty)
-        ty = ty + 20
-    end
-
-    -- Resistances / weaknesses from affinities.
-    local resists, weaks = {}, {}
-    for dtype, mult in pairs(e.affinities or {}) do
-        if type(mult) == "number" and mult ~= 1 then
-            local nm = DAMAGE_TYPE_NAMES[dtype] or dtype
-            if mult < 1 then resists[#resists + 1] = string.format("%s  -%d%%", nm, math.floor((1 - mult) * 100 + 0.5))
-            else weaks[#weaks + 1] = string.format("%s  +%d%%", nm, math.floor((mult - 1) * 100 + 0.5)) end
-        end
-    end
-    table.sort(resists); table.sort(weaks)
-
-    local bottom = y + h - 14
-    if #resists == 0 and #weaks == 0 then
-        love.graphics.setColor(0.6, 0.6, 0.65, 1)
-        love.graphics.print("Takes full damage", tx, ty)
-    else
-        if #resists > 0 and ty < bottom then
-            love.graphics.setColor(0.4, 0.7, 1.0, 1); love.graphics.print("RESISTS", tx, ty); ty = ty + 16
-            for _, t in ipairs(resists) do
-                if ty > bottom then break end
-                love.graphics.setColor(0.55, 0.8, 1.0, 1); love.graphics.print("  " .. t, tx, ty); ty = ty + 15
-            end
-        end
-        if #weaks > 0 and ty < bottom then
-            love.graphics.setColor(1.0, 0.5, 0.3, 1); love.graphics.print("WEAK TO", tx, ty); ty = ty + 16
-            for _, t in ipairs(weaks) do
-                if ty > bottom then break end
-                love.graphics.setColor(1.0, 0.65, 0.45, 1); love.graphics.print("  " .. t, tx, ty); ty = ty + 15
-            end
-        end
-    end
+    love.graphics.setColor(0.85, 0.9, 1.0, 1)
+    love.graphics.printf(desc, x + 8, contentY, w - 16, "left")
     love.graphics.pop()
 end
 
