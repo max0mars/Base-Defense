@@ -36,7 +36,8 @@ function TurretDebuffer:new(config)
     local instance = Enemy:new(config)
     setmetatable(instance, self)
     
-    instance.debuffTimer = 0 -- Apply immediately on spawn
+    local freq = instance:getStat("debuffFrequency") or 3.0
+    instance.debuffTimer = freq * 0.5 + love.math.random() * (freq * 0.5) -- Apply at random delay between half and full frequency
     instance.activeTargets = {}
     return instance
 end
