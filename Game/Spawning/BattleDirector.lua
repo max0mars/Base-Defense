@@ -28,11 +28,11 @@ function BattleDirector:new(game)
     return obj
 end
 
-function BattleDirector:getBudgetForWave(waveNumber, globalDifficulty)
-    local baseBudgets = {30, 45, 65, 95, 150}
-    local wave = math.max(1, math.min(5, waveNumber))
+function BattleDirector:getBudgetForWave(template, waveNumber, globalDifficulty)
+    local baseBudgets = template and template.budgets or require("Game.Spawning.BattleTemplateDictionary").DEFAULT_BUDGETS
+    local wave = math.max(1, math.min(#baseBudgets, waveNumber))
     local base = baseBudgets[wave]
-    local multiplier = 1 + (globalDifficulty - 1) * (0.3 + (wave - 1) * 0.1)
+    local multiplier = (globalDifficulty) * 
     return math.floor(base * multiplier)
 end
 
@@ -60,7 +60,7 @@ function BattleDirector:generateBattle(globalDifficulty, profile)
     local numWaves = template and template.numWaves or 5
     for i = 1, numWaves do
         -- Calculate budget
-        local budget = self:getBudgetForWave(i, globalDifficulty or 1)
+        local budget = self:getBudgetForWave(template, i, globalDifficulty or 1)
         if template and template.relativeDifficulty and template.relativeDifficulty[i] then
             budget = math.floor(budget * template.relativeDifficulty[i])
         end

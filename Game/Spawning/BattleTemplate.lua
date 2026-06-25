@@ -24,6 +24,7 @@ function BattleTemplate:new(config)
     obj.allowedTypes = config.allowedTypes or {}
     obj.specificEnemies = config.specificEnemies or {}
     obj.specificWaveEnemies = config.specificWaveEnemies or {}
+    obj.budgets = config.budgets
 
     return obj
 end

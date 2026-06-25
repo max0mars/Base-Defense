@@ -1,5 +1,7 @@
 local BattleTemplate = require("Game.Spawning.BattleTemplate")
 
+local DEFAULT_BUDGETS = {30, 45, 65, 95, 150}
+
 local BattleTemplateDictionary = {
     battle_1 = BattleTemplate:new({
         id = "battle_1",
@@ -40,7 +42,21 @@ local BattleTemplateDictionary = {
         lanesPerWave = {1, 2, 3},
         battleDangerTiers = {tier0min = 4, tier0max = 4},
         weight = 50
-    })
+    }),
+    battle_mid1 = BattleTemplate:new({
+        id = "battle_mid1",
+        validBattleRange = {min = 6, max = 12},
+        numWaves = 5,
+        lanesPerWave = {1, 2, 2, 3, 3},
+        battleDangerTiers = {tier0min = 1, tier0max = 1},
+        weight = 50
+    }),
 }
+
+for _, template in pairs(BattleTemplateDictionary) do
+    template.budgets = template.budgets or DEFAULT_BUDGETS
+end
+
+BattleTemplateDictionary.DEFAULT_BUDGETS = DEFAULT_BUDGETS
 
 return BattleTemplateDictionary

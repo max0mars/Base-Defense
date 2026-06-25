@@ -98,9 +98,10 @@ function preparation_scene:precalculateWaves()
 end
 
 function preparation_scene:getRequiredXP(level)
-    if level < 4 then return 1 end
-    if level < 6 then return 2 end
-    return 3
+    if level < 2 then return 2 end
+    if level < 4 then return 3 end
+    if level < 6 then return 4 end
+    return 5
 end
 
 function preparation_scene:addShopXP(amount)
