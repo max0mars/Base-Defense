@@ -19,11 +19,20 @@ function Guardian:new(config)
     local obj = Enemy:new(config)
     setmetatable(obj, { __index = self })
     
-    obj.auraRadius = 75
-    obj.grantsShield = true  -- Standard
-    obj.hasAura = false     -- Upgrade
-    obj.shieldAmount = 50
+    obj.auraRadius = config.auraRadius or 75
+    if config.grantsShield ~= nil then
+        obj.grantsShield = config.grantsShield
+    else
+        obj.grantsShield = true
+    end
+    if config.hasAura ~= nil then
+        obj.hasAura = config.hasAura
+    else
+        obj.hasAura = false
+    end
+    obj.shieldAmount = config.shieldAmount or 50
     obj.shieldTimer = 0
+    obj.auraMult = config.auraMult or -0.25
     
     return obj
 end
@@ -44,7 +53,7 @@ function Guardian:update(dt)
             duration = 0.5, -- Refreshable short duration
             maxStacks = 1,
             statModifiers = {
-                damageReductionMultiplier = { mult = -0.25 }
+                damageReductionMultiplier = { mult = self.auraMult }
             },
             globalStacks = 1
         }

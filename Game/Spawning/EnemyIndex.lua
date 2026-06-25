@@ -24,9 +24,9 @@ local EnemyIndex = {
         tier = 0,
         spawnCost = 10,
         spawnWeight = 1,
-        maxHp = 20,
+        maxHp = 50,
         damage = 10,
-        speed = 80,
+        speed = 70,
         color = {1, 1, 0, 1}, -- Yellow
         shape = "rectangle",
         size = 15,
@@ -120,6 +120,29 @@ local EnemyIndex = {
         spawnReference = "Critter",
         description = "Hatches Critters.",
         mutations = {}
+    },
+    {
+        id = "BlueGuardian",
+        type = "BlueGuardian",
+        class = require("Enemies.Guardian"),
+        tier = 1,
+        spawnCost = 30,
+        spawnWeight = 0.5,
+        maxHp = 200,
+        damage = 10,
+        speed = 18,
+        color = {0, 0.4, 1, 1}, -- Blue
+        shape = "rectangle",
+        size = 22,
+        types = { enemy = true, blue = true, support = true },
+        baseSpawnDelay = 1.0,
+        description = "Provides a damage reduction aura to nearby allies.",
+        hasAura = true,
+        grantsShield = false,
+        auraMult = -0.15,
+        mutations = {
+            { id = "blueguardian_shield", name = "Shield Granter", description = "Guardian now also grants shields to nearby allies.", modifiers = { grantsShield = { set = true } }, target = "BlueGuardian" }
+        }
     }
 }
 
