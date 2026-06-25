@@ -140,7 +140,11 @@ function EffectManager:applyEffect(effectTemplate, source)
         -- Find and remove the oldest stack of the same name to make room for the new one
         for i = 1, #self.activeEffects do
             if self:getStackingKey(self.activeEffects[i]) == stackingKey then
-                inheritedTime = self.activeEffects[i].time
+                local oldEffect = self.activeEffects[i]
+                if effect.onOverwrite then
+                    effect:onOverwrite(oldEffect)
+                end
+                inheritedTime = oldEffect.time
                 table.remove(self.activeEffects, i)
                 currentStacks = currentStacks - 1
                 break

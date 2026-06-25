@@ -18,7 +18,7 @@ function ToxicShard:new(config)
     config.damageType = "toxic"
     
     -- Spread the Toxic status effect on hit (safe now that globalStacks=1 is enforced)
-    config.hitEffects = { ToxicEffect:new() }
+    config.hitEffects = { ToxicEffect:new({recursion = config.recursion or 0}) }
     config.hitbox = true
     config.types = { bullet = true }
     

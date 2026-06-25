@@ -1,6 +1,6 @@
 local BattleTemplate = require("Game.Spawning.BattleTemplate")
 
-local DEFAULT_BUDGETS = {30, 45, 65, 95, 150}
+local DEFAULT_BUDGETS = {30, 45, 65, 100, 150, 200, 250}
 
 local BattleTemplateDictionary = {
     battle_1 = BattleTemplate:new({
@@ -47,8 +47,8 @@ local BattleTemplateDictionary = {
         id = "battle_mid1",
         validBattleRange = {min = 6, max = 12},
         numWaves = 5,
-        lanesPerWave = {1, 2, 2, 3, 3},
-        battleDangerTiers = {tier0min = 1, tier0max = 1},
+        lanesPerWave = {1, 2, 2, 3},
+        battleDangerTiers = {tier0min = 1, tier0max = 2},
         weight = 50
     }),
 }

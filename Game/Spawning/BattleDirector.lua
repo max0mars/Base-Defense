@@ -82,8 +82,8 @@ function BattleDirector:selectTemplate(currentBattleNumber)
     local validTemplates = {}
     local totalWeight = 0
 
-    for _, template in pairs(templates) do
-        if template:isValidForBattle(currentBattleNumber) then
+    for key, template in pairs(templates) do
+        if type(template) == "table" and type(template.isValidForBattle) == "function" and template:isValidForBattle(currentBattleNumber) then
             table.insert(validTemplates, template)
             totalWeight = totalWeight + (template.weight or 10)
         end

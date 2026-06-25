@@ -14,6 +14,7 @@ function Toxic:new(config)
     instance.dps = config.dps or 6
     instance.speedMult = config.speedMult or -0.15
     instance.bloomDamage = config.bloomDamage or 3
+    instance.recursion = config.recursion or 1 -- Default to 1 to prevent infinite loops
     instance.globalStacks = 1
     
     -- Internal state
@@ -35,7 +36,15 @@ function Toxic:onUpdate(dt, target)
     end
 end
 
+function Toxic:onOverwrite(oldEffect)
+    if oldEffect.recursion and self.recursion then
+        self.recursion = math.max(self.recursion, oldEffect.recursion)
+    end
+end
+
 function Toxic:onDeath(target)
+    if self.recursion <= 0 then return end
+
     -- Spawn a burst of shards instead of an explosion
     local ToxicShard = require("Bullets.ToxicShard")
     local numShards = 4
@@ -52,7 +61,8 @@ function Toxic:onDeath(target)
             y = target.y,
             angle = angle,
             damage = self.bloomDamage,
-            hitCache = {[target:getID()] = true} -- Skip the enemy that just died
+            hitCache = {[target:getID()] = true}, -- Skip the enemy that just died
+            recursion = self.recursion - 1
         })
         target.game:addObject(shard)
     end
