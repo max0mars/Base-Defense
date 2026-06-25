@@ -32,7 +32,7 @@ function BattleDirector:getBudgetForWave(template, waveNumber, globalDifficulty)
     local baseBudgets = template and template.budgets or require("Game.Spawning.BattleTemplateDictionary").DEFAULT_BUDGETS
     local wave = math.max(1, math.min(#baseBudgets, waveNumber))
     local base = baseBudgets[wave]
-    local multiplier = (globalDifficulty) * 
+    local multiplier = 1.25 ^ (globalDifficulty - 1)
     return math.floor(base * multiplier)
 end
 
