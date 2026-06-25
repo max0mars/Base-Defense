@@ -98,10 +98,11 @@ function preparation_scene:precalculateWaves()
 end
 
 function preparation_scene:getRequiredXP(level)
-    if level < 2 then return 2 end
-    if level < 4 then return 3 end
-    if level < 6 then return 4 end
-    return 5
+    if level < 3 then return 2 end
+    if level < 5 then return 3 end
+    if level < 7 then return 4 end
+    if level < 9 then return 5 end
+    return 6
 end
 
 function preparation_scene:addShopXP(amount)
@@ -282,8 +283,10 @@ function preparation_scene:drawForecast()
     local yOff = 40
     for typeName, count in pairs(self.forecast.totals) do
         local tier = "Low"
-        if count >= 15 then tier = "High"
-        elseif count >= 5 then tier = "Medium" end
+        if count >= 50 then tier = "Extreme"
+        elseif count >= 25 then tier = "High"
+        elseif count >= 15 then tier = "Medium" 
+        end
         
         love.graphics.printf(typeName .. ": " .. tier, fx + 10, fy + yOff, fw - 20, "left")
         yOff = yOff + 20
