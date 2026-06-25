@@ -23,7 +23,7 @@ CardRegistry.RangeFinder = InstantCard.new({
     cost = 1,
     rarity = "Common",
     executionType = InstantCard.ExecutionType.Targeted,
-    statModifiers = { range = { add = 100 } }
+    statModifiers = { range = { add = 50 } }
 })
 
 -- ==========================================
