@@ -27,7 +27,7 @@ function CardDraw.new(x, y, data)
     -- Card Data
     self.name = data.name or "Unknown Tower"
     self.cost = data.cost or 0
-    self.rarity = data.rarity or "common"
+    self.rarity = string.lower(data.rarity or "common")
     self.description = data.description or ""
     
     -- Font setup (high-resolution for crisp scaling)

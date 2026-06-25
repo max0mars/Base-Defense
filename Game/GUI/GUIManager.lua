@@ -126,14 +126,12 @@ function GUIManager:new(game)
         tooltips = TooltipManager:new(game),
         confirmation = ConfirmationUI:new(game),
         -- Controls are placed on the right side of the bottom tray
-        buyBlockerButton = { x = Layout.W - 188, y = Layout.tray.y + 16, w = 180, h = 34 },
+        autoFireButton   = { x = Layout.W - 188, y = Layout.tray.y + 16, w = 180, h = 24 },
+        dmgNumsButton    = { x = Layout.W - 188, y = Layout.tray.y + 44, w = 180, h = 24 },
 
-        autoFireButton   = { x = Layout.W - 188, y = Layout.tray.y + 66, w = 180, h = 24 },
-        dmgNumsButton    = { x = Layout.W - 188, y = Layout.tray.y + 94, w = 180, h = 24 },
-
-        speedMinusButton = { x = Layout.W - 188, y = Layout.tray.y + 122, w = 24, h = 24 },
-        speedPanel       = { x = Layout.W - 188 + 28, y = Layout.tray.y + 122, w = 120, h = 24 },
-        speedPlusButton  = { x = Layout.W - 188 + 156, y = Layout.tray.y + 122, w = 24, h = 24 },
+        speedMinusButton = { x = Layout.W - 188, y = Layout.tray.y + 72, w = 24, h = 24 },
+        speedPanel       = { x = Layout.W - 188 + 28, y = Layout.tray.y + 72, w = 120, h = 24 },
+        speedPlusButton  = { x = Layout.W - 188 + 156, y = Layout.tray.y + 72, w = 24, h = 24 },
         
         mutation = MutationUI:new(game),
         incomeFeedback = IncomeFeedbackManager:new(game),
@@ -280,20 +278,14 @@ function GUIManager:drawHUD()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(tostring(currentLevel), sx + 145, sy)
 
-    -- TOKENS
-    love.graphics.setColor(1.0, 0.7, 0.1, 0.8)
-    love.graphics.print("TOKENS", sx, sy + 22)
-    love.graphics.setColor(1.0, 0.9, 0.2, 1)
-    love.graphics.print(tostring(game.tokens), sx + 85, sy + 22)
-
     -- HEALTH BAR
     if game.base then
-        local hpX, hpY, hpW, hpH = sx, sy + 56, statPanel.w - 24, 8
+        local hpX, hpY, hpW, hpH = sx, sy + 36, statPanel.w - 24, 8
         local healthPercent = game.base.hp / game.base:getStat("maxHp")
 
         love.graphics.setColor(1, 1, 1, 0.8)
         local hpText = string.format("BASE HP: %d/%d", game.base.hp, game.base:getStat("maxHp"))
-        love.graphics.print(hpText, sx, sy + 42)
+        love.graphics.print(hpText, sx, sy + 22)
         
         -- Health bar background track
         love.graphics.setColor(0.05, 0.05, 0.08, 0.8)
@@ -343,21 +335,6 @@ function GUIManager:drawHUD()
     -- Luck Offering.
 
 
-    -- Buy Blocker.
-    local isPlacingBlocker = game.inputMode == "placing" and game.blueprint and game.blueprint:isType("blocker")
-    if isPlacingBlocker then
-        drawActionButton(self.buyBlockerButton, "DISCARD", "BLOCKER",
-            { 0.8, 0.2, 0.2 },
-            Layout.inRegion(self.buyBlockerButton, mx, my), true,
-            true)
-    else
-        drawActionButton(self.buyBlockerButton, "BUY BLOCKER",
-            game.blockerCost .. " Tk",
-            { 0.2, 0.4, 0.6 },
-            Layout.inRegion(self.buyBlockerButton, mx, my), buyEnabled,
-            game.tokens >= game.blockerCost)
-    end
-
     -- ==========================================
     -- TRAY TOGGLES: AutoFire, Dmg Nums
     -- ==========================================
@@ -401,7 +378,7 @@ function GUIManager:drawHUD()
     love.graphics.pop()
 
     -- Hand cursor over any HUD button (mx is neutralized while an overlay is open).
-    for _, btn in ipairs({ self.buyBlockerButton,
+    for _, btn in ipairs({
         self.autoFireButton, self.dmgNumsButton,
         self.speedMinusButton, self.speedPlusButton }) do
         if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
@@ -524,18 +501,6 @@ function GUIManager:mousepressed(x, y, button)
     end
     
     if button == 1 then
-        -- Check Buy Blocker Button
-        if x >= self.buyBlockerButton.x and x <= self.buyBlockerButton.x + self.buyBlockerButton.w and
-           y >= self.buyBlockerButton.y and y <= self.buyBlockerButton.y + self.buyBlockerButton.h then
-            if self.game.inputMode == "placing" and self.game.blueprint and self.game.blueprint:isType("blocker") then
-                self.game.blueprint = nil
-                self.game.inputMode = "idle"
-            else
-                self.game:attemptPurchaseBlocker()
-            end
-            return true
-        end
-
         -- Check AutoFire Button
         if x >= self.autoFireButton.x and x <= self.autoFireButton.x + self.autoFireButton.w and
            y >= self.autoFireButton.y and y <= self.autoFireButton.y + self.autoFireButton.h then

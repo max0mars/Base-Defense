@@ -815,6 +815,7 @@ function game:drawCard(amount)
 end
 
 function game:consumeCard(card)
+    self.tokens = self.tokens - card:getCost()
     for i, c in ipairs(self.hand) do
         if c == card then
             table.remove(self.hand, i)
@@ -849,8 +850,7 @@ end
 
 function game:refundCard(card)
     -- Assuming the card wasn't removed from the hand array until consumeCard
-    -- We just refund tokens and clear active card
-    self.tokens = self.tokens + card:getCost()
+    -- We no longer refund tokens here since they are not subtracted on selection anymore
     self.activeCard = nil
     self.inputMode = "idle"
 end
