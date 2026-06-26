@@ -21,6 +21,10 @@ function mockGame:EnemyDied(enemy)
     -- mock
 end
 
+function mockGame:spawnDebuffProjectile(x, y, target, callback, color)
+    callback()
+end
+
 -- Reset EnemyRegistry with mockGame
 EnemyRegistry:reset(mockGame)
 
@@ -71,6 +75,7 @@ else
 end
 
 -- 5. Trigger first tick (on spawn, debuffTimer = 0)
+droneInstance.debuffTimer = 0
 droneInstance:update(0.1)
 local rateStack1 = turretInstance:getStat("fireRate")
 print(string.format("After first tick fire rate: %f (expected: 1.98)", rateStack1))

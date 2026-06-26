@@ -253,6 +253,62 @@ local TestingEnemyIndex = {
         teleportCooldown = 3.0,
         description = "Periodically teleports nearby allies forward.",
         mutations = {}
+    },
+    {
+        id = "Sapper",
+        type = "Sapper",
+        class = require("Enemies.Enemy"),
+        tier = 1,
+        spawnCost = 15,
+        spawnWeight = 0.8,
+        maxHp = 40,
+        damage = 40,
+        speed = 65,
+        color = {1, 1, 0, 1}, -- Yellow
+        shape = "rectangle",
+        size = 12,
+        types = { enemy = true, yellow = true, sapper = true },
+        baseSpawnDelay = 0.4,
+        description = "Fragile, fast enemy that deals extreme damage if it reaches the base.",
+        mutations = {}
+    },
+    {
+        id = "Medic",
+        type = "Medic",
+        class = require("Enemies.Medic"),
+        tier = 2,
+        spawnCost = 35,
+        spawnWeight = 0.5,
+        maxHp = 220,
+        damage = 10,
+        speed = 20,
+        color = {1, 0.2, 0.2, 1}, -- Red
+        shape = "rectangle",
+        size = 22,
+        types = { enemy = true, red = true, support = true },
+        baseSpawnDelay = 1.0,
+        targets = 3,
+        range = 150,
+        description = "Attaches to up to 3 nearby allies and heals them over time.",
+        mutations = {}
+    },
+    {
+        id = "Slime",
+        type = "Slime",
+        class = require("Enemies.Duplicator"),
+        tier = 2,
+        spawnCost = 25,
+        spawnWeight = 0.5,
+        maxHp = 100,
+        damage = 15,
+        speed = 22,
+        color = {0.1, 0.9, 0.3, 1}, -- Green
+        shape = "diamond",
+        size = 18,
+        types = { enemy = true, green = true, duplicator = true, bio = true },
+        baseSpawnDelay = 1.0,
+        description = "A cellular green slime that divides upon death.",
+        mutations = {}
     }
 }
 
