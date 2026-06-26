@@ -21,7 +21,8 @@ function Burn:new(config)
     end
     instance.time = 0
     instance.duration = config.duration_burn
-
+    instance.isDebuff = true
+    
     -- Ensure we have a name for the EffectManager stacking and icons
     instance.name = config.name or ("burn")
     

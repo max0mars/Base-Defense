@@ -15,6 +15,7 @@ function Stun:new(config)
     instance.duration = config.duration or 2.0
     instance.hidden = config.hidden or false
     instance.isIndependent = false
+    instance.isDebuff = true
     
     instance.statModifiers = {
         stunned = { add = 1 }

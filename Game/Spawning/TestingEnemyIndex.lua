@@ -210,9 +210,49 @@ local TestingEnemyIndex = {
         color = {0.8, 0.4, 0.1, 1},
         shape = "rectangle",
         size = 12,
-        types = { enemy = true, beast = true },
-        baseSpawnDelay = 0.2,
         description = "A swift beast summoned by the Beast Master."
+    },
+    {
+        id = "Captain",
+        type = "Captain",
+        class = require("Enemies.Captain"),
+        tier = 2,
+        spawnCost = 35,
+        spawnWeight = 0.5,
+        maxHp = 250,
+        damage = 10,
+        speed = 20,
+        color = {0, 0.4, 1, 1}, -- Blue
+        shape = "rectangle",
+        size = 22,
+        types = { enemy = true, blue = true, support = true },
+        baseSpawnDelay = 1.0,
+        range = 120,
+        clearCooldown = 3.0,
+        description = "Periodically clears debuffs on nearby allies.",
+        mutations = {}
+    },
+    {
+        id = "PortalMaster",
+        type = "PortalMaster",
+        class = require("Enemies.PortalMaster"),
+        tier = 2,
+        spawnCost = 35,
+        spawnWeight = 0.5,
+        maxHp = 200,
+        damage = 10,
+        speed = 22,
+        color = {1, 0.9, 0, 1}, -- Yellow
+        shape = "rectangle",
+        size = 22,
+        types = { enemy = true, yellow = true, support = true },
+        baseSpawnDelay = 1.0,
+        targets = 1,
+        range = 120,
+        teleportDistance = 80,
+        teleportCooldown = 3.0,
+        description = "Periodically teleports nearby allies forward.",
+        mutations = {}
     }
 }
 

@@ -24,6 +24,7 @@ function Poison:new(config)
     instance.name = config.name or ("poison")
     instance.duration = config.duration_poison or config.duration
     instance.time = 0
+    instance.isDebuff = true
     
     return instance
 end

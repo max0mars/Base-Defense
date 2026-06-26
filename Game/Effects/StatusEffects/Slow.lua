@@ -15,6 +15,7 @@ function Slow:new(config)
     instance.duration = config.duration or 0.2
     instance.amount = config.amount or 0.5
     instance.hidden = config.hidden or false
+    instance.isDebuff = true
     
     instance.statModifiers = {
         speed = { compoundMult = 1 - instance.amount }

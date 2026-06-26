@@ -143,6 +143,49 @@ local EnemyIndex = {
         mutations = {
             { id = "blueguardian_shield", name = "Shield Granter", description = "Guardian now also grants shields to nearby allies.", modifiers = { grantsShield = { set = true } }, target = "BlueGuardian" }
         }
+    },
+    {
+        id = "Captain",
+        type = "Captain",
+        class = require("Enemies.Captain"),
+        tier = 2,
+        spawnCost = 35,
+        spawnWeight = 0.5,
+        maxHp = 250,
+        damage = 10,
+        speed = 20,
+        color = {0, 0.4, 1, 1}, -- Blue
+        shape = "rectangle",
+        size = 22,
+        types = { enemy = true, blue = true, support = true },
+        baseSpawnDelay = 1.0,
+        targets = 1,
+        range = 120,
+        clearCooldown = 3.0,
+        description = "Periodically clears debuffs on nearby allies.",
+        mutations = {}
+    },
+    {
+        id = "PortalMaster",
+        type = "PortalMaster",
+        class = require("Enemies.PortalMaster"),
+        tier = 2,
+        spawnCost = 35,
+        spawnWeight = 0.5,
+        maxHp = 200,
+        damage = 10,
+        speed = 22,
+        color = {1, 0.9, 0, 1}, -- Yellow
+        shape = "rectangle",
+        size = 22,
+        types = { enemy = true, yellow = true, support = true },
+        baseSpawnDelay = 1.0,
+        targets = 1,
+        range = 120,
+        teleportDistance = 80,
+        teleportCooldown = 3.0,
+        description = "Periodically teleports nearby allies forward.",
+        mutations = {}
     }
 }
 

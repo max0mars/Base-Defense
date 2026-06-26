@@ -16,6 +16,7 @@ function Toxic:new(config)
     instance.bloomDamage = config.bloomDamage or 3
     instance.recursion = config.recursion or 1 -- Default to 1 to prevent infinite loops
     instance.globalStacks = 1
+    instance.isDebuff = true
     
     -- Internal state
     instance.time = 0

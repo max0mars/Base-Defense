@@ -424,6 +424,35 @@ function EffectManager:getTooltipStrings()
     return strings
 end
 
+function EffectManager:hasDebuff()
+    for _, effect in ipairs(self.activeEffects) do
+        if effect.isDebuff then
+            return true
+        end
+    end
+    return false
+end
+
+function EffectManager:clearDebuffs()
+    local removedAny = false
+    for i = #self.activeEffects, 1, -1 do
+        local effect = self.activeEffects[i]
+        if effect.isDebuff then
+            local key = self:getStackingKey(effect)
+            self.effectCounts[key] = (self.effectCounts[key] or 1) - 1
+            table.remove(self.activeEffects, i)
+            removedAny = true
+        end
+    end
+    if removedAny then
+        self:recalculateStats()
+        if not self.owner then
+            self:propagateRecalculation()
+        end
+    end
+    return removedAny
+end
+
 -- Removed drawTooltip (moved to TooltipManager)
 
 return EffectManager
