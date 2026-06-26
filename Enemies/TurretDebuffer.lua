@@ -8,7 +8,7 @@ local default = {
     numTargets = 1,
     debuffStacks = 999,
     debuffDuration = nil, -- Permanent until drone is destroyed if nil
-    debuffFrequency = 3.0,
+    debuffFrequency = 7.0, -- Reduced frequency (apply less often)
     stickyTargets = true, -- Keep same target(s) or switch
     debuffStat = "fireRate",
     debuffAmount = -0.01,
@@ -177,12 +177,12 @@ function TurretDebuffer:isValidTarget(obj)
 end
 
 function TurretDebuffer:died()
-    self:clearDebuffs()
+    -- Do not clear debuffs on death; they persist until wave end
     Enemy.died(self)
 end
 
 function TurretDebuffer:destroy()
-    self:clearDebuffs()
+    -- Do not clear debuffs on destroy; they persist until wave end
     Enemy.destroy(self)
 end
 

@@ -304,6 +304,7 @@ function MainLazer.getStartingDeck()
     StandardMainTurret.addCard(deck, "inst_overclock_1", 2)
     StandardMainTurret.addCard(deck, "inst_range_1", 2)
     StandardMainTurret.addCard(deck, "inst_frenzy_1", 1)
+    StandardMainTurret.addCard(deck, "spell_fireball", 2)
 
     
     local energySurge = InstantCard.new({

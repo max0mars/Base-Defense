@@ -26,7 +26,7 @@ local EnemyIndex = {
         spawnWeight = 1,
         maxHp = 50,
         damage = 10,
-        speed = 70,
+        speed = 90,
         color = {1, 1, 0, 1}, -- Yellow
         shape = "rectangle",
         size = 15,
@@ -40,7 +40,7 @@ local EnemyIndex = {
         type = "Critter",
         class = require("Enemies.Enemy"),
         tier = 0,
-        spawnCost = 2,
+        spawnCost = 3,
         spawnWeight = 4,
         maxHp = 25,
         damage = 5,
@@ -105,11 +105,11 @@ local EnemyIndex = {
         type = "Sapper",
         class = require("Enemies.Enemy"),
         tier = 1,
-        spawnCost = 15,
+        spawnCost = 25,
         spawnWeight = 0.8,
         maxHp = 40,
-        damage = 40,
-        speed = 65,
+        damage = 30,
+        speed = 110,
         color = {1, 1, 0, 1}, -- Yellow
         shape = "rectangle",
         size = 12,
@@ -140,8 +140,8 @@ local EnemyIndex = {
         mutations = {}
     },
     {
-        id = "BlueGuardian",
-        type = "BlueGuardian",
+        id = "Guardian",
+        type = "Guardian",
         class = require("Enemies.Guardian"),
         tier = 1,
         spawnCost = 30,
@@ -159,7 +159,7 @@ local EnemyIndex = {
         grantsShield = false,
         auraMult = -0.15,
         mutations = {
-            { id = "blueguardian_shield", name = "Shield Granter", description = "Guardian now also grants shields to nearby allies.", modifiers = { grantsShield = { set = true } }, target = "BlueGuardian" }
+            { id = "blueguardian_shield", name = "Shield Granter", description = "Guardian now also grants shields to nearby allies.", modifiers = { grantsShield = { set = true } }, target = "Guardian" }
         }
     },
     {
@@ -200,8 +200,8 @@ local EnemyIndex = {
         baseSpawnDelay = 1.0,
         targets = 1,
         range = 120,
-        teleportDistance = 80,
-        teleportCooldown = 3.0,
+        teleportDistance = 25,
+        teleportCooldown = 5.0,
         description = "Periodically teleports nearby allies forward.",
         mutations = {}
     },
@@ -242,6 +242,25 @@ local EnemyIndex = {
         types = { enemy = true, green = true, duplicator = true, bio = true },
         baseSpawnDelay = 1.0,
         description = "A cellular green slime that divides upon death.",
+        mutations = {}
+    },
+    {
+        id = "Tank",
+        type = "Tank",
+        class = require("Enemies.Tank"),
+        tier = 5,
+        spawnCost = 55,
+        spawnWeight = 0.1,
+        maxHp = 2500,
+        damage = 50,
+        speed = 12,
+        color = {1, 0.2, 0.2, 1}, -- Red
+        shape = "tank",
+        size = 30,
+        types = { enemy = true, red = true, tank = true },
+        affinities = { heal = 1.5 },
+        baseSpawnDelay = 2.5,
+        description = "Slow and heavy. Can soak up massive damage and takes increased healing.",
         mutations = {}
     }
 }

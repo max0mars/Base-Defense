@@ -52,12 +52,12 @@ CardRegistry.EmergencyRepairs = InstantCard.new({
     executionType = InstantCard.ExecutionType.Global,
     
     -- We don't use statModifiers here, we write custom logic
-    customExecute = function()
-        -- Assuming you have a global Game state or Base object
-        if Base.hp < Base.maxHp then
-            Base.hp = math.min(Base.hp + 10, Base.maxHp)
+    customExecute = function(gameObj)
+        if not gameObj or not gameObj.base then return end
+        local base = gameObj.base
+        if base.hp < base.maxHp then
+            base.hp = math.min(base.hp + 10, base.maxHp)
             print("Base healed for 10 HP!")
-            -- Trigger visual heal effect here
         end
     end
 })

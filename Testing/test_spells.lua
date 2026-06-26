@@ -42,12 +42,12 @@ assert(SpellCardRegistry.Zap ~= nil, "Zap spell loaded")
 
 -- 2. Test Card Properties
 local fireball = SpellCardRegistry.Fireball
-assert(fireball.cost == 1, "Fireball cost is 1")
+assert(fireball.cost == 25, "Fireball cost is 25")
 assert(fireball.radius == 60, "Fireball radius is 60")
 assert(fireball.isGlobalSpell == false, "Fireball is not global")
 
 local judgment = SpellCardRegistry.Judgment
-assert(judgment.cost == 2, "Judgment cost is 2")
+assert(judgment.cost == 50, "Judgment cost is 50")
 assert(judgment.isGlobalSpell == true, "Judgment is a global spell")
 
 local zap = SpellCardRegistry.Zap

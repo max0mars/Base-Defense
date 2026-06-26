@@ -338,6 +338,45 @@ function Base:initMainLazer(turretClass)
     
     self.game:newBuilding(self.mainLazer, centerSlot)
     
+    -- Unlock additional adjacent slots if player chose the starting slots upgrade
+    local extraUnlocks = _G.PersistentState and _G.PersistentState.startBattleExtraSlotsUnlocked or 0
+    local slotsToUnlockCount = extraUnlocks * 4
+    
+    for i = 1, slotsToUnlockCount do
+        local candidates = {}
+        for s = 1, gridWidth * gridHeight do
+            if not self.buildGrid.unlocked[s] then
+                local neighbors = self:getNeighbors(s)
+                for _, n in ipairs(neighbors) do
+                    if self.buildGrid.unlocked[n] then
+                        table.insert(candidates, s)
+                        break
+                    end
+                end
+            end
+        end
+        
+        if #candidates > 0 then
+            -- Sort candidates by distance to the center row/column
+            table.sort(candidates, function(a, b)
+                local ax = ((a - 1) % gridWidth) + 1
+                local ay = math.ceil(a / gridWidth)
+                local bx = ((b - 1) % gridWidth) + 1
+                local by = math.ceil(b / gridWidth)
+                local distA = (ax - centerCol)^2 + (ay - centerRow)^2
+                local distB = (bx - centerCol)^2 + (by - centerRow)^2
+                if distA == distB then
+                    return a < b
+                end
+                return distA < distB
+            end)
+            
+            self.buildGrid.unlocked[candidates[1]] = true
+        else
+            break
+        end
+    end
+    
     return self.mainLazer
 end
 

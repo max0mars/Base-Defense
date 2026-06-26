@@ -14,7 +14,7 @@ function BattleDirector:new(game)
 end
 
 function BattleDirector:getBudgetForWave(template, waveNumber, globalDifficulty)
-    local baseBudgets = template and template.budgets or require("Game.Spawning.BattleTemplateDictionary").DEFAULT_BUDGETS
+    local baseBudgets = template and template.budgets or require("Game.Spawning.BattleIndex").DEFAULT_BUDGETS
     local wave = math.max(1, math.min(#baseBudgets, waveNumber))
     local base = baseBudgets[wave]
     local multiplier = 1.25 ^ (globalDifficulty - 1)
@@ -50,7 +50,8 @@ function BattleDirector:generateBattle(globalDifficulty, profile)
             budget = math.floor(budget * template.relativeDifficulty[i])
         end
 
-        local list, summary, lanes = wd:generateWaveList(i, roster, template, budget)
+        local isBossWave = (battleNum == 20 and i == numWaves)
+        local list, summary, lanes = wd:generateWaveList(i, roster, template, budget, isBossWave)
         table.insert(upcomingWaves, list)
         table.insert(upcomingSummaries, summary)
         
@@ -63,7 +64,7 @@ function BattleDirector:generateBattle(globalDifficulty, profile)
 end
 
 function BattleDirector:selectTemplate(currentBattleNumber)
-    local templates = require("Game.Spawning.BattleTemplateDictionary")
+    local templates = require("Game.Spawning.BattleIndex")
     local validTemplates = {}
     local totalWeight = 0
 
@@ -75,7 +76,20 @@ function BattleDirector:selectTemplate(currentBattleNumber)
     end
 
     if #validTemplates == 0 then
-        return nil
+        local bestTemplate = nil
+        local maxRange = -1
+        for key, template in pairs(templates) do
+            if type(template) == "table" and template.validBattleRange and (not template.limit or template.count < template.limit) and template.validBattleRange.max > maxRange then
+                maxRange = template.validBattleRange.max
+                bestTemplate = template
+            end
+        end
+        if bestTemplate then
+            table.insert(validTemplates, bestTemplate)
+            totalWeight = bestTemplate.weight or 10
+        else
+            return nil
+        end
     end
 
     local roll = math.random(1, totalWeight)
@@ -92,6 +106,7 @@ function BattleDirector:selectTemplate(currentBattleNumber)
 
     if selectedTemplate then
         print("Selected Template ID: " .. selectedTemplate.id)
+        selectedTemplate.count = selectedTemplate.count + 1
     end
 
     return selectedTemplate

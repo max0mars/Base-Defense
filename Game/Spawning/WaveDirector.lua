@@ -15,7 +15,7 @@ function WaveDirector:new(game)
     return obj
 end
 
-function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget)
+function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget, isBossWave)
     assert(battleRoster, "WaveDirector:generateWaveList requires a battleRoster")
     assert(budget, "WaveDirector:generateWaveList requires a budget")
 
@@ -75,6 +75,22 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget
             table.insert(summaryOrder, enemy.id)
         end
         summaryCounts[enemy.id] = summaryCounts[enemy.id] + count
+    end
+
+    if isBossWave then
+        local tier5Enemy = nil
+        local tier5Candidates = {}
+        for _, e in ipairs(EnemyRegistry.allEnemies) do
+            if e.tier == 5 then
+                table.insert(tier5Candidates, e)
+            end
+        end
+        if #tier5Candidates > 0 then
+            tier5Enemy = tier5Candidates[math.random(1, #tier5Candidates)]
+        end
+        if tier5Enemy then
+            addEnemySpawns(tier5Enemy, 1)
+        end
     end
 
     if template and template.specificWaveEnemies and template.specificWaveEnemies[waveIndex] then

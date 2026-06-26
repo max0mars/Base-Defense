@@ -64,8 +64,8 @@ end
 
 -- Update for 1 second of regeneration
 medicInstance:update(1.0)
-print(string.format("Target HP after 1.1s healing: %f (expected: ~72.0)", targetEnemy.hp))
-if targetEnemy.hp > 71.9 and targetEnemy.hp < 72.1 then
+print(string.format("Target HP after 1.1s healing: %f (expected: 70.0)", targetEnemy.hp))
+if targetEnemy.hp > 69.9 and targetEnemy.hp < 70.1 then
     print("[PASS] Medic healed target correctly.")
 else
     print("[FAIL] Healing amount is incorrect.")

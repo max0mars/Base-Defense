@@ -23,6 +23,7 @@ function Medic:new(config)
     obj.targets = config.targets or 3
     obj.regenAmount = config.regenAmount or 15 -- HP per second
     obj.attachedTargets = {}
+    obj.regenTimer = 0
     
     return obj
 end
@@ -81,13 +82,14 @@ function Medic:update(dt)
         end
     end
     
-    -- 3. Apply healing to attached targets
-    for _, t in ipairs(self.attachedTargets) do
-        local maxHp = t:getStat("maxHp")
-        if t.hp < maxHp then
-            local oldHp = t.hp
-            t.hp = math.min(maxHp, t.hp + self.regenAmount * dt)
-            local amountHealed = t.hp - oldHp
+    -- 3. Apply healing to attached targets every 0.5 seconds
+    self.regenTimer = self.regenTimer + dt
+    while self.regenTimer >= 0.5 do
+        local tickTime = 0.5
+        self.regenTimer = self.regenTimer - 0.5
+        
+        for _, t in ipairs(self.attachedTargets) do
+            local amountHealed = t:heal(self.regenAmount * tickTime)
             
             -- Spawn healing damage number if accumulated heal >= 1
             if not t.accumulatedHeal then t.accumulatedHeal = 0 end

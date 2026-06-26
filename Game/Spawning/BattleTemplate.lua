@@ -25,12 +25,17 @@ function BattleTemplate:new(config)
     obj.specificEnemies = config.specificEnemies or {}
     obj.specificWaveEnemies = config.specificWaveEnemies or {}
     obj.budgets = config.budgets
+    obj.count = 0
+    obj.limit = config.limit
 
     return obj
 end
 
 -- Checks if this template can be rolled for the current battle
 function BattleTemplate:isValidForBattle(battleNumber)
+    if self.limit and self.count >= self.limit then
+        return false
+    end
     return battleNumber >= self.validBattleRange.min and battleNumber <= self.validBattleRange.max
 end
 

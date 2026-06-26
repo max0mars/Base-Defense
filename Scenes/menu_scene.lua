@@ -135,8 +135,10 @@ function menu_scene:mousepressed(x, y, button)
                         activeMutations = {},
                         discoveredEnemies = { ["Basic"] = true },
                         startingTokens = 3,
-                        startingHandSize = 3,
+                        startingHandSize = 4,
+                        waveCompleteDrawSize = 4,
                         incomeTokens = 3,
+                        startBattleExtraSlotsUnlocked = 0,
                         upgradeCostTokens = 20,
                         upgradeCostHand = 20,
                         upgradeCostIncome = 20
@@ -175,8 +177,10 @@ function menu_scene:keypressed(key)
             activeMutations = {},
             discoveredEnemies = { ["Basic"] = true },
             startingTokens = 3,
-            startingHandSize = 3,
+            startingHandSize = 4,
+            waveCompleteDrawSize = 4,
             incomeTokens = 3,
+            startBattleExtraSlotsUnlocked = 0,
             upgradeCostTokens = 20,
             upgradeCostHand = 20,
             upgradeCostIncome = 20

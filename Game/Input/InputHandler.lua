@@ -311,6 +311,11 @@ function InputHandler:mousepressed(x, y, button)
     local game = self.game
     if button == 1 then self.isMouseDown = true end
     
+    if game:isState("mulligan") then
+        game:handleMulliganClick(x, y, button)
+        return
+    end
+
     -- Check GUI consumption first
     if game.gui:mousepressed(x, y, button) then
         return
@@ -527,6 +532,7 @@ function InputHandler:mousepressed(x, y, button)
                 if totalCost > 0 then
                     if game.tokens >= totalCost then
                         game.tokens = game.tokens - totalCost
+        if game.tokens < 0 then game.tokens = 0 end
                         for _, s in ipairs(slotsToOccupy) do
                             buildGrid.unlocked[s] = true
                         end
@@ -583,6 +589,7 @@ function InputHandler:mousepressed(x, y, button)
                 local cost = base:getSlotPrice(anchorSlot)
                 if game.tokens >= cost then
                     game.tokens = game.tokens - cost
+        if game.tokens < 0 then game.tokens = 0 end
                     buildGrid.unlocked[anchorSlot] = true
                 else
                     print("Not enough tokens to unlock slot!")
@@ -684,6 +691,13 @@ end
 
 function InputHandler:keypressed(key)
     local game = self.game
+
+    if game:isState("mulligan") then
+        if key == "return" or key == "enter" then
+            game:setState("startup")
+        end
+        return
+    end
 
     if key == "1" then
         game.debugMode = not game.debugMode

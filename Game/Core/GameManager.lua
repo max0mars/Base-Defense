@@ -35,8 +35,22 @@ local DamageNumber       = require("Graphics.Animations.DamageNumber")
 local LightningBolt     = require("Graphics.Animations.LightningBolt")
 local ExpandingCircle   = require("Graphics.Animations.ExpandingCircle")
 local ArmorBreak        = require("Graphics.Animations.ArmorBreak")
-local DebuffArrows      = require("Graphics.Animations.DebuffArrows")
 local DebuffProjectile  = require("Graphics.Animations.DebuffProjectile")
+local DebuffArrows      = require("Graphics.Animations.DebuffArrows")
+local function drawCircularArrow(cx, cy, r)
+    love.graphics.arc("line", "open", cx, cy, r, 0.1 * math.pi, 1.7 * math.pi)
+    -- Arrowhead
+    local angle = 1.7 * math.pi
+    local ax = cx + math.cos(angle) * r
+    local ay = cy + math.sin(angle) * r
+    local tanAngle = angle + math.pi/2
+    local size = 4
+    love.graphics.polygon("fill", 
+        ax, ay,
+        ax + math.cos(tanAngle - 0.4) * size, ay + math.sin(tanAngle - 0.4) * size,
+        ax + math.cos(tanAngle + 0.4) * size, ay + math.sin(tanAngle + 0.4) * size
+    )
+end
 
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
@@ -62,10 +76,11 @@ function game:load(saveData, isTesting)
         -- Future Implementation: Handle save game loading here
     else
         -- Initialize Game State
-        self.state        = "startup" -- States: "startup", "preparing", "wave", "gameover"
+        self.state        = "mulligan" -- States: "mulligan", "startup", "preparing", "wave", "gameover"
         self.objects      = {}        -- Entity master list
         self.score        = 0
         self.xp           = 0
+        self.mulliganSkipsUsed = 0
         
         self.testingMode  = isTesting or false
         if self.testingMode then
@@ -73,7 +88,9 @@ function game:load(saveData, isTesting)
         else
             self.tokens   = _G.PersistentState and _G.PersistentState.startingTokens or 3
         end
-        self.maxTokens    = 3
+        self.maxTokens    = _G.PersistentState and _G.PersistentState.startingTokens or 3
+        self.mana         = 100
+        self.maxMana      = 100
         EnemyRegistry:reset(self)
         self.shopLevel    = _G.PersistentState and _G.PersistentState.shopLevel or 1
         self.wave         = 0
@@ -121,7 +138,7 @@ function game:load(saveData, isTesting)
         
         self:initBattleDeck()
         -- Starting Draw
-        self:drawCard(_G.PersistentState and _G.PersistentState.startingHandSize or 3)
+        self:drawCard(_G.PersistentState and _G.PersistentState.startingHandSize or 4)
 
         -- Codex discovery tracking: enemies seen in a wave, turrets ever owned.
         self.seenEnemies = {}
@@ -468,18 +485,84 @@ function game:draw()
     Layout.popWorld()
     SetGameScissor()
 
-    self.gui:draw()
-    if self.rewardSystem and self.rewardSystem.isActive then
-        self.rewardSystem:draw()
-    end
-    
-    if self.specialUpgradeManager and self.specialUpgradeManager.isActive then
-        self.specialUpgradeManager:draw()
-    end
-    
-    -- Absolute Highest Z-Index Layer: Quit & Destruction Modals overlay everything
-    if self.gui and self.gui.confirmation then
-        self.gui.confirmation:draw()
+    if self:isState("mulligan") then
+        -- 1. Dim background
+        love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.rectangle("fill", 0, 0, Layout.W, Layout.H)
+        
+        local layout = self:getMulliganLayout()
+        local mx, my = love.mouse.getPosition()
+        
+        -- 2. Draw Title
+        love.graphics.setColor(0, 0.85, 1.0, 1)
+        local titleFont = love.graphics.getFont()
+        love.graphics.printf("MULLIGAN PHASE", 0, layout.cards[1].y - 70, Layout.W, "center")
+        love.graphics.setColor(0.7, 0.8, 0.9, 0.8)
+        love.graphics.printf("Reroll up to 2 cards to optimize your starting hand.", 0, layout.cards[1].y - 40, Layout.W, "center")
+        
+        -- 3. Draw starting cards & their circular arrow buttons
+        for i, card in ipairs(self.hand) do
+            local c = layout.cards[i]
+            local cardDrawObj = card:getCardDraw()
+            local isCardHovered = mx >= c.x and mx <= c.x + layout.cardW and my >= c.y and my <= c.y + layout.cardH
+            cardDrawObj:draw(c.x, c.y, layout.cardW, layout.cardH, isCardHovered)
+            
+            if (self.mulliganSkipsUsed or 0) < 2 then
+                local dist2 = (mx - c.arrowX)^2 + (my - c.arrowY)^2
+                local hoverArrow = dist2 <= c.arrowR^2
+                if hoverArrow then
+                    Cursor.wantHand = true
+                    love.graphics.setColor(0.1, 0.6, 0.9, 0.8)
+                else
+                    love.graphics.setColor(0.05, 0.1, 0.2, 0.6)
+                end
+                love.graphics.circle("fill", c.arrowX, c.arrowY, c.arrowR)
+                love.graphics.setColor(0, 0.85, 1.0, 1)
+                love.graphics.setLineWidth(2)
+                love.graphics.circle("line", c.arrowX, c.arrowY, c.arrowR)
+                love.graphics.setLineWidth(1)
+                
+                love.graphics.setColor(1, 1, 1, 1)
+                drawCircularArrow(c.arrowX, c.arrowY, 10)
+            end
+        end
+        
+        -- 4. Draw Skip / Start Battle Button
+        local sb = layout.skipBtn
+        local hoverSkip = mx >= sb.x and mx <= sb.x + sb.w and my >= sb.y and my <= sb.y + sb.h
+        if hoverSkip then
+            Cursor.wantHand = true
+            love.graphics.setColor(0.2, 0.5, 0.3, 0.85)
+        else
+            love.graphics.setColor(0.1, 0.3, 0.2, 0.6)
+        end
+        love.graphics.rectangle("fill", sb.x, sb.y, sb.w, sb.h, 6)
+        love.graphics.setColor(0.2, 0.9, 0.4, 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", sb.x, sb.y, sb.w, sb.h, 6)
+        love.graphics.setLineWidth(1)
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("START BATTLE", sb.x, sb.y + sb.h/2 - titleFont:getHeight()/2, sb.w, "center")
+        
+        -- 5. Draw Skips used count
+        love.graphics.setColor(1, 1, 1, 1)
+        local countText = "Skips Used: " .. (self.mulliganSkipsUsed or 0) .. " / 2"
+        love.graphics.printf(countText, 0, sb.y - 30, Layout.W, "center")
+    else
+        self.gui:draw()
+        if self.rewardSystem and self.rewardSystem.isActive then
+            self.rewardSystem:draw()
+        end
+        
+        if self.specialUpgradeManager and self.specialUpgradeManager.isActive then
+            self.specialUpgradeManager:draw()
+        end
+        
+        -- Absolute Highest Z-Index Layer: Quit & Destruction Modals overlay everything
+        if self.gui and self.gui.confirmation then
+            self.gui.confirmation:draw()
+        end
     end
 
     -- 6. UI Animations (Drawn over HUD and menu elements)
@@ -514,6 +597,7 @@ function game:draw()
             or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
             or (self.gui and self.gui.itemPicker and self.gui.itemPicker.isActive)
             or self:isState("enemy_mutation") or self:isState("upgrade_mutation")
+            or self:isState("mulligan")
         -- Over the base build area, use the OS pointer (hand for clickable slots)
         -- rather than the battlefield crosshair.
         local overBase = self:isMouseOverBase(mx, my)
@@ -590,8 +674,8 @@ function game:waveComplete()
         self.gui.incomeFeedback:triggerSequence()
     end
     
-    -- Draw 4 new cards for the next wave
-    self:drawCard(4)
+    -- Draw new cards for the next wave based on upgrade stats
+    self:drawCard(_G.PersistentState and _G.PersistentState.waveCompleteDrawSize or 4)
     
     -- Trigger onWaveComplete for other objects (if any)
     for _, obj in ipairs(self.objects) do
@@ -706,6 +790,102 @@ function game:pickUpBuilding(building)
     return true
 end
 
+function game:getMulliganLayout()
+    local N = #self.hand
+    local cardW = 200
+    local cardH = 280
+    local spacing = 20
+    local totalW = N * cardW + (N - 1) * spacing
+    local startX = (Layout.W - totalW) / 2
+    local startY = (Layout.H - cardH) / 2 - 20
+    
+    local layout = {
+        cardW = cardW,
+        cardH = cardH,
+        cards = {},
+        skipBtn = {
+            x = (Layout.W - 200) / 2,
+            y = Layout.H - 80,
+            w = 200,
+            h = 50
+        }
+    }
+    
+    for i = 1, N do
+        local cx = startX + (i - 1) * (cardW + spacing) + cardW / 2
+        local cy = startY + cardH + 25
+        table.insert(layout.cards, {
+            x = startX + (i - 1) * (cardW + spacing),
+            y = startY,
+            arrowX = cx,
+            arrowY = cy,
+            arrowR = 20
+        })
+    end
+    
+    return layout
+end
+
+function game:handleMulliganClick(x, y, button)
+    if button ~= 1 then return end
+    local layout = self:getMulliganLayout()
+    
+    -- Check skip button
+    local sb = layout.skipBtn
+    if x >= sb.x and x <= sb.x + sb.w and y >= sb.y and y <= sb.y + sb.h then
+        self:setState("startup")
+        return
+    end
+    
+    -- If skips used is 2, don't allow rerolls
+    if (self.mulliganSkipsUsed or 0) >= 2 then return end
+    
+    -- Check card reroll buttons
+    for i, c in ipairs(layout.cards) do
+        local dist2 = (x - c.arrowX)^2 + (y - c.arrowY)^2
+        if dist2 <= c.arrowR^2 then
+            self:rerollCard(i)
+            break
+        end
+    end
+end
+
+function game:rerollCard(cardIndex)
+    if not self.hand or not self.hand[cardIndex] then return end
+    local oldCard = self.hand[cardIndex]
+    
+    table.remove(self.hand, cardIndex)
+    table.insert(self.drawPile, oldCard)
+    
+    -- Shuffle drawPile
+    for i = #self.drawPile, 2, -1 do
+        local j = math.random(i)
+        self.drawPile[i], self.drawPile[j] = self.drawPile[j], self.drawPile[i]
+    end
+    
+    if #self.drawPile > 0 then
+        local newCard = table.remove(self.drawPile, 1)
+        if newCard.payload and newCard.payload.effect then
+            local EffectManager = require("Game.Effects.EffectManager")
+            newCard.effectManager = EffectManager:new(newCard, self)
+            newCard.effectManager.game = self
+            newCard.effectManager.owner = newCard
+            if self.playerEffectManager then
+                newCard.effectManager.parent = self.playerEffectManager
+            end
+            newCard.effectManager:recalculateStats()
+        end
+        table.insert(self.hand, cardIndex, newCard)
+    else
+        table.insert(self.hand, cardIndex, oldCard)
+    end
+    
+    self.mulliganSkipsUsed = (self.mulliganSkipsUsed or 0) + 1
+    if AUDIO then
+        AUDIO:playSFX("upgrade_01")
+    end
+end
+
 function game:setState(newState)    self.state = newState end
 function game:getState()            return self.state end
 function game:isState(checkState)   return self.state == checkState end
@@ -815,7 +995,12 @@ function game:drawCard(amount)
 end
 
 function game:consumeCard(card)
-    self.tokens = self.tokens - card:getCost()
+    local isSpell = (card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell)
+    if isSpell then
+        self.mana = (self.mana or 100) - card:getCost()
+    else
+        self.tokens = self.tokens - card:getCost()
+    end
     for i, c in ipairs(self.hand) do
         if c == card then
             table.remove(self.hand, i)

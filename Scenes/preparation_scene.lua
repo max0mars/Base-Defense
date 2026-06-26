@@ -33,6 +33,57 @@ function preparation_scene:load(isPostBattle)
             local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
             EnemyRegistry:triggerRandomMutation()
         end
+        
+        if _G.PersistentState.battlesCompleted > 0 and _G.PersistentState.battlesCompleted % 5 == 0 then
+            self.showUpgradeChoice = true
+        end
+    end
+    
+    if self.showUpgradeChoice then
+        local cardW = 220
+        local cardH = 340
+        local spacing = 40
+        local startX = (VIRTUAL_WIDTH - (3 * cardW + 2 * spacing)) / 2
+        local startY = (VIRTUAL_HEIGHT - cardH) / 2
+        
+        self.upgradeChoices = {
+            {
+                id = "card_draw",
+                x = startX,
+                y = startY,
+                w = cardW,
+                h = cardH,
+                title = "+1 CARD DRAW",
+                desc = "Draw +1 card at the\nstart of battle and\nbetween waves.",
+                color = {0.15, 0.35, 0.6, 1},
+                hoverColor = {0.2, 0.45, 0.75, 1},
+                borderColor = {0.3, 0.7, 1, 1}
+            },
+            {
+                id = "tokens",
+                x = startX + cardW + spacing,
+                y = startY,
+                w = cardW,
+                h = cardH,
+                title = "+1 TOKEN / TURN",
+                desc = "Start waves and\nbattles with +1\nmaximum Token.",
+                color = {0.15, 0.5, 0.3, 1},
+                hoverColor = {0.2, 0.65, 0.4, 1},
+                borderColor = {0.3, 0.9, 0.5, 1}
+            },
+            {
+                id = "slots",
+                x = startX + 2 * (cardW + spacing),
+                y = startY,
+                w = cardW,
+                h = cardH,
+                title = "+4 START SLOTS",
+                desc = "Unlock 4 additional\nadjacent turret slots\nat the start of each\nbattle.",
+                color = {0.45, 0.15, 0.5, 1},
+                hoverColor = {0.6, 0.2, 0.7, 1},
+                borderColor = {0.8, 0.3, 0.9, 1}
+            }
+        }
     end
     
     local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
@@ -449,8 +500,52 @@ function preparation_scene:draw()
         self:drawDeck()
         Cursor.wantHand = true
     end
+    
+    if self.showUpgradeChoice then
+        self:drawUpgradeChoice(mx, my)
+        Cursor.wantHand = true
+    end
 
     love.mouse.setCursor(Cursor.wantHand and self.handCursor or self.arrowCursor)
+end
+
+function preparation_scene:drawUpgradeChoice(mx, my)
+    -- Dark overlay
+    love.graphics.setColor(0.02, 0.02, 0.05, 0.92)
+    love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+    
+    -- Title
+    love.graphics.setColor(1, 0.8, 0.2, 1)
+    love.graphics.printf("MILESTONE BATTLE COMPLETE!", 0, 80, VIRTUAL_WIDTH, "center")
+    love.graphics.setColor(0.9, 0.9, 0.9, 1)
+    love.graphics.printf("Choose a major permanent upgrade to your arsenal:", 0, 115, VIRTUAL_WIDTH, "center")
+    
+    for _, choice in ipairs(self.upgradeChoices) do
+        local isHovered = mx >= choice.x and mx <= choice.x + choice.w and my >= choice.y and my <= choice.y + choice.h
+        if isHovered then Cursor.wantHand = true end
+        
+        -- Panel fill
+        love.graphics.setColor(isHovered and choice.hoverColor or choice.color)
+        love.graphics.rectangle("fill", choice.x, choice.y, choice.w, choice.h, 12, 12)
+        
+        -- Panel border
+        love.graphics.setColor(choice.borderColor)
+        love.graphics.setLineWidth(isHovered and 3 or 1.5)
+        love.graphics.rectangle("line", choice.x, choice.y, choice.w, choice.h, 12, 12)
+        love.graphics.setLineWidth(1)
+        
+        -- Title text
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf(choice.title, choice.x + 10, choice.y + 40, choice.w - 20, "center")
+        
+        -- Separator line
+        love.graphics.setColor(choice.borderColor[1], choice.borderColor[2], choice.borderColor[3], 0.5)
+        love.graphics.line(choice.x + 20, choice.y + 80, choice.x + choice.w - 20, choice.y + 80)
+        
+        -- Description text
+        love.graphics.setColor(0.95, 0.95, 0.95, 1)
+        love.graphics.printf(choice.desc, choice.x + 20, choice.y + 130, choice.w - 40, "center")
+    end
 end
 
 function preparation_scene:mousepressed(x, y, button)
@@ -461,6 +556,27 @@ function preparation_scene:mousepressed(x, y, button)
         elseif action == "exit" then
             paused = 0
             self.scene_manager.switch("menu")
+        end
+        return
+    end
+    
+    if self.showUpgradeChoice then
+        if button == 1 then
+            for _, choice in ipairs(self.upgradeChoices) do
+                if x >= choice.x and x <= choice.x + choice.w and y >= choice.y and y <= choice.y + choice.h then
+                    if choice.id == "card_draw" then
+                        _G.PersistentState.startingHandSize = (_G.PersistentState.startingHandSize or 4) + 1
+                        _G.PersistentState.waveCompleteDrawSize = (_G.PersistentState.waveCompleteDrawSize or 4) + 1
+                    elseif choice.id == "tokens" then
+                        _G.PersistentState.startingTokens = (_G.PersistentState.startingTokens or 3) + 1
+                        _G.PersistentState.incomeTokens = (_G.PersistentState.incomeTokens or 3) + 1
+                    elseif choice.id == "slots" then
+                        _G.PersistentState.startBattleExtraSlotsUnlocked = (_G.PersistentState.startBattleExtraSlotsUnlocked or 0) + 1
+                    end
+                    self.showUpgradeChoice = false
+                    break
+                end
+            end
         end
         return
     end

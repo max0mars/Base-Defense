@@ -221,17 +221,49 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
         love.graphics.setColor(color) -- Reset border color
     end
 
-    -- 6. Energy Circle (Top Left)
-    -- Mask out the banner lines underneath the circle
-    love.graphics.setColor(0.08, 0.08, 0.08, 1)
-    love.graphics.circle("fill", 15, 35, 25)
+    -- 6. Energy Circle/Hexagon (Top Left)
+    -- Mask out the banner lines underneath the circle/hexagon
+    local isSpellCard = (self.cardType == "Instant" and self.instantType == "Spell")
+    if isSpellCard then
+        love.graphics.setColor(0.1, 0.45, 0.9, 1) -- Blue hexagon for mana
+        local vertices = {}
+        for i = 1, 6 do
+            local angle = (i - 1) * (math.pi / 3) - math.pi / 6
+            table.insert(vertices, 15 + math.cos(angle) * 25)
+            table.insert(vertices, 35 + math.sin(angle) * 25)
+        end
+        love.graphics.polygon("fill", vertices)
+    else
+        love.graphics.setColor(0.08, 0.08, 0.08, 1)
+        love.graphics.circle("fill", 15, 35, 25)
+    end
     
-    -- Outer/inner neon ring detailing
+    -- Outer/inner neon ring/hexagon detailing
     love.graphics.setColor(color)
-    love.graphics.setLineWidth(3)
-    love.graphics.circle("line", 15, 35, 25)
-    love.graphics.setLineWidth(1)
-    love.graphics.circle("line", 15, 35, 18)
+    if isSpellCard then
+        love.graphics.setLineWidth(3)
+        local vertices = {}
+        for i = 1, 6 do
+            local angle = (i - 1) * (math.pi / 3) - math.pi / 6
+            table.insert(vertices, 15 + math.cos(angle) * 25)
+            table.insert(vertices, 35 + math.sin(angle) * 25)
+        end
+        love.graphics.polygon("line", vertices)
+        
+        love.graphics.setLineWidth(1)
+        local vertices_inner = {}
+        for i = 1, 6 do
+            local angle = (i - 1) * (math.pi / 3) - math.pi / 6
+            table.insert(vertices_inner, 15 + math.cos(angle) * 18)
+            table.insert(vertices_inner, 35 + math.sin(angle) * 18)
+        end
+        love.graphics.polygon("line", vertices_inner)
+    else
+        love.graphics.setLineWidth(3)
+        love.graphics.circle("line", 15, 35, 25)
+        love.graphics.setLineWidth(1)
+        love.graphics.circle("line", 15, 35, 18)
+    end
 
     -- 7. Populate Text Fields dynamically
     love.graphics.setColor(1, 1, 1, 1) -- Set text color to white

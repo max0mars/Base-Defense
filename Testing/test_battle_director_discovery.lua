@@ -8,7 +8,7 @@ love = {
 }
 
 local BattleDirector = require("Game.Spawning.BattleDirector")
-local BattleTemplateDictionary = require("Game.Spawning.BattleTemplateDictionary")
+local BattleIndex = require("Game.Spawning.BattleIndex")
 
 print("--- Starting BattleDirector Discovery Tests ---")
 
@@ -23,7 +23,7 @@ printDiscovered()
 
 -- Test 1: updateDiscoveryPool for Battle 1 (needs 1x tier0 -> maps to danger level 2? Wait! No, basic is dangerLevel 1. Wait, let's see what is tier0 and tier1 mapping).
 -- Let's test battle_early1 (requires tier0min=2, tier1min=1 -> dangerLevel 2 and dangerLevel 3)
-local template_early1 = BattleTemplateDictionary.battle_early1
+local template_early1 = BattleIndex.battle_early1
 print("\nUpdating Discovery Pool for battle_early1 (requires tier0min=2, tier1min=1):")
 bd:updateDiscoveryPool(template_early1)
 printDiscovered()

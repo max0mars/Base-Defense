@@ -86,8 +86,8 @@ function HandUI:draw()
     local mx, my = love.mouse.getPosition()
     if self.game.gui and self.game.gui:overlayActive() then mx, my = -1000, -1000 end
     
-    local drawCost = self.game.drawCost or 1
-    local canAffordDraw = (self.game.tokens or 0) >= drawCost
+    local drawCost = 25
+    local canAffordDraw = (self.game.mana or 0) >= drawCost
     
     local drawPileCount = self.game.drawPile and #self.game.drawPile or 0
     local discardPileCount = self.game.discardPile and #self.game.discardPile or 0
@@ -130,12 +130,21 @@ function HandUI:draw()
     local tokensStr = tostring(self.game.tokens)
     love.graphics.print(tokensStr, coinX + radius + 8, centerY - 8)
     
-    -- Show pending cost subtraction if card is selected
-    if self.game.activeCard then
-        local cost = self.game.activeCard:getCost()
+    -- Show pending cost subtraction for token usage (cards) and slot unlocks
+    local activeCard = self.game.activeCard
+    local isSpell = activeCard and (activeCard.executionType == "Spell" or (activeCard.isType and activeCard:isType("spell")) or activeCard.isSpell)
+    local pendingCost = 0
+    if activeCard and not isSpell then
+        pendingCost = pendingCost + activeCard:getCost()
+    end
+    -- Include slot unlock cost if hovering a locked slot (building placement)
+    if self.game.base and self.game.base.hoverTooltip and self.game.base.hoverTooltip.cost then
+        pendingCost = pendingCost + self.game.base.hoverTooltip.cost
+    end
+    if pendingCost > 0 then
         love.graphics.setColor(1.0, 0.3, 0.3, 1.0)
         local valueWidth = self.valueFont:getWidth(tokensStr)
-        love.graphics.print("(-" .. tostring(cost) .. ")", coinX + radius + 8 + valueWidth + 4, centerY - 8)
+        love.graphics.print("(-" .. tostring(pendingCost) .. ")", coinX + radius + 8 + valueWidth + 4, centerY - 8)
     end
     
     -- 2. Mana Blueish Orb (right side)
@@ -159,10 +168,18 @@ function HandUI:draw()
     local manaStr = tostring(self.game.mana or 100)
     love.graphics.print(manaStr, orbX + radius + 8, centerY - 8)
     
+    -- Show pending cost subtraction if spell card is selected (mana)
+    if activeCard and isSpell then
+        local cost = activeCard:getCost()
+        love.graphics.setColor(1.0, 0.3, 0.3, 1.0)
+        local valueWidth = self.valueFont:getWidth(manaStr)
+        love.graphics.print("(-" .. tostring(cost) .. ")", orbX + radius + 8 + valueWidth + 4, centerY - 8)
+    end
+    
     love.graphics.pop()
     
     -- Draw Card Button
-    drawActionButton(drawCardBtn, "DRAW CARD", drawCost .. " Tk", {0.2, 0.6, 0.9}, inRegion(drawCardBtn), true, canAffordDraw)
+    drawActionButton(drawCardBtn, "DRAW CARD", drawCost .. " Mana", {0.2, 0.6, 0.9}, inRegion(drawCardBtn), true, canAffordDraw)
     
     -- View Drawpile Button
     drawActionButton(viewDrawBtn, "VIEW DRAW", drawPileCount .. " Cards", {0.3, 0.4, 0.8}, inRegion(viewDrawBtn), drawPileCount > 0, true)
@@ -211,9 +228,18 @@ function HandUI:draw()
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.printf(card.name, cx + 5, cy + 10, cardWidth - 10, "center")
             
-            local canAfford = self.game.tokens >= cost
+            local cardIsSpell = (card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell)
+            local canAfford = false
+            local costUnit = "Tk"
+            if cardIsSpell then
+                canAfford = (self.game.mana or 0) >= cost
+                costUnit = "Mana"
+            else
+                canAfford = (self.game.tokens or 0) >= cost
+            end
+            
             if canAfford then love.graphics.setColor(0.2, 0.8, 0.2, 1) else love.graphics.setColor(0.8, 0.2, 0.2, 1) end
-            love.graphics.printf(cost .. " Tk", cx, cy + cardHeight - 20, cardWidth, "center")
+            love.graphics.printf(cost .. " " .. costUnit, cx, cy + cardHeight - 20, cardWidth, "center")
         end
     end
 
@@ -264,15 +290,14 @@ function HandUI:mousepressed(x, y, button)
     -- Hand is always visible
     
     if inRegion(drawCardBtn) then
-        local cost = self.game.drawCost or 1
-        if self.game.tokens >= cost then
+        local cost = 25
+        if (self.game.mana or 0) >= cost then
             local drawn = self.game:drawCard(1)
             if drawn > 0 then
-                self.game.tokens = self.game.tokens - cost
-                self.game.drawCost = cost + 1
+                self.game.mana = self.game.mana - cost
             end
         else
-            self.game:spawnFloatingText("Not enough tokens!", x, y, {0.8, 0.2, 0.2, 1})
+            self.game:spawnFloatingText("Not enough mana!", x, y, {0.2, 0.6, 1.0, 1})
         end
         return true
     end
@@ -318,7 +343,15 @@ function HandUI:mousepressed(x, y, button)
             end
             
             local cost = card:getCost()
-            if self.game.tokens >= cost then
+            local cardIsSpell = (card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell)
+            local canAfford = false
+            if cardIsSpell then
+                canAfford = (self.game.mana or 0) >= cost
+            else
+                canAfford = (self.game.tokens or 0) >= cost
+            end
+            
+            if canAfford then
                 self.game.activeCard = card
                 
                 if card.executionType == ExecutionType.Global or card.executionType == "Global" or card.executionType == ExecutionType.Group or card.executionType == "Group" then

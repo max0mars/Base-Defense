@@ -53,6 +53,7 @@ function Card:getCardDraw()
         local CardDraw = require("Game.Cards.CardDraw")
         local isTargeted = self.executionType == require("Game.Cards.ExecutionType").Targeted or self.executionType == "Targeted"
         local isGlobal = self.executionType == require("Game.Cards.ExecutionType").Global or self.executionType == "Global"
+        local isSpell = self.executionType == require("Game.Cards.ExecutionType").Spell or self.executionType == "Spell"
         
         local dmgBars, rngBars, frBars = 0, 0, 0
         local affSlots = self.payload.affectedSlots or {}
@@ -81,7 +82,7 @@ function Card:getCardDraw()
             description = self.description,
             cost = self:getCost(),
             rarity = self.payload.rarity or self.rarity or "common",
-            type = self.payload.isMainUpgrade and "main_upgrade" or ((isGlobal or isTargeted) and "effect" or "building"),
+            type = self.payload.isMainUpgrade and "main_upgrade" or (isSpell and "spell" or ((isGlobal or isTargeted) and "effect" or "building")),
             iconCategory = (isGlobal or isTargeted) and "upgrade" or iconCat,
             damageBars = dmgBars,
             rangeBars = rngBars,

@@ -48,19 +48,20 @@ local TestingEnemyIndex = {
     {
         id = "Tank",
         type = "Tank",
-        class = require("Enemies.Enemy"), -- CHANGED
+        class = require("Enemies.Tank"),
         tier = 3,
         spawnCost = 55,
         spawnWeight = 25,
         maxHp = 1000,
         damage = 30,
         speed = 15,
-        color = {1, 1, 0, 1},
+        color = {1, 0.2, 0.2, 1}, -- Red
         shape = "tank",
         size = 30,
-        types = { enemy = true, tank = true },
+        types = { enemy = true, red = true, tank = true },
+        affinities = { heal = 1.5 },
         baseSpawnDelay = 2.5,
-        description = "Slow and heavy. Can soak up massive damage.",
+        description = "Slow and heavy. Can soak up massive damage and takes increased healing.",
         mutations = {
             { id = "tank_hp", name = "Behemoth Plating", description = "HP +50%", modifiers = { maxHp = 1.5, hp = 1.5 }, target = "Tank" },
             { id = "tank_speed", name = "Turbo Engines", description = "Speed +25%", modifiers = { speed = 1.25 }, target = "Tank" }

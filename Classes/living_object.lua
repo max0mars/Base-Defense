@@ -26,7 +26,8 @@ function living_object:new(config)
         trueDamage = 1,
         fire = 1,
         explosive = 1,
-        energy = 1
+        energy = 1,
+        heal = 1
     }
     return obj
 end
@@ -152,6 +153,22 @@ function living_object:takeDamage(amount, damageType, hitX, hitY, damageTags)
         self:died()
     end
     return damageTaken
+end
+
+function living_object:heal(amount)
+    if not amount or amount <= 0 or self.hp <= 0 or self.destroyed or self.isDead then return 0 end
+    
+    local mult = self.affinities and self.affinities.heal or 1
+    amount = amount * mult
+    
+    local maxHp = self:getStat("maxHp")
+    if self.hp >= maxHp then return 0 end
+    
+    local oldHp = self.hp
+    self.hp = math.min(maxHp, self.hp + amount)
+    local diff = self.hp - oldHp
+    
+    return diff
 end
 
 function living_object:died()

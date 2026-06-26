@@ -70,7 +70,7 @@ assert(frenzy:isValidTarget(nil) == true, "Group Frenzy allows nil target")
 
 -- Test Targeted execute
 overclock:execute(validTurret)
-assert(validTurret.buffs and validTurret.buffs[1].statModifiers.damage.mult == 0.10, "Overclock applied buff to target")
+assert(validTurret.buffs and validTurret.buffs[1].statModifiers.damage.mult == 0.15, "Overclock applied buff to target")
 
 -- Test Group execute
 _G.GameManager.objects = { validTurret }
