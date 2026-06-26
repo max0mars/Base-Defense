@@ -7,11 +7,11 @@ local SpellCardRegistry = {}
 SpellCardRegistry.Fireball = Spell.new({
     id = "spell_fireball",
     name = "Fireball",
-    description = "Deals 80 damage in a area.",
-    cost = 25,
+    description = "Deals 60 damage in an area.",
+    cost = 20,
     rarity = "Common",
     radius = 60,
-    damage = 80,
+    damage = 60,
     customExecute = function(self, x, y, game)
         local FireballVisual = require("Spells.FireballVisual")
         table.insert(game.animations, FireballVisual:new(x, y, self:getStat("radius"), self:getStat("damage"), game))
@@ -23,7 +23,7 @@ SpellCardRegistry.StunBurst = Spell.new({
     id = "spell_stunburst",
     name = "Stun Burst",
     description = "Stuns enemies in a small area.",
-    cost = 25,
+    cost = 15,
     rarity = "Uncommon",
     radius = 40,
     customExecute = function(self, x, y, game)
@@ -59,10 +59,10 @@ SpellCardRegistry.AcidCloud = Spell.new({
     id = "spell_acidcloud",
     name = "Acid Cloud",
     description = "Deals poison damage in an area.",
-    cost = 50,
+    cost = 30,
     rarity = "Rare",
-    radius = 80,
-    dps = 15,
+    radius = 50,
+    dps = 10,
     customExecute = function(self, x, y, game)
         -- Visual
         local AcidCloudVisual = require("Graphics.Animations.AcidCloudVisual")
@@ -88,11 +88,11 @@ SpellCardRegistry.AcidCloud = Spell.new({
 SpellCardRegistry.Judgment = Spell.new({
     id = "spell_judgment",
     name = "Judgment",
-    description = "Deal 1000 damage split evenly between all active enemies.",
+    description = "Deal 800 damage split evenly between all active enemies.",
     cost = 50,
     rarity = "Epic",
     radius = 0,
-    damage = 1000,
+    damage = 800,
     isGlobalSpell = true,
     customExecute = function(self, x, y, game)
         local activeEnemies = {}
@@ -125,11 +125,11 @@ SpellCardRegistry.Judgment = Spell.new({
 SpellCardRegistry.Zap = Spell.new({
     id = "spell_zap",
     name = "Zap",
-    description = "Deals 20 damage in a very small area.",
-    cost = 0,
+    description = "Deals low damage and short stun.",
+    cost = 10,
     rarity = "Common",
     radius = 25,
-    damage = 20,
+    damage = 40,
     customExecute = function(self, x, y, game)
         -- Visuals
         if game.spawnLightningBolt then
@@ -147,16 +147,20 @@ SpellCardRegistry.Zap = Spell.new({
             AUDIO:playSFX("lightning_01")
         end
 
-        -- Damage
+        -- Damage & Stun
         local r = self:getStat("radius")
         local r2 = r * r
         local dmg = self:getStat("damage")
+        local Stun = require("Game.Effects.StatusEffects.Stun")
         for _, obj in ipairs(game.objects) do
             if obj:isType("enemy") and not obj.destroyed then
                 local dx = obj.x - x
                 local dy = obj.y - y
                 if dx*dx + dy*dy <= r2 then
                     obj:takeDamage(dmg, "energy")
+                    if obj.effectManager then
+                        obj.effectManager:applyEffect(Stun:new({ duration = 0.2 }))
+                    end
                 end
             end
         end

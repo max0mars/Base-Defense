@@ -174,6 +174,16 @@ local RewardIndex = {
             cost = 2,
             affectedSlots = {{1,0},{-1,0},{0,1},{0,-1}}
         },
+        {
+            id = "conduit",
+            name = "Conduit",
+            description = "Provides 10 Mana each wave.",
+            type = "building",
+            building = require("Buildings.Passives.Conduit"),
+            iconCategory = "buff",
+            cost = 2,
+            affectedSlots = {}
+        },
         -- {
         --     id = "industrialBattery",
         --     name = "Industrial Battery",

@@ -103,7 +103,6 @@ function game:load(saveData, isTesting)
         end
         self.maxTokens    = _G.PersistentState and _G.PersistentState.startingTokens or 3
         self.mana         = 100
-        self.maxMana      = 100
         EnemyRegistry:reset(self)
         self.shopLevel    = _G.PersistentState and _G.PersistentState.shopLevel or 1
         self.wave         = 0
@@ -699,6 +698,19 @@ function game:waveComplete()
         if obj.onWaveComplete and not obj.destroyed then
             obj:onWaveComplete()
         end
+        if obj.effectManager and not obj.destroyed then
+            obj.effectManager:triggerEvent("onWaveComplete", obj)
+            obj.effectManager:recalculateStats()
+        end
+    end
+    
+    if self.playerEffectManager then
+        self.playerEffectManager:triggerEvent("onWaveComplete", self.base)
+        self.playerEffectManager:recalculateStats()
+    end
+    if self.enemyEffectManager then
+        self.enemyEffectManager:triggerEvent("onWaveComplete", nil)
+        self.enemyEffectManager:recalculateStats()
     end
 end
 

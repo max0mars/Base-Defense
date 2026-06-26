@@ -9,11 +9,11 @@ local CardRegistry = {}
 CardRegistry.Overclock = InstantCard.new({
     id = "inst_overclock_1",
     name = "Overclock",
-    description = "Give a turret +15% Damage.",
+    description = "Give a turret +25% Damage.",
     cost = 1,
     rarity = "Common",
     executionType = InstantCard.ExecutionType.Targeted,
-    statModifiers = { damage = { mult = 0.15 } }
+    statModifiers = { damage = { mult = 0.25 } }
 })
 
 CardRegistry.RangeFinder = InstantCard.new({
@@ -32,11 +32,11 @@ CardRegistry.RangeFinder = InstantCard.new({
 CardRegistry.Frenzy = InstantCard.new({
     id = "inst_frenzy_1",
     name = "Frenzy",
-    description = "All turrets fire 15% faster.",
+    description = "All turrets fire 20% faster.",
     cost = 3,
     rarity = "Uncommon",
     executionType = InstantCard.ExecutionType.Group,
-    statModifiers = { fireRate = { mult = 0.15 } }
+    statModifiers = { fireRate = { mult = 0.2 } }
 })
 
 -- ==========================================
@@ -45,7 +45,7 @@ CardRegistry.Frenzy = InstantCard.new({
 CardRegistry.EmergencyRepairs = InstantCard.new({
     id = "inst_repair_1",
     name = "Emergency Repairs",
-    description = "Heal your Base for 10 HP. Consume.",
+    description = "Heal your Base for 15 HP. Consume.",
     cost = 1,
     isConsume = true,
     rarity = "Rare",
@@ -56,8 +56,8 @@ CardRegistry.EmergencyRepairs = InstantCard.new({
         if not gameObj or not gameObj.base then return end
         local base = gameObj.base
         if base.hp < base.maxHp then
-            base.hp = math.min(base.hp + 10, base.maxHp)
-            print("Base healed for 10 HP!")
+            base.hp = math.min(base.hp + 15, base.maxHp)
+            print("Base healed for 15 HP!")
         end
     end
 })
@@ -68,7 +68,7 @@ CardRegistry.HastyDefenses = InstantCard.new({
     description = "Spawn 3 Sentries in random unoccupied slots on the base.",
     cost = 2,
     isConsume = true,
-    rarity = "Uncommon",
+    rarity = "Rare",
     executionType = InstantCard.ExecutionType.Global,
     
     customExecute = function(gameObj)
@@ -111,7 +111,7 @@ CardRegistry.PocketDefenses = InstantCard.new({
     description = "Add 3 random 1-cost turrets to your hand. They cost 0. Consume",
     cost = 2,
     isConsume = true,
-    rarity = "Rare",
+    rarity = "Uncommon",
     executionType = InstantCard.ExecutionType.Global,
     
     customExecute = function(gameObj)
@@ -166,6 +166,29 @@ CardRegistry.PocketDefenses = InstantCard.new({
         
         if added > 0 then
             gameObj:spawnFloatingText("+" .. added .. " Turrets!", 400, 280, {0.3, 1.0, 0.5, 1})
+        end
+    end
+})
+
+CardRegistry.AcceleratingCore = InstantCard.new({
+    id = "inst_accel_core_1",
+    name = "Accelerating Core",
+    description = "Give a turret +10% Fire Rate, and an additional +10% Fire Rate each wave.",
+    cost = 2,
+    rarity = "Rare",
+    executionType = InstantCard.ExecutionType.Targeted,
+    customExecute = function(targetEntity)
+        if targetEntity and targetEntity.effectManager then
+            local IterativeEffect = require("Game.Effects.StatusEffects.IterativeEffect")
+            local eff = IterativeEffect:new({
+                name = "inst_accel_core_1_eff",
+                displayName = "Accelerating Core",
+                statModifiers = { fireRate = { mult = 0.1 } },
+                iterativeChanges = { fireRate = { mult = 0.1 } },
+                iterativeLimits = { fireRate = { max_mult = 0.5 } }
+            })
+            targetEntity.effectManager:applyEffect(eff)
+            targetEntity.effectManager:recalculateStats()
         end
     end
 })
