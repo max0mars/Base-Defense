@@ -49,8 +49,10 @@ function Duplicator:new(config)
             end
         end
     end
-    for key in pairs(default.types) do
-        config.types[key] = true
+    if default.types then
+        for key in pairs(default.types) do
+            config.types[key] = true
+        end
     end
     
     local instance = Enemy:new(config)

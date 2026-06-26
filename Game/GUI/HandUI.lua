@@ -316,7 +316,8 @@ function HandUI:mousepressed(x, y, button)
         return true
     end
     
-    for i, card in ipairs(self.game.hand) do
+    for i = #self.game.hand, 1, -1 do
+        local card = self.game.hand[i]
         local cx = handStartX + (i - 1) * (cardWidth + spacing)
         local cy = deckY
         if self.game.activeCard == card then

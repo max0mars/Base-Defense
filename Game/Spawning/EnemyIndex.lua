@@ -110,7 +110,7 @@ local EnemyIndex = {
         maxHp = 40,
         damage = 30,
         speed = 110,
-        color = {1, 1, 0, 1}, -- Yellow
+        color = {1, 0.8, 0, 1}, -- Orange-Yellow
         shape = "rectangle",
         size = 12,
         types = { enemy = true, yellow = true, sapper = true },
@@ -220,10 +220,10 @@ local EnemyIndex = {
         size = 22,
         types = { enemy = true, red = true, support = true },
         baseSpawnDelay = 1.0,
-        targets = 3,
+        targets = 1,
         range = 150,
-        regenAmount = 15,
-        description = "Attaches to up to 3 nearby allies and heals them over time.",
+        regenAmount = 10,
+        description = "Attaches to a nearby ally and heals them over time.",
         mutations = {}
     },
     {
@@ -239,7 +239,8 @@ local EnemyIndex = {
         color = {0.1, 0.9, 0.3, 1}, -- Green
         shape = "diamond",
         size = 18,
-        types = { enemy = true, green = true, duplicator = true, bio = true },
+        types = {enemy = true, green = true, duplicator = true},
+        affinities = {fire = 1.2}
         baseSpawnDelay = 1.0,
         description = "A cellular green slime that divides upon death.",
         mutations = {}

@@ -433,8 +433,9 @@ function Enemy:drawCustomShape(mode, cx, cy)
         -- Use a grey color with the same alpha as the current rendering layer
         love.graphics.setColor(0.6, 0.6, 0.6, a)
         local padW = self.w * 0.2
-        love.graphics.rectangle(mode, cx - self.w/2 - padW, cy - self.h/2, padW, self.h)
-        love.graphics.rectangle(mode, cx + self.w/2, cy - self.h/2, padW, self.h)
+        local padH = self.h * 0.6
+        love.graphics.rectangle(mode, cx - self.w/2 - padW, cy - padH/2, padW, padH)
+        love.graphics.rectangle(mode, cx + self.w/2, cy - padH/2, padW, padH)
         love.graphics.setColor(r, g, b, a)
     else
         love.graphics.rectangle(mode, cx - self.w/2, cy - self.h/2, self.w, self.h)

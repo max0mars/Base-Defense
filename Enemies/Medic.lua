@@ -42,6 +42,9 @@ function Medic:update(dt)
         local t = self.attachedTargets[i]
         if t.destroyed or t.isDead then
             table.remove(self.attachedTargets, i)
+        elseif t.hp and t.maxHp and t.hp >= t.maxHp then
+            -- Detach from fully healed targets
+            table.remove(self.attachedTargets, i)
         else
             local dx = t.x - self.x
             local dy = t.y - self.y
@@ -55,7 +58,8 @@ function Medic:update(dt)
     if #self.attachedTargets < self.targets then
         local candidates = {}
         for _, obj in ipairs(self.game.objects) do
-            if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed and not obj.isDead then
+            if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed and not obj.isDead
+               and obj.hp and obj.maxHp and obj.hp < obj.maxHp then
                 -- Check if already attached
                 local alreadyAttached = false
                 for _, attached in ipairs(self.attachedTargets) do
@@ -108,7 +112,7 @@ function Medic:draw()
     Enemy.draw(self)
     
     -- Draw attachment beams/lines to attached targets
-    if not self.destroyed and not self.isDead then
+    if not self.destroyed and not self.isDead and self.attachedTargets then
         for _, t in ipairs(self.attachedTargets) do
             -- Draw a pulsing green healing beam
             love.graphics.setColor(0.2, 1.0, 0.4, 0.4 + 0.2 * math.sin(love.timer.getTime() * 10))

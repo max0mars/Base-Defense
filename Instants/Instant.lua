@@ -121,6 +121,14 @@ function Instant:applyTargetedEffect(targetEntity)
             targetTypes = self.targetTypes
         }
         targetEntity.effectManager:applyEffect(buff)
+        -- Spawn buff animation on the affected target
+        if targetEntity.game and targetEntity.game.spawnBuffPluses then
+            local tx, ty = targetEntity.x, targetEntity.y
+            if targetEntity.getCenterPosition then
+                tx, ty = targetEntity:getCenterPosition()
+            end
+            targetEntity.game:spawnBuffPluses(tx, ty)
+        end
     else
         print("WARNING: Target has no effectManager for Instant!")
     end
@@ -159,6 +167,14 @@ function Instant:applyGroupEffect(gameObj)
                 if matches then
                     obj.effectManager:applyEffect(buff)
                     obj.effectManager:recalculateStats()
+                    -- Spawn buff animation on each affected turret
+                    if gameObj.spawnBuffPluses then
+                        local tx, ty = obj.x, obj.y
+                        if obj.getCenterPosition then
+                            tx, ty = obj:getCenterPosition()
+                        end
+                        gameObj:spawnBuffPluses(tx, ty)
+                    end
                 end
             end
         end
@@ -187,6 +203,31 @@ function Instant:applyGlobalEffect(gameObj)
         gameObj.playerEffectManager:applyEffect(buff)
         if type(gameObj.registerActiveGlobalBuff) == "function" then
             gameObj:registerActiveGlobalBuff(buff)
+        end
+        
+        -- Spawn buff animation on each affected turret for global buff
+        if gameObj.objects and gameObj.spawnBuffPluses then
+            for _, obj in ipairs(gameObj.objects) do
+                if obj and not obj.destroyed and obj:isType("turret") then
+                    local matches = true
+                    if self.targetTypes then
+                        matches = false
+                        for tType, val in pairs(self.targetTypes) do
+                            if val and obj:isType(tType) then
+                                matches = true
+                                break
+                            end
+                        end
+                    end
+                    if matches then
+                        local tx, ty = obj.x, obj.y
+                        if obj.getCenterPosition then
+                            tx, ty = obj:getCenterPosition()
+                        end
+                        gameObj:spawnBuffPluses(tx, ty)
+                    end
+                end
+            end
         end
     else
         print("WARNING: GameManager or playerEffectManager not linked for Global Instant!")

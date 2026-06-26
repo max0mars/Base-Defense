@@ -157,7 +157,7 @@ function TurretDebuffer:applyDebuffs()
         if gameRef and gameRef.spawnDebuffProjectile then
             local droneColor = self.color or {0, 1, 1, 1}
             gameRef:spawnDebuffProjectile(self.x, self.y, target, function()
-                if not target.destroyed and not self.destroyed then
+                if not target.destroyed then
                     target.effectManager:applyEffect(debuffTemplate, self)
                     if gameRef.spawnDebuffArrows then
                         local tx, ty = target.x, target.y

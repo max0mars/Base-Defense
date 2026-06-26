@@ -37,6 +37,7 @@ local ExpandingCircle   = require("Graphics.Animations.ExpandingCircle")
 local ArmorBreak        = require("Graphics.Animations.ArmorBreak")
 local DebuffProjectile  = require("Graphics.Animations.DebuffProjectile")
 local DebuffArrows      = require("Graphics.Animations.DebuffArrows")
+local BuffPluses        = require("Graphics.Animations.BuffPluses")
 local function drawCircularArrow(cx, cy, r)
     love.graphics.arc("line", "open", cx, cy, r, 0.1 * math.pi, 1.7 * math.pi)
     -- Arrowhead
@@ -664,6 +665,10 @@ function game:waveComplete()
     -- Wave-Transition Economy (Token Reset)
     self.tokens = self:getMaxTokens()
     
+    if self.activeCard then
+        self:refundCard(self.activeCard)
+    end
+    
     -- Wave-Transition Hand Wiping
     for _, card in ipairs(self.hand) do
         table.insert(self.discardPile, card)
@@ -691,6 +696,10 @@ end
 
 function game:spawnDebuffArrows(x, y)
     table.insert(self.animations, DebuffArrows:new(x, y))
+end
+
+function game:spawnBuffPluses(x, y)
+    table.insert(self.animations, BuffPluses:new(x, y))
 end
 
 function game:spawnDebuffProjectile(x, y, target, onHitCallback, color)
@@ -1037,6 +1046,7 @@ function game:refundCard(card)
     -- Assuming the card wasn't removed from the hand array until consumeCard
     -- We no longer refund tokens here since they are not subtracted on selection anymore
     self.activeCard = nil
+    self.blueprint = nil
     self.inputMode = "idle"
 end
 

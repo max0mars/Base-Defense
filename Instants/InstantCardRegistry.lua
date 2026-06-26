@@ -105,4 +105,69 @@ CardRegistry.HastyDefenses = InstantCard.new({
     end
 })
 
+CardRegistry.PocketDefenses = InstantCard.new({
+    id = "inst_pocket_defenses_1",
+    name = "Pocket Defenses",
+    description = "Add 3 random 1-cost turrets to your hand. They cost 0. Consume",
+    cost = 2,
+    isConsume = true,
+    rarity = "Rare",
+    executionType = InstantCard.ExecutionType.Global,
+    
+    customExecute = function(gameObj)
+        if not gameObj or not gameObj.hand then return end
+        
+        local Card = require("Game.Cards.Card")
+        local ExecutionType = require("Game.Cards.ExecutionType")
+        local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+        
+        -- Collect all cost-1 turrets from the reward index
+        local pool = {}
+        for _, rarityGroup in pairs(RewardIndex) do
+            if type(rarityGroup) == "table" then
+                for _, reward in ipairs(rarityGroup) do
+                    if reward.cost == 1 and reward.building and reward.type == "building"
+                       and reward.iconCategory == "turret" then
+                        table.insert(pool, reward)
+                    end
+                end
+            end
+        end
+        
+        if #pool == 0 then return end
+        
+        local added = 0
+        for i = 1, 3 do
+            if #gameObj.hand >= 8 then
+                gameObj:spawnFloatingText("Hand is full!", 400, 300, {0.8, 0.2, 0.2, 1})
+                break
+            end
+            
+            local pick = pool[love.math.random(1, #pool)]
+            
+            local card = Card:new({
+                id = pick.id,
+                name = pick.name,
+                description = pick.description,
+                cost = 0,
+                executionType = ExecutionType.Placement,
+                isConsume = true, -- temporary: consumed after use, never enters discard
+                payload = {
+                    buildingClass = pick.building,
+                    config = {},
+                    rarity = "common",
+                    cost = 0,
+                }
+            })
+            
+            table.insert(gameObj.hand, card)
+            added = added + 1
+        end
+        
+        if added > 0 then
+            gameObj:spawnFloatingText("+" .. added .. " Turrets!", 400, 280, {0.3, 1.0, 0.5, 1})
+        end
+    end
+})
+
 return CardRegistry

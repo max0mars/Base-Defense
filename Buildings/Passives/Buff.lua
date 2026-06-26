@@ -175,7 +175,21 @@ function Buff:applyBuffs()
         for _, slot in ipairs(affectedSlots) do
             local target = base.buildGrid.buildings[slot]
             if target then
-                table.insert(targets, target)
+                -- If the effect specifies targetTypes, only include matching targets
+                if self.effect and self.effect.targetTypes then
+                    local matches = false
+                    for tType, val in pairs(self.effect.targetTypes) do
+                        if val and target.isType and target:isType(tType) then
+                            matches = true
+                            break
+                        end
+                    end
+                    if matches then
+                        table.insert(targets, target)
+                    end
+                else
+                    table.insert(targets, target)
+                end
             end
         end
     end
