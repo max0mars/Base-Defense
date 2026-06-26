@@ -39,18 +39,29 @@ local DebuffProjectile  = require("Graphics.Animations.DebuffProjectile")
 local DebuffArrows      = require("Graphics.Animations.DebuffArrows")
 local BuffPluses        = require("Graphics.Animations.BuffPluses")
 local function drawCircularArrow(cx, cy, r)
+    love.graphics.push("all")
+    love.graphics.setLineWidth(2)
     love.graphics.arc("line", "open", cx, cy, r, 0.1 * math.pi, 1.7 * math.pi)
-    -- Arrowhead
+    
+    -- Arrowhead pointing forward along the arc
     local angle = 1.7 * math.pi
     local ax = cx + math.cos(angle) * r
     local ay = cy + math.sin(angle) * r
-    local tanAngle = angle + math.pi/2
-    local size = 4
+    local forwardAngle = angle + math.pi/2
+    local backAngle = forwardAngle + math.pi
+    local headLength = 7
+    local spread = 0.6
+    
+    -- Push tip slightly forward to cap the line
+    local tipX = ax + math.cos(forwardAngle) * 2
+    local tipY = ay + math.sin(forwardAngle) * 2
+
     love.graphics.polygon("fill", 
-        ax, ay,
-        ax + math.cos(tanAngle - 0.4) * size, ay + math.sin(tanAngle - 0.4) * size,
-        ax + math.cos(tanAngle + 0.4) * size, ay + math.sin(tanAngle + 0.4) * size
+        tipX, tipY,
+        tipX + math.cos(backAngle - spread) * headLength, tipY + math.sin(backAngle - spread) * headLength,
+        tipX + math.cos(backAngle + spread) * headLength, tipY + math.sin(backAngle + spread) * headLength
     )
+    love.graphics.pop()
 end
 
 -- -----------------------------------------------------------------------------
@@ -82,6 +93,7 @@ function game:load(saveData, isTesting)
         self.score        = 0
         self.xp           = 0
         self.mulliganSkipsUsed = 0
+        self.mulliganLockedSlots = {}
         
         self.testingMode  = isTesting or false
         if self.testingMode then
@@ -508,7 +520,7 @@ function game:draw()
             local isCardHovered = mx >= c.x and mx <= c.x + layout.cardW and my >= c.y and my <= c.y + layout.cardH
             cardDrawObj:draw(c.x, c.y, layout.cardW, layout.cardH, isCardHovered)
             
-            if (self.mulliganSkipsUsed or 0) < 2 then
+            if (self.mulliganSkipsUsed or 0) < 2 and not (self.mulliganLockedSlots and self.mulliganLockedSlots[i]) then
                 local dist2 = (mx - c.arrowX)^2 + (my - c.arrowY)^2
                 local hoverArrow = dist2 <= c.arrowR^2
                 if hoverArrow then
@@ -851,10 +863,12 @@ function game:handleMulliganClick(x, y, button)
     
     -- Check card reroll buttons
     for i, c in ipairs(layout.cards) do
-        local dist2 = (x - c.arrowX)^2 + (y - c.arrowY)^2
-        if dist2 <= c.arrowR^2 then
-            self:rerollCard(i)
-            break
+        if not (self.mulliganLockedSlots and self.mulliganLockedSlots[i]) then
+            local dist2 = (x - c.arrowX)^2 + (y - c.arrowY)^2
+            if dist2 <= c.arrowR^2 then
+                self:rerollCard(i)
+                break
+            end
         end
     end
 end
@@ -890,6 +904,8 @@ function game:rerollCard(cardIndex)
     end
     
     self.mulliganSkipsUsed = (self.mulliganSkipsUsed or 0) + 1
+    if not self.mulliganLockedSlots then self.mulliganLockedSlots = {} end
+    self.mulliganLockedSlots[cardIndex] = true
     if AUDIO then
         AUDIO:playSFX("upgrade_01")
     end

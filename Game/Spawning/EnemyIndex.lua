@@ -88,7 +88,7 @@ local EnemyIndex = {
         maxHp = 200,
         damage = 12,
         speed = 22,
-        color = {1, 0, 0, 1}, -- Red
+        color = {0.8, 0, 0, 1}, -- Dark Red
         shape = "soldier",
         size = 22,
         types = { enemy = true, red = true, armour = true },
@@ -128,7 +128,7 @@ local EnemyIndex = {
         maxHp = 250,
         damage = 15,
         speed = 15,
-        color = {0, 1, 0, 1}, -- Green
+        color = {0, 0.6, 0, 1}, -- Dark Green
         shape = "rectangle",
         size = 24,
         types = { enemy = true, green = true, spawner = true },
@@ -172,7 +172,7 @@ local EnemyIndex = {
         maxHp = 250,
         damage = 10,
         speed = 20,
-        color = {0, 0.4, 1, 1}, -- Blue
+        color = {0, 0, 0.8, 1}, -- Dark Blue
         shape = "rectangle",
         size = 22,
         types = { enemy = true, blue = true, support = true },
@@ -193,7 +193,7 @@ local EnemyIndex = {
         maxHp = 200,
         damage = 10,
         speed = 22,
-        color = {1, 0.9, 0, 1}, -- Yellow
+        color = {0.8, 0.8, 0, 1}, -- Olive Yellow
         shape = "rectangle",
         size = 22,
         types = { enemy = true, yellow = true, support = true },
@@ -215,7 +215,7 @@ local EnemyIndex = {
         maxHp = 220,
         damage = 10,
         speed = 20,
-        color = {1, 0.2, 0.2, 1}, -- Red
+        color = {1, 0.4, 0.4, 1}, -- Light Red
         shape = "rectangle",
         size = 22,
         types = { enemy = true, red = true, support = true },
@@ -236,11 +236,11 @@ local EnemyIndex = {
         maxHp = 100,
         damage = 15,
         speed = 22,
-        color = {0.1, 0.9, 0.3, 1}, -- Green
+        color = {0.5, 1, 0.5, 1}, -- Lime Green
         shape = "diamond",
         size = 18,
         types = {enemy = true, green = true, duplicator = true},
-        affinities = {fire = 1.2}
+        affinities = {fire = 1.2},
         baseSpawnDelay = 1.0,
         description = "A cellular green slime that divides upon death.",
         mutations = {}
@@ -255,7 +255,7 @@ local EnemyIndex = {
         maxHp = 2500,
         damage = 50,
         speed = 12,
-        color = {1, 0.2, 0.2, 1}, -- Red
+        color = {0.6, 0, 0, 1}, -- Maroon Red
         shape = "tank",
         size = 30,
         types = { enemy = true, red = true, tank = true },
