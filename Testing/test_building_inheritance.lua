@@ -111,24 +111,9 @@ end
 
 -- 1. Standard Turrets
 local turrets = {
-    { path = "Buildings.Turrets.AirburstTurret", name = "AirburstTurret" },
-    { path = "Buildings.Turrets.AutoCannon", name = "AutoCannon" },
-    { path = "Buildings.Turrets.Blaster", name = "Blaster" },
     { path = "Buildings.Turrets.ChainLaser", name = "ChainLaser" },
-    { path = "Buildings.Turrets.FluxCannon", name = "FluxCannon" },
-    { path = "Buildings.Turrets.Gator", name = "Gator" },
-    { path = "Buildings.Turrets.Grenadier", name = "Grenadier" },
-    { path = "Buildings.Turrets.HeavyGun", name = "HeavyGun" },
-    { path = "Buildings.Turrets.HookTurret", name = "HookTurret" },
-    { path = "Buildings.Turrets.MissileLauncher", name = "MissileLauncher" },
-    { path = "Buildings.Turrets.Mortar", name = "Mortar" },
-    { path = "Buildings.Turrets.PlasmaScattershot", name = "PlasmaScattershot" },
-    { path = "Buildings.Turrets.PoisonTurret", name = "PoisonTurret" },
-    { path = "Buildings.Turrets.Sentry", name = "Sentry" },
     { path = "Buildings.Turrets.SequenceTurret", name = "SequenceTurret" },
-    { path = "Buildings.Turrets.ShotgunTurret", name = "ShotgunTurret" },
-    { path = "Buildings.Turrets.SlushCannon", name = "SlushCannon" },
-    { path = "Buildings.Turrets.Sniper", name = "Sniper" },
+    { path = "Buildings.Turrets.Turret", name = "Turret" },
 }
 
 for _, t in ipairs(turrets) do

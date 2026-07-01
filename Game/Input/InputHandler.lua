@@ -326,11 +326,6 @@ function InputHandler:mousepressed(x, y, button)
         game.rewardSystem:mousepressed(x, y, button)
         return
     end
-    
-    if game.specialUpgradeManager and game.specialUpgradeManager.isActive then
-        game.specialUpgradeManager:mousepressed(x, y, button)
-        return
-    end
 
     -- Everything below operates in WORLD space (grids, turrets). Convert the
     -- click to field-local coords; clicks outside the field fail grid bounds.

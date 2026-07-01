@@ -7,11 +7,7 @@ local Cursor = require("Game.GUI.Cursor")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
-local Sentry = require("Buildings.Turrets.Sentry")
-local Blaster = require("Buildings.Turrets.Blaster")
-local AutoCannon = require("Buildings.Turrets.AutoCannon")
-local ShotgunTurret = require("Buildings.Turrets.ShotgunTurret")
-local HeavyGun = require("Buildings.Turrets.HeavyGun")
+
 
 -- Starting deck creation has been moved to individual Main Turret classes.
 

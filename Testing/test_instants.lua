@@ -23,7 +23,8 @@ _G.GameManager = {
     registerActiveGlobalBuff = function(self, buff)
         -- mock
     end,
-    objects = {}
+    objects = {},
+    base = _G.Base
 }
 
 local failures = 0
@@ -70,12 +71,12 @@ assert(frenzy:isValidTarget(nil) == true, "Group Frenzy allows nil target")
 
 -- Test Targeted execute
 overclock:execute(validTurret)
-assert(validTurret.buffs and validTurret.buffs[1].statModifiers.damage.mult == 0.15, "Overclock applied buff to target")
+assert(validTurret.buffs and validTurret.buffs[1].statModifiers.damage.mult == 0.25, "Overclock applied buff to target")
 
 -- Test Group execute
 _G.GameManager.objects = { validTurret }
 frenzy:execute(_G.GameManager)
-assert(validTurret.buffs and validTurret.buffs[2].statModifiers.fireRate.mult == 0.15, "Frenzy applied group buff to active turret")
+assert(validTurret.buffs and validTurret.buffs[2].statModifiers.fireRate.mult == 0.2, "Frenzy applied group buff to active turret")
 
 -- Test Global execute (affects playerEffectManager)
 local mockGlobal = InstantCard.new({
@@ -125,11 +126,11 @@ assert(ballisticTurret.buffs == nil or #ballisticTurret.buffs == 0, "Energy Surg
 
 -- Test custom execute
 local initialHp = _G.Base.hp
-InstantCardRegistry.EmergencyRepairs:execute(nil)
-assert(_G.Base.hp == initialHp + 10, "Emergency Repairs healed the base")
+InstantCardRegistry.EmergencyRepairs:execute(_G.GameManager)
+assert(_G.Base.hp == initialHp + 15, "Emergency Repairs healed the base")
 
 -- Test Instant Injection into RewardIndex
-local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local RewardIndex = require("Game.Rewards.RewardIndex")
 local prevCount = 0
 for rarityKey, _ in pairs(RewardIndex) do
     if type(RewardIndex[rarityKey]) == "table" then

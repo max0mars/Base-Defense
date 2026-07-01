@@ -5,7 +5,7 @@
 -- Opened from the HUD codex buttons or by clicking a Horde / Inspect card.
 
 local EnemyIndex  = require("Game.Spawning.EnemyIndex")
-local NormalRewardIndex = require("Game.Rewards.NormalRewardIndex")
+local NormalRewardIndex = require("Game.Rewards.RewardIndex")
 local EnemyRegistry     = require("Game.Spawning.EnemyRegistry")
 local Reward            = require("Game.Rewards.Reward")
 local Cursor            = require("Game.GUI.Cursor")

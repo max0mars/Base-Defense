@@ -13,9 +13,10 @@ game.objects = {}
 game:initBattleDeck()
 
 -- Create mock cards
-local c1 = { id = "c1", executionType = ExecutionType.Placement }
-local c2 = { id = "c2", executionType = ExecutionType.Targeted }
-local c3 = { id = "c3", executionType = "Global" }
+local mockCost = function() return 1 end
+local c1 = { id = "c1", executionType = ExecutionType.Placement, getCost = mockCost }
+local c2 = { id = "c2", executionType = ExecutionType.Targeted, getCost = mockCost }
+local c3 = { id = "c3", executionType = "Global", getCost = mockCost }
 
 game.drawPile = { c1, c2, c3 }
 game.hand = {}

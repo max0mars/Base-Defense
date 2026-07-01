@@ -219,7 +219,7 @@ function InfoColumn:drawBuildingCard(b, x, y, w, h)
     local col = b.color or {0.6, 0.7, 0.8}
     local desc = ""
     
-    local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+    local RewardIndex = require("Game.Rewards.RewardIndex")
     local id = (b.rewardCard and b.rewardCard.id) or b.id
     if not id and b.isType then
         local card = self.game.gui.tooltips:buildingCardFor(b)

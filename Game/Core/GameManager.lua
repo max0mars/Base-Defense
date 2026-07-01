@@ -18,7 +18,7 @@ local InputHandler       = require("Game.Input.InputHandler")
 local WaveSpawner        = require("Game.Spawning.WaveSpawner")
 local WaveDirector       = require("Game.Spawning.WaveDirector")
 local RewardSystem       = require("Game.Rewards.RewardSystem")
-local SpecialUpgradeMgr  = require("Game.Rewards.SpecialUpgradeManager")
+
 local Inventory          = require("Game.Inventory.Inventory")
 local EffectManager      = require("Game.Effects.EffectManager")
 
@@ -122,7 +122,7 @@ function game:load(saveData, isTesting)
         self.WaveSpawner     = WaveSpawner:new({game = self})
         self.waveDirector    = WaveDirector:new(self)
         self.rewardSystem    = RewardSystem:new(self)
-        self.specialUpgradeManager = SpecialUpgradeMgr:new(self)
+
         
         -- Configuration
         self.rewardCost           = 2
@@ -567,9 +567,7 @@ function game:draw()
             self.rewardSystem:draw()
         end
         
-        if self.specialUpgradeManager and self.specialUpgradeManager.isActive then
-            self.specialUpgradeManager:draw()
-        end
+
         
         -- Absolute Highest Z-Index Layer: Quit & Destruction Modals overlay everything
         if self.gui and self.gui.confirmation then
@@ -603,7 +601,6 @@ function game:draw()
     if not (paused == 1) then
         local mx, my = love.mouse.getPosition()
         local menuActive = (self.rewardSystem and self.rewardSystem.isActive)
-            or (self.specialUpgradeManager and self.specialUpgradeManager.isActive)
             or (self.gui and self.gui.mutation and self.gui.mutation.isActive)
             or (self.gui and self.gui.codex and self.gui.codex.isActive)
             or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
@@ -771,8 +768,7 @@ function game:toggleDamageNumbers()
 end
 
 function game:isRewardSystemActive()
-    return (self.rewardSystem and self.rewardSystem.isActive) or 
-           (self.specialUpgradeManager and self.specialUpgradeManager.isActive)
+    return (self.rewardSystem and self.rewardSystem.isActive)
 end
 
 function game:placeBuilding(building, sourceReward)

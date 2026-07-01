@@ -205,18 +205,8 @@ function new_game_scene:mousepressed(x, y, button)
                 _G.PersistentState.deck = turretModule.getStartingDeck()
             end
             if turretModule.getUniqueCards then
-                local RewardIndex = require("Game.Rewards.NormalRewardIndex")
-                local SpellCardRegistry = require("Spells.SpellCardRegistry")
-                local InstantCardRegistry = require("Instants.InstantCardRegistry")
+                local RewardIndex = require("Game.Rewards.RewardIndex")
                 RewardIndex.injectCards(turretModule.getUniqueCards())
-                RewardIndex.injectSpells(SpellCardRegistry)
-                RewardIndex.injectInstants(InstantCardRegistry)
-            else
-                local RewardIndex = require("Game.Rewards.NormalRewardIndex")
-                local SpellCardRegistry = require("Spells.SpellCardRegistry")
-                local InstantCardRegistry = require("Instants.InstantCardRegistry")
-                RewardIndex.injectSpells(SpellCardRegistry)
-                RewardIndex.injectInstants(InstantCardRegistry)
             end
             self.scene_manager.switch("game")
         end

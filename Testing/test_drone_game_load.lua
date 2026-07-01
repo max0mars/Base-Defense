@@ -25,7 +25,8 @@ love = {
         scale = function() end,
         printf = function() end,
         print = function() end,
-        getFont = function() return { getWidth = function() return 10 end } end,
+        getFont = function() return { getWidth = function() return 10 end, getHeight = function() return 10 end } end,
+        newFont = function() return { getWidth = function() return 10 end, getHeight = function() return 10 end } end,
     },
     mouse = {
         setVisible = function() end

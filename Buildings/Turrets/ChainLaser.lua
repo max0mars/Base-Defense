@@ -1,69 +1,8 @@
 local Turret = require("Buildings.Turrets.Turret")
-local BounceEffect = require("Game.Effects.IndependantEffects.bounce")
 local Utils = require("Classes.Utils")
 
 local ChainLaser = setmetatable({}, { __index = Turret })
 ChainLaser.__index = ChainLaser
-
--- Source of Truth: All stats in a single flat table
-ChainLaser.template = {
-    name = "Chain Laser",
-    rotation = 0,
-
-    fireRate = 0.65,
-    damage = 30,
-    bulletSpeed = 600,
-    range = 500,
-    barrel = 12,
-    lifespan = 5,
-    firingArc = {
-        direction = 0,
-        minRange = 0,
-        angle = math.pi / 6 -- Aimable 30-degree cone
-    },
-    shapePattern = {
-        {0, 0}
-    },
-    color = {0.4, 0.7, 1, 1}, -- Electric blue
-    bulletW = 6,
-    bulletH = 6,
-    bulletName = "Lazer Bolt",
-    damageType = "energy",
-    bouncesLeft = 10,
-    cost = 500, -- Legendary price
-    types = { turret = true, legendary = true, energy = true},
-    sfx = "laser_02"
-}
-
-function ChainLaser:new(config)
-    -- Deep copy the template to avoid shared table references
-    local baseConfig = Utils.deepCopy(ChainLaser.template)
-
-    if config then
-        for k, v in pairs(config) do
-            if type(v) == "table" and baseConfig[k] then
-                for k2, v2 in pairs(v) do baseConfig[k][k2] = v2 end
-            else
-                baseConfig[k] = v
-            end
-        end
-    end
-    
-    local t = Turret:new(baseConfig)
-    setmetatable(t, { __index = self })
-    
-    -- Add the bounce effect to the turret's hit effects
-    t.hitEffects = { BounceEffect:new({ name = "Chain Bounce" }) }
-    
-    return t
-end
-
-function ChainLaser:fire(args)
-    args = args or {}
-    -- Ensure the bullet knows how many times it can bounce
-    args.bouncesLeft = self:getStat("bouncesLeft")
-    Turret.fire(self, args)
-end
 
 function ChainLaser:draw(drawx, drawy)
     local cx, cy = drawx or self.x, drawy or self.y

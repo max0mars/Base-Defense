@@ -59,6 +59,11 @@ function CardDraw.new(x, y, data)
     self.damageBars = data.damageBars or 0
     self.rangeBars = data.rangeBars or 0
     self.firerateBars = data.firerateBars or 0
+    
+    self.damageBarsBonus = data.damageBarsBonus or 0
+    self.rangeBarsBonus = data.rangeBarsBonus or 0
+    self.firerateBarsBonus = data.firerateBarsBonus or 0
+    
     self.affectedSlots = data.affectedSlots or {}
     
     return self
@@ -114,15 +119,38 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
             local startY = 75
             local labels = {"Dmg", "Range", "Firerate"}
             local stats = {self.damageBars, self.rangeBars, self.firerateBars}
+            local bonusStats = {self.damageBarsBonus, self.rangeBarsBonus, self.firerateBarsBonus}
             for j = 1, 3 do
                 table.insert(deferredText, {t = labels[j], x = startX, y = startY + (j-1)*30, w = 80, a = "left"})
+                
+                local base = stats[j]
+                local bonus = bonusStats[j]
+                
                 for i = 1, 5 do
-                    if i <= stats[j] then
-                        love.graphics.rectangle("fill", startX + 80 + (i-1)*20, startY + (j-1)*30, 15, 15)
+                    local rx = startX + 80 + (i-1)*20
+                    local ry = startY + (j-1)*30
+                    
+                    if i <= base + bonus - 5 then
+                        -- Wrapped bonus
+                        love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
+                        love.graphics.rectangle("fill", rx, ry, 15, 15)
+                        love.graphics.setColor(1, 1, 1, 1) -- White inner indicator
+                        love.graphics.rectangle("fill", rx + 4, ry + 4, 7, 7)
+                    elseif i > base and i <= base + bonus then
+                        -- Standard bonus
+                        love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
+                        love.graphics.rectangle("fill", rx, ry, 15, 15)
+                    elseif i <= base then
+                        -- Base stat
+                        love.graphics.setColor(color)
+                        love.graphics.rectangle("fill", rx, ry, 15, 15)
                     else
-                        love.graphics.rectangle("line", startX + 80 + (i-1)*20, startY + (j-1)*30, 15, 15)
+                        -- Empty slot
+                        love.graphics.setColor(color)
+                        love.graphics.rectangle("line", rx, ry, 15, 15)
                     end
                 end
+                love.graphics.setColor(color) -- reset color for the rest of the drawing
             end
         elseif self.buildingType == "Buffer" then
             local cx = CardDraw.WIDTH / 2

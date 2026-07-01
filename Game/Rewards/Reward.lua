@@ -38,11 +38,12 @@ function Reward:new(config)
     
     -- Create dummy building if it's a building type, to read properties for icons
     if reward.building and type(reward.building) == "table" and reward.building.new and reward.game then
-        local success, b = pcall(reward.building.new, reward.building, {game = reward.game, types={building=true}})
+        -- Pass 'config' instead of 'reward' since 'config' contains all the raw stats (damage, rotation, etc.)
+        local success, b = pcall(reward.building.new, reward.building, config)
         if success then
             reward.dummyBuilding = b
         else
-            print("Failed to instantiate dummy building for reward: " .. tostring(reward.id))
+            print("Failed to instantiate dummy building for reward: " .. tostring(reward.id) .. " Error: " .. tostring(b))
         end
     end
     

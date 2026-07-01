@@ -5,7 +5,7 @@ local RewardIndex = {
             name = "The Slush Cannon",
             description = "Fires heavy clumps of slush that slow enemies on impact.",
             type = "building",
-            building = require("Buildings.Turrets.SlushCannon"),
+            building = require("Buildings.Turrets.Turret"),
             iconCategory = "turret"
         },
         {
@@ -21,7 +21,7 @@ local RewardIndex = {
             name = "The Hook",
             description = "Fires a heavy shot that stuns enemies in their tracks.",
             type = "building",
-            building = require("Buildings.Turrets.HookTurret"),
+            building = require("Buildings.Turrets.Turret"),
             iconCategory = "turret"
         },
     },

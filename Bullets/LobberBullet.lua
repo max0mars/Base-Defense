@@ -25,6 +25,7 @@ function LobberBullet:new(config)
     
     b.z = 0
     b.v_z = 0
+    b.explodeOnGroundOnly = config.explodeOnGroundOnly
     
     -- Calculate vertical and horizontal components for a fixed peak height
     if config.targetX and config.targetY then
@@ -74,7 +75,7 @@ function LobberBullet:onGroundImpact()
 end
 
 function LobberBullet:onCollision(obj)
-    if self.destroyed then return end
+    if self.destroyed or self.explodeOnGroundOnly then return end
     
     if obj:isType('enemy') and not self.hitCache[obj:getID()] then
         local targetZ = obj.z or 0

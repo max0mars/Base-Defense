@@ -59,15 +59,31 @@ function Card:getCardDraw()
         local affSlots = self.payload.affectedSlots or {}
         local iconCat = self.payload.iconCategory or "turret"
         
-        local success, rewardIndex = pcall(require, "Game.Rewards.NormalRewardIndex")
+        local success, rewardIndex = pcall(require, "Game.Rewards.RewardIndex")
         if success and rewardIndex then
             for _, category in pairs(rewardIndex) do
                 if type(category) == "table" then
                     for _, reward in ipairs(category) do
                         if reward.id == self.id then
-                            dmgBars = reward.damageBars or dmgBars
-                            rngBars = reward.rangeBars or rngBars
-                            frBars = reward.firerateBars or frBars
+                            if reward.building and type(reward.building) == "table" then
+                                local t = reward.building.template or reward
+                                local dmg = t.damage or 0
+                                if t.pelletCount and t.pelletCount > 1 then
+                                    dmg = dmg * t.pelletCount
+                                elseif t.splitamount and t.splitamount > 0 then
+                                    dmg = dmg * (t.splitamount + 1)
+                                end
+                                local rng = t.range or 0
+                                local fr = t.fireRate or 1
+                                
+                                if dmg < 10 then dmgBars = 1 elseif dmg < 25 then dmgBars = 2 elseif dmg < 50 then dmgBars = 3 else dmgBars = 4 end
+                                if rng < 200 then rngBars = 1 elseif rng < 350 then rngBars = 2 elseif rng < 500 then rngBars = 3 else rngBars = 4 end
+                                if fr >= 1.0 then frBars = 1 elseif fr >= 0.5 then frBars = 2 elseif fr >= 0.2 then frBars = 3 else frBars = 4 end
+                            else
+                                dmgBars = reward.damageBars or dmgBars
+                                rngBars = reward.rangeBars or rngBars
+                                frBars = reward.firerateBars or frBars
+                            end
                             affSlots = reward.affectedSlots or affSlots
                             iconCat = reward.iconCategory or iconCat
                             break
@@ -87,6 +103,9 @@ function Card:getCardDraw()
             damageBars = dmgBars,
             rangeBars = rngBars,
             firerateBars = frBars,
+            damageBarsBonus = self.payload.damageBarsBonus or 0,
+            rangeBarsBonus = self.payload.rangeBarsBonus or 0,
+            firerateBarsBonus = self.payload.firerateBarsBonus or 0,
             affectedSlots = affSlots,
             isTargeted = isTargeted,
             isGlobal = isGlobal
@@ -127,8 +146,7 @@ function Card:getCost()
         return nil
     end
 
-    foundCost = searchIndex("Game.Rewards.NormalRewardIndex") or 
-                searchIndex("Game.Rewards.BlockerRewardIndex") or 
+    foundCost = searchIndex("Game.Rewards.RewardIndex") or 
                 searchIndex("Game.Rewards.SpecialRewardIndex")
                 
     if foundCost then

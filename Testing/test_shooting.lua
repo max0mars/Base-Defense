@@ -64,16 +64,21 @@ end
 print("--- Starting Turret Aiming, Shooting, and Bullet Impact Tests ---")
 
 -- 3. Load Classes
-local Sentry = require("Buildings.Turrets.Sentry")
+local Turret = require("Buildings.Turrets.Turret")
+local TurretIndex = require("Buildings.TurretIndex")
 local Enemy = require("Enemies.Enemy")
 
 -- 4. Instantiate Turret and Enemy
-local turret = Sentry:new({
-    game = mockGame,
-    x = 100,
-    y = 100,
-    rotation = 0
-})
+local sentryConfig = {}
+for k, v in pairs(TurretIndex.common[1]) do
+    sentryConfig[k] = v
+end
+sentryConfig.game = mockGame
+sentryConfig.x = 100
+sentryConfig.y = 100
+sentryConfig.rotation = 0
+
+local turret = Turret:new(sentryConfig)
 mockGame.objects[1] = turret
 
 local enemy = Enemy:new({

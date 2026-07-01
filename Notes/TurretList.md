@@ -1,10 +1,10 @@
 # Turret List
 
 ## Sentry
-- **Damage**: 10
+- **Damage**: 12
 - **Range**: 500
 - **Fire Rate**: 0.85
-- **DPS**: 8.5
+- **DPS**: 10.2
 - **Description**: Standard basic defense turret.
 
 ## Sniper Turret
@@ -15,17 +15,17 @@
 - **Description**: Slow firing but deals massive damage at extremely long range.
 
 ## Shotgun Turret
-- **Damage**: 4 (per pellet)
+- **Damage**: 3 (per pellet)
 - **Range**: 200
 - **Fire Rate**: 0.7
-- **DPS**: 2.8 (per pellet) | 28.0 (Max Theoretical DPS)
+- **DPS**: 2.1 (per pellet) | 21.0 (Max Theoretical DPS)
 - **Description**: Lethal close-range weapon that fires a wide spread of 10 pellets.
 
 ## Plasma Scattershot
-- **Damage**: 10 (per bolt)
+- **Damage**: 12 (per bolt)
 - **Range**: 200
 - **Fire Rate**: 2.0
-- **DPS**: 20.0 (per bolt) | 120.0 (Max Burst DPS)
+- **DPS**: 24.0 (per bolt) | 240.0 (Max Burst DPS)
 - **Description**: Energy variant of the shotgun. Fires high-velocity plasma bolts rapidly and has an internal ammo reload mechanic.
 
 ## Auto Cannon
@@ -36,31 +36,31 @@
 - **Description**: Fast firing twin-barrel cannon.
 
 ## Heavy Gun
-- **Damage**: 42
+- **Damage**: 60
 - **Range**: 600
-- **Fire Rate**: 0.25
-- **DPS**: 10.5
+- **Fire Rate**: 0.2
+- **DPS**: 12.0
 - **Description**: Slow firing weapon that shoots a high damage projectile.
 
 ## Gator (GTR-55)
-- **Damage**: 40
+- **Damage**: 60
 - **Range**: 500
 - **Fire Rate**: 0.7
-- **DPS**: 28.0
+- **DPS**: 42.0
 - **Description**: Standard turret variant with high pierce, able to hit multiple enemies.
 
 ## Blaster
-- **Damage**: 4
-- **Range**: 450
-- **Fire Rate**: 0.7
-- **DPS**: 2.8 (per bolt) | 8.4 (Max Theoretical DPS)
-- **Description**: Energy turret that fires 3-bolt bursts.
+- **Damage**: 7
+- **Range**: 400
+- **Fire Rate**: 0.85
+- **DPS**: 5.95 (per bolt) | 11.9 (Max Theoretical DPS)
+- **Description**: Energy turret that fires 2-bolt bursts.
 
 ## Flux Cannon
-- **Damage**: 35
-- **Range**: 400
-- **Fire Rate**: 1.2
-- **DPS**: 42.0
+- **Damage**: 60
+- **Range**: 450
+- **Fire Rate**: 0.35
+- **DPS**: 21.0
 - **Description**: Strong single-shot energy turret.
 
 ## Chain Laser
@@ -71,57 +71,57 @@
 - **Description**: Legendary energy weapon. Fires a laser bolt that chains and bounces to multiple nearby enemies.
 
 ## Sequence Turret (CSR-8)
-- **Damage**: 12
+- **Damage**: 20
 - **Range**: 450
 - **Fire Rate**: 0.5 (Base)
-- **DPS**: 6.0 (Base) | 72.0 (Max Theoretical DPS)
+- **DPS**: 10.0 (Base) | 120.0 (Max Theoretical DPS)
 - **Description**: Advanced turret that continuously spins up, increasing its fire rate the longer it shoots at a target.
 
 ## Poison Turret
-- **Damage**: 5 (Direct)
+- **Damage**: 10 (Direct)
 - **Range**: 400
 - **Fire Rate**: 0.5
-- **DPS**: 2.5 (Direct) | 15.0 (Poison DoT for 4.1s)
+- **DPS**: 5.0 (Direct) | 16.0 (Poison DoT for 4s)
 - **Description**: Deals low direct damage but applies a poison status effect that deals damage over time.
 
 ## Mortar
-- **Damage**: 40
+- **Damage**: 100
 - **Range**: 500
-- **Fire Rate**: 0.2
-- **DPS**: 8.0
+- **Fire Rate**: 0.15
+- **DPS**: 15.0
 - **Description**: Arcs shells over obstacles to deal explosive area-of-effect damage. Cannot hit targets too close.
 
 ## Grenadier
-- **Damage**: 20
+- **Damage**: 35
 - **Range**: 500
 - **Fire Rate**: 0.35
-- **DPS**: 7.0
-- **Description**: Fires explosive grenades in an arc, dealing splash damage in a radius.
+- **DPS**: 36.75 (Burst)
+- **Description**: Fires explosive grenades in an arc, dealing splash damage in a radius. Fires in a 3 round burst.
 
 ## Airburst Turret
-- **Damage**: 10 (Direct) / 20 (Burst)
-- **Range**: 550
-- **Fire Rate**: 0.8
-- **DPS**: 8.0 (Direct) / 16.0 (Burst) | 24.0 (Max Theoretical DPS)
+- **Damage**: 25 (Direct) / 25 (Burst)
+- **Range**: 400
+- **Fire Rate**: 0.5
+- **DPS**: 12.5 (Direct) / 12.5 (Burst) | 25.0 (Max Theoretical DPS)
 - **Description**: Shells explode in the air for area damage.
 
 ## Missile Launcher
-- **Damage**: 25 (Direct) / 25 (Explosion)
+- **Damage**: 90 (Direct) / 90 (Explosion)
 - **Range**: 450
-- **Fire Rate**: 0.4
-- **DPS**: 10.0 (Direct) / 10.0 (Explosion) | 20.0 (Max Theoretical DPS)
+- **Fire Rate**: 0.5
+- **DPS**: 45.0 (Direct) / 45.0 (Explosion) | 90.0 (Max Theoretical DPS)
 - **Description**: Fires missiles that explode on impact, dealing double damage in a radius.
 
 ## The Hook
-- **Damage**: 25
+- **Damage**: 80
 - **Range**: 300
-- **Fire Rate**: 0.2
-- **DPS**: 5.0
+- **Fire Rate**: 0.3
+- **DPS**: 24.0
 - **Description**: Fires a heavy shot that stuns enemies in their tracks.
 
 ## Slush Cannon
-- **Damage**: 5
+- **Damage**: 40
 - **Range**: 450
-- **Fire Rate**: 0.25
-- **DPS**: 1.25
+- **Fire Rate**: 0.3
+- **DPS**: 12.0
 - **Description**: Fires heavy clumps of slush that slow enemies on impact.

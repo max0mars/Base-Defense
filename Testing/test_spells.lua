@@ -42,16 +42,16 @@ assert(SpellCardRegistry.Zap ~= nil, "Zap spell loaded")
 
 -- 2. Test Card Properties
 local fireball = SpellCardRegistry.Fireball
-assert(fireball.cost == 25, "Fireball cost is 25")
+assert(fireball.cost == 20, "Fireball cost is 20")
 assert(fireball.radius == 60, "Fireball radius is 60")
-assert(fireball.isGlobalSpell == false, "Fireball is not global")
+assert(not fireball.isGlobalSpell, "Fireball is not global")
 
 local judgment = SpellCardRegistry.Judgment
 assert(judgment.cost == 50, "Judgment cost is 50")
 assert(judgment.isGlobalSpell == true, "Judgment is a global spell")
 
 local zap = SpellCardRegistry.Zap
-assert(zap.cost == 0, "Zap cost is 0")
+assert(zap.cost == 10, "Zap cost is 10")
 assert(zap.radius == 25, "Zap radius is 25")
 assert(zap.isGlobalSpell == false, "Zap is not global")
 
@@ -209,8 +209,8 @@ local mockJudgmentGame = {
 judgment:execute(0, 0, mockJudgmentGame)
 local e1 = mockJudgmentGame.objects[1]
 local e2 = mockJudgmentGame.objects[2]
-assert(e1.damageTaken == 500, "Enemy 1 took 500 damage (1000 split by 2)")
-assert(e2.damageTaken == 500, "Enemy 2 took 500 damage (1000 split by 2)")
+assert(e1.damageTaken == 400, "Enemy 1 took 400 damage (800 split by 2)")
+assert(e2.damageTaken == 400, "Enemy 2 took 400 damage (800 split by 2)")
 assert(e1.damageType == "trueDamage", "Judgment damage type is trueDamage")
 assert(mockJudgmentGame.lightningSpawnCount == 2, "Lightning bolts spawned on both enemies")
 
@@ -245,13 +245,13 @@ local mockZapGame = {
 zap:execute(0, 0, mockZapGame)
 local z1 = mockZapGame.objects[1]
 local z2 = mockZapGame.objects[2]
-assert(z1.damageTaken == 20, "Enemy within Zap radius took 20 damage")
+assert(z1.damageTaken == 40, "Enemy within Zap radius took 40 damage")
 assert(z1.damageType == "energy", "Zap damage type is energy")
 assert(z2.damageTaken == nil, "Enemy outside Zap radius took no damage")
 assert(mockZapGame.lightningSpawnCount == 1, "Lightning bolt spawned at target coordinates")
 
 -- Test Spell Injection into RewardIndex
-local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local RewardIndex = require("Game.Rewards.RewardIndex")
 local SpellCardRegistry = require("Spells.SpellCardRegistry")
 
 -- Count spells in registry

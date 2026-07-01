@@ -3,7 +3,7 @@ local Reward = require("Game.Rewards.Reward")
 
 local RewardSystem = {}
 RewardSystem.__index = RewardSystem
-local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local RewardIndex = require("Game.Rewards.RewardIndex")
 local Cursor = require("Game.GUI.Cursor")
 local TestingIndex = require("Game.Rewards.TestingRewardIndex")
 local RewardPool = require("Game.Rewards.RewardPool")
@@ -56,9 +56,7 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     end
     
     local indexToUse = RewardIndex
-    if poolLogicMode == "blocker" then
-        indexToUse = require("Game.Rewards.BlockerRewardIndex")
-    end
+
     
     self.poolLogic = RewardPool:new(indexToUse, self.game)
     local choices = self.poolLogic:generateChoices(count, shopLevel)

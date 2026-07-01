@@ -2,8 +2,8 @@
 -- main-lazer upgrade in the game. Click a building to drop into placement mode,
 -- or an upgrade to apply it instantly. Toggle with 'g' (testing mode only).
 
-local NormalRewardIndex  = require("Game.Rewards.NormalRewardIndex")
-local BlockerRewardIndex = require("Game.Rewards.BlockerRewardIndex")
+local NormalRewardIndex  = require("Game.Rewards.RewardIndex")
+
 local Reward             = require("Game.Rewards.Reward")
 
 local ItemPickerUI = {}
@@ -58,7 +58,7 @@ function ItemPickerUI:new(game)
         for _, item in ipairs(NormalRewardIndex[rarity] or {}) do add(item, rarity) end
     end
     -- Blocker index duplicates the same list across all rarities; common holds the set.
-    for _, item in ipairs(BlockerRewardIndex.common or {}) do add(item, "blocker") end
+
 
     -- Precompute panel geometry.
     obj.numRows = math.ceil(#obj.items / NUM_COLS)

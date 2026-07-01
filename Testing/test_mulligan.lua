@@ -51,9 +51,7 @@ package.loaded["Game.Spawning.WaveDirector"] = {
 package.loaded["Game.Rewards.RewardSystem"] = {
     new = function() return {} end
 }
-package.loaded["Game.Rewards.SpecialUpgradeManager"] = {
-    new = function() return {} end
-}
+
 package.loaded["Game.Inventory.Inventory"] = {
     new = function() return {} end
 }

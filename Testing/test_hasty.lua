@@ -1,9 +1,11 @@
+_G.love = { math = { random = math.random } }
 local mockGame = {
     base = {
         buildGrid = {
             width = 4,
             height = 16,
-            buildings = {}
+            buildings = {},
+            unlocked = {}
         },
         addBuilding = function(self, b, s)
             self.buildGrid.buildings[s] = b

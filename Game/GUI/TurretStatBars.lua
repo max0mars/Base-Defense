@@ -11,7 +11,7 @@ local STAT_BOUNDS = nil
 --- the reward pool. Requires a live game reference to instantiate turrets.
 function TurretStatBars.getBounds(game)
     if STAT_BOUNDS then return STAT_BOUNDS end
-    local Normal = require("Game.Rewards.NormalRewardIndex")
+    local Normal = require("Game.Rewards.RewardIndex")
     local b = {
         damage   = { min = math.huge, max = 0 },
         range    = { min = math.huge, max = 0 },

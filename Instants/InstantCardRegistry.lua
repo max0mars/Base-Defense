@@ -86,8 +86,12 @@ CardRegistry.HastyDefenses = InstantCard.new({
             end
         end
         
-        local SentryClass = require("Buildings.Turrets.Sentry")
-        
+        local TurretClass = require("Buildings.Turrets.Turret")
+        local TurretIndex = require("Buildings.TurretIndex")
+        local sentryConfig = {}
+        for k, v in pairs(TurretIndex.common[1]) do
+            sentryConfig[k] = v
+        end
         local count = 0
         -- Pick 3 random empty slots and spawn sentries
         while count < 3 and #emptySlots > 0 do
@@ -98,7 +102,8 @@ CardRegistry.HastyDefenses = InstantCard.new({
             -- Force unlock the slot so Base:addBuilding's visibility check doesn't fail
             grid.unlocked[slot] = true
             
-            local newSentry = SentryClass:new({game = gameObj})
+            sentryConfig.game = gameObj
+            local newSentry = TurretClass:new(sentryConfig)
             gameObj:newBuilding(newSentry, slot)
             count = count + 1
         end
@@ -119,7 +124,7 @@ CardRegistry.PocketDefenses = InstantCard.new({
         
         local Card = require("Game.Cards.Card")
         local ExecutionType = require("Game.Cards.ExecutionType")
-        local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+        local RewardIndex = require("Game.Rewards.RewardIndex")
         
         -- Collect all cost-1 turrets from the reward index
         local pool = {}
@@ -154,7 +159,7 @@ CardRegistry.PocketDefenses = InstantCard.new({
                 isConsume = true, -- temporary: consumed after use, never enters discard
                 payload = {
                     buildingClass = pick.building,
-                    config = {},
+                    config = pick,
                     rarity = "common",
                     cost = 0,
                 }

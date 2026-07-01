@@ -6,7 +6,7 @@ setmetatable(preparation_scene, { __index = scene })
 local Cursor = require("Game.GUI.Cursor")
 local BattleDirector = require("Game.Spawning.BattleDirector")
 local RewardPool = require("Game.Rewards.RewardPool")
-local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local RewardIndex = require("Game.Rewards.RewardIndex")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
@@ -237,7 +237,7 @@ function preparation_scene:rollShop()
                 cardPayload.isMainUpgrade = true
             else
                 cardPayload.buildingClass = choice.building
-                cardPayload.config = {}
+                cardPayload.config = choice
             end
             
             cardPayload.rewardCard = CardDraw.new(0, 0, choice)

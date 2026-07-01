@@ -51,7 +51,8 @@ function Bullet:new(config)
     
     b.color = config.color or {1, 1, 0.8, 1}
     b.trail = {}
-    b.maxTrail = 5
+    b.maxTrail = config.maxTrail or 5
+    b.drawStyle = config.drawStyle or "standard"
     
     return b
 end
@@ -82,34 +83,84 @@ function Bullet:update(dt)
 end
 
 function Bullet:draw()
-    local r, g, b, a = unpack(self.color or {1, 1, 1, 1})
+    local r, g, bColor, a = unpack(self.color or {1, 1, 1, 1})
     
-    -- 1. Draw Fading Trail
+    if self.drawStyle == "energy" then
+        if #self.trail > 1 then
+            for i = 1, #self.trail - 1 do
+                local p1 = self.trail[i]
+                local p2 = self.trail[i+1]
+                local alpha = (1 - (i / #self.trail)) * 0.6
+                love.graphics.setColor(r, g, bColor, alpha)
+                local width = (1 - (i / #self.trail)) * 3
+                love.graphics.setLineWidth(width)
+                love.graphics.line(p1.x, p1.y, p2.x, p2.y)
+            end
+        end
+        for i = 3, 1, -1 do
+            love.graphics.setColor(r, g, bColor, 0.15 * (4-i))
+            love.graphics.circle("fill", self.x, self.y, self.w * (0.2 + i * 0.3))
+        end
+        local angle = self.angle
+        local length = self.w
+        local hw = length / 2
+        love.graphics.push()
+        love.graphics.translate(self.x, self.y)
+        love.graphics.rotate(angle)
+        love.graphics.setColor(r, g, bColor, 1)
+        love.graphics.rectangle("fill", -hw, -1.5, length, 3, 1, 1)
+        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.rectangle("fill", -hw * 0.6, -0.5, length * 0.6, 1, 0.5, 0.5)
+        love.graphics.pop()
+        
+    elseif self.drawStyle == "shard" then
+        local angle = self.angle
+        love.graphics.push()
+        love.graphics.translate(self.x, self.y)
+        love.graphics.rotate(angle)
+        love.graphics.setColor(r, g, bColor, 0.3)
+        love.graphics.rectangle("fill", -self.w/2 - 2, -self.h/2 - 2, self.w + 4, self.h + 4)
+        love.graphics.setColor(r, g, bColor, 1)
+        love.graphics.rectangle("fill", -self.w/2, -self.h/2, self.w, self.h)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("fill", self.w/2 - 2, -self.h/2, 2, self.h)
+        love.graphics.pop()
+        
+    elseif self.drawStyle == "slush" then
+        love.graphics.setColor(r, g, bColor, 0.5)
+        love.graphics.circle("fill", self.x, self.y, self.w / 1.5)
+        love.graphics.setColor(1, 1, 1, 1)
+        self:drawStandard(r, g, bColor)
+        
+    else
+        self:drawStandard(r, g, bColor)
+    end
+    
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+function Bullet:drawStandard(r, g, bColor)
     if #self.trail > 1 then
         for i = 1, #self.trail - 1 do
             local p1 = self.trail[i]
             local p2 = self.trail[i+1]
             local alpha = (1 - (i / #self.trail)) * 0.5
             
-            -- Glow Layer
-            love.graphics.setColor(r, g, b, alpha * 0.4)
+            love.graphics.setColor(r, g, bColor, alpha * 0.4)
             love.graphics.setLineWidth(4)
             love.graphics.line(p1.x, p1.y, p2.x, p2.y)
             
-            -- Core Layer
-            love.graphics.setColor(r, g, b, alpha)
+            love.graphics.setColor(r, g, bColor, alpha)
             love.graphics.setLineWidth(1.5)
             love.graphics.line(p1.x, p1.y, p2.x, p2.y)
         end
     end
     
-    -- 2. Draw Bullet Head
-    -- Outer Glow
-    love.graphics.setColor(r, g, b, 0.3)
+    love.graphics.setColor(r, g, bColor, 0.3)
     love.graphics.circle("fill", self.x, self.y, self.w * 0.8)
     
-    -- Main Shape
-    love.graphics.setColor(r, g, b, 1)
+    love.graphics.setColor(r, g, bColor, 1)
     if self.shape == "pill" or self.shape == "ray" then
         local angle = self.angle
         local length = self.w
@@ -123,13 +174,8 @@ function Bullet:draw()
         love.graphics.circle("fill", self.x, self.y, self.w / 2)
     end
     
-    -- Bright Core
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.circle("fill", self.x, self.y, self.w / 4)
-    
-    -- Reset state
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Bullet:onCollision(obj)

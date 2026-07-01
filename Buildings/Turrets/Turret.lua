@@ -9,12 +9,17 @@ function Turret:new(config)
         error("Developer Error: Turret:new called with nil config.")
     end
 
-    local required = {"name", "rotation", "fireRate", "damage", "bulletSpeed", "range", "barrel", "firingArc", "shapePattern", "color"}
+    local required = {"name", "fireRate", "damage", "bulletSpeed", "range", "firingArc"}
     for _, key in ipairs(required) do
         if config[key] == nil then
             error("Developer Error: Turret [" .. (config.name or "Unknown") .. "] is missing the '" .. key .. "' field in config.")
         end
     end
+    
+    config.shapePattern = config.shapePattern or {{0, 0}}
+    config.rotation = config.rotation or 0
+    config.color = config.color or {1, 1, 1, 1}
+    config.barrel = config.barrel or 10
 
     -- Nested validation for firingArc
     local arcRequired = {"direction", "minRange", "angle"}
@@ -29,10 +34,30 @@ function Turret:new(config)
     local t = setmetatable(building:new(config), { __index = self }) 
     
     t.targetRotation = t.rotation -- Target rotation for smooth aiming
-    t.bulletType = config.bulletType or bullet
+    
+    t.bulletId = config.bulletId
+    if t.bulletId then
+        local BulletIndex = require("Bullets.BulletIndex")
+        t.bulletDef = BulletIndex[t.bulletId]
+        if not t.bulletDef then
+            error("Unknown bulletId: " .. tostring(t.bulletId))
+        end
+        t.bulletType = t.bulletDef.class or bullet
+    else
+        t.bulletType = config.bulletType or bullet
+    end
     t.cooldown = 0 -- Cooldown timer for firing
     t.hitEffects = config.hitEffects or {} -- Table to store hit effects
     t.target = nil  -- Target to auto aim at
+    
+    t.pelletCount = config.pelletCount or 1
+    t.ammoMax = config.ammoMax
+    if t.ammoMax then
+        t.ammoCount = t.ammoMax
+        t.reloadTime = config.reloadTime or 2
+        t.isReloading = false
+        t.reloadTimer = 0
+    end
     
     -- Re-structure firingArc for internal use
     t.firingArc = {
@@ -125,54 +150,87 @@ function Turret:fire(args)
         collectUnique(self.effectManager)
     end
 
-    local config = {
-        name = self:getStat("bulletName"),
-        x = x,
-        y = y,
-        angle = (args and args.angle or self.rotation) + offset, -- Add spread to the angle
-        bulletSpeed = self:getStat("bulletSpeed"), -- Speed of the bullet
-        damage = self:getStat("damage"), -- Damage dealt by the bullet
-        pierce = self:getStat("pierce"),
-        lifespan = self:getStat("lifespan"),
-        displayLifespan = self:getStat("displayLifespan"),
-        damageType = self:getStat("damageType"),
-        w = self.bulletW,
-        h = self.bulletH,
-        shape = self.bulletShape,
-        hitbox = true,
-        hitEffects = currentHitEffects, -- Effects to apply on hit
-        poison_from_damage = self:getStat("poison_from_damage"),
-        dps_poison = self:getStat("dps_poison"),
-        duration_poison = self:getStat("duration_poison"),
-        maxStacks = self:getStat("maxStacks"),
-        splitamount = self:getStat("splitamount"),
-        spread = self:getStat("spread"),
-        splitDamage = self:getStat("splitDamage"),
-        splitDamage_from_damage = self:getStat("splitDamage_from_damage"),
-        radius = self:getStat("radius"),
-        explosionDamage = self:getStat("explosionDamage"),
-        explosion_from_damage = self:getStat("explosion_from_damage"),
-        recursion = self:getStat("recursion"),
-        recursionSpread = self:getStat("recursionSpread"),
-        canDirectHit = self:getStat("canDirectHit"),
-        game = self.game, -- Reference to the game object
-        source = self,
-        color = self.color, -- Pass turret color to bullet
-        types = { bullet = true },
-        targetX = args and args.targetX or nil,
-        targetY = args and args.targetY or nil,
-    }
-    -- If args has extra keys, override config
-    if args then
-        for k, v in pairs(args) do
-            if k ~= "angle" then
-                config[k] = v
+    local currentSpread = self:getStat("spread") or 0
+    local pelletCount = self:getStat("pelletCount") or 1
+
+    local oldAudio = AUDIO
+    if pelletCount > 1 then AUDIO = nil end
+
+    for i = 1, pelletCount do
+        local offset = 0
+        if pelletCount > 1 then
+            offset = (math.random() - 0.5) * currentSpread
+        else
+            offset = love.math.random() * currentSpread * 2 - currentSpread
+        end
+        
+        -- Vary speed slightly for shotgun blasts
+        local speedFactor = 1.0
+        if pelletCount > 1 then speedFactor = 0.9 + math.random() * 0.2 end
+        
+        local configCopy = {
+            name = self:getStat("bulletName"),
+            x = x,
+            y = y,
+            angle = (args and args.angle or self.rotation) + offset,
+            bulletSpeed = self:getStat("bulletSpeed") * speedFactor,
+            damage = self:getStat("damage"),
+            pierce = self:getStat("pierce"),
+            lifespan = self:getStat("lifespan"),
+            displayLifespan = self:getStat("displayLifespan"),
+            damageType = self:getStat("damageType"),
+            w = self.bulletW,
+            h = self.bulletH,
+            shape = self.bulletShape,
+            hitbox = true,
+            hitEffects = currentHitEffects,
+            poison_from_damage = self:getStat("poison_from_damage"),
+            dps_poison = self:getStat("dps_poison"),
+            duration_poison = self:getStat("duration_poison"),
+            maxStacks = self:getStat("maxStacks"),
+            splitamount = self:getStat("splitamount"),
+            spread = self:getStat("spread"),
+            splitDamage = self:getStat("splitDamage"),
+            splitDamage_from_damage = self:getStat("splitDamage_from_damage"),
+            radius = self:getStat("radius"),
+            explosionDamage = self:getStat("explosionDamage"),
+            explosion_from_damage = self:getStat("explosion_from_damage"),
+            bouncesLeft = self:getStat("bouncesLeft"),
+            recursion = self:getStat("recursion"),
+            recursionSpread = self:getStat("recursionSpread"),
+            canDirectHit = self:getStat("canDirectHit"),
+            game = self.game,
+            source = self,
+            color = self.color,
+            types = { bullet = true },
+            targetX = args and args.targetX or nil,
+            targetY = args and args.targetY or nil,
+        }
+        if self.bulletDef then
+            for k, v in pairs(self.bulletDef) do
+                if k ~= "class" and configCopy[k] == nil then
+                    configCopy[k] = v
+                end
             end
         end
+        if args then
+            for k, v in pairs(args) do
+                if k ~= "angle" then configCopy[k] = v end
+            end
+        end
+        self.game:addObject(self.bulletType:new(configCopy))
     end
-
-    --self.bulletType:new(config)
-    self.game:addObject(self.bulletType:new(config))
+    
+    AUDIO = oldAudio
+    
+    if self.ammoMax then
+        self.ammoCount = self.ammoCount - 1
+        if self.ammoCount <= 0 then
+            self.isReloading = true
+            self.reloadTimer = self.reloadTime
+            self.burstsRemaining = 0 -- Cancel active bursts if out of ammo
+        end
+    end
 end
 
 function Turret:update(dt)
@@ -180,11 +238,38 @@ function Turret:update(dt)
         self.effectManager:update(dt)
     end
 
-    -- Do not acquire targets or shoot while the player is setting the firing arc
     if self.game.inputMode == "aiming" and self.game.inputHandler.selectedBuilding == self then
         if self.firingArc then
             self.rotation = self.firingArc.direction
             self.targetRotation = self.firingArc.direction
+        end
+        return
+    end
+
+    if self.isReloading then
+        self.reloadTimer = self.reloadTimer - dt
+        if self.reloadTimer <= 0 then
+            self.isReloading = false
+            self.ammoCount = self.ammoMax
+        end
+        return
+    end
+
+    if (self.burstsRemaining or 0) > 0 then
+        self.burstTimer = self.burstTimer - dt
+        if self.burstTimer <= 0 then
+            if self.target and not self.target.destroyed then
+                local tx, ty = self:getTargetLeadPosition()
+                self:lookAt(tx, ty, dt)
+                self:fire({targetX = tx, targetY = ty, isBurst = true})
+            else
+                self:fire({isBurst = true})
+            end
+            
+            self.burstsRemaining = self.burstsRemaining - 1
+            if self.burstsRemaining > 0 then
+                self.burstTimer = self:getStat("burstDelay") or 0.1
+            end
         end
         return
     end
@@ -207,6 +292,13 @@ function Turret:update(dt)
                 
                 if angleDiff <= 0.15 then
                     self:fire({targetX = x, targetY = y})
+                    
+                    local burstCount = self:getStat("burstCount") or 1
+                    if burstCount > 1 then
+                        self.burstsRemaining = burstCount - 1
+                        self.burstTimer = self:getStat("burstDelay") or 0.1
+                    end
+                    
                     self.cooldown = 1 / currentFireRate
                 end
             end
@@ -248,6 +340,14 @@ function Turret:draw(drawx, drawy)
             love.graphics.rectangle("line", cx-9, cy-9, 18, 18, 2, 2)
         elseif s == "circle" then
             love.graphics.circle("line", cx, cy, 10)
+        elseif s == "hexagon" then
+            local pts = {}
+            for i = 0, 5 do
+                local angle = i * (math.pi * 2 / 6)
+                table.insert(pts, cx + math.cos(angle) * 10)
+                table.insert(pts, cy + math.sin(angle) * 10)
+            end
+            love.graphics.polygon("line", pts)
         end
     end
 
@@ -281,6 +381,10 @@ function Turret:draw(drawx, drawy)
             love.graphics.rectangle("line", 0, -4, self.barrel, 8, 2, 2)
         elseif s == "long" then
             love.graphics.rectangle("line", 0, -1.5, self.barrel, 3, 0.5, 0.5)
+        elseif s == "flared" then
+            love.graphics.polygon("line", 0, -3, self.barrel, -6.5, self.barrel, 6.5, 0, 3)
+        elseif s == "funnel" then
+            love.graphics.polygon("line", 2, -3, self.barrel, -6, self.barrel, 6, 2, 3)
         end
     end
 

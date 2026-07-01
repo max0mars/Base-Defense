@@ -1,5 +1,4 @@
 local Bullet = require("Bullets.Bullet")
-local ShrapnelBullet = require("Bullets.ShrapnelBullet")
 
 local AirburstBullet = setmetatable({}, { __index = Bullet })
 AirburstBullet.__index = AirburstBullet
@@ -79,7 +78,12 @@ function AirburstBullet:airburst()
             recursion = self.recursion,
             recursionSpread = self.recursionSpread
         }
-        self.game:addObject(ShrapnelBullet:new(config))
+        local BulletIndex = require("Bullets.BulletIndex")
+        local shrapnelDef = BulletIndex.shrapnel
+        for k, v in pairs(shrapnelDef) do
+            if k ~= "class" then config[k] = v end
+        end
+        self.game:addObject(shrapnelDef.class:new(config))
     end
     
     -- Visual pop effect

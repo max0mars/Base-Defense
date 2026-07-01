@@ -4,7 +4,7 @@ local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local InstantCardRegistry = require("Instants.InstantCardRegistry")
 local SpellCardRegistry = require("Spells.SpellCardRegistry")
-local RewardIndex = require("Game.Rewards.NormalRewardIndex")
+local RewardIndex = require("Game.Rewards.RewardIndex")
 
 local StandardMainTurret = setmetatable({}, { __index = Turret })
 StandardMainTurret.__index = StandardMainTurret
@@ -191,7 +191,7 @@ function StandardMainTurret.addCard(deck, id, quantity, rarity)
             description = reward.description,
             executionType = ExecutionType.Placement, 
             quantity = quantity,
-            payload = { buildingClass = reward.building, config = {}, rarity = rarity or "common" }
+            payload = { buildingClass = reward.building, config = reward, rarity = rarity or "common" }
         }))
         return true
     end

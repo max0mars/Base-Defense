@@ -111,8 +111,7 @@ function tutorial_scene:load()
         if step then
             if self:isDialogStep() or
                (game.rewardSystem and game.rewardSystem.isActive) or 
-               (game.specialUpgradeManager and game.specialUpgradeManager.isActive) or
-               (game.gui.mutation and game.gui.mutation.isActive) or
+               (game.gui and game.gui.mutation and game.gui.mutation.isActive) or
                (game.gui.confirmation and game.gui.confirmation.active) then
                 isFrozen = true
             end

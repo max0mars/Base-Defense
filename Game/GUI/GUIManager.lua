@@ -211,7 +211,7 @@ end
 function GUIManager:overlayActive()
     return (self.game.rewardSystem and self.game.rewardSystem.isActive)
         or (self.mutation and self.mutation.isActive)
-        or (self.game.specialUpgradeManager and self.game.specialUpgradeManager.isActive)
+
         or (self.codex and self.codex.isActive)
         or (self.enemySpawner and self.enemySpawner.isActive)
         or (self.itemPicker and self.itemPicker.isActive)

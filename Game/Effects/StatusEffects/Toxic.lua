@@ -47,7 +47,8 @@ function Toxic:onDeath(target)
     if self.recursion <= 0 then return end
 
     -- Spawn a burst of shards instead of an explosion
-    local ToxicShard = require("Bullets.ToxicShard")
+    local BulletIndex = require("Bullets.BulletIndex")
+    local shardDef = BulletIndex.toxicShard
     local numShards = 4
     local baseAngle = love.math.random() * math.pi * 2
     local angleStep = (math.pi * 2) / numShards
@@ -55,7 +56,8 @@ function Toxic:onDeath(target)
     for i = 1, numShards do
         local minAngle = baseAngle + (i - 1) * angleStep
         local angle = minAngle + (love.math.random() * angleStep)
-        local shard = ToxicShard:new({
+        
+        local config = {
             game = target.game,
             source = target,
             x = target.x,
@@ -63,8 +65,18 @@ function Toxic:onDeath(target)
             angle = angle,
             damage = self.bloomDamage,
             hitCache = {[target:getID()] = true}, -- Skip the enemy that just died
-            recursion = self.recursion - 1
-        })
+            recursion = self.recursion - 1,
+            name = "Toxic Shard",
+            bulletSpeed = 350,
+            pierce = 1,
+            lifespan = 0.25,
+            damageType = "toxic"
+        }
+        for k, v in pairs(shardDef) do
+            if k ~= "class" then config[k] = v end
+        end
+        
+        local shard = shardDef.class:new(config)
         target.game:addObject(shard)
     end
 end

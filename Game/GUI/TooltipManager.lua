@@ -46,7 +46,7 @@ function TooltipManager:findHoveredEnemy()
     if self.hoveredBuilding then return nil end
     if game.inputMode == "placing" or game.inputMode == "targeting_spell" then return nil end
     if game.rewardSystem and game.rewardSystem.isActive then return nil end
-    if game.specialUpgradeManager and game.specialUpgradeManager.isActive then return nil end
+
     if game.gui and game.gui.mutation and game.gui.mutation.isActive then return nil end
 
     local rmx, rmy = love.mouse.getPosition()
@@ -189,7 +189,7 @@ local RARITY_ORDER = { common = 1, uncommon = 2, rare = 3, epic = 4, legendary =
 function TooltipManager:mainUpgradeInfo()
     if self._mainUpgradeInfo then return self._mainUpgradeInfo end
     local info = {}
-    local NormalRewardIndex = require("Game.Rewards.NormalRewardIndex")
+    local NormalRewardIndex = require("Game.Rewards.RewardIndex")
     for rarity, entries in pairs(NormalRewardIndex) do
         if type(entries) == "table" then
             for _, e in ipairs(entries) do
