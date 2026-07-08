@@ -171,19 +171,19 @@ function StandardMainTurret.addCard(deck, id, quantity, rarity)
     
     -- Check if it's a building card in RewardIndex
     local function findRewardById(rewardId)
-        for _, rarityList in pairs(RewardIndex) do
+        for rarityName, rarityList in pairs(RewardIndex) do
             if type(rarityList) == "table" then
                 for _, item in ipairs(rarityList) do
                     if item.id == rewardId then
-                        return item
+                        return item, rarityName
                     end
                 end
             end
         end
-        return nil
+        return nil, nil
     end
 
-    local reward = findRewardById(id)
+    local reward, foundRarity = findRewardById(id)
     if reward then
         deck:addCard(Card:new({
             id = reward.id, 
@@ -191,7 +191,7 @@ function StandardMainTurret.addCard(deck, id, quantity, rarity)
             description = reward.description,
             executionType = ExecutionType.Placement, 
             quantity = quantity,
-            payload = { buildingClass = reward.building, config = reward, rarity = rarity or "common" }
+            payload = { buildingClass = reward.building, config = reward, rarity = rarity or foundRarity or "common" }
         }))
         return true
     end

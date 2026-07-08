@@ -116,7 +116,7 @@ function RewardPool:getRandomRewardFromTier(rarity, excludedIds)
                     
                     local reward = {}
                     for k, v in pairs(choice) do
-                        if k == "building" or k == "bulletType" then
+                        if k == "building" or k == "bulletType" or k == "hitEffects" or k == "types" then
                             reward[k] = v
                         else
                             reward[k] = deepCopy(v)

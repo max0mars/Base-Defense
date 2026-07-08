@@ -97,7 +97,7 @@ local BulletIndex = {
     mortarShell = {
         class = LobberBullet,
         name = "Mortar Shell",
-        shape = "circle",
+        shape = "rectangle", w = 8, h = 8,
         explodeOnGroundOnly = true
     },
     shrapnel = {
@@ -110,7 +110,7 @@ local BulletIndex = {
     grenade = {
         class = GrenadeBullet,
         name = "Grenade",
-        shape = "circle"
+        shape = "rectangle", w = 6, h = 6
     },
     missile = {
         class = MissileBullet,

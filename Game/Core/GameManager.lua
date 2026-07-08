@@ -883,9 +883,13 @@ end
 
 function game:rerollCard(cardIndex)
     if not self.hand or not self.hand[cardIndex] then return end
-    local oldCard = self.hand[cardIndex]
+    if #self.drawPile == 0 then return end -- No cards to draw
     
+    local oldCard = self.hand[cardIndex]
     table.remove(self.hand, cardIndex)
+    
+    local newCard = table.remove(self.drawPile, 1)
+    
     table.insert(self.drawPile, oldCard)
     
     -- Shuffle drawPile
@@ -894,22 +898,17 @@ function game:rerollCard(cardIndex)
         self.drawPile[i], self.drawPile[j] = self.drawPile[j], self.drawPile[i]
     end
     
-    if #self.drawPile > 0 then
-        local newCard = table.remove(self.drawPile, 1)
-        if newCard.payload and newCard.payload.effect then
-            local EffectManager = require("Game.Effects.EffectManager")
-            newCard.effectManager = EffectManager:new(newCard, self)
-            newCard.effectManager.game = self
-            newCard.effectManager.owner = newCard
-            if self.playerEffectManager then
-                newCard.effectManager.parent = self.playerEffectManager
-            end
-            newCard.effectManager:recalculateStats()
+    if newCard.payload and newCard.payload.effect then
+        local EffectManager = require("Game.Effects.EffectManager")
+        newCard.effectManager = EffectManager:new(newCard, self)
+        newCard.effectManager.game = self
+        newCard.effectManager.owner = newCard
+        if self.playerEffectManager then
+            newCard.effectManager.parent = self.playerEffectManager
         end
-        table.insert(self.hand, cardIndex, newCard)
-    else
-        table.insert(self.hand, cardIndex, oldCard)
+        newCard.effectManager:recalculateStats()
     end
+    table.insert(self.hand, cardIndex, newCard)
     
     self.mulliganSkipsUsed = (self.mulliganSkipsUsed or 0) + 1
     if not self.mulliganLockedSlots then self.mulliganLockedSlots = {} end

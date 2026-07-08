@@ -1,4 +1,8 @@
 local BounceEffect = require("Game.Effects.IndependantEffects.bounce")
+local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
+local PoisonEffect = require("Game.Effects.StatusEffects.Poison")
+local SlowEffect = require("Game.Effects.StatusEffects.Slow")
+local StunEffect = require("Game.Effects.StatusEffects.Stun")
 local RewardIndex = {
     common = {
         {
@@ -39,9 +43,9 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 3, range = 250,
+            rotation = 0, fireRate = 4, range = 250,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
-            bulletSpeed = 350, damageType = "normal", damage = 4,
+            bulletSpeed = 350, damageType = "normal", damage = 5,
             pierce = 1, lifespan = 0.8, bulletId = "cannonBullet"
         },
         {
@@ -55,8 +59,8 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.7, range = 200,
             firingArc = {direction = 0, minRange = 0, angle = math.rad(100)},
-            spread = math.rad(15), pelletCount = 10,
-            bulletSpeed = 480, damageType = "normal", damage = 3,
+            spread = math.rad(15), pelletCount = 8,
+            bulletSpeed = 480, damageType = "normal", damage = 4,
             pierce = 1, lifespan = 0.8, bulletId = "shotgunPellet"
         },
         {
@@ -69,7 +73,7 @@ local RewardIndex = {
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.2, range = 600,
-            firingArc = {direction = 0, minRange = 0, angle = math.pi/8},
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/14},
             bulletSpeed = 500, damageType = "normal", damage = 60,
             pierce = 1, lifespan = 1.5, bulletId = "heavyShell"
         },
@@ -87,7 +91,8 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.5, range = 400,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
             bulletSpeed = 500, damageType = "poison", damage = 10,
-            pierce = 1, lifespan = 2, dps_poison = 4, duration_poison = 4, maxStacks = 4, bulletId = "poisonDart"
+            pierce = 1, lifespan = 2, dps_poison = 4, duration_poison = 4, maxStacks = 4, bulletId = "poisonDart",
+            hitEffects = { PoisonEffect:new({name = "Poison"}) }
         },
         {
             id = "airburst",
@@ -128,9 +133,10 @@ local RewardIndex = {
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.35, range = 500, firingArc = {direction = 0, minRange = 200, angle = math.pi/6},
-            fuseTime = 0.7, bulletSpeed = 250, damageType = "normal", damage = 35,
-            burstCount = 3, burstDelay = 0.1, spread = math.rad(5),
-            pierce = 1, lifespan = 1.5, explosionDamage = 35, explosion_from_damage = 1.0, radius = 60, bulletId = "grenade"
+            fuseTime = 0.7, bulletSpeed = 250, damageType = "normal", damage = 8,
+            burstCount = 3, burstDelay = 0.2, spread = math.rad(5),
+            pierce = 1, lifespan = 1.5, explosionDamage = 35, explosion_from_damage = 1.0, radius = 60, bulletId = "grenade",
+            hitEffects = { ExplosionEffect:new({ name = "Grenade Explosion" }) }
         },
         {
             id = "slushCannon",
@@ -144,7 +150,8 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.3, range = 450,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 350, damageType = "water", damage = 40,
-            pierce = 1, lifespan = 2, bulletId = "slush"
+            pierce = 1, lifespan = 2, bulletId = "slush",
+            hitEffects = { SlowEffect:new({name = "Slush Slow", duration = 2.0, amount = 0.4}) }
         },
     },
     rare = {
@@ -173,7 +180,8 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.5, range = 450, firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 200, damageType = "normal", damage = 90,
-            pierce = 1, lifespan = 3, explosionDamage = 90, explosion_from_damage = 1.0, radius = 100, bulletId = "missile"
+            pierce = 1, lifespan = 3, explosionDamage = 90, explosion_from_damage = 1.0, radius = 100, bulletId = "missile",
+            hitEffects = { ExplosionEffect:new({ name = "Missile Explosion" }) }
         },
         {
             id = "plasmaScattershot",
@@ -216,7 +224,8 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.3, range = 300,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
             bulletSpeed = 250, damageType = "normal", damage = 80,
-            pierce = 1, lifespan = 2, bulletId = "heavyHook"
+            pierce = 1, lifespan = 2, bulletId = "heavyHook",
+            hitEffects = { StunEffect:new({name = "Hook Stun", duration = 1.0}) }
         },
     },
     epic = {
@@ -229,7 +238,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.2, range = 1000, firingArc = {direction = 0, minRange = 0, angle = math.pi/32},
+            rotation = 0, fireRate = 0.2, range = 1000, firingArc = {direction = 0, minRange = 0, angle = math.pi/2},
             bulletSpeed = 0, damageType = "normal", damage = 250,
             pierce = 1, lifespan = 0.3, maxLifespan = 0.3, bulletId = "sniperShot"
         },
@@ -244,7 +253,8 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.15, range = 500, firingArc = {direction = 0, minRange = 300, angle = math.pi/4},
             bulletSpeed = 200, damageType = "normal", damage = 100,
-            pierce = 1, lifespan = 2, explosionDamage = 100, explosion_from_damage = 1.0, radius = 80, bulletId = "mortarShell"
+            pierce = 1, lifespan = 2, explosionDamage = 100, explosion_from_damage = 1.0, radius = 80, bulletId = "mortarShell",
+            hitEffects = { ExplosionEffect:new({ name = "Mortar Explosion" }) }
         },
     },
     legendary = {
