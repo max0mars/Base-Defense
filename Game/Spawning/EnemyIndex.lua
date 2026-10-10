@@ -94,8 +94,7 @@ local EnemyIndex = {
         types = { enemy = true, red = true, armour = true },
         baseSpawnDelay = 1.0,
         affinities = {
-            normal = 0.75,
-            explosive = 0.75
+            physical = 0.75,
         },
         description = "A sturdy combatant with light armour.",
         mutations = {}

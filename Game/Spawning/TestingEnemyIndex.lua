@@ -127,12 +127,12 @@ local TestingEnemyIndex = {
         types = { enemy = true, armored = true },
         baseSpawnDelay = 1.2,
         affinities = {
-            normal = 0.5,
+            physical = 0.5,
         },
-        description = "Heavily resistant to normal damage.",
+        description = "Heavily resistant to physical damage.",
         mutations = {
             { id = "armored_hp", name = "Dreadnought Plating", description = "HP +40%", modifiers = { maxHp = 1.4, hp = 1.4 }, target = "Armored" },
-            { id = "armored_resist", name = "Even Stronger Armor", description = "Normal resistance +20%", modifiers = { normal = 0.8 }, target = "Armored" },
+            { id = "armored_resist", name = "Even Stronger Armor", description = "Physical resistance +20%", modifiers = { physical = 0.8 }, target = "Armored" },
             { id = "armored_energy_resist", name = "Energy Shielding", description = "Energy resistance +25%", modifiers = { energy = 0.75 }, target = "Armored" }
         }
     },

@@ -21,7 +21,7 @@ function living_object:new(config)
     obj.maxShield = config.maxShield or math.huge
     obj.armour = config.armour or 0
     obj.affinities = config.affinities or {
-        normal = 1,
+        physical = 1,
         poison = 1,
         trueDamage = 1,
         fire = 1,
@@ -72,7 +72,7 @@ function living_object:_drawHealthBar()
 end
 
 local damageTypes = {
-    normal = 1,
+    physical = 1,
     poison = 1,
     trueDamage = 1,
     fire = 1,
