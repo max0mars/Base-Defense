@@ -697,16 +697,19 @@ function game:waveComplete()
         end
         if obj.effectManager and not obj.destroyed then
             obj.effectManager:triggerEvent("onWaveComplete", obj)
+            obj.effectManager:clearWaveEffects()
             obj.effectManager:recalculateStats()
         end
     end
     
     if self.playerEffectManager then
         self.playerEffectManager:triggerEvent("onWaveComplete", self.base)
+        self.playerEffectManager:clearWaveEffects()
         self.playerEffectManager:recalculateStats()
     end
     if self.enemyEffectManager then
         self.enemyEffectManager:triggerEvent("onWaveComplete", nil)
+        self.enemyEffectManager:clearWaveEffects()
         self.enemyEffectManager:recalculateStats()
     end
 end

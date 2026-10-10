@@ -144,6 +144,8 @@ function TurretDebuffer:applyDebuffs()
             displayName = "Drone Slowdown",
             duration = duration,
             maxStacks = maxStacks,
+            isDebuff = true,
+            clearOnWaveEnd = true,
             statModifiers = {
                 [debuffStat] = { mult = debuffAmount }
             }
