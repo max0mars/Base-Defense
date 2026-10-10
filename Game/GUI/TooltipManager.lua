@@ -4,20 +4,18 @@ local TooltipManager = {}
 TooltipManager.__index = TooltipManager
 
 local DAMAGE_TYPE_NAMES = {
-    normal         = "Normal",
+    physical       = "Physical",
     poison         = "Poison",
     trueDamage     = "True",
     fire           = "Fire",
-    explosive      = "Explosive",
     energy         = "Energy",
 }
 
 local DAMAGE_TYPE_COLORS = {
-    normal         = {1, 1, 1, 1},
+    physical       = {1, 1, 1, 1},
     poison         = {0.4, 0.85, 0.3, 1},
     trueDamage     = {1, 0.4, 0.7, 1},
     fire           = {1, 0.5, 0.2, 1},
-    explosive      = {1, 0.55, 0.1, 1},
     energy         = {0.4, 0.7, 1, 1},
 }
 
@@ -290,7 +288,7 @@ function TooltipManager:drawTurretTooltip(turret)
     local pellets  = turret.pelletCount or 1
     local range    = turret:getStat("range", 0)
     local pierce   = turret:getStat("pierce", 1)
-    local dtype    = turret:getStat("damageType", "normal")
+    local dtype    = turret:getStat("damageType", "physical")
     local volley   = dmg * pellets          -- effective per-volley damage
     local dps      = volley * fireRate
 

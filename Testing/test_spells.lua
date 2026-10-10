@@ -102,7 +102,7 @@ assert(fbVisual.destroyed == true, "FireballVisual marked destroyed on impact")
 local closeEnemy = mockGame.objects[1]
 local farEnemy = mockGame.objects[2]
 assert(closeEnemy.damageTaken ~= nil and closeEnemy.damageTaken > 0, "Close enemy took damage from Fireball")
-assert(closeEnemy.damageType == "explosive", "Fireball damage type is explosive")
+assert(closeEnemy.damageType == "fire", "Fireball damage type is fire")
 assert(farEnemy.damageTaken == nil, "Far enemy did not take damage from Fireball")
 
 -- 5. Test Stun Burst execution

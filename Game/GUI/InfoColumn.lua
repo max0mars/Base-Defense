@@ -20,8 +20,8 @@ local ENEMY_COLORS = {
 local ENEMY_NAMES = { BeastMaster = "Beast Master" }
 
 local DAMAGE_TYPE_NAMES = {
-    normal = "Normal", poison = "Poison", trueDamage = "True",
-    fire = "Fire", explosive = "Explosive", energy = "Energy",
+    physical = "Physical", poison = "Poison", trueDamage = "True",
+    fire = "Fire", energy = "Energy",
 }
 
 local RARITY_ORDER = { common = 1, uncommon = 2, rare = 3, epic = 4, legendary = 5 }

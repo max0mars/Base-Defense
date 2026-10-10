@@ -1,9 +1,8 @@
 Damage Types:
-- Normal
+- Physical
 - Poison
 - True Damage
 - Fire
-- Explosive
 - Energy
 
 Damage Tags:
