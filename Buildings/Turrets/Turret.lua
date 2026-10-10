@@ -77,7 +77,7 @@ function Turret:new(config)
     t.bulletW = config.bulletW
     t.bulletH = config.bulletH
     t.bulletShape = config.bulletShape
-    t.damageType = config.damageType or "normal"
+    t.damageType = config.damageType or "physical"
     -- Effect Stats (Initialized from config, defaulting to 0)
     t.dps_poison = config.dps_poison or 0
     t.duration_poison = config.duration_poison or 0

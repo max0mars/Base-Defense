@@ -121,7 +121,8 @@ assert(#layout.cards == 3, "Layout cards count matches hand size")
 assert(layout.skipBtn ~= nil, "Skip button position is calculated")
 
 -- Test single card reroll
-local oldHand = { table.unpack(game.hand) }
+local unpack_fn = table.unpack or unpack
+local oldHand = { unpack_fn(game.hand) }
 local originalRandom = math.random
 math.random = function(i) return i end
 game:rerollCard(2)
