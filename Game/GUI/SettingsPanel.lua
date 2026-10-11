@@ -30,20 +30,31 @@ function SettingsPanel:new(opts)
 
     obj.buttons = {}
 
-    -- Window mode (Fullscreen above Windowed).
-    table.insert(obj.buttons, { x = bx, y = p.y + 80, w = bw, h = 30, label = "FULLSCREEN",
+    local colW = 190
+    local col1X = p.x + 24
+    local col2X = p.x + 226
+
+    -- Window mode (Fullscreen and Windowed side-by-side).
+    table.insert(obj.buttons, { x = col1X, y = p.y + 76, w = colW, h = 28, label = "FULLSCREEN",
         action = "fullscreen_mode", color = setCol, hoverColor = setHov, borderColor = setBord })
-    table.insert(obj.buttons, { x = bx, y = p.y + 116, w = bw, h = 30, label = "WINDOWED",
+    table.insert(obj.buttons, { x = col2X, y = p.y + 76, w = colW, h = 28, label = "WINDOWED",
         action = "windowed", color = setCol, hoverColor = setHov, borderColor = setBord })
 
-    -- Stacked resolutions.
+    -- Resolution options (2 columns).
     local resOptions = {
-        { width = 1280, height = 720, label = "1280 x 720" },
-        { width = 1600, height = 900, label = "1600 x 900" },
+        { width = 1280, height = 720,  label = "1280 x 720" },
+        { width = 1366, height = 768,  label = "1366 x 768" },
+        { width = 1600, height = 900,  label = "1600 x 900" },
         { width = 1920, height = 1080, label = "1920 x 1080" },
+        { width = 2560, height = 1440, label = "2560 x 1440" },
+        { width = 2880, height = 1620, label = "2880 x 1620" },
+        { width = 3200, height = 1800, label = "3200 x 1800" },
+        { width = 3840, height = 2160, label = "3840 x 2160" },
     }
     for i, res in ipairs(resOptions) do
-        table.insert(obj.buttons, { x = bx, y = p.y + 174 + (i - 1) * 38, w = bw, h = 30,
+        local col = ((i - 1) % 2 == 0) and col1X or col2X
+        local row = math.floor((i - 1) / 2)
+        table.insert(obj.buttons, { x = col, y = p.y + 142 + row * 30, w = colW, h = 26,
             label = res.label, action = "resolution", data = res,
             color = setCol, hoverColor = setHov, borderColor = setBord })
     end
@@ -66,7 +77,7 @@ function SettingsPanel:new(opts)
         end
     end
 
-    obj.sliders = AudioSlidersUI:new({ x = mid - 120, y = p.y + 344, w = 240 })
+    obj.sliders = AudioSlidersUI:new({ x = mid - 120, y = p.y + 322, w = 240 })
     return obj
 end
 
@@ -146,15 +157,16 @@ function SettingsPanel:draw()
 
     self:divider(p.y + 50)
     love.graphics.setColor(0.5, 0.6, 0.7, 0.9)
-    love.graphics.printf("DISPLAY", p.x, p.y + 60, p.w, "center")
+    love.graphics.printf("DISPLAY", p.x, p.y + 58, p.w, "center")
+    self:divider(p.y + 114)
     love.graphics.setColor(0.45, 0.5, 0.58, 0.8)
-    love.graphics.printf("Resolution", p.x, p.y + 154, p.w, "center")
+    love.graphics.printf("Resolution", p.x, p.y + 122, p.w, "center")
 
-    self:divider(p.y + 300)
+    self:divider(p.y + 276)
     love.graphics.setColor(0.5, 0.6, 0.7, 0.9)
-    love.graphics.printf("AUDIO", p.x, p.y + 312, p.w, "center")
+    love.graphics.printf("AUDIO", p.x, p.y + 288, p.w, "center")
 
-    self:divider(p.y + 428)
+    self:divider(p.y + 422)
 
     for _, btn in ipairs(self.buttons) do
         drawButton(btn, mx, my)

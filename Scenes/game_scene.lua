@@ -152,6 +152,13 @@ function game_scene:draw()
 end
 
 function game_scene:keypressed(key)
+    -- Testing debug command: Shift + Z instantly wins the battle
+    if (key == "z" or key == "Z") and (love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")) then
+        paused = 0
+        game:winBattle()
+        return
+    end
+
     -- Codex (if open) captures Esc to close itself first.
     if game.gui.codex and game.gui.codex.isActive then
         game.gui.codex:keypressed(key)
@@ -171,7 +178,9 @@ function game_scene:keypressed(key)
     elseif key == "-" then
         game.time_mul = math.max(game.time_mul - 0.5, 0.5) -- Decrease time multiplier down to 0.5x
     else
-        game.inputHandler:keypressed(key) -- Route through InputHandler
+        if game.inputHandler and game.inputHandler.keypressed then
+            game.inputHandler:keypressed(key) -- Route through InputHandler
+        end
     end
 end
 
