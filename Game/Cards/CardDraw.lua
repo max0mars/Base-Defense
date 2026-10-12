@@ -60,6 +60,44 @@ function CardDraw.new(x, y, data)
     self.rangeBars = data.rangeBars or 0
     self.firerateBars = data.firerateBars or 0
     
+    if (self.damageBars == 0 and self.rangeBars == 0 and self.firerateBars == 0) and self.cardType == "Building" and self.buildingType == "Turret" then
+        local t = (data.building and type(data.building) == "table" and data.building.template) or data.template or data.config or data
+        if not (t and (t.damage or t.range or t.fireRate)) and data.id then
+            local success, rewardIndex = pcall(require, "Game.Rewards.RewardIndex")
+            if success and rewardIndex then
+                for _, category in pairs(rewardIndex) do
+                    if type(category) == "table" then
+                        for _, reward in ipairs(category) do
+                            if reward.id == data.id then
+                                t = (reward.building and type(reward.building) == "table" and reward.building.template) or reward
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        if t and (t.damage or t.range or t.fireRate) then
+            local dmg = t.damage or 0
+            if t.pelletCount and t.pelletCount > 1 then
+                dmg = dmg * t.pelletCount
+            elseif t.splitamount and t.splitamount > 0 then
+                dmg = dmg * (t.splitamount + 1)
+            end
+            local rng = t.range or 0
+            local fr = t.fireRate or 1
+            
+            if dmg < 10 then self.damageBars = 1 elseif dmg < 25 then self.damageBars = 2 elseif dmg < 50 then self.damageBars = 3 else self.damageBars = 4 end
+            if rng < 200 then self.rangeBars = 1 elseif rng < 350 then self.rangeBars = 2 elseif rng < 500 then self.rangeBars = 3 else self.rangeBars = 4 end
+            if fr >= 1.0 then self.firerateBars = 1 elseif fr >= 0.5 then self.firerateBars = 2 elseif fr >= 0.2 then self.firerateBars = 3 else self.firerateBars = 4 end
+        elseif t and (t.damageBars or t.rangeBars or t.firerateBars) then
+            self.damageBars = t.damageBars or self.damageBars
+            self.rangeBars = t.rangeBars or self.rangeBars
+            self.firerateBars = t.firerateBars or self.firerateBars
+        end
+    end
+    
     self.damageBarsBonus = data.damageBarsBonus or 0
     self.rangeBarsBonus = data.rangeBarsBonus or 0
     self.firerateBarsBonus = data.firerateBarsBonus or 0
