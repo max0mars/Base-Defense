@@ -697,16 +697,19 @@ function game:waveComplete()
         end
         if obj.effectManager and not obj.destroyed then
             obj.effectManager:triggerEvent("onWaveComplete", obj)
+            obj.effectManager:clearWaveEffects()
             obj.effectManager:recalculateStats()
         end
     end
     
     if self.playerEffectManager then
         self.playerEffectManager:triggerEvent("onWaveComplete", self.base)
+        self.playerEffectManager:clearWaveEffects()
         self.playerEffectManager:recalculateStats()
     end
     if self.enemyEffectManager then
         self.enemyEffectManager:triggerEvent("onWaveComplete", nil)
+        self.enemyEffectManager:clearWaveEffects()
         self.enemyEffectManager:recalculateStats()
     end
 end
@@ -1091,6 +1094,57 @@ function game:attemptPurchaseBlocker()
         return true
     end
     return false
+end
+
+function game:winBattle()
+    -- Close any active mid-battle menus or targeting
+    if self.activeCard then
+        self:refundCard(self.activeCard)
+    end
+    if self.rewardSystem then
+        self.rewardSystem.isActive = false
+    end
+    if self.gui and self.gui.mutation then
+        self.gui.mutation.isActive = false
+    end
+    if self.gui and self.gui.enemySpawner then
+        self.gui.enemySpawner.isActive = false
+    end
+    if self.gui and self.gui.itemPicker then
+        self.gui.itemPicker.isActive = false
+    end
+
+    -- Clear all enemies and enemy bullets
+    for i = #self.objects, 1, -1 do
+        local obj = self.objects[i]
+        if obj.isType and (obj:isType("enemy") or (obj:isType("bullet") and obj.targetType == "building")) then
+            obj.destroyed = true
+            table.remove(self.objects, i)
+        end
+    end
+
+    if self.WaveSpawner then
+        self.WaveSpawner.waveList = {}
+        self.WaveSpawner.waveState = "idle"
+    end
+
+    if _G.PersistentState then
+        _G.PersistentState.upcomingWaves = {}
+        _G.PersistentState.upcomingSummaries = {}
+    end
+
+    self:waveComplete()
+
+    self.battleComplete = true
+    self:clearGlobalBuffs()
+    if _G.PersistentState then
+        _G.PersistentState.baseHP = self.base and self.base.hp or 100
+        local reward = 100
+        _G.PersistentState.cash = (_G.PersistentState.cash or 0) + reward
+        self.battleReward = reward
+    else
+        self.battleReward = 100
+    end
 end
 
 return game

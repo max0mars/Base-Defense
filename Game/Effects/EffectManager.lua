@@ -453,6 +453,26 @@ function EffectManager:clearDebuffs()
     return removedAny
 end
 
+function EffectManager:clearWaveEffects()
+    local removedAny = false
+    for i = #self.activeEffects, 1, -1 do
+        local effect = self.activeEffects[i]
+        if effect.clearOnWaveEnd then
+            local key = self:getStackingKey(effect)
+            self.effectCounts[key] = (self.effectCounts[key] or 1) - 1
+            table.remove(self.activeEffects, i)
+            removedAny = true
+        end
+    end
+    if removedAny then
+        self:recalculateStats()
+        if not self.owner then
+            self:propagateRecalculation()
+        end
+    end
+    return removedAny
+end
+
 -- Removed drawTooltip (moved to TooltipManager)
 
 return EffectManager
