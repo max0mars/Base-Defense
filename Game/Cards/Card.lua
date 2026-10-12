@@ -49,6 +49,12 @@ end
 
 function Card:getCardDraw()
     if not self.payload then self.payload = {} end
+    if self.payload.rewardCard and self.payload.rewardCard.cardType == "Building" and self.payload.rewardCard.buildingType == "Turret" then
+        local rc = self.payload.rewardCard
+        if rc.damageBars == 0 and rc.rangeBars == 0 and rc.firerateBars == 0 then
+            self.payload.rewardCard = nil
+        end
+    end
     if not self.payload.rewardCard then
         local CardDraw = require("Game.Cards.CardDraw")
         local isTargeted = self.executionType == require("Game.Cards.ExecutionType").Targeted or self.executionType == "Targeted"
@@ -58,6 +64,31 @@ function Card:getCardDraw()
         local dmgBars, rngBars, frBars = 0, 0, 0
         local affSlots = self.payload.affectedSlots or {}
         local iconCat = self.payload.iconCategory or "turret"
+        
+        local cfg = self.payload.config
+        if cfg then
+            local t = (cfg.building and type(cfg.building) == "table" and cfg.building.template) or cfg.template or cfg
+            if t.damage or t.range or t.fireRate then
+                local dmg = t.damage or 0
+                if t.pelletCount and t.pelletCount > 1 then
+                    dmg = dmg * t.pelletCount
+                elseif t.splitamount and t.splitamount > 0 then
+                    dmg = dmg * (t.splitamount + 1)
+                end
+                local rng = t.range or 0
+                local fr = t.fireRate or 1
+                
+                if dmg < 10 then dmgBars = 1 elseif dmg < 25 then dmgBars = 2 elseif dmg < 50 then dmgBars = 3 else dmgBars = 4 end
+                if rng < 200 then rngBars = 1 elseif rng < 350 then rngBars = 2 elseif rng < 500 then rngBars = 3 else rngBars = 4 end
+                if fr >= 1.0 then frBars = 1 elseif fr >= 0.5 then frBars = 2 elseif fr >= 0.2 then frBars = 3 else frBars = 4 end
+            else
+                dmgBars = cfg.damageBars or dmgBars
+                rngBars = cfg.rangeBars or rngBars
+                frBars = cfg.firerateBars or frBars
+            end
+            affSlots = cfg.affectedSlots or affSlots
+            iconCat = cfg.iconCategory or iconCat
+        end
         
         local success, rewardIndex = pcall(require, "Game.Rewards.RewardIndex")
         if success and rewardIndex then

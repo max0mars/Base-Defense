@@ -240,8 +240,6 @@ function preparation_scene:rollShop()
                 cardPayload.config = choice
             end
             
-            cardPayload.rewardCard = CardDraw.new(0, 0, choice)
-            
             card = Card:new({
                 id = choice.id,
                 name = choice.name,
@@ -249,6 +247,7 @@ function preparation_scene:rollShop()
                 executionType = isGlobal and ExecutionType.Targeted or ExecutionType.Placement,
                 payload = cardPayload
             })
+            cardPayload.rewardCard = card:getCardDraw()
         end
         
         table.insert(self.shopItems, {
