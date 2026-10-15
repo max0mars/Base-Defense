@@ -47,6 +47,69 @@ function Card:getClonedPayload()
     return deepcopy(self.payload)
 end
 
+local function resolveTurretStats(payload, cardId, CardDraw)
+    local affSlots = payload.affectedSlots or {}
+    local iconCat = payload.iconCategory or "turret"
+    local source = nil
+
+    -- 1. Try directly from payload.config / template
+    local cfg = payload.config
+    if cfg then
+        source = (cfg.building and type(cfg.building) == "table" and cfg.building.template) or cfg.template or cfg
+        affSlots = cfg.affectedSlots or affSlots
+        iconCat = cfg.iconCategory or iconCat
+    end
+
+    -- 2. Fall back to RewardIndex by ID if source lacks raw stats
+    if not (source and (source.damage or source.range or source.fireRate or source.damageBars)) and cardId then
+        local success, rewardIndex = pcall(require, "Game.Rewards.RewardIndex")
+        if success and rewardIndex then
+            for _, category in pairs(rewardIndex) do
+                if type(category) == "table" then
+                    for _, reward in ipairs(category) do
+                        if reward.id == cardId then
+                            source = (reward.building and type(reward.building) == "table" and reward.building.template) or reward
+                            affSlots = reward.affectedSlots or affSlots
+                            iconCat = reward.iconCategory or iconCat
+                            break
+                        end
+                    end
+                end
+                if source and (source.damage or source.range or source.fireRate or source.damageBars) then break end
+            end
+        end
+    end
+
+    -- 3. Calculate stat bars from source
+    local dmgBars, rngBars, frBars = 0, 0, 0
+    if source then
+        if source.damage or source.range or source.fireRate then
+            local dmg = source.damage or 0
+            if source.pelletCount and source.pelletCount > 1 then
+                dmg = dmg * source.pelletCount
+            elseif source.splitamount and source.splitamount > 0 then
+                dmg = dmg * (source.splitamount + 1)
+            end
+            local rng = source.range or 0
+            local fr = source.fireRate or 1
+
+            if CardDraw and CardDraw.calcBars then
+                dmgBars = CardDraw.calcBars("damage", dmg)
+                rngBars = CardDraw.calcBars("range", rng)
+                frBars = CardDraw.calcBars("fireRate", fr)
+            else
+                error("CardDraw.calcBars not found")
+            end
+        else
+            dmgBars = source.damageBars or 0
+            rngBars = source.rangeBars or 0
+            frBars = source.firerateBars or 0
+        end
+    end
+
+    return dmgBars, rngBars, frBars, affSlots, iconCat
+end
+
 function Card:getCardDraw()
     if not self.payload then self.payload = {} end
     if self.payload.rewardCard and self.payload.rewardCard.cardType == "Building" and self.payload.rewardCard.buildingType == "Turret" then
@@ -61,68 +124,7 @@ function Card:getCardDraw()
         local isGlobal = self.executionType == require("Game.Cards.ExecutionType").Global or self.executionType == "Global"
         local isSpell = self.executionType == require("Game.Cards.ExecutionType").Spell or self.executionType == "Spell"
         
-        local dmgBars, rngBars, frBars = 0, 0, 0
-        local affSlots = self.payload.affectedSlots or {}
-        local iconCat = self.payload.iconCategory or "turret"
-        
-        local cfg = self.payload.config
-        if cfg then
-            local t = (cfg.building and type(cfg.building) == "table" and cfg.building.template) or cfg.template or cfg
-            if t.damage or t.range or t.fireRate then
-                local dmg = t.damage or 0
-                if t.pelletCount and t.pelletCount > 1 then
-                    dmg = dmg * t.pelletCount
-                elseif t.splitamount and t.splitamount > 0 then
-                    dmg = dmg * (t.splitamount + 1)
-                end
-                local rng = t.range or 0
-                local fr = t.fireRate or 1
-                
-                if dmg < 10 then dmgBars = 1 elseif dmg < 25 then dmgBars = 2 elseif dmg < 50 then dmgBars = 3 else dmgBars = 4 end
-                if rng < 200 then rngBars = 1 elseif rng < 350 then rngBars = 2 elseif rng < 500 then rngBars = 3 else rngBars = 4 end
-                if fr >= 1.0 then frBars = 1 elseif fr >= 0.5 then frBars = 2 elseif fr >= 0.2 then frBars = 3 else frBars = 4 end
-            else
-                dmgBars = cfg.damageBars or dmgBars
-                rngBars = cfg.rangeBars or rngBars
-                frBars = cfg.firerateBars or frBars
-            end
-            affSlots = cfg.affectedSlots or affSlots
-            iconCat = cfg.iconCategory or iconCat
-        end
-        
-        local success, rewardIndex = pcall(require, "Game.Rewards.RewardIndex")
-        if success and rewardIndex then
-            for _, category in pairs(rewardIndex) do
-                if type(category) == "table" then
-                    for _, reward in ipairs(category) do
-                        if reward.id == self.id then
-                            if reward.building and type(reward.building) == "table" then
-                                local t = reward.building.template or reward
-                                local dmg = t.damage or 0
-                                if t.pelletCount and t.pelletCount > 1 then
-                                    dmg = dmg * t.pelletCount
-                                elseif t.splitamount and t.splitamount > 0 then
-                                    dmg = dmg * (t.splitamount + 1)
-                                end
-                                local rng = t.range or 0
-                                local fr = t.fireRate or 1
-                                
-                                if dmg < 10 then dmgBars = 1 elseif dmg < 25 then dmgBars = 2 elseif dmg < 50 then dmgBars = 3 else dmgBars = 4 end
-                                if rng < 200 then rngBars = 1 elseif rng < 350 then rngBars = 2 elseif rng < 500 then rngBars = 3 else rngBars = 4 end
-                                if fr >= 1.0 then frBars = 1 elseif fr >= 0.5 then frBars = 2 elseif fr >= 0.2 then frBars = 3 else frBars = 4 end
-                            else
-                                dmgBars = reward.damageBars or dmgBars
-                                rngBars = reward.rangeBars or rngBars
-                                frBars = reward.firerateBars or frBars
-                            end
-                            affSlots = reward.affectedSlots or affSlots
-                            iconCat = reward.iconCategory or iconCat
-                            break
-                        end
-                    end
-                end
-            end
-        end
+        local dmgBars, rngBars, frBars, affSlots, iconCat = resolveTurretStats(self.payload, self.id, CardDraw)
 
         local data = {
             name = self.name,
