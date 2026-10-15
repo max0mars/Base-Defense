@@ -16,6 +16,31 @@ local rarityColors = {
     main_weapon = {0.0, 1.0, 0.8}  -- Cyan/Teal
 }
 
+-- Calculate continuous fractional bar score (e.g. 1.0 to 5.0)
+local STAT_BOUNDS = {
+    damage = { min = 5, max = 250 },
+    range = { min = 150, max = 1000 },
+    fireRate = { min = 0.15, max = 4.0 }
+}
+
+function CardDraw.calcBars(statType, value)
+    if not value or value <= 0 then return 0 end
+    local bounds = STAT_BOUNDS[statType]
+    if not bounds then return math.min(5, math.max(0, value)) end
+    
+    local lo = math.log(bounds.min)
+    local hi = math.log(bounds.max)
+    local val = math.log(math.max(value, bounds.min * 0.5))
+    local norm = (val - lo) / (hi - lo)
+    norm = math.max(0, math.min(1, norm))
+    
+    -- Map norm [0, 1] to continuous 1.0 to 5.0 bars
+    local rawBars = 1.0 + norm * 4.0
+    -- Round to nearest 1/4th (0.25)
+    local rounded = math.floor(rawBars * 4 + 0.5) / 4
+    return math.max(1, math.min(5.0, rounded))
+end
+
 -- Constructor to create a new card instance
 function CardDraw.new(x, y, data)
     local self = setmetatable({}, CardDraw)
@@ -88,9 +113,15 @@ function CardDraw.new(x, y, data)
             local rng = t.range or 0
             local fr = t.fireRate or 1
             
-            if dmg < 10 then self.damageBars = 1 elseif dmg < 25 then self.damageBars = 2 elseif dmg < 50 then self.damageBars = 3 else self.damageBars = 4 end
-            if rng < 200 then self.rangeBars = 1 elseif rng < 350 then self.rangeBars = 2 elseif rng < 500 then self.rangeBars = 3 else self.rangeBars = 4 end
-            if fr >= 1.0 then self.firerateBars = 1 elseif fr >= 0.5 then self.firerateBars = 2 elseif fr >= 0.2 then self.firerateBars = 3 else self.firerateBars = 4 end
+            if CardDraw.calcBars then
+                self.damageBars = CardDraw.calcBars("damage", dmg)
+                self.rangeBars = CardDraw.calcBars("range", rng)
+                self.firerateBars = CardDraw.calcBars("fireRate", fr)
+            else
+                if dmg < 10 then self.damageBars = 1 elseif dmg < 25 then self.damageBars = 2 elseif dmg < 50 then self.damageBars = 3 elseif dmg < 100 then self.damageBars = 4 else self.damageBars = 5 end
+                if rng < 250 then self.rangeBars = 1 elseif rng < 350 then self.rangeBars = 2 elseif rng < 550 then self.rangeBars = 3 elseif rng < 750 then self.rangeBars = 4 else self.rangeBars = 5 end
+                if fr < 0.3 then self.firerateBars = 1 elseif fr < 0.5 then self.firerateBars = 2 elseif fr < 0.8 then self.firerateBars = 3 elseif fr < 1.5 then self.firerateBars = 4 else self.firerateBars = 5 end
+            end
         elseif t and (t.damageBars or t.rangeBars or t.firerateBars) then
             self.damageBars = t.damageBars or self.damageBars
             self.rangeBars = t.rangeBars or self.rangeBars
@@ -167,26 +198,55 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
                 for i = 1, 5 do
                     local rx = startX + 80 + (i-1)*20
                     local ry = startY + (j-1)*30
+                    local size = 15
                     
-                    if i <= base + bonus - 5 then
-                        -- Wrapped bonus
-                        love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
-                        love.graphics.rectangle("fill", rx, ry, 15, 15)
-                        love.graphics.setColor(1, 1, 1, 1) -- White inner indicator
-                        love.graphics.rectangle("fill", rx + 4, ry + 4, 7, 7)
-                    elseif i > base and i <= base + bonus then
-                        -- Standard bonus
-                        love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
-                        love.graphics.rectangle("fill", rx, ry, 15, 15)
-                    elseif i <= base then
-                        -- Base stat
-                        love.graphics.setColor(color)
-                        love.graphics.rectangle("fill", rx, ry, 15, 15)
+                    -- 1. Slot background (dark subtle slot)
+                    love.graphics.setColor(color[1], color[2], color[3], 0.25)
+                    love.graphics.rectangle("fill", rx, ry, size, size)
+                    
+                    -- 2. Fill calculation
+                    local totalStat = base + bonus
+                    
+                    -- Check if wrapped bonus (exceeds 5) covers this block
+                    if totalStat > 5 and i <= (totalStat - 5 + 0.001) then
+                        local wrapFrac = math.min(1, math.max(0, (totalStat - 5) - (i - 1)))
+                        if wrapFrac > 0.001 then
+                            love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
+                            love.graphics.rectangle("fill", rx, ry, size, size)
+                            love.graphics.setColor(1, 1, 1, 1) -- White inner indicator
+                            local fillW = math.max(1, math.floor(9 * wrapFrac + 0.5))
+                            love.graphics.rectangle("fill", rx + 3, ry + 3, fillW, 9)
+                        end
                     else
-                        -- Empty slot
-                        love.graphics.setColor(color)
-                        love.graphics.rectangle("line", rx, ry, 15, 15)
+                        -- Base stat fill for this block [i-1, i]
+                        local rawBaseFrac = math.min(1, math.max(0, base - (i - 1)))
+                        if rawBaseFrac > 0.001 then
+                            local fillW = (rawBaseFrac >= 0.999) and size or math.floor(size * rawBaseFrac + 0.5)
+                            love.graphics.setColor(color)
+                            love.graphics.rectangle("fill", rx, ry, fillW, size)
+                        end
+                        
+                        -- Bonus fill for this block (if bonus extends into or starts in this block)
+                        local bonusStart = base
+                        local bonusEnd = base + bonus
+                        local blockStart = i - 1
+                        local blockEnd = i
+                        
+                        local activeStart = math.max(blockStart, bonusStart)
+                        local activeEnd = math.min(blockEnd, bonusEnd)
+                        if activeEnd - activeStart > 0.001 then
+                            local xOffset = math.floor((activeStart - blockStart) * size + 0.5)
+                            local w = math.floor((activeEnd - activeStart) * size + 0.5)
+                            if xOffset + w > size then w = size - xOffset end
+                            love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
+                            love.graphics.rectangle("fill", rx + xOffset, ry, w, size)
+                        end
                     end
+                    
+                    -- 3. Draw clean 1px border outline ON TOP of the fill
+                    love.graphics.setLineWidth(1)
+                    love.graphics.setColor(color)
+                    love.graphics.rectangle("line", rx, ry, size, size)
                 end
                 love.graphics.setColor(color) -- reset color for the rest of the drawing
             end
