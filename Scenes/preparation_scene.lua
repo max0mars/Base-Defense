@@ -13,13 +13,54 @@ local PlayerDeck = require("Game.Cards.PlayerDeck")
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local CardDraw = require("Game.Cards.CardDraw")
 
+function preparation_scene:drawTrashIcon(cx, cy, size, col)
+    local w = size or 22
+    local h = size or 22
+    local x = cx - w / 2
+    local y = cy - h / 2
+    
+    love.graphics.setColor(col or {0.9, 0.35, 0.35, 1})
+    
+    -- Lid handle (small rounded rectangle at top)
+    local handleW = math.max(4, math.floor(w * 0.35))
+    local handleH = math.max(2, math.floor(h * 0.12))
+    love.graphics.rectangle("fill", cx - handleW / 2, y, handleW, handleH, 1)
+    
+    -- Lid bar (horizontal bar extending past body)
+    local lidW = math.floor(w * 0.85)
+    local lidH = math.max(2, math.floor(h * 0.12))
+    local lidY = y + handleH + 1
+    love.graphics.rectangle("fill", cx - lidW / 2, lidY, lidW, lidH, 1)
+    
+    -- Can body (slightly tapered/rounded rectangle)
+    local bodyW = math.floor(w * 0.65)
+    local bodyH = h - (lidY + lidH - y) - 2
+    local bodyX = cx - bodyW / 2
+    local bodyY = lidY + lidH + 1
+    love.graphics.rectangle("fill", bodyX, bodyY, bodyW, bodyH, 2)
+    
+    -- Slits / vertical lines on can body for clear garbage can silhouette
+    love.graphics.setColor(0.08, 0.08, 0.12, 0.75)
+    local slitW = math.max(1, math.floor(w * 0.08))
+    local slitH = math.max(2, math.floor(bodyH * 0.6))
+    local slitY = bodyY + math.floor((bodyH - slitH) / 2)
+    local spacing = math.floor(bodyW * 0.25)
+    love.graphics.rectangle("fill", cx - spacing - slitW / 2, slitY, slitW, slitH, 1)
+    love.graphics.rectangle("fill", cx - slitW / 2, slitY, slitW, slitH, 1)
+    love.graphics.rectangle("fill", cx + spacing - slitW / 2, slitY, slitW, slitH, 1)
+end
+
 function preparation_scene:load(isPostBattle)
     love.mouse.setVisible(true)
     self.handCursor = love.mouse.getSystemCursor("hand")
     self.arrowCursor = love.mouse.getSystemCursor("arrow")
     
     _G.PersistentState = _G.PersistentState or {}
-    _G.PersistentState.materials = _G.PersistentState.materials or { ["Upgrade Material"] = 5 }
+    _G.PersistentState.materials = _G.PersistentState.materials or { ["Upgrade Material"] = 5, ["Card Removal"] = 2 }
+    if _G.PersistentState.cardRemovals == nil then
+        _G.PersistentState.cardRemovals = (_G.PersistentState.materials and _G.PersistentState.materials["Card Removal"]) or 2
+    end
+    _G.PersistentState.materials["Card Removal"] = _G.PersistentState.cardRemovals
     
     if isPostBattle then
         _G.PersistentState.battlesCompleted = (_G.PersistentState.battlesCompleted or 0) + 1
@@ -37,6 +78,8 @@ function preparation_scene:load(isPostBattle)
         
         if _G.PersistentState.battlesCompleted > 0 and _G.PersistentState.battlesCompleted % 5 == 0 then
             self.showUpgradeChoice = true
+            local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+            CardUpgradeConfig.Economy.addCardRemovals(1)
         end
     end
     
@@ -132,6 +175,9 @@ function preparation_scene:load(isPostBattle)
     self.viewingDeck = false
     self.viewingUpgrades = false
     self.upgradePage = 1
+    self.deckPage = 1
+    self.deckTrashMode = false
+    self.destroyConfirmCard = nil
 
     self:precalculateWaves()
     self:rollShop()
@@ -352,26 +398,83 @@ function preparation_scene:drawForecast()
 end
 
 function preparation_scene:drawDeck()
-    love.graphics.setColor(0, 0, 0, 0.9)
-    love.graphics.rectangle("fill", 100, 50, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 100, 10)
+    local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+    local removals = CardUpgradeConfig.Economy.getCardRemovals()
+    local mx, my = love.mouse.getPosition()
+
+    love.graphics.setColor(0, 0, 0, 0.92)
+    love.graphics.rectangle("fill", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("line", 100, 50, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 100, 10)
+    love.graphics.rectangle("line", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
     
-    -- Title removed per request
-    
+    -- Header: Total cards count
+    if _G.PersistentState.deck then
+        local rawCards = _G.PersistentState.deck:getCards()
+        local totalCount = 0
+        for _, c in ipairs(rawCards) do
+            totalCount = totalCount + (c.quantity or 1)
+        end
+        love.graphics.setColor(0.85, 0.85, 0.9, 1)
+        love.graphics.printf("Cards in Deck: " .. totalCount, 120, 58, 200, "left")
+    end
+
+    -- Header: Garbage / Removal Button
+    self.deckTrashBtn = {
+        x = VIRTUAL_WIDTH - 290,
+        y = 52,
+        w = 170,
+        h = 36
+    }
+    local isTrashBtnHover = false
+    if not self.destroyConfirmCard then
+        isTrashBtnHover = mx >= self.deckTrashBtn.x and mx <= self.deckTrashBtn.x + self.deckTrashBtn.w and my >= self.deckTrashBtn.y and my <= self.deckTrashBtn.y + self.deckTrashBtn.h
+        if isTrashBtnHover then Cursor.wantHand = true end
+    end
+
+    if self.deckTrashMode then
+        -- Pulsing warning banner in center
+        local pulse = 0.75 + 0.25 * math.sin(love.timer.getTime() * 6)
+        love.graphics.setColor(1, 0.35, 0.35, pulse)
+        love.graphics.printf("REMOVAL MODE: Click a card to destroy it", 100, 60, VIRTUAL_WIDTH - 200, "center")
+
+        -- Active Cancel button
+        love.graphics.setColor(isTrashBtnHover and {0.9, 0.25, 0.25, 1} or {0.8, 0.18, 0.18, 1})
+        love.graphics.rectangle("fill", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
+        love.graphics.setColor(1, 0.5, 0.5, 1)
+        love.graphics.rectangle("line", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
+        self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1, 1, 1})
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("CANCEL", self.deckTrashBtn.x + 36, self.deckTrashBtn.y + 10, self.deckTrashBtn.w - 40, "center")
+    else
+        local canTrash = removals > 0
+        local btnBg = canTrash and (isTrashBtnHover and {0.35, 0.15, 0.18, 1} or {0.24, 0.11, 0.14, 0.95})
+                                or {0.18, 0.18, 0.2, 0.7}
+        local btnBorder = canTrash and (isTrashBtnHover and {0.95, 0.4, 0.4, 1} or {0.75, 0.28, 0.28, 1})
+                                   or {0.4, 0.4, 0.45, 0.8}
+        love.graphics.setColor(btnBg)
+        love.graphics.rectangle("fill", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
+        love.graphics.setColor(btnBorder)
+        love.graphics.rectangle("line", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
+
+        local iconColor = canTrash and (isTrashBtnHover and {1, 0.4, 0.4, 1} or {0.9, 0.35, 0.35, 1})
+                                   or {0.5, 0.5, 0.5, 1}
+        self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, iconColor)
+
+        love.graphics.setColor(canTrash and {1, 1, 1, 1} or {0.55, 0.55, 0.6, 1})
+        local label = canTrash and ("Destroy (" .. removals .. ")") or "Destroy (0)"
+        love.graphics.printf(label, self.deckTrashBtn.x + 36, self.deckTrashBtn.y + 10, self.deckTrashBtn.w - 40, "center")
+    end
 
     if _G.PersistentState.deck then
         local cards = _G.PersistentState.deck:getCards()
         
         local cols = 4
         local cardW = 200
-        local cardH = 280
+        local cardH = 240
         local spacingX = 40
-        local spacingY = 20
+        local spacingY = 30
         local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
-        local startY = 65
-        
-        local mx, my = love.mouse.getPosition()
+        local startY = 96
         
         local maxPerPage = 8
         local totalPages = math.max(1, math.ceil(#cards / maxPerPage))
@@ -391,9 +494,17 @@ function preparation_scene:drawDeck()
             local cx = startX + col * (cardW + spacingX)
             local cy = startY + row * (cardH + spacingY)
             
+            local isTargetedForDestruction = (self.destroyConfirmCard ~= nil and self.destroyConfirmCard == card)
+            local isHovered = false
+            if not self.destroyConfirmCard then
+                isHovered = mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH
+                if isHovered and self.deckTrashMode then
+                    Cursor.wantHand = true
+                end
+            end
+
             if card.getCardDraw and card:getCardDraw() then
-                local isHovered = mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH
-                card:getCardDraw():draw(cx, cy, cardW, cardH, isHovered)
+                card:getCardDraw():draw(cx, cy, cardW, cardH, isHovered and not self.deckTrashMode)
                 
                 -- Draw quantity badge
                 if card.quantity and card.quantity > 1 then
@@ -409,13 +520,26 @@ function preparation_scene:drawDeck()
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.printf(card.name, cx, cy + 50, cardW, "center")
             end
+
+            -- Highlight card: either locked to targeted card when confirm popup appears,
+            -- or on hover when selecting a card in removal mode
+            local shouldHighlight = isTargetedForDestruction or (self.destroyConfirmCard == nil and self.deckTrashMode and isHovered)
+            if shouldHighlight then
+                love.graphics.setColor(0.9, 0.15, 0.15, 0.22)
+                love.graphics.rectangle("fill", cx, cy, cardW, cardH, 8)
+                love.graphics.setColor(1, 0.25, 0.25, 1)
+                love.graphics.setLineWidth(3)
+                love.graphics.rectangle("line", cx, cy, cardW, cardH, 8)
+                love.graphics.setLineWidth(1)
+                self:drawTrashIcon(cx + cardW / 2, cy + cardH / 2, 42, {1, 0.3, 0.3, 0.9})
+            end
         end
         
         self.prevPageBtn = { x = 120, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Prev Page" }
         self.nextPageBtn = { x = VIRTUAL_WIDTH - 240, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Next Page" }
         
         if self.deckPage > 1 then
-            local isHovered = mx >= self.prevPageBtn.x and mx <= self.prevPageBtn.x + self.prevPageBtn.w and my >= self.prevPageBtn.y and my <= self.prevPageBtn.y + self.prevPageBtn.h
+            local isHovered = not self.destroyConfirmCard and (mx >= self.prevPageBtn.x and mx <= self.prevPageBtn.x + self.prevPageBtn.w and my >= self.prevPageBtn.y and my <= self.prevPageBtn.y + self.prevPageBtn.h)
             if isHovered then Cursor.wantHand = true end
             love.graphics.setColor(isHovered and {0.4, 0.6, 0.9, 1} or {0.3, 0.5, 0.8, 1})
             love.graphics.rectangle("fill", self.prevPageBtn.x, self.prevPageBtn.y, self.prevPageBtn.w, self.prevPageBtn.h, 5)
@@ -424,7 +548,7 @@ function preparation_scene:drawDeck()
         end
         
         if self.deckPage < totalPages then
-            local isHovered = mx >= self.nextPageBtn.x and mx <= self.nextPageBtn.x + self.nextPageBtn.w and my >= self.nextPageBtn.y and my <= self.nextPageBtn.y + self.nextPageBtn.h
+            local isHovered = not self.destroyConfirmCard and (mx >= self.nextPageBtn.x and mx <= self.nextPageBtn.x + self.nextPageBtn.w and my >= self.nextPageBtn.y and my <= self.nextPageBtn.y + self.nextPageBtn.h)
             if isHovered then Cursor.wantHand = true end
             love.graphics.setColor(isHovered and {0.4, 0.6, 0.9, 1} or {0.3, 0.5, 0.8, 1})
             love.graphics.rectangle("fill", self.nextPageBtn.x, self.nextPageBtn.y, self.nextPageBtn.w, self.nextPageBtn.h, 5)
@@ -438,6 +562,122 @@ function preparation_scene:drawDeck()
     
     love.graphics.setColor(0.6, 0.6, 0.6, 1)
     love.graphics.printf("Click anywhere else to close", 100, VIRTUAL_HEIGHT - 45, VIRTUAL_WIDTH - 200, "center")
+end
+
+function preparation_scene:drawDestroyConfirmation(mx, my)
+    if not self.destroyConfirmCard then return end
+    
+    local card = self.destroyConfirmCard
+    local dw = 480
+    local dh = 270
+    local dx = (VIRTUAL_WIDTH - dw) / 2
+    local dy = (VIRTUAL_HEIGHT - dh) / 2
+    
+    -- Dim backdrop
+    love.graphics.setColor(0, 0, 0, 0.82)
+    love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+    
+    -- Modal panel
+    love.graphics.setColor(0.12, 0.12, 0.16, 0.98)
+    love.graphics.rectangle("fill", dx, dy, dw, dh, 10)
+    love.graphics.setColor(0.85, 0.25, 0.25, 1)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", dx, dy, dw, dh, 10)
+    love.graphics.setLineWidth(1)
+    
+    -- Trash icon next to title
+    self:drawTrashIcon(dx + 35, dy + 32, 26, {0.95, 0.3, 0.3, 1})
+    
+    -- Title
+    love.graphics.setColor(1, 0.35, 0.35, 1)
+    love.graphics.printf("DESTROY CARD", dx + 55, dy + 22, dw - 75, "left")
+    
+    -- Card Name
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf(card.name or "Unknown Card", dx + 20, dy + 68, dw - 40, "center")
+    
+    -- Explanation / Details
+    local qty = card.quantity or 1
+    if qty > 1 then
+        love.graphics.setColor(1, 0.85, 0.3, 1)
+        love.graphics.printf("You have " .. qty .. " copies of this card in your deck.\nOnly a single copy will be destroyed (" .. (qty - 1) .. " remaining).", dx + 20, dy + 105, dw - 40, "center")
+    else
+        love.graphics.setColor(0.85, 0.85, 0.85, 1)
+        love.graphics.printf("This is your only copy of this card.\nIt will be permanently removed from your deck.", dx + 20, dy + 105, dw - 40, "center")
+    end
+    
+    love.graphics.setColor(0.65, 0.65, 0.7, 1)
+    love.graphics.printf("Cost: 1 Card Removal", dx + 20, dy + 155, dw - 40, "center")
+    
+    -- Buttons
+    self.confirmDestroyBtn = { x = dx + 35, y = dy + dh - 58, w = 190, h = 42, label = "DESTROY" }
+    self.cancelDestroyBtn = { x = dx + dw - 225, y = dy + dh - 58, w = 190, h = 42, label = "CANCEL" }
+    
+    -- Draw Confirm Button
+    local isConfirmHover = mx >= self.confirmDestroyBtn.x and mx <= self.confirmDestroyBtn.x + self.confirmDestroyBtn.w and my >= self.confirmDestroyBtn.y and my <= self.confirmDestroyBtn.y + self.confirmDestroyBtn.h
+    if isConfirmHover then Cursor.wantHand = true end
+    love.graphics.setColor(isConfirmHover and {0.9, 0.22, 0.22, 1} or {0.75, 0.18, 0.18, 1})
+    love.graphics.rectangle("fill", self.confirmDestroyBtn.x, self.confirmDestroyBtn.y, self.confirmDestroyBtn.w, self.confirmDestroyBtn.h, 6)
+    love.graphics.setColor(1, 0.4, 0.4, 1)
+    love.graphics.rectangle("line", self.confirmDestroyBtn.x, self.confirmDestroyBtn.y, self.confirmDestroyBtn.w, self.confirmDestroyBtn.h, 6)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("DESTROY", self.confirmDestroyBtn.x, self.confirmDestroyBtn.y + 12, self.confirmDestroyBtn.w, "center")
+    
+    -- Draw Cancel Button
+    local isCancelHover = mx >= self.cancelDestroyBtn.x and mx <= self.cancelDestroyBtn.x + self.cancelDestroyBtn.w and my >= self.cancelDestroyBtn.y and my <= self.cancelDestroyBtn.y + self.cancelDestroyBtn.h
+    if isCancelHover then Cursor.wantHand = true end
+    love.graphics.setColor(isCancelHover and {0.4, 0.4, 0.46, 1} or {0.28, 0.28, 0.34, 1})
+    love.graphics.rectangle("fill", self.cancelDestroyBtn.x, self.cancelDestroyBtn.y, self.cancelDestroyBtn.w, self.cancelDestroyBtn.h, 6)
+    love.graphics.setColor(0.6, 0.6, 0.7, 1)
+    love.graphics.rectangle("line", self.cancelDestroyBtn.x, self.cancelDestroyBtn.y, self.cancelDestroyBtn.w, self.cancelDestroyBtn.h, 6)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("CANCEL", self.cancelDestroyBtn.x, self.cancelDestroyBtn.y + 12, self.cancelDestroyBtn.w, "center")
+end
+
+function preparation_scene:executeCardRemoval(card)
+    if not card then return false end
+    local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+    if CardUpgradeConfig.Economy.getCardRemovals() < 1 then
+        return false
+    end
+    
+    local deck = _G.PersistentState and _G.PersistentState.deck
+    if not deck then return false end
+    
+    -- Deduct 1 card removal
+    CardUpgradeConfig.Economy.useCardRemoval()
+    
+    -- Remove single card
+    if type(deck.removeCardInstance) == "function" then
+        deck:removeCardInstance(card)
+    else
+        local qty = card.quantity or 1
+        if qty > 1 then
+            card.quantity = qty - 1
+            if card.payload then card.payload.rewardCard = nil end
+            card.rewardCard = nil
+        else
+            if deck.cards then
+                for idx = #deck.cards, 1, -1 do
+                    if deck.cards[idx] == card then
+                        table.remove(deck.cards, idx)
+                        break
+                    end
+                end
+            elseif type(deck.removeCard) == "function" then
+                deck:removeCard(card.id, 1, card.tier)
+            end
+        end
+    end
+    
+    -- Adjust pagination if needed
+    local cards = deck:getCards()
+    local totalPages = math.max(1, math.ceil(#cards / 8))
+    if self.deckPage > totalPages then
+        self.deckPage = totalPages
+    end
+    
+    return true
 end
 
 local function isUpgradableCard(c)
@@ -808,6 +1048,12 @@ function preparation_scene:draw()
     love.graphics.setColor(0.3, 0.85, 1, 1)
     love.graphics.printf("Materials: " .. upgradeMats, 20, 115, 200, "left")
     
+    local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+    local removals = CardUpgradeConfig.Economy.getCardRemovals()
+    self:drawTrashIcon(150, 122, 18, {0.9, 0.35, 0.35, 1})
+    love.graphics.setColor(0.9, 0.45, 0.45, 1)
+    love.graphics.printf("Removals: " .. removals, 165, 115, 150, "left")
+    
     -- Draw XP circles
     if shopLevel < 10 then
         local reqXP = self:getRequiredXP(shopLevel)
@@ -845,6 +1091,9 @@ function preparation_scene:draw()
     
     if self.viewingDeck then
         self:drawDeck()
+        if self.destroyConfirmCard then
+            self:drawDestroyConfirmation(mx, my)
+        end
         Cursor.wantHand = true
     end
     
@@ -936,6 +1185,48 @@ function preparation_scene:mousepressed(x, y, button)
     if button ~= 1 then return end
     
     if self.viewingDeck then
+        -- 1. Confirmation Modal
+        if self.destroyConfirmCard then
+            local btn = self.confirmDestroyBtn
+            if btn and x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                self:executeCardRemoval(self.destroyConfirmCard)
+                self.destroyConfirmCard = nil
+                self.deckTrashMode = false
+                return
+            end
+            btn = self.cancelDestroyBtn
+            if btn and x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                self.destroyConfirmCard = nil
+                return
+            end
+            local dw, dh = 480, 270
+            local dx = (VIRTUAL_WIDTH - dw) / 2
+            local dy = (VIRTUAL_HEIGHT - dh) / 2
+            if x < dx or x > dx + dw or y < dy or y > dy + dh then
+                self.destroyConfirmCard = nil
+                return
+            end
+            return
+        end
+
+        -- 2. Trash button toggle
+        if self.deckTrashBtn then
+            local btn = self.deckTrashBtn
+            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+                local removals = CardUpgradeConfig.Economy.getCardRemovals()
+                if self.deckTrashMode then
+                    self.deckTrashMode = false
+                else
+                    if removals > 0 then
+                        self.deckTrashMode = true
+                    end
+                end
+                return
+            end
+        end
+
+        -- 3. Pagination buttons
         if self.deckPage and self.deckPage > 1 and self.prevPageBtn then
             local btn = self.prevPageBtn
             if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
@@ -955,10 +1246,62 @@ function preparation_scene:mousepressed(x, y, button)
                 end
             end
         end
-        
-        self.viewingDeck = false
-        self.deckPage = 1
-        return
+
+        -- 4. In Trash Mode: check card clicks
+        if self.deckTrashMode then
+            local cards = _G.PersistentState.deck and _G.PersistentState.deck:getCards() or {}
+            local maxPerPage = 8
+            local startIndex = (self.deckPage - 1) * maxPerPage + 1
+            local endIndex = math.min(self.deckPage * maxPerPage, #cards)
+            local cols = 4
+            local cardW = 200
+            local cardH = 240
+            local spacingX = 40
+            local spacingY = 30
+            local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
+            local startY = 96
+
+            for i = startIndex, endIndex do
+                local displayIndex = i - startIndex
+                local card = cards[i]
+                local col = (displayIndex % cols)
+                local row = math.floor(displayIndex / cols)
+                local cx = startX + col * (cardW + spacingX)
+                local cy = startY + row * (cardH + spacingY)
+
+                if x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then
+                    self.destroyConfirmCard = card
+                    return
+                end
+            end
+
+            -- Clicked inside modal window but not on a card: stay in deck view
+            local modalX, modalY = 100, 45
+            local modalW, modalH = VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90
+            if x >= modalX and x <= modalX + modalW and y >= modalY and y <= modalY + modalH then
+                return
+            end
+        end
+
+        -- 5. Clicking outside closes deck view
+        local modalX, modalY = 100, 45
+        local modalW, modalH = VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90
+        if x < modalX or x > modalX + modalW or y < modalY or y > modalY + modalH then
+            self.viewingDeck = false
+            self.deckPage = 1
+            self.deckTrashMode = false
+            self.destroyConfirmCard = nil
+            return
+        end
+
+        -- Clicking empty space when not in trash mode closes deck view (original behavior)
+        if not self.deckTrashMode then
+            self.viewingDeck = false
+            self.deckPage = 1
+            self.deckTrashMode = false
+            self.destroyConfirmCard = nil
+            return
+        end
     end
 
     if self.viewingUpgrades then
@@ -1011,6 +1354,8 @@ function preparation_scene:mousepressed(x, y, button)
     if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
         self.viewingDeck = true
         self.viewingUpgrades = false
+        self.deckTrashMode = false
+        self.destroyConfirmCard = nil
         return
     end
     
@@ -1063,7 +1408,16 @@ end
 function preparation_scene:keypressed(key)
     if key == "escape" or key == "p" then
         if self.viewingDeck then
+            if self.destroyConfirmCard then
+                self.destroyConfirmCard = nil
+                return
+            end
+            if self.deckTrashMode then
+                self.deckTrashMode = false
+                return
+            end
             self.viewingDeck = false
+            self.deckPage = 1
             return
         end
         if self.viewingUpgrades then

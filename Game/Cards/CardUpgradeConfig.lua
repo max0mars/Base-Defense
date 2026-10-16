@@ -21,6 +21,13 @@ CardUpgradeConfig.Economy = {
         if resName == "gold" or resName == "cash" then
             return _G.PersistentState.cash or 0
         end
+        if resName == "Card Removal" or resName == "cardRemovals" or resName == "trash" or resName == "Trash" then
+            if _G.PersistentState.cardRemovals ~= nil then
+                return _G.PersistentState.cardRemovals
+            end
+            _G.PersistentState.materials = _G.PersistentState.materials or {}
+            return _G.PersistentState.materials["Card Removal"] or _G.PersistentState.materials["Trash"] or 0
+        end
         _G.PersistentState.materials = _G.PersistentState.materials or {}
         return _G.PersistentState.materials[resName] or 0
     end,
@@ -40,6 +47,10 @@ CardUpgradeConfig.Economy = {
         for resName, amount in pairs(costTable) do
             if resName == "gold" or resName == "cash" then
                 _G.PersistentState.cash = (_G.PersistentState.cash or 0) - amount
+            elseif resName == "Card Removal" or resName == "cardRemovals" or resName == "trash" or resName == "Trash" then
+                _G.PersistentState.cardRemovals = math.max(0, (_G.PersistentState.cardRemovals or 0) - amount)
+                _G.PersistentState.materials = _G.PersistentState.materials or {}
+                _G.PersistentState.materials["Card Removal"] = _G.PersistentState.cardRemovals
             else
                 _G.PersistentState.materials = _G.PersistentState.materials or {}
                 _G.PersistentState.materials[resName] = (_G.PersistentState.materials[resName] or 0) - amount
@@ -52,10 +63,29 @@ CardUpgradeConfig.Economy = {
         _G.PersistentState = _G.PersistentState or {}
         if resName == "gold" or resName == "cash" then
             _G.PersistentState.cash = (_G.PersistentState.cash or 0) + amount
+        elseif resName == "Card Removal" or resName == "cardRemovals" or resName == "trash" or resName == "Trash" then
+            _G.PersistentState.cardRemovals = (_G.PersistentState.cardRemovals or 0) + amount
+            _G.PersistentState.materials = _G.PersistentState.materials or {}
+            _G.PersistentState.materials["Card Removal"] = _G.PersistentState.cardRemovals
         else
             _G.PersistentState.materials = _G.PersistentState.materials or {}
             _G.PersistentState.materials[resName] = (_G.PersistentState.materials[resName] or 0) + amount
         end
+    end,
+
+    getCardRemovals = function()
+        return CardUpgradeConfig.Economy.getResource("Card Removal")
+    end,
+
+    addCardRemovals = function(amount)
+        CardUpgradeConfig.Economy.addResource("Card Removal", amount)
+    end,
+
+    useCardRemoval = function()
+        if CardUpgradeConfig.Economy.getCardRemovals() >= 1 then
+            return CardUpgradeConfig.Economy.deduct({ ["Card Removal"] = 1 })
+        end
+        return false
     end
 }
 

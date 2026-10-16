@@ -42,4 +42,23 @@ function PlayerDeck:removeCard(cardId, amount, tier)
     return false
 end
 
+function PlayerDeck:removeCardInstance(targetCard)
+    if not targetCard then return false end
+    for i = #self.cards, 1, -1 do
+        local card = self.cards[i]
+        if card == targetCard then
+            local qty = card.quantity or 1
+            if qty > 1 then
+                card.quantity = qty - 1
+                if card.payload then card.payload.rewardCard = nil end
+                card.rewardCard = nil
+            else
+                table.remove(self.cards, i)
+            end
+            return true
+        end
+    end
+    return self:removeCard(targetCard.id, 1, targetCard.tier)
+end
+
 return PlayerDeck
