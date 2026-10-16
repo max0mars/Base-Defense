@@ -8,10 +8,12 @@ function PlayerDeck:new()
 end
 
 function PlayerDeck:addCard(card)
-    -- Check if we already have a card with the same ID to stack them
+    local cardTier = card.tier or 1
+    -- Check if we already have a card with the same ID and tier to stack them
     for _, existingCard in ipairs(self.cards) do
-        if existingCard.id == card.id then
-            existingCard.quantity = existingCard.quantity + (card.quantity or 1)
+        local existingTier = existingCard.tier or 1
+        if existingCard.id == card.id and existingTier == cardTier then
+            existingCard.quantity = (existingCard.quantity or 1) + (card.quantity or 1)
             return
         end
     end
@@ -24,12 +26,13 @@ function PlayerDeck:getCards()
     return self.cards
 end
 
-function PlayerDeck:removeCard(cardId, amount)
+function PlayerDeck:removeCard(cardId, amount, tier)
     amount = amount or 1
     for i = #self.cards, 1, -1 do
         local card = self.cards[i]
-        if card.id == cardId then
-            card.quantity = card.quantity - amount
+        local cardTier = card.tier or 1
+        if card.id == cardId and (tier == nil or cardTier == tier) then
+            card.quantity = (card.quantity or 1) - amount
             if card.quantity <= 0 then
                 table.remove(self.cards, i)
             end

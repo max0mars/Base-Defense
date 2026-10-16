@@ -20,7 +20,7 @@ local rarityColors = {
 local STAT_BOUNDS = {
     damage = { min = 5, max = 250 },
     range = { min = 150, max = 1000 },
-    fireRate = { min = 0.15, max = 4.0 }
+    fireRate = { min = 0.10, max = 10.0 }
 }
 
 function CardDraw.calcBars(statType, value)
@@ -34,11 +34,11 @@ function CardDraw.calcBars(statType, value)
     local norm = (val - lo) / (hi - lo)
     norm = math.max(0, math.min(1, norm))
     
-    -- Map norm [0, 1] to continuous 1.0 to 5.0 bars
-    local rawBars = 1.0 + norm * 4.0
-    -- Round to nearest 1/4th (0.25)
+    -- Map norm [0, 1] to continuous 0.0 to 5.0 bars
+    local rawBars = norm * 5.0
+    -- Round to nearest 1/4th (0.25), with a minimum of 0.25 bars
     local rounded = math.floor(rawBars * 4 + 0.5) / 4
-    return math.max(1, math.min(5.0, rounded))
+    return math.max(0.25, math.min(5.0, rounded))
 end
 
 -- Constructor to create a new card instance
@@ -132,6 +132,8 @@ function CardDraw.new(x, y, data)
     self.damageBarsBonus = data.damageBarsBonus or 0
     self.rangeBarsBonus = data.rangeBarsBonus or 0
     self.firerateBarsBonus = data.firerateBarsBonus or 0
+    self.tier = data.tier or 1
+    self.upgradable = data.upgradable
     
     self.affectedSlots = data.affectedSlots or {}
     
@@ -189,6 +191,8 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
             local labels = {"Dmg", "Range", "Firerate"}
             local stats = {self.damageBars, self.rangeBars, self.firerateBars}
             local bonusStats = {self.damageBarsBonus, self.rangeBarsBonus, self.firerateBarsBonus}
+            local defaultBarColor = {0.6, 0.6, 0.6, 1} -- Standard grey for default stat bars on all cards
+            local greenBonusColor = {0.2, 0.9, 0.3, 1} -- Green fill for tier upgrades bonus
             for j = 1, 3 do
                 table.insert(deferredText, {t = labels[j], x = startX, y = startY + (j-1)*30, w = 80, a = "left"})
                 
@@ -200,8 +204,8 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
                     local ry = startY + (j-1)*30
                     local size = 15
                     
-                    -- 1. Slot background (dark subtle slot)
-                    love.graphics.setColor(color[1], color[2], color[3], 0.25)
+                    -- 1. Slot background (dark subtle grey slot)
+                    love.graphics.setColor(defaultBarColor[1], defaultBarColor[2], defaultBarColor[3], 0.25)
                     love.graphics.rectangle("fill", rx, ry, size, size)
                     
                     -- 2. Fill calculation
@@ -211,22 +215,22 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
                     if totalStat > 5 and i <= (totalStat - 5 + 0.001) then
                         local wrapFrac = math.min(1, math.max(0, (totalStat - 5) - (i - 1)))
                         if wrapFrac > 0.001 then
-                            love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
+                            love.graphics.setColor(greenBonusColor) -- Green bonus
                             love.graphics.rectangle("fill", rx, ry, size, size)
                             love.graphics.setColor(1, 1, 1, 1) -- White inner indicator
                             local fillW = math.max(1, math.floor(9 * wrapFrac + 0.5))
                             love.graphics.rectangle("fill", rx + 3, ry + 3, fillW, 9)
                         end
                     else
-                        -- Base stat fill for this block [i-1, i]
+                        -- Base stat fill for this block [i-1, i] (Default grey stat bar)
                         local rawBaseFrac = math.min(1, math.max(0, base - (i - 1)))
                         if rawBaseFrac > 0.001 then
                             local fillW = (rawBaseFrac >= 0.999) and size or math.floor(size * rawBaseFrac + 0.5)
-                            love.graphics.setColor(color)
+                            love.graphics.setColor(defaultBarColor)
                             love.graphics.rectangle("fill", rx, ry, fillW, size)
                         end
                         
-                        -- Bonus fill for this block (if bonus extends into or starts in this block)
+                        -- Bonus fill for this block (Vibrant green bonus)
                         local bonusStart = base
                         local bonusEnd = base + bonus
                         local blockStart = i - 1
@@ -238,18 +242,18 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
                             local xOffset = math.floor((activeStart - blockStart) * size + 0.5)
                             local w = math.floor((activeEnd - activeStart) * size + 0.5)
                             if xOffset + w > size then w = size - xOffset end
-                            love.graphics.setColor(1, 0.8, 0.2, 1) -- Gold
+                            love.graphics.setColor(greenBonusColor) -- Green bonus
                             love.graphics.rectangle("fill", rx + xOffset, ry, w, size)
                         end
                     end
                     
                     -- 3. Draw clean 1px border outline ON TOP of the fill
                     love.graphics.setLineWidth(1)
-                    love.graphics.setColor(color)
+                    love.graphics.setColor(defaultBarColor)
                     love.graphics.rectangle("line", rx, ry, size, size)
                 end
-                love.graphics.setColor(color) -- reset color for the rest of the drawing
             end
+            love.graphics.setColor(color) -- reset color for the rest of the drawing
         elseif self.buildingType == "Buffer" then
             local cx = CardDraw.WIDTH / 2
             local cy = 115
@@ -397,8 +401,18 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
     -- Render Cost Text (Centered inside the circle)
     table.insert(deferredText, {t = tostring(self.cost), x = -10, y = 25, w = 50, a = "center"})
     
-    -- Render Name Text (Slight offset inside the name banner)
-    table.insert(deferredText, {t = self.name, x = 45, y = 27, w = CardDraw.WIDTH - 65, a = "left"})
+    -- Render Name and Tier Text (Slight offset inside the name banner)
+    local isUpgradable = self.upgradable
+    if isUpgradable == nil then
+        isUpgradable = self.cardType == "Building" and self.buildingType == "Turret"
+    end
+    if isUpgradable then
+        local tierRoman = ({"I", "II", "III", "IV", "V"})[self.tier or 1] or "I"
+        table.insert(deferredText, {t = self.name, x = 45, y = 27, w = CardDraw.WIDTH - 115, a = "left"})
+        table.insert(deferredText, {t = tierRoman, x = CardDraw.WIDTH - 70, y = 27, w = 45, a = "center"})
+    else
+        table.insert(deferredText, {t = self.name, x = 45, y = 27, w = CardDraw.WIDTH - 65, a = "left"})
+    end
     
     -- Render Description Text
     local boxHeight = 150

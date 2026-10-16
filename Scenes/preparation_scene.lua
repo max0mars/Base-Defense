@@ -19,6 +19,7 @@ function preparation_scene:load(isPostBattle)
     self.arrowCursor = love.mouse.getSystemCursor("arrow")
     
     _G.PersistentState = _G.PersistentState or {}
+    _G.PersistentState.materials = _G.PersistentState.materials or { ["Upgrade Material"] = 5 }
     
     if isPostBattle then
         _G.PersistentState.battlesCompleted = (_G.PersistentState.battlesCompleted or 0) + 1
@@ -108,8 +109,13 @@ function preparation_scene:load(isPostBattle)
     }
     
     self.deckButton = {
-        x = 20, y = VIRTUAL_HEIGHT - 60, w = 150, h = 45, label = "VIEW DECK",
+        x = 20, y = VIRTUAL_HEIGHT - 60, w = 140, h = 45, label = "VIEW DECK",
         color = {0.3, 0.3, 0.4, 1}, hoverColor = {0.4, 0.4, 0.5, 1}, borderColor = {0.6, 0.6, 0.8, 1}
+    }
+    
+    self.upgradeCardsButton = {
+        x = 175, y = VIRTUAL_HEIGHT - 60, w = 170, h = 45, label = "UPGRADE CARDS",
+        color = {0.15, 0.4, 0.3, 1}, hoverColor = {0.2, 0.55, 0.4, 1}, borderColor = {0.3, 0.85, 0.6, 1}
     }
     
     self.rerollButton = {
@@ -124,6 +130,8 @@ function preparation_scene:load(isPostBattle)
 
 
     self.viewingDeck = false
+    self.viewingUpgrades = false
+    self.upgradePage = 1
 
     self:precalculateWaves()
     self:rollShop()
@@ -432,6 +440,341 @@ function preparation_scene:drawDeck()
     love.graphics.printf("Click anywhere else to close", 100, VIRTUAL_HEIGHT - 45, VIRTUAL_WIDTH - 200, "center")
 end
 
+local function isUpgradableCard(c)
+    if not c then return false end
+    if type(c.isUpgradable) == "function" then
+        return c:isUpgradable()
+    end
+    if c.upgradable ~= nil then
+        return c.upgradable
+    end
+    if type(c.isTurret) == "function" then
+        return c:isTurret()
+    end
+    if c.payload then
+        local payload = c.payload
+        local cfg = payload.config or {}
+        if payload.upgradable ~= nil then return payload.upgradable end
+        if cfg.upgradable ~= nil then return cfg.upgradable end
+        
+        local iconCat = payload.iconCategory or cfg.iconCategory or c.iconCategory
+        if iconCat == "buff" or iconCat == "blocker" or iconCat == "spell" or iconCat == "instant" then return false end
+
+        local function checkType(col, name)
+            if not col then return false end
+            if type(col) == "table" then
+                for _, t in ipairs(col) do if t == name then return true end end
+                if col[name] == true then return true end
+            elseif col == name then return true end
+            return false
+        end
+
+        local bClass = payload.buildingClass
+        if checkType(payload.types, "passive") or checkType(payload.types, "buff") or checkType(payload.types, "blocker") or
+           checkType(cfg.types, "passive") or checkType(cfg.types, "buff") or checkType(cfg.types, "blocker") or
+           checkType(c.types, "passive") or checkType(c.types, "buff") or checkType(c.types, "blocker") or
+           (bClass and (checkType(bClass.types, "passive") or checkType(bClass.types, "buff") or checkType(bClass.types, "blocker"))) then
+            return false
+        end
+
+        local affSlots = payload.affectedSlots or cfg.affectedSlots
+        if affSlots and #affSlots > 0 and iconCat ~= "turret" then return false end
+
+        if iconCat == "turret" then return true end
+        if checkType(payload.types, "turret") or checkType(cfg.types, "turret") or checkType(c.types, "turret") or (bClass and checkType(bClass.types, "turret")) then
+            return true
+        end
+        if cfg.damage or cfg.fireRate or cfg.range or cfg.damageBars or cfg.firerateBars or cfg.rangeBars or
+           payload.damage or payload.fireRate or payload.range then
+            return true
+        end
+    end
+    if type(c.getCardDraw) == "function" then
+        local cd = c:getCardDraw()
+        if cd and cd.upgradable ~= nil then
+            return cd.upgradable
+        end
+    end
+    return false
+end
+
+local function getCardTier(c)
+    if not c then return 1 end
+    if type(c.getTier) == "function" then
+        return c:getTier()
+    end
+    return c.tier or 1
+end
+
+local function getCardNextUpgradeCost(c)
+    if not c then return nil end
+    local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+    if type(c.getNextUpgradeCost) == "function" then
+        return c:getNextUpgradeCost()
+    end
+    local currentTier = getCardTier(c)
+    if currentTier >= CardUpgradeConfig.MAX_TIER then return nil end
+    local nextTier = currentTier + 1
+    if c.upgradeCosts and c.upgradeCosts[nextTier] then
+        return c.upgradeCosts[nextTier]
+    end
+    return CardUpgradeConfig.DEFAULT_COSTS[nextTier]
+end
+
+local function canUpgradeCard(c)
+    if not c then return false, "nil_card" end
+    local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+    if type(c.canUpgrade) == "function" then
+        return c:canUpgrade()
+    end
+    local currentTier = getCardTier(c)
+    if currentTier >= CardUpgradeConfig.MAX_TIER then return false, "max_tier" end
+    local cost = getCardNextUpgradeCost(c)
+    if not cost then return false, "no_cost" end
+    if not CardUpgradeConfig.Economy.canAfford(cost) then
+        return false, "insufficient_resources", cost
+    end
+    return true, nil, cost
+end
+
+local function upgradeCard(c)
+    if not c then return false end
+    local deck = _G.PersistentState and _G.PersistentState.deck
+    if type(c.upgrade) == "function" then
+        return c:upgrade(deck)
+    end
+    local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+    local can, reason, cost = canUpgradeCard(c)
+    if not can then return false, reason end
+    CardUpgradeConfig.Economy.deduct(cost)
+    local currentTier = getCardTier(c)
+    local nextTier = currentTier + 1
+
+    if (c.quantity or 1) > 1 then
+        c.quantity = c.quantity - 1
+        if c.payload then c.payload.rewardCard = nil end
+        if c.rewardCard then c.rewardCard = nil end
+
+        local merged = false
+        if deck and deck.cards then
+            for _, other in ipairs(deck.cards) do
+                if other.id == c.id and getCardTier(other) == nextTier then
+                    other.quantity = (other.quantity or 1) + 1
+                    if other.payload then other.payload.rewardCard = nil end
+                    if other.rewardCard then other.rewardCard = nil end
+                    merged = true
+                    break
+                end
+            end
+        end
+
+        if not merged then
+            local Utils = require("Classes.Utils")
+            local newCard = Utils.deepCopy(c)
+            newCard.quantity = 1
+            newCard.tier = nextTier
+            if newCard.payload then newCard.payload.rewardCard = nil end
+            newCard.rewardCard = nil
+            if deck and deck.cards then
+                table.insert(deck.cards, newCard)
+            end
+        end
+    else
+        local merged = false
+        if deck and deck.cards then
+            for i, other in ipairs(deck.cards) do
+                if other ~= c and other.id == c.id and getCardTier(other) == nextTier then
+                    other.quantity = (other.quantity or 1) + 1
+                    if other.payload then other.payload.rewardCard = nil end
+                    if other.rewardCard then other.rewardCard = nil end
+                    for j = #deck.cards, 1, -1 do
+                        if deck.cards[j] == c then
+                            table.remove(deck.cards, j)
+                            break
+                        end
+                    end
+                    merged = true
+                    break
+                end
+            end
+        end
+        if not merged then
+            c.tier = nextTier
+            if c.payload then c.payload.rewardCard = nil end
+            if c.rewardCard then c.rewardCard = nil end
+        end
+    end
+    return true, nextTier
+end
+
+function preparation_scene:drawUpgradeWindow()
+    local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+    local mx, my = love.mouse.getPosition()
+
+    -- 1. Modal backdrop & border matching View Deck window
+    love.graphics.setColor(0, 0, 0, 0.92)
+    love.graphics.rectangle("fill", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
+    love.graphics.setColor(0.3, 0.85, 0.6, 1)
+    love.graphics.rectangle("line", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
+    
+    -- 2. Header: Title and Resource Balances
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("UPGRADE CARDS", 100, 55, VIRTUAL_WIDTH - 200, "center")
+    
+    local gold = CardUpgradeConfig.Economy.getResource("gold")
+    local mats = CardUpgradeConfig.Economy.getResource("Upgrade Material")
+    love.graphics.setColor(1, 0.85, 0.2, 1)
+    love.graphics.printf("Gold: $" .. gold, 120, 55, 200, "left")
+    love.graphics.setColor(0.3, 0.85, 1, 1)
+    love.graphics.printf("Upgrade Material: " .. mats, VIRTUAL_WIDTH - 320, 55, 200, "right")
+
+    self.upgradeButtons = {}
+
+    if _G.PersistentState.deck then
+        local rawCards = _G.PersistentState.deck:getCards()
+        local cards = {}
+        for _, card in ipairs(rawCards) do
+            if isUpgradableCard(card) then
+                table.insert(cards, card)
+            end
+        end
+        
+        if #cards == 0 then
+            love.graphics.setColor(0.7, 0.7, 0.7, 1)
+            love.graphics.printf("No upgradable turret cards in deck", 100, VIRTUAL_HEIGHT / 2 - 10, VIRTUAL_WIDTH - 200, "center")
+            love.graphics.setColor(0.6, 0.6, 0.6, 1)
+            love.graphics.printf("Click anywhere else to close", 100, VIRTUAL_HEIGHT - 45, VIRTUAL_WIDTH - 200, "center")
+            return
+        end
+        
+        local cols = 4
+        local cardW = 200
+        local cardH = 240
+        local spacingX = 40
+        local spacingY = 48
+        local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
+        local startY = 82
+        
+        local maxPerPage = 8
+        local totalPages = math.max(1, math.ceil(#cards / maxPerPage))
+        self.upgradePage = self.upgradePage or 1
+        if self.upgradePage > totalPages then self.upgradePage = totalPages end
+        if self.upgradePage < 1 then self.upgradePage = 1 end
+        
+        local startIndex = (self.upgradePage - 1) * maxPerPage + 1
+        local endIndex = math.min(self.upgradePage * maxPerPage, #cards)
+        
+        for i = startIndex, endIndex do
+            local displayIndex = i - startIndex
+            local card = cards[i]
+            local col = (displayIndex % cols)
+            local row = math.floor(displayIndex / cols)
+            
+            local cx = startX + col * (cardW + spacingX)
+            local cy = startY + row * (cardH + spacingY)
+            
+            if card.getCardDraw and card:getCardDraw() then
+                local isHovered = mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH
+                card:getCardDraw():draw(cx, cy, cardW, cardH, isHovered)
+                
+                -- Draw quantity badge
+                if card.quantity and card.quantity > 1 then
+                    love.graphics.setColor(0.9, 0.2, 0.2, 1)
+                    love.graphics.circle("fill", cx + cardW, cy, 12)
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.printf(tostring(card.quantity), cx + cardW - 12, cy - 7, 24, "center")
+                end
+            else
+                love.graphics.setColor(0.3, 0.3, 0.3, 1)
+                love.graphics.rectangle("fill", cx, cy, cardW, cardH, 5)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.printf(card.name, cx, cy + 50, cardW, "center")
+            end
+            
+            -- Upgrade control directly below card
+            local currentTier = getCardTier(card)
+            local btnY = cy + cardH + 5
+            local btnH = 34
+            
+            if currentTier >= CardUpgradeConfig.MAX_TIER then
+                love.graphics.setColor(0.2, 0.25, 0.25, 0.8)
+                love.graphics.rectangle("fill", cx, btnY, cardW, btnH, 4)
+                love.graphics.setColor(0.4, 0.8, 0.5, 1)
+                love.graphics.rectangle("line", cx, btnY, cardW, btnH, 4)
+                love.graphics.setColor(1, 0.85, 0.2, 1)
+                love.graphics.printf("MAX TIER (Tier V)", cx, btnY + 9, cardW, "center")
+            else
+                local cost = getCardNextUpgradeCost(card)
+                local canAfford = cost and CardUpgradeConfig.Economy.canAfford(cost)
+                local nextTier = currentTier + 1
+                local nextTierRoman = CardUpgradeConfig.TIER_NAMES[nextTier] or tostring(nextTier)
+                
+                -- Display exact modular costs (Gold and Upgrade Material or specific items)
+                local costParts = {}
+                if cost then
+                    if cost.gold or cost.cash then
+                        table.insert(costParts, "$" .. (cost.gold or cost.cash))
+                    end
+                    for resName, amount in pairs(cost) do
+                        if resName ~= "gold" and resName ~= "cash" then
+                            table.insert(costParts, amount .. " " .. resName)
+                        end
+                    end
+                end
+                local costStr = #costParts > 0 and table.concat(costParts, ", ") or "Free"
+                
+                local isBtnHover = mx >= cx and mx <= cx + cardW and my >= btnY and my <= btnY + btnH
+                if isBtnHover then Cursor.wantHand = true end
+                
+                local fillCol = canAfford and (isBtnHover and {0.2, 0.65, 0.35, 1} or {0.15, 0.45, 0.25, 1})
+                                          or {0.28, 0.16, 0.18, 0.85}
+                local borderCol = canAfford and (isBtnHover and {0.4, 0.95, 0.6, 1} or {0.3, 0.8, 0.5, 1})
+                                            or {0.55, 0.28, 0.28, 1}
+                
+                love.graphics.setColor(fillCol)
+                love.graphics.rectangle("fill", cx, btnY, cardW, btnH, 4)
+                love.graphics.setColor(borderCol)
+                love.graphics.rectangle("line", cx, btnY, cardW, btnH, 4)
+                
+                love.graphics.setColor(canAfford and {1, 1, 1, 1} or {0.85, 0.6, 0.6, 1})
+                love.graphics.printf("Tier " .. nextTierRoman .. ": " .. costStr, cx, btnY + 9, cardW, "center")
+                
+                table.insert(self.upgradeButtons, {
+                    x = cx, y = btnY, w = cardW, h = btnH,
+                    card = card, canAfford = canAfford
+                })
+            end
+        end
+        
+        self.prevUpgradePageBtn = { x = 120, y = VIRTUAL_HEIGHT - 85, w = 120, h = 35, label = "Prev Page" }
+        self.nextUpgradePageBtn = { x = VIRTUAL_WIDTH - 240, y = VIRTUAL_HEIGHT - 85, w = 120, h = 35, label = "Next Page" }
+        
+        if self.upgradePage > 1 then
+            local isHovered = mx >= self.prevUpgradePageBtn.x and mx <= self.prevUpgradePageBtn.x + self.prevUpgradePageBtn.w and my >= self.prevUpgradePageBtn.y and my <= self.prevUpgradePageBtn.y + self.prevUpgradePageBtn.h
+            if isHovered then Cursor.wantHand = true end
+            love.graphics.setColor(isHovered and {0.2, 0.65, 0.35, 1} or {0.15, 0.45, 0.25, 1})
+            love.graphics.rectangle("fill", self.prevUpgradePageBtn.x, self.prevUpgradePageBtn.y, self.prevUpgradePageBtn.w, self.prevUpgradePageBtn.h, 5)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf(self.prevUpgradePageBtn.label, self.prevUpgradePageBtn.x, self.prevUpgradePageBtn.y + 10, self.prevUpgradePageBtn.w, "center")
+        end
+        
+        if self.upgradePage < totalPages then
+            local isHovered = mx >= self.nextUpgradePageBtn.x and mx <= self.nextUpgradePageBtn.x + self.nextUpgradePageBtn.w and my >= self.nextUpgradePageBtn.y and my <= self.nextUpgradePageBtn.y + self.nextUpgradePageBtn.h
+            if isHovered then Cursor.wantHand = true end
+            love.graphics.setColor(isHovered and {0.2, 0.65, 0.35, 1} or {0.15, 0.45, 0.25, 1})
+            love.graphics.rectangle("fill", self.nextUpgradePageBtn.x, self.nextUpgradePageBtn.y, self.nextUpgradePageBtn.w, self.nextUpgradePageBtn.h, 5)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf(self.nextUpgradePageBtn.label, self.nextUpgradePageBtn.x, self.nextUpgradePageBtn.y + 10, self.nextUpgradePageBtn.w, "center")
+        end
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("Page " .. self.upgradePage .. " / " .. totalPages, 0, VIRTUAL_HEIGHT - 75, VIRTUAL_WIDTH, "center")
+    end
+    
+    love.graphics.setColor(0.6, 0.6, 0.6, 1)
+    love.graphics.printf("Click anywhere else to close", 100, VIRTUAL_HEIGHT - 45, VIRTUAL_WIDTH - 200, "center")
+end
+
 function preparation_scene:draw()
     if paused == 1 and self.settings then
         self.settings:draw()
@@ -460,6 +803,10 @@ function preparation_scene:draw()
     
     love.graphics.setColor(0.8, 0.2, 0.8, 1)
     love.graphics.printf("Shop Level: " .. shopLevel, 20, 70, 200, "left")
+    
+    local upgradeMats = (_G.PersistentState and _G.PersistentState.materials and _G.PersistentState.materials["Upgrade Material"]) or 0
+    love.graphics.setColor(0.3, 0.85, 1, 1)
+    love.graphics.printf("Materials: " .. upgradeMats, 20, 115, 200, "left")
     
     -- Draw XP circles
     if shopLevel < 10 then
@@ -494,9 +841,15 @@ function preparation_scene:draw()
     
     self:drawButton(self.startButton, mx, my)
     self:drawButton(self.deckButton, mx, my)
+    self:drawButton(self.upgradeCardsButton, mx, my)
     
     if self.viewingDeck then
         self:drawDeck()
+        Cursor.wantHand = true
+    end
+    
+    if self.viewingUpgrades then
+        self:drawUpgradeWindow()
         Cursor.wantHand = true
     end
     
@@ -607,6 +960,46 @@ function preparation_scene:mousepressed(x, y, button)
         self.deckPage = 1
         return
     end
+
+    if self.viewingUpgrades then
+        if self.upgradePage and self.upgradePage > 1 and self.prevUpgradePageBtn then
+            local btn = self.prevUpgradePageBtn
+            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                self.upgradePage = self.upgradePage - 1
+                return
+            end
+        end
+        
+        if self.upgradePage and self.nextUpgradePageBtn then
+            local rawCards = _G.PersistentState.deck and _G.PersistentState.deck:getCards() or {}
+            local upgradeableCount = 0
+            for _, c in ipairs(rawCards) do
+                if isUpgradableCard(c) then upgradeableCount = upgradeableCount + 1 end
+            end
+            local totalPages = math.max(1, math.ceil(upgradeableCount / 8))
+            if self.upgradePage < totalPages then
+                local btn = self.nextUpgradePageBtn
+                if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                    self.upgradePage = self.upgradePage + 1
+                    return
+                end
+            end
+        end
+        
+        -- Check click on upgrade buttons
+        for _, btn in ipairs(self.upgradeButtons or {}) do
+            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                if btn.canAfford and btn.card then
+                    upgradeCard(btn.card)
+                end
+                return
+            end
+        end
+        
+        self.viewingUpgrades = false
+        self.upgradePage = 1
+        return
+    end
     
     local btn = self.startButton
     if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
@@ -617,6 +1010,14 @@ function preparation_scene:mousepressed(x, y, button)
     btn = self.deckButton
     if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
         self.viewingDeck = true
+        self.viewingUpgrades = false
+        return
+    end
+    
+    btn = self.upgradeCardsButton
+    if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+        self.viewingUpgrades = true
+        self.viewingDeck = false
         return
     end
     
@@ -661,11 +1062,19 @@ end
 
 function preparation_scene:keypressed(key)
     if key == "escape" or key == "p" then
+        if self.viewingDeck then
+            self.viewingDeck = false
+            return
+        end
+        if self.viewingUpgrades then
+            self.viewingUpgrades = false
+            return
+        end
         paused = paused == 1 and 0 or 1
         return
     end
 
-    if key == "return" and not self.viewingDeck then
+    if key == "return" and not self.viewingDeck and not self.viewingUpgrades then
         self.scene_manager.switch("game")
     end
 end
