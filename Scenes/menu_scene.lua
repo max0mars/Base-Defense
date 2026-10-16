@@ -138,7 +138,8 @@ function menu_scene:mousepressed(x, y, button)
                         upgradeCostTokens = 20,
                         upgradeCostHand = 20,
                         upgradeCostIncome = 20,
-                        materials = { ["Upgrade Material"] = 5 }
+                        materials = { ["Upgrade Material"] = 5, ["Card Removal"] = 2 },
+                        cardRemovals = 2
                     }
                     game.testingMode = false
                     self.scene_manager.switch("new_game")
@@ -181,7 +182,8 @@ function menu_scene:keypressed(key)
             upgradeCostTokens = 20,
             upgradeCostHand = 20,
             upgradeCostIncome = 20,
-            materials = { ["Upgrade Material"] = 5 }
+            materials = { ["Upgrade Material"] = 5, ["Card Removal"] = 2 },
+            cardRemovals = 2
         }
         game.testingMode = false
         self.scene_manager.switch("new_game")
