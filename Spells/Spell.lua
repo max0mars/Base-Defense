@@ -25,7 +25,34 @@ function Spell.new(config)
     self.isConsume = config.isConsume or false
     self.isExile = config.isExile or false
     
+    self.tier = config.tier or 1
+    self.upgradeCosts = config.upgradeCosts
+    
     return self
+end
+
+function Spell:getTier()
+    return self.tier or 1
+end
+
+function Spell:isTurret()
+    return false
+end
+
+function Spell:isUpgradable()
+    return false
+end
+
+function Spell:getNextUpgradeCost()
+    return nil
+end
+
+function Spell:canUpgrade()
+    return false, "not_upgradable"
+end
+
+function Spell:upgrade()
+    return false, "not_upgradable"
 end
 
 function Spell:getCardDraw()
@@ -34,6 +61,7 @@ function Spell:getCardDraw()
         
         local data = {
             name = self.name,
+            tier = self.tier or 1,
             description = self.description,
             cost = self:getCost(),
             rarity = self.rarity or "Common",

@@ -137,7 +137,8 @@ function menu_scene:mousepressed(x, y, button)
                         startBattleExtraSlotsUnlocked = 0,
                         upgradeCostTokens = 20,
                         upgradeCostHand = 20,
-                        upgradeCostIncome = 20
+                        upgradeCostIncome = 20,
+                        materials = { ["Upgrade Material"] = 5 }
                     }
                     game.testingMode = false
                     self.scene_manager.switch("new_game")
@@ -179,7 +180,8 @@ function menu_scene:keypressed(key)
             startBattleExtraSlotsUnlocked = 0,
             upgradeCostTokens = 20,
             upgradeCostHand = 20,
-            upgradeCostIncome = 20
+            upgradeCostIncome = 20,
+            materials = { ["Upgrade Material"] = 5 }
         }
         game.testingMode = false
         self.scene_manager.switch("new_game")

@@ -361,15 +361,21 @@ function HandUI:mousepressed(x, y, button)
                     self.game.inputMode = "targeting_spell"
                 elseif card.executionType == ExecutionType.Placement then
                     self.game.inputMode = "placing"
-                    local config = {}
-                    if card.payload.config then
-                        for k, v in pairs(card.payload.config) do
-                            config[k] = v
+                    if type(card.execute) == "function" then
+                        self.game.blueprint = card:execute(self.game)
+                    else
+                        local config = {}
+                        if card.payload and card.payload.config then
+                            for k, v in pairs(card.payload.config) do
+                                config[k] = v
+                            end
                         end
+                        config.game = self.game
+                        self.game.blueprint = card.payload.buildingClass:new(config)
                     end
-                    config.game = self.game
-                    self.game.blueprint = card.payload.buildingClass:new(config)
-                    self.game.blueprint.showArc = true
+                    if self.game.blueprint then
+                        self.game.blueprint.showArc = true
+                    end
                 elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then
                     self.game.inputMode = "targeting_card"
                 end
