@@ -128,9 +128,16 @@ function WaveSpawner:update(dt)
                         local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
                         EnemyRegistry:applyActiveMutations(enemyInstance)
 
-                        -- Codex: mark this enemy type as seen.
-                        if self.game.seenEnemies and enemyInstance.name then
-                            self.game.seenEnemies[enemyInstance.name] = true
+                        -- Codex & Scouting discovery: mark this enemy type as seen and discovered.
+                        local enemyIdToDiscover = enemyInstance.enemyId or enemyInstance.id or enemyInstance.name
+                        if enemyIdToDiscover then
+                            if self.game.seenEnemies then
+                                self.game.seenEnemies[enemyIdToDiscover] = true
+                                if enemyInstance.name then
+                                    self.game.seenEnemies[enemyInstance.name] = true
+                                end
+                            end
+                            EnemyRegistry:discoverEnemy(enemyIdToDiscover)
                         end
 
                         self.game:addObject(enemyInstance)

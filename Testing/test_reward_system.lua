@@ -132,5 +132,28 @@ assert(sys.currentChoices ~= nil and #sys.currentChoices > 0, "RewardSystem popu
 sys.isActive = false
 assert(sys.isActive == false, "RewardSystem deactivates successfully")
 
+-- 4. Test Card Reward Mode
+_G.PersistentState = {
+    deck = {
+        cards = {},
+        addCard = function(self, card)
+            table.insert(self.cards, card)
+        end
+    }
+}
+sys:activate("cards", 3)
+assert(sys.isActive == true, "RewardSystem activated in cards mode")
+assert(sys.mode == "cards", "RewardSystem mode is cards")
+assert(#sys.currentChoices == 3, "RewardSystem has 3 choices in cards mode")
+
+-- Reveal cards to select
+for _, c in ipairs(sys.currentChoices) do
+    c.state = "revealed"
+end
+sys:selectReward(1)
+assert(sys.isActive == false, "RewardSystem deactivated after selecting card")
+assert(#_G.PersistentState.deck.cards == 1, "Selected card was added to deck")
+print("[PASS] Card reward mode added card to deck successfully")
+
 print("--- Reward System Tests Completed with " .. failures .. " failures ---")
 os.exit(failures == 0 and 0 or 1)

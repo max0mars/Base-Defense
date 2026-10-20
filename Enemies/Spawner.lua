@@ -109,6 +109,17 @@ function Spawner:spawnOneReinforcement()
     -- Apply any active upgrades to the spawned enemy
     EnemyRegistry:applyActiveMutations(spawnedInstance)
     
+    local enemyIdToDiscover = spawnedInstance.enemyId or spawnedInstance.id or spawnedInstance.name or nameStr
+    if enemyIdToDiscover then
+        if self.game and self.game.seenEnemies then
+            self.game.seenEnemies[enemyIdToDiscover] = true
+            if spawnedInstance.name then
+                self.game.seenEnemies[spawnedInstance.name] = true
+            end
+        end
+        EnemyRegistry:discoverEnemy(enemyIdToDiscover)
+    end
+
     self.game:addObject(spawnedInstance)
 end
 

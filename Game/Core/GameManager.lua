@@ -278,14 +278,7 @@ function game:update(dt)
         
         local finished = not (_G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0)
         if finished then
-            self.battleComplete = true
-            self:clearGlobalBuffs()
-            if _G.PersistentState then
-                _G.PersistentState.baseHP = self.base.hp
-                local reward = 100
-                _G.PersistentState.cash = (_G.PersistentState.cash or 0) + reward
-                self.battleReward = reward
-            end
+            self:winBattle()
             return
         end
         
@@ -606,7 +599,7 @@ function game:draw()
             or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
             or (self.gui and self.gui.itemPicker and self.gui.itemPicker.isActive)
             or self:isState("enemy_mutation") or self:isState("upgrade_mutation")
-            or self:isState("mulligan")
+            or self:isState("mulligan") or self.battleComplete
         -- Over the base build area, use the OS pointer (hand for clickable slots)
         -- rather than the battlefield crosshair.
         local overBase = self:isMouseOverBase(mx, my)
@@ -778,6 +771,14 @@ function game:placeBuilding(building, sourceReward)
     self.inputMode = "placing"
     
     local config = {game = self}
+    local raw = (sourceReward and sourceReward.rawConfig) or sourceReward or {}
+    for k, v in pairs(raw) do
+        if config[k] == nil then
+            config[k] = v
+        end
+    end
+    config.game = self
+    
     if sourceReward and sourceReward.shapePattern then
         config.shapePattern = sourceReward.shapePattern
     end
@@ -1137,11 +1138,33 @@ function game:winBattle()
 
     self.battleComplete = true
     self:clearGlobalBuffs()
+    
+    local BattleManager = require("Game.Core.BattleManager")
+    local bm = BattleManager:new()
+    
     if _G.PersistentState then
         _G.PersistentState.baseHP = self.base and self.base.hp or 100
-        local reward = 100
-        _G.PersistentState.cash = (_G.PersistentState.cash or 0) + reward
-        self.battleReward = reward
+        
+        local activeBattle = _G.PersistentState.selectedBattle
+        local rewards = activeBattle and activeBattle.rewards
+        
+        -- Find gold reward amount for UI summary screen
+        local goldReward = 100
+        if rewards and #rewards > 0 then
+            for _, r in ipairs(rewards) do
+                if r.type == BattleManager.REWARD_TYPES.GOLD then
+                    goldReward = r.amount or goldReward
+                    break
+                end
+            end
+            self.battleReward = goldReward
+            self.awardedBattleRewards = rewards
+            bm:applyRewards(rewards, self)
+        else
+            -- Default legacy behavior / fallback
+            self.battleReward = 100
+            _G.PersistentState.cash = (_G.PersistentState.cash or 0) + 100
+        end
     else
         self.battleReward = 100
     end

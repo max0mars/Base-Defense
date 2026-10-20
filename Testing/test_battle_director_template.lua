@@ -42,23 +42,27 @@ else
     print("[FAIL] Failed to select battle_3 for battle number 3")
 end
 
--- Test 4: Selecting template for battle 5 (range 4-8) - should be battle_early1 or battle_early2
-print("\nTesting Battle 5 (weighted random between battle_early1 and battle_early2):")
-local early1_count = 0
-local early2_count = 0
+-- Test 4: Selecting template for battle 5 (range 4-8) - should be valid early game templates
+print("\nTesting Battle 5 (weighted random among valid early templates):")
+local rolled_templates = {}
 for i = 1, 100 do
     local t = bd:selectTemplate(5)
-    if t.id == "battle_early1" then
-        early1_count = early1_count + 1
-    elseif t.id == "battle_early2" then
-        early2_count = early2_count + 1
+    if t and t.id then
+        rolled_templates[t.id] = (rolled_templates[t.id] or 0) + 1
+        assert(t:isValidForBattle(5), "Template " .. t.id .. " must be valid for battle 5!")
     end
 end
-print(string.format("Out of 100 rolls: battle_early1 = %d, battle_early2 = %d", early1_count, early2_count))
-if early1_count > 0 and early2_count > 0 then
-    print("[PASS] Weighted selection working for battle range 4-8")
+
+local distinctCount = 0
+for id, count in pairs(rolled_templates) do
+    distinctCount = distinctCount + 1
+    print(string.format("  - %s: %d rolls", id, count))
+end
+
+if distinctCount >= 2 then
+    print("[PASS] Weighted selection working for battle range 4-8 with multiple distinct templates.")
 else
-    print("[FAIL] Weighted selection did not roll both valid templates")
+    print("[FAIL] Weighted selection did not roll multiple valid templates")
 end
 
 print("\n--- BattleDirector Template Tests Completed ---")

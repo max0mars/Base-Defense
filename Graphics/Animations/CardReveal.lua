@@ -188,27 +188,44 @@ function CardReveal:draw(isSelected)
     
     love.graphics.scale(self.scaleX * effectScale, 1 * effectScale)
     
+    local radius = 10 * (self.width / 250)
+
     if self.state == "hidden" or (self.state == "flipping" and not self.effectsTriggered) then
-        -- Draw Card Back
-        love.graphics.setColor(0.15, 0.15, 0.2, 1)
-        love.graphics.rectangle("fill", -self.width/2, -self.height/2, self.width, self.height)
-        love.graphics.setColor(0.4, 0.4, 0.5, 1)
-        love.graphics.setLineWidth(4)
-        love.graphics.rectangle("line", -self.width/2, -self.height/2, self.width, self.height)
-        
-        -- Add a simple logo or pattern on the back
-        love.graphics.circle("line", 0, 0, 30)
-        love.graphics.polygon("line", 0, -15, 15, 10, -15, 10)
+        -- Draw Card Back (Sleek dark card back with glowing neon accents)
+        love.graphics.setColor(0.08, 0.08, 0.11, 1)
+        love.graphics.rectangle("fill", -self.width/2, -self.height/2, self.width, self.height, radius)
+
+        love.graphics.setColor(0.3, 0.35, 0.45, 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", -self.width/2, -self.height/2, self.width, self.height, radius)
+
+        -- Inner decorative border
+        love.graphics.setColor(0.18, 0.22, 0.3, 0.8)
+        love.graphics.setLineWidth(1.5)
+        love.graphics.rectangle("line", -self.width/2 + 8, -self.height/2 + 8, self.width - 16, self.height - 16, math.max(2, radius - 4))
+
+        -- Center Emblem / Geometric Tech Pattern
+        love.graphics.setColor(0.4, 0.45, 0.6, 0.7)
+        local patternR = math.min(self.width, self.height) * 0.15
+        love.graphics.circle("line", 0, 0, patternR)
+        love.graphics.circle("line", 0, 0, patternR * 0.6)
+        love.graphics.polygon("line", 0, -patternR * 0.7, patternR * 0.6, patternR * 0.35, -patternR * 0.6, patternR * 0.35)
     else
-        -- Draw Actual Card
-        self.reward:draw(-self.width/2, -self.height/2, self.width, self.height, isSelected)
+        -- Draw Actual Card using CardDraw
+        if self.reward.rewardCard and self.reward.rewardCard.draw then
+            self.reward.rewardCard:draw(-self.width/2, -self.height/2, self.width, self.height, isSelected)
+        elseif self.reward.getCardDraw and self.reward:getCardDraw() then
+            self.reward:getCardDraw():draw(-self.width/2, -self.height/2, self.width, self.height, isSelected)
+        else
+            self.reward:draw(-self.width/2, -self.height/2, self.width, self.height, isSelected)
+        end
         
         -- Draw Overlay Glows
         if self.glowAlpha > 0 then
             love.graphics.push("all")
             love.graphics.setBlendMode("add")
             love.graphics.setColor(self.color[1], self.color[2], self.color[3], self.glowAlpha)
-            love.graphics.rectangle("fill", -self.width/2, -self.height/2, self.width, self.height)
+            love.graphics.rectangle("fill", -self.width/2, -self.height/2, self.width, self.height, radius)
             love.graphics.pop()
         end
         
@@ -219,7 +236,7 @@ function CardReveal:draw(isSelected)
             love.graphics.setColor(1, 0.8, 0, 0.2 * pulse)
             love.graphics.setBlendMode("add")
             love.graphics.setLineWidth(4 + pulse * 4)
-            love.graphics.rectangle("line", -self.width/2 - 2, -self.height/2 - 2, self.width + 4, self.height + 4)
+            love.graphics.rectangle("line", -self.width/2 - 2, -self.height/2 - 2, self.width + 4, self.height + 4, radius)
             love.graphics.pop()
         end
     end

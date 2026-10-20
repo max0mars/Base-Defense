@@ -25,15 +25,15 @@ function RewardSystem:new(game)
     
     -- UI Properties
     system.cardWidth = 200
-    system.cardHeight = 230
-    system.cardSpacing = 20
+    system.cardHeight = 280
+    system.cardSpacing = 24
     system.startX = 100
-    system.startY = 245       -- centered for the 720-tall canvas
+    system.startY = 220       -- centered nicely for the 720-tall canvas
 
     system.skipBtnW = 160
     system.skipBtnH = 40
     system.skipBtnX = VIRTUAL_WIDTH / 2 - system.skipBtnW / 2
-    system.skipBtnY = 515
+    system.skipBtnY = 535
     
     -- Initialize the reward pool
     system:initializeRewardPool()
@@ -42,6 +42,7 @@ function RewardSystem:new(game)
 end
 
 function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
+    self.mode = poolLogicMode
     self.rewardPool = {} -- Clear previous
     self.revealTimer = 0
     self.nextRevealIndex = 1
@@ -108,7 +109,65 @@ function RewardSystem:selectReward(index)
     if card and card.state == "revealed" then
         local reward = card.reward
         --print("Selected reward: " .. reward.name)
-        if reward.type == "building" then
+        if self.mode == "cards" then
+            local cardObj = nil
+            local rarity = reward.rarity or "common"
+            if reward.type == "spell" then
+                local SpellCardRegistry = require("Spells.SpellCardRegistry")
+                local baseSpell = nil
+                for _, s in pairs(SpellCardRegistry) do
+                    if type(s) == "table" and s.id == reward.id then
+                        baseSpell = s
+                        break
+                    end
+                end
+                if baseSpell then
+                    local Utils = require("Classes.Utils")
+                    cardObj = Utils.deepCopy(baseSpell)
+                    cardObj.quantity = 1
+                end
+            elseif reward.type == "instant" then
+                local InstantCardRegistry = require("Instants.InstantCardRegistry")
+                local baseInstant = nil
+                for _, inst in pairs(InstantCardRegistry) do
+                    if type(inst) == "table" and inst.id == reward.id then
+                        baseInstant = inst
+                        break
+                    end
+                end
+                if baseInstant then
+                    local Utils = require("Classes.Utils")
+                    cardObj = Utils.deepCopy(baseInstant)
+                    cardObj.quantity = 1
+                end
+            end
+
+            if not cardObj then
+                local Card = require("Game.Cards.Card")
+                local ExecutionType = require("Game.Cards.ExecutionType")
+                local isGlobal = reward.type == "main_upgrade"
+                local cardPayload = { rarity = rarity }
+                if isGlobal then
+                    cardPayload.isMainUpgrade = true
+                else
+                    cardPayload.buildingClass = reward.building
+                    cardPayload.config = reward.rawConfig or reward
+                end
+
+                cardObj = Card:new({
+                    id = reward.id,
+                    name = reward.name,
+                    description = reward.description,
+                    executionType = isGlobal and ExecutionType.Targeted or ExecutionType.Placement,
+                    payload = cardPayload
+                })
+                cardPayload.rewardCard = cardObj:getCardDraw()
+            end
+
+            if _G.PersistentState and _G.PersistentState.deck and cardObj then
+                _G.PersistentState.deck:addCard(cardObj)
+            end
+        elseif reward.type == "building" then
             self.game:placeBuilding(reward.building, reward)
         elseif reward.type == "main_upgrade" then
             if self.game.base and self.game.base.mainLazer then
@@ -120,6 +179,7 @@ function RewardSystem:selectReward(index)
     end    
     self.isActive = false
     self.currentChoices = {}
+    self.mode = nil
 end
 
 -- function RewardSystem:keypressed(key)
@@ -143,34 +203,44 @@ function RewardSystem:draw()
     
     -- Draw title
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Choose Your Reward", 0, 165, VIRTUAL_WIDTH, "center")
+    if self.mode == "cards" then
+        love.graphics.printf("Card Draft", 0, 160, VIRTUAL_WIDTH, "center")
+    else
+        love.graphics.printf("Choose Your Reward", 0, 160, VIRTUAL_WIDTH, "center")
+    end
     --love.graphics.printf("Use A/D or Arrow Keys to select, Enter/Space to confirm", 0, 80, VIRTUAL_WIDTH, "center")
     
     -- Draw reward cards
+    local mx, my = love.mouse.getPosition()
     for i, card in ipairs(self.currentChoices) do
-        local isSelected = (i == self.selectedIndex)
+        local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
+        local cardY = self.startY
+        local isHovered = (mx >= cardX and mx <= cardX + self.cardWidth and my >= cardY and my <= cardY + self.cardHeight)
+        local isSelected = (i == self.selectedIndex) or isHovered
         card:draw(isSelected)
     end
 
-    -- Draw skip button
-    local mx, my = love.mouse.getPosition()
-    local isSkipHovered = mx >= self.skipBtnX and mx <= self.skipBtnX + self.skipBtnW and
-                         my >= self.skipBtnY and my <= self.skipBtnY + self.skipBtnH
-    
-    if isSkipHovered then
-        love.graphics.setColor(0.4, 0.4, 0.4, 1)
-    else
-        love.graphics.setColor(0.3, 0.3, 0.3, 1)
-    end
-    love.graphics.rectangle("fill", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("line", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
-    if self.game.tokens >= 1 then
-        love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
-    else
-        love.graphics.setColor(1, 0.4, 0.4, 1)
-        love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
+    -- Draw skip/reroll button (only in standard mid-battle upgrade mode)
+    if self.mode ~= "cards" then
+        local mx, my = love.mouse.getPosition()
+        local isSkipHovered = mx >= self.skipBtnX and mx <= self.skipBtnX + self.skipBtnW and
+                             my >= self.skipBtnY and my <= self.skipBtnY + self.skipBtnH
+        
+        if isSkipHovered then
+            love.graphics.setColor(0.4, 0.4, 0.4, 1)
+        else
+            love.graphics.setColor(0.3, 0.3, 0.3, 1)
+        end
+        love.graphics.rectangle("fill", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("line", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
+        if self.game.tokens >= 1 then
+            love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
+        else
+            love.graphics.setColor(1, 0.4, 0.4, 1)
+            love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
+        end
     end
 
     -- Hand cursor over reward cards / reroll.
@@ -178,7 +248,9 @@ function RewardSystem:draw()
         local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
         Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight)
     end
-    Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
+    if self.mode ~= "cards" then
+        Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
+    end
 end
 
 function RewardSystem:mousepressed(x, y, button)
@@ -198,8 +270,9 @@ function RewardSystem:mousepressed(x, y, button)
         end
     end
 
-    -- Check for skip button
-    if x >= self.skipBtnX and x <= self.skipBtnX + self.skipBtnW and
+    -- Check for skip button (only if not in cards reward mode)
+    if self.mode ~= "cards" and
+       x >= self.skipBtnX and x <= self.skipBtnX + self.skipBtnW and
        y >= self.skipBtnY and y <= self.skipBtnY + self.skipBtnH then
         if self.game.tokens >= 1 then
             self.game.tokens = self.game.tokens - 1
