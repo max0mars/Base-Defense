@@ -3,21 +3,21 @@ BattleTemplate.__index = BattleTemplate
 
 function BattleTemplate:new(config)
     assert(config.id, "BattleTemplate requires an 'id'")
-    assert(config.validBattleRange and config.validBattleRange.min and config.validBattleRange.max, "BattleTemplate requires a validBattleRange {min, max}")
-    assert(config.numWaves, "BattleTemplate requires 'numWaves'")
-    assert(config.lanesPerWave, "BattleTemplate requires 'lanesPerWave' array")
     assert(config.battleDangerTiers, "BattleTemplate requires 'battleDangerTiers'")
 
     local obj = setmetatable({}, self)
     
     -- Required Fields
     obj.id = config.id
-    obj.validBattleRange = config.validBattleRange
-    obj.numWaves = config.numWaves
-    obj.lanesPerWave = config.lanesPerWave
     obj.battleDangerTiers = config.battleDangerTiers
     
+    -- Level criteria (can be left empty / nil)
+    obj.minimumLevel = config.minimumLevel or (config.validBattleRange and config.validBattleRange.min)
+    obj.maximumLevel = config.maximumLevel or (config.validBattleRange and config.validBattleRange.max)
+    
     -- Optional Fields with safe defaults
+    obj.numWaves = config.numWaves
+    obj.lanesPerWave = config.lanesPerWave
     obj.weight = config.weight or 10
     obj.relativeDifficulty = config.relativeDifficulty or {}
     obj.waveDangerTiers = config.waveDangerTiers or {}
@@ -32,20 +32,29 @@ function BattleTemplate:new(config)
 end
 
 -- Checks if this template can be rolled for the current battle
+-- A template should only be used if it meets the minimum and maximum criteria
 function BattleTemplate:isValidForBattle(battleNumber)
     if self.limit and self.count >= self.limit then
         return false
     end
-    return battleNumber >= self.validBattleRange.min and battleNumber <= self.validBattleRange.max
+    if self.minimumLevel and battleNumber < self.minimumLevel then
+        return false
+    end
+    if self.maximumLevel and battleNumber > self.maximumLevel then
+        return false
+    end
+    return true
 end
 
--- Safely retrieves lane counts to prevent nil errors in WaveDirector
+-- Safely retrieves lane counts if defined on template (fallback for custom overrides)
 function BattleTemplate:getLanesForWave(waveIndex)
-    if self.lanesPerWave[waveIndex] then
+    if self.lanesPerWave and self.lanesPerWave[waveIndex] then
         return self.lanesPerWave[waveIndex]
     end
-    -- Fallback in case of data entry error
-    return self.lanesPerWave[#self.lanesPerWave] or 1 
+    if self.lanesPerWave and #self.lanesPerWave > 0 then
+        return self.lanesPerWave[#self.lanesPerWave]
+    end
+    return nil
 end
 
 return BattleTemplate

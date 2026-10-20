@@ -15,19 +15,22 @@ function WaveDirector:new(game)
     return obj
 end
 
-function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget, isBossWave)
+function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget, isBossWave, laneCount)
     assert(battleRoster, "WaveDirector:generateWaveList requires a battleRoster")
     assert(budget, "WaveDirector:generateWaveList requires a budget")
 
     local totalBudget = budget
-    local laneCount = 1
+    local laneCount = laneCount
 
-    if template then
-        if template.getLanesForWave then
-            laneCount = template:getLanesForWave(waveIndex)
-        elseif template.lanesPerWave then
-            laneCount = template.lanesPerWave[waveIndex] or template.lanesPerWave[#template.lanesPerWave] or 1
+    if not laneCount then
+        if template then
+            if template.getLanesForWave then
+                laneCount = template:getLanesForWave(waveIndex)
+            elseif template.lanesPerWave then
+                laneCount = template.lanesPerWave[waveIndex] or template.lanesPerWave[#template.lanesPerWave] or 1
+            end
         end
+        laneCount = laneCount or 1
     end
 
     local available = {}
@@ -175,7 +178,10 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget
 end
 
 function WaveDirector:checkConstraints(enemy, currentCounts)
-    -- Placeholder for future min/max constraints per enemy type
+    -- Tier 5 (Boss tier): never spawned through standard random budget consumption
+    if enemy and enemy.tier == 5 then
+        return false
+    end
     return true
 end
 

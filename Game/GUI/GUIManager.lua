@@ -209,14 +209,17 @@ end
 -- True when a modal/overlay is open over the HUD (so background HUD buttons
 -- should not respond to hover).
 function GUIManager:overlayActive()
+    local scene_manager = package.loaded["Scenes.scene_manager"]
+    local isSummary = scene_manager and scene_manager.current and scene_manager.current.showingSummary
     return (self.game.rewardSystem and self.game.rewardSystem.isActive)
         or (self.mutation and self.mutation.isActive)
-
         or (self.codex and self.codex.isActive)
         or (self.enemySpawner and self.enemySpawner.isActive)
         or (self.itemPicker and self.itemPicker.isActive)
         or (self.confirmation and self.confirmation.active)
         or (self.deckViewer and self.deckViewer.isActive)
+        or (self.game.battleComplete)
+        or isSummary
         or (paused == 1)
 end
 

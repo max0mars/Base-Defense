@@ -48,6 +48,7 @@ function Enemy:new(config)
     
     local base = getBaseStats(config)
     if base then
+        config.name = config.name or base.id
         config.maxHp = config.maxHp or base.maxHp
         config.damage = config.damage or base.damage
         config.speed = config.speed or base.speed
@@ -105,7 +106,7 @@ function Enemy:new(config)
     local navType = config.navigator or "GridNavigator"
     obj.navigator = Navigators[navType]:new(obj, obj.game)
     
-    
+    obj.enemyId = config.enemyId or (base and base.id) or config.name
     obj.shield = 0
     obj.maxShield = 50 -- Default reference for shield visuals
     

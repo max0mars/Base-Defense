@@ -35,6 +35,14 @@ function Reward:new(config)
     -- Additional metadata
     reward.category = config.category or "general" -- weapon, defense, utility, etc.
     reward.game = config.game
+    reward.rawConfig = config
+
+    -- Preserve all config fields (e.g. fireRate, damage, range, bulletSpeed, firingArc, etc.)
+    for k, v in pairs(config) do
+        if reward[k] == nil then
+            reward[k] = v
+        end
+    end
     
     -- Create dummy building if it's a building type, to read properties for icons
     if reward.building and type(reward.building) == "table" and reward.building.new and reward.game then

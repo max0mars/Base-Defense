@@ -5,6 +5,7 @@ local scene = require("Scenes.scene") -- Import the base scene class
 setmetatable(game_over_scene, { __index = scene })
 
 local game = require("Game.Core.GameManager")
+local Cursor = require("Game.GUI.Cursor")
 
 function game_over_scene:load()
     love.mouse.setVisible(true)
@@ -14,6 +15,7 @@ function game_over_scene:load()
 end
 
 function game_over_scene:draw()
+    Cursor.reset()
     game:draw()
     love.graphics.setColor(0, 0, 0, 0.85) -- Dark overlay
     love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
@@ -120,6 +122,8 @@ function game_over_scene:draw()
             local hoverLeft = mx >= leftArrowX and mx <= leftArrowX + 30 and my >= leftArrowY and my <= leftArrowY + 30
             local hoverRight = mx >= rightArrowX and mx <= rightArrowX + 30 and my >= rightArrowY and my <= rightArrowY + 30
             
+            if hoverLeft or hoverRight then Cursor.wantHand = true end
+
             -- Left Arrow
             love.graphics.setColor(hoverLeft and {0, 0.85, 1.0, 1} or {0, 0.5, 0.6, 1})
             love.graphics.rectangle("fill", leftArrowX, leftArrowY, 30, 30, 4)
@@ -149,6 +153,8 @@ function game_over_scene:draw()
     local isRetryHovered = mx >= retryX and mx <= retryX + btnW and my >= btnY and my <= btnY + btnH
     local isQuitHovered = mx >= quitX and mx <= quitX + btnW and my >= btnY and my <= btnY + btnH
     
+    if isRetryHovered or isQuitHovered then Cursor.wantHand = true end
+
     -- Draw Retry Button (Green themed)
     love.graphics.setColor(isRetryHovered and {0.2, 0.8, 0.2, 1} or {0.1, 0.5, 0.1, 1})
     love.graphics.rectangle("fill", retryX, btnY, btnW, btnH, 8, 8)
@@ -169,6 +175,9 @@ function game_over_scene:draw()
     
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf("Quit Game", quitX, btnY + 15, btnW, "center")
+
+    -- Ensure OS cursor is visible and updated (hand vs arrow)
+    Cursor.applyOS()
 end
 
 function game_over_scene:mousepressed(x, y, button)

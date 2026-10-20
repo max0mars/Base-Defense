@@ -434,6 +434,27 @@ function Card:execute(game)
             if config.range == nil and payload.range ~= nil then config.range = payload.range end
             if config.fireRate == nil and payload.fireRate ~= nil then config.fireRate = payload.fireRate end
 
+            -- Safety fallback: if turret is still missing critical stats (e.g. fireRate), look up in RewardIndex by ID
+            if (config.fireRate == nil or config.damage == nil or config.range == nil) and self.id then
+                local success, rewardIndex = pcall(require, "Game.Rewards.RewardIndex")
+                if success and rewardIndex then
+                    for _, category in pairs(rewardIndex) do
+                        if type(category) == "table" then
+                            for _, item in ipairs(category) do
+                                if item.id == self.id then
+                                    for k, v in pairs(item) do
+                                        if config[k] == nil then
+                                            config[k] = v
+                                        end
+                                    end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
             -- Apply tier scaling (flat 20% per tier above Tier I)
             -- This sets the turret's BASE values so in-battle buffs (e.g. +50% damage)
             -- multiply the upgraded base value (e.g. Tier 2: 120% * 1.5).

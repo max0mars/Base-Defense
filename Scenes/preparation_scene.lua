@@ -5,6 +5,8 @@ setmetatable(preparation_scene, { __index = scene })
 
 local Cursor = require("Game.GUI.Cursor")
 local BattleDirector = require("Game.Spawning.BattleDirector")
+local LevelManager = require("Game.Core.LevelManager")
+local BattleManager = require("Game.Core.BattleManager")
 local RewardPool = require("Game.Rewards.RewardPool")
 local RewardIndex = require("Game.Rewards.RewardIndex")
 local Card = require("Game.Cards.Card")
@@ -129,9 +131,6 @@ function preparation_scene:load(isPostBattle)
             }
         }
     end
-    
-    local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
-    EnemyRegistry:updatePools(_G.PersistentState.globalDifficulty or 1)
 
     local cx = (VIRTUAL_WIDTH - 240) / 2
     local cy = VIRTUAL_HEIGHT - 60
@@ -161,6 +160,11 @@ function preparation_scene:load(isPostBattle)
         color = {0.15, 0.4, 0.3, 1}, hoverColor = {0.2, 0.55, 0.4, 1}, borderColor = {0.3, 0.85, 0.6, 1}
     }
     
+    self.previewBattlesButton = {
+        x = VIRTUAL_WIDTH - 200, y = 20, w = 180, h = 42, label = "SCOUTING REPORT",
+        color = {0.15, 0.35, 0.55, 1}, hoverColor = {0.2, 0.48, 0.75, 1}, borderColor = {0.4, 0.75, 1, 1}
+    }
+    
     self.rerollButton = {
         x = 20, y = 140, w = 160, h = 40, label = "Reroll Shop (20$)",
         color = {0.4, 0.3, 0.1, 1}, hoverColor = {0.6, 0.45, 0.15, 1}, borderColor = {0.8, 0.6, 0.2, 1}
@@ -174,23 +178,62 @@ function preparation_scene:load(isPostBattle)
 
     self.viewingDeck = false
     self.viewingUpgrades = false
+    self.viewingLevelSelect = false
     self.upgradePage = 1
     self.deckPage = 1
     self.deckTrashMode = false
     self.destroyConfirmCard = nil
 
+    self.levelManager = LevelManager:new()
+    self.battleManager = BattleManager:new()
     self:precalculateWaves()
     self:rollShop()
 end
 
 function preparation_scene:precalculateWaves()
+    _G.PersistentState = _G.PersistentState or {}
+    local currentLevel = (_G.PersistentState.battlesCompleted or 0) + 1
+
+    -- Calculate upcoming major battle level (every 5 waves: 5, 10, 15, 20...)
+    local nextMajorLevel = math.ceil(currentLevel / 5) * 5
+    if nextMajorLevel == 0 then nextMajorLevel = 5 end
+    self.nextMajorLevel = nextMajorLevel
+
+    -- Check if we already generated and cached the upcoming major battle for this milestone
+    local cached = _G.PersistentState.upcomingMajorBattle
+    if cached and cached.level == nextMajorLevel and cached.choices then
+        self.majorBattleChoices = cached.choices
+    else
+        self.majorBattleChoices = self.levelManager:generateChoices(nextMajorLevel)
+        _G.PersistentState.upcomingMajorBattle = {
+            level = nextMajorLevel,
+            choices = self.majorBattleChoices
+        }
+    end
+
+    -- If current level IS the milestone battle, the battle encounter is the cached major battle!
+    if currentLevel == nextMajorLevel then
+        self.levelChoices = self.majorBattleChoices
+    else
+        -- Use LevelManager to generate choices for the regular current level
+        self.levelChoices = self.levelManager:generateChoices(currentLevel)
+    end
+
+    -- Default to choice 1 (or safe choice) until player confirms/picks
+    self:applyLevelChoice(self.levelChoices[1])
+end
+
+function preparation_scene:applyLevelChoice(choice)
+    if not choice then return end
+    self.selectedChoice = choice
+    _G.PersistentState.selectedBattle = choice
+
     -- Create dummy game for BattleDirector
     local dummyGame = {}
     local bd = BattleDirector:new(dummyGame)
     
-    _G.PersistentState = _G.PersistentState or {}
-    
-    local upcomingWaves, upcomingSummaries, forecastTotals = bd:generateBattle(_G.PersistentState.globalDifficulty or 1)
+    local template = choice.template
+    local upcomingWaves, upcomingSummaries, forecastTotals = bd:generateBattle(choice.difficultyMultiplier or 1, { template = template, roster = choice.roster })
     _G.PersistentState.upcomingWaves = upcomingWaves
     _G.PersistentState.upcomingSummaries = upcomingSummaries
     
@@ -198,7 +241,9 @@ function preparation_scene:precalculateWaves()
         low = 0,
         medium = 0,
         high = 0,
-        totals = forecastTotals
+        totals = forecastTotals,
+        multiplier = choice.difficultyMultiplier,
+        rewards = choice.rewards
     }
 end
 
@@ -371,29 +416,119 @@ function preparation_scene:drawShop(mx, my)
 end
 
 function preparation_scene:drawForecast()
-    local fw = 200
-    local fh = 200
+    local fw = 230
+    local fh = 260
     local fx = VIRTUAL_WIDTH - fw - 20
     local fy = 20
     
-    love.graphics.setColor(0, 0, 0, 0.6)
-    love.graphics.rectangle("fill", fx, fy, fw, fh, 5)
-    love.graphics.setColor(0.8, 0.8, 0.8, 1)
-    love.graphics.rectangle("line", fx, fy, fw, fh, 5)
+    love.graphics.setColor(0, 0, 0, 0.75)
+    love.graphics.rectangle("fill", fx, fy, fw, fh, 8)
+    
+    local mult = (self.selectedChoice and self.selectedChoice.difficultyMultiplier) or 1.0
+    local isSafe = (mult < 1.20)
+    local isMilestone = (self.selectedChoice and self.selectedChoice.isMilestone)
+    local multColor = isSafe and {0.2, 0.9, 0.4, 1} or ((mult < 1.6) and {1, 0.8, 0.2, 1} or {1, 0.35, 0.35, 1})
+    local threatTierName = isSafe and "Low Threat" or ((mult < 1.6) and "Medium Threat" or "High Threat")
+    if isMilestone then
+        threatTierName = "MAJOR BATTLE"
+        multColor = {1, 0.2, 0.2, 1}
+    end
+    love.graphics.setColor(multColor)
+    love.graphics.rectangle("line", fx, fy, fw, fh, 8)
     
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("FORECAST", fx, fy + 10, fw, "center")
+    love.graphics.printf("BATTLE FORECAST", fx, fy + 8, fw, "center")
     
-    local yOff = 40
-    for typeName, count in pairs(self.forecast.totals) do
-        local tier = "Low"
-        if count >= 50 then tier = "Extreme"
-        elseif count >= 25 then tier = "High"
-        elseif count >= 15 then tier = "Medium" 
+    if isMilestone then
+        if not self.threatBadgeFont then
+            self.threatBadgeFont = love.graphics.newFont(22)
         end
+        local oldFont = love.graphics.getFont()
+        love.graphics.setFont(self.threatBadgeFont)
+        love.graphics.setColor(1, 0.2, 0.2, 1)
+        love.graphics.printf(threatTierName, fx, fy + 24, fw, "center")
+        love.graphics.setFont(oldFont)
+    else
+        love.graphics.setColor(multColor)
+        love.graphics.printf(threatTierName, fx, fy + 26, fw, "center")
+    end
+    
+    -- Enemy preview header
+    love.graphics.setColor(0.7, 0.85, 1, 1)
+    love.graphics.printf("Incoming Enemies:", fx + 10, fy + 48, fw - 20, "left")
+    
+    local yOff = fy + 66
+    if self.selectedChoice and self.selectedChoice.enemies then
+        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+        for idx, enemy in ipairs(self.selectedChoice.enemies) do
+            if idx <= 4 then
+                local rawId = enemy.id or (enemy.displayName ~= "???" and enemy.displayName)
+                local canonicalId = EnemyRegistry:canonicalEnemyId(rawId) or rawId
+                local isDiscovered = false
+                if canonicalId then
+                    if _G.PersistentState and _G.PersistentState.discoveredEnemies then
+                        isDiscovered = _G.PersistentState.discoveredEnemies[canonicalId] or (rawId and _G.PersistentState.discoveredEnemies[rawId])
+                    end
+                    if not isDiscovered and EnemyRegistry.discoveredEnemiesMap then
+                        isDiscovered = EnemyRegistry.discoveredEnemiesMap[canonicalId] or (rawId and EnemyRegistry.discoveredEnemiesMap[rawId])
+                    end
+                end
+                if not isDiscovered and enemy.displayName and enemy.displayName ~= "???" then
+                    isDiscovered = true
+                end
+
+                if not isDiscovered then
+                    love.graphics.setColor(0.65, 0.65, 0.65, 1)
+                    love.graphics.printf("• ??? (Unknown)", fx + 15, yOff, fw - 30, "left")
+                else
+                    love.graphics.setColor(1, 0.4, 0.4, 1)
+                    local displayName = canonicalId or rawId or enemy.displayName
+                    love.graphics.printf("• " .. displayName, fx + 15, yOff, fw - 30, "left")
+                end
+                yOff = yOff + 18
+            end
+        end
+    end
+    
+    -- Rewards preview header
+    yOff = math.max(yOff + 4, fy + 144)
+    love.graphics.setColor(1, 0.85, 0.3, 1)
+    love.graphics.printf("Expected Rewards:", fx + 10, yOff, fw - 20, "left")
+    yOff = yOff + 18
+    
+    if self.selectedChoice and self.selectedChoice.rewards then
+        for idx, reward in ipairs(self.selectedChoice.rewards) do
+            if idx <= 3 then
+                love.graphics.setColor(0.3, 1, 0.5, 1)
+                love.graphics.printf("• " .. (reward.description or reward.name), fx + 15, yOff, fw - 30, "left")
+                yOff = yOff + 16
+            end
+        end
+    end
+    
+    -- Select / Change Level button (Disabled / hidden on milestone battles where player has no choice)
+    local isMilestone = self.selectedChoice and self.selectedChoice.isMilestone
+    if not isMilestone then
+        local mx, my = love.mouse.getPosition()
+        local btnW = fw - 20
+        local btnH = 28
+        local btnX = fx + 10
+        local btnY = fy + fh - 35
+        local isHover = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
+        if isHover then Cursor.wantHand = true end
         
-        love.graphics.printf(typeName .. ": " .. tier, fx + 10, fy + yOff, fw - 20, "left")
-        yOff = yOff + 20
+        love.graphics.setColor(isHover and {0.25, 0.5, 0.8, 1} or {0.15, 0.35, 0.6, 1})
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 5)
+        love.graphics.setColor(0.4, 0.75, 1, 1)
+        love.graphics.rectangle("line", btnX, btnY, btnW, btnH, 5)
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf("PREVIEW NEXT BATTLES", btnX, btnY + 7, btnW, "center")
+        self.chooseBattleBtn = { x = btnX, y = btnY, w = btnW, h = btnH }
+    else
+        self.chooseBattleBtn = nil
+        love.graphics.setColor(0.8, 0.3, 0.3, 0.9)
+        love.graphics.printf("MANDATORY ENCOUNTER", fx + 10, fy + fh - 28, fw - 20, "center")
     end
 end
 
@@ -861,10 +996,10 @@ function preparation_scene:drawUpgradeWindow()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf("UPGRADE CARDS", 100, 55, VIRTUAL_WIDTH - 200, "center")
     
-    local gold = CardUpgradeConfig.Economy.getResource("gold")
+    local cash = CardUpgradeConfig.Economy.getResource("cash") or CardUpgradeConfig.Economy.getResource("gold")
     local mats = CardUpgradeConfig.Economy.getResource("Upgrade Material")
     love.graphics.setColor(1, 0.85, 0.2, 1)
-    love.graphics.printf("Gold: $" .. gold, 120, 55, 200, "left")
+    love.graphics.printf("Cash: $" .. cash, 120, 55, 200, "left")
     love.graphics.setColor(0.3, 0.85, 1, 1)
     love.graphics.printf("Upgrade Material: " .. mats, VIRTUAL_WIDTH - 320, 55, 200, "right")
 
@@ -1079,7 +1214,6 @@ function preparation_scene:draw()
         love.graphics.printf("MAX LEVEL", 20, 90, 200, "left")
     end
     
-    self:drawForecast()
     self:drawShop(mx, my)
     
     self:drawButton(self.rerollButton, mx, my)
@@ -1088,6 +1222,7 @@ function preparation_scene:draw()
     self:drawButton(self.startButton, mx, my)
     self:drawButton(self.deckButton, mx, my)
     self:drawButton(self.upgradeCardsButton, mx, my)
+    self:drawButton(self.previewBattlesButton, mx, my)
     
     if self.viewingDeck then
         self:drawDeck()
@@ -1102,12 +1237,193 @@ function preparation_scene:draw()
         Cursor.wantHand = true
     end
     
+    if self.viewingLevelSelect then
+        self:drawLevelSelectWindow()
+        Cursor.wantHand = true
+    end
+
     if self.showUpgradeChoice then
         self:drawUpgradeChoice(mx, my)
         Cursor.wantHand = true
     end
 
     love.mouse.setCursor(Cursor.wantHand and self.handCursor or self.arrowCursor)
+end
+
+function preparation_scene:drawLevelSelectWindow()
+    local mx, my = love.mouse.getPosition()
+    
+    -- Semi-transparent backdrop
+    love.graphics.setColor(0, 0, 0, 0.88)
+    love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+    
+    local isLaunchMode = (self.levelSelectMode == "launch")
+    local currentLevel = (_G.PersistentState and _G.PersistentState.battlesCompleted and (_G.PersistentState.battlesCompleted + 1))
+        or (self.levelChoices and self.levelChoices[1] and self.levelChoices[1].playerLevel)
+        or 1
+
+    local nextMajorLevel = self.nextMajorLevel or (math.ceil(currentLevel / 5) * 5)
+    if nextMajorLevel == 0 then nextMajorLevel = 5 end
+
+    -- Active choices to display:
+    -- In launch mode: immediate battle choices for currentLevel
+    -- In preview mode (Scouting Report): preview of the upcoming Major Battle (milestone)
+    local displayedChoices = isLaunchMode and self.levelChoices or (self.majorBattleChoices or self.levelChoices)
+
+    -- Header Title
+    love.graphics.setColor(1, 1, 1, 1)
+    if isLaunchMode then
+        if not self.titleFont then
+            self.titleFont = love.graphics.newFont(32)
+        end
+        local oldFont = love.graphics.getFont()
+        love.graphics.setFont(self.titleFont)
+        love.graphics.printf(string.format("Level %d", currentLevel), 0, 48, VIRTUAL_WIDTH, "center")
+        love.graphics.setFont(oldFont)
+    else
+        love.graphics.printf("SCOUTING REPORT: UPCOMING MAJOR BATTLE", 0, 48, VIRTUAL_WIDTH, "center")
+        love.graphics.setColor(0.8, 0.85, 0.95, 1)
+        love.graphics.printf(string.format("Intel on Level %d Major Hostile Encounter. Prepare your defenses accordingly.", nextMajorLevel), 0, 78, VIRTUAL_WIDTH, "center")
+    end
+    
+    local cardW = 340
+    local cardH = 380
+    local spacing = 40
+    local isSingleCard = (#(displayedChoices or {}) == 1)
+    local totalW = isSingleCard and cardW or ((#(displayedChoices or {}) * cardW) + ((#(displayedChoices or {}) - 1) * spacing))
+    local startX = (VIRTUAL_WIDTH - totalW) / 2
+    local startY = 125
+    
+    self.levelChoiceButtons = {}
+    
+    for i, choice in ipairs(displayedChoices or {}) do
+        local cx = startX + (i - 1) * (cardW + spacing)
+        local cy = startY
+        local isSelected = (self.selectedChoice and self.selectedChoice.slotIndex == choice.slotIndex)
+        local isHovered = mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH
+        if isHovered then Cursor.wantHand = true end
+        
+        -- Multiplier color
+        local mult = choice.difficultyMultiplier or 1.0
+        local isSafe = choice.isSafe
+        local accentColor = choice.isMilestone and {1, 0.2, 0.2, 1}
+            or (isSafe and {0.2, 0.9, 0.4, 1} or ((mult < 1.6) and {1, 0.8, 0.2, 1} or {1, 0.35, 0.35, 1}))
+        
+        -- Card background
+        love.graphics.setColor(0.08, 0.08, 0.12, 0.95)
+        love.graphics.rectangle("fill", cx, cy, cardW, cardH, 12)
+        
+        -- Card border: Always highlighted in danger color
+        love.graphics.setColor(accentColor)
+        love.graphics.setLineWidth(isHovered and 3 or 2)
+        love.graphics.rectangle("line", cx, cy, cardW, cardH, 12)
+        
+        -- Threat / Major Battle Badge
+        if choice.isMilestone then
+            if not self.majorBattleFont then
+                self.majorBattleFont = love.graphics.newFont(26)
+            end
+            local oldFont = love.graphics.getFont()
+            love.graphics.setFont(self.majorBattleFont)
+            -- Solid vibrant red text
+            love.graphics.setColor(1, 0.2, 0.2, 1)
+            love.graphics.printf("MAJOR BATTLE", cx, cy + 20, cardW, "center")
+            love.graphics.setFont(oldFont)
+        else
+            love.graphics.setColor(accentColor)
+            local threatLabel = isSafe and "Low Threat" or ((mult < 1.6) and "Medium Threat" or "High Threat")
+            love.graphics.printf(threatLabel, cx, cy + 24, cardW, "center")
+        end
+        
+        -- Incoming Enemies Section
+        love.graphics.setColor(0.6, 0.8, 1, 1)
+        love.graphics.printf("Incoming Hostiles:", cx + 20, cy + 85, cardW - 40, "left")
+        love.graphics.setColor(0.3, 0.5, 0.7, 0.5)
+        love.graphics.line(cx + 20, cy + 105, cx + cardW - 20, cy + 105)
+        
+        local ey = cy + 115
+        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+        for _, enemy in ipairs(choice.enemies or {}) do
+            local rawId = enemy.id or (enemy.displayName ~= "???" and enemy.displayName)
+            local canonicalId = EnemyRegistry:canonicalEnemyId(rawId) or rawId
+            local isDiscovered = false
+            if canonicalId then
+                if _G.PersistentState and _G.PersistentState.discoveredEnemies then
+                    isDiscovered = _G.PersistentState.discoveredEnemies[canonicalId] or (rawId and _G.PersistentState.discoveredEnemies[rawId])
+                end
+                if not isDiscovered and EnemyRegistry.discoveredEnemiesMap then
+                    isDiscovered = EnemyRegistry.discoveredEnemiesMap[canonicalId] or (rawId and EnemyRegistry.discoveredEnemiesMap[rawId])
+                end
+            end
+            if not isDiscovered and enemy.displayName and enemy.displayName ~= "???" then
+                isDiscovered = true
+            end
+
+            if not isDiscovered then
+                love.graphics.setColor(0.6, 0.6, 0.6, 1)
+                love.graphics.printf("• ??? (Undiscovered)", cx + 25, ey, cardW - 50, "left")
+            else
+                love.graphics.setColor(1, 0.45, 0.45, 1)
+                local displayName = canonicalId or rawId or enemy.displayName
+                love.graphics.printf("• " .. displayName, cx + 25, ey, cardW - 50, "left")
+            end
+            ey = ey + 22
+        end
+        
+        -- Rewards Section
+        local ry = cy + 240
+        love.graphics.setColor(1, 0.85, 0.3, 1)
+        love.graphics.printf("Guaranteed Rewards:", cx + 20, ry, cardW - 40, "left")
+        love.graphics.setColor(0.7, 0.6, 0.2, 0.5)
+        love.graphics.line(cx + 20, ry + 20, cx + cardW - 20, ry + 20)
+        
+        ry = ry + 30
+        for _, reward in ipairs(choice.rewards or {}) do
+            love.graphics.setColor(0.35, 1, 0.6, 1)
+            love.graphics.printf("• " .. (reward.description or reward.name), cx + 25, ry, cardW - 50, "left")
+            ry = ry + 22
+        end
+        
+        if isLaunchMode then
+            -- Pre-battle launch mode: Clicking directly chooses and engages this battle!
+            local btnW = cardW - 40
+            local btnH = 40
+            local btnX = cx + 20
+            local btnY = cy + cardH - 55
+            local btnHover = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
+            if btnHover then Cursor.wantHand = true end
+
+            love.graphics.setColor(btnHover and {0.2, 0.7, 0.35, 1} or {0.12, 0.5, 0.25, 1})
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 8)
+            love.graphics.setColor(0.4, 1, 0.6, 1)
+            love.graphics.rectangle("line", btnX, btnY, btnW, btnH, 8)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf("ENGAGE THIS BATTLE", btnX, btnY + 12, btnW, "center")
+
+            table.insert(self.levelChoiceButtons, {
+                x = btnX, y = btnY, w = btnW, h = btnH,
+                cardX = cx, cardY = cy, cardW = cardW, cardH = cardH,
+                choice = choice
+            })
+        end
+    end
+    
+    -- Close / Cancel / Return Button
+    local closeBtnW = 220
+    local closeBtnH = 38
+    local closeBtnX = (VIRTUAL_WIDTH - closeBtnW) / 2
+    local closeBtnY = VIRTUAL_HEIGHT - 65
+    local closeHover = mx >= closeBtnX and mx <= closeBtnX + closeBtnW and my >= closeBtnY and my <= closeBtnY + closeBtnH
+    if closeHover then Cursor.wantHand = true end
+    
+    love.graphics.setColor(closeHover and {0.3, 0.3, 0.38, 1} or {0.2, 0.2, 0.28, 1})
+    love.graphics.rectangle("fill", closeBtnX, closeBtnY, closeBtnW, closeBtnH, 8)
+    love.graphics.setColor(0.6, 0.6, 0.8, 1)
+    love.graphics.rectangle("line", closeBtnX, closeBtnY, closeBtnW, closeBtnH, 8)
+    love.graphics.setColor(1, 1, 1, 1)
+    local closeText = isLaunchMode and "CANCEL / BACK TO PREPARATION" or "CLOSE SCOUTING REPORT"
+    love.graphics.printf(closeText, closeBtnX, closeBtnY + 11, closeBtnW, "center")
+    self.closeLevelSelectBtn = { x = closeBtnX, y = closeBtnY, w = closeBtnW, h = closeBtnH }
 end
 
 function preparation_scene:drawUpgradeChoice(mx, my)
@@ -1184,6 +1500,32 @@ function preparation_scene:mousepressed(x, y, button)
     
     if button ~= 1 then return end
     
+    if self.viewingLevelSelect then
+        if self.closeLevelSelectBtn then
+            local btn = self.closeLevelSelectBtn
+            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                self.viewingLevelSelect = false
+                self.levelSelectMode = "preview"
+                return
+            end
+        end
+        if self.levelSelectMode == "launch" then
+            for _, btn in ipairs(self.levelChoiceButtons or {}) do
+                if (x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h) or
+                   (x >= btn.cardX and x <= btn.cardX + btn.cardW and y >= btn.cardY and y <= btn.cardY + btn.cardH) then
+                    self:applyLevelChoice(btn.choice)
+                    self.viewingLevelSelect = false
+                    self.levelSelectMode = "preview"
+                    self.scene_manager.switch("game")
+                    return
+                end
+            end
+        end
+        self.viewingLevelSelect = false
+        self.levelSelectMode = "preview"
+        return
+    end
+
     if self.viewingDeck then
         -- 1. Confirmation Modal
         if self.destroyConfirmCard then
@@ -1344,9 +1686,22 @@ function preparation_scene:mousepressed(x, y, button)
         return
     end
     
+    btn = self.previewBattlesButton
+    if btn and x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+        self.levelSelectMode = "preview"
+        self.viewingLevelSelect = true
+        self.viewingDeck = false
+        self.viewingUpgrades = false
+        return
+    end
+
     local btn = self.startButton
     if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-        self.scene_manager.switch("game")
+        -- Open battle select/confirmation screen (showing choices for regular battles, or the single Major Battle encounter)
+        self.levelSelectMode = "launch"
+        self.viewingLevelSelect = true
+        self.viewingDeck = false
+        self.viewingUpgrades = false
         return
     end
     

@@ -48,7 +48,9 @@ function InputHandler:update(dt)
         end
     end
     
-    self:handleBuildingHover()
+    if not (game.gui and game.gui:overlayActive()) then
+        self:handleBuildingHover()
+    end
     
     -- Update selected turret's firing arc direction during preparation phase or when aiming after placement
     if (game:isState("startup") or game:isState("preparing") or game.inputMode == "aiming") and self.selectedBuilding and self.selectedBuilding.firingArc then

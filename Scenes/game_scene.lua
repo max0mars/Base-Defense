@@ -51,6 +51,7 @@ function game_scene:mousepressed(x, y, button)
 end
 
 function game_scene:mousereleased(x, y, button)
+    if self.showingSummary then return end
     if paused == 1 then
         self.settings:mousereleased(x, y, button)
         return
@@ -70,24 +71,39 @@ function game_scene:update(dt)
     end
 
     if game.battleComplete then
-        game.battleComplete = false
-        self.showingSummary = true
-        self.summaryDamage = game.damageTakenThisBattle or 0
-        self.summaryIncome = game.battleReward or 0
-        self.summaryPerfectBonus = (self.summaryDamage == 0) and 25 or 0
-        
-        local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
-        local cashBeforeBattle = currentCash - self.summaryIncome
-        if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
-        self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
-        
-        if _G.PersistentState then
-            _G.PersistentState.cash = currentCash + self.summaryInterest + self.summaryPerfectBonus
-            self.summaryTotalCash = _G.PersistentState.cash
-        else
-            self.summaryTotalCash = 0
+        if not (game.rewardSystem and game.rewardSystem.isActive) then
+            game.battleComplete = false
+            self.showingSummary = true
+            self.summaryDamage = game.damageTakenThisBattle or 0
+            self.summaryIncome = game.battleReward or 0
+            self.summaryPerfectBonus = (self.summaryDamage == 0) and 25 or 0
+            
+            local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
+            local cashBeforeBattle = currentCash - self.summaryIncome
+            if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
+            self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
+            
+            if _G.PersistentState then
+                _G.PersistentState.cash = currentCash + self.summaryInterest + self.summaryPerfectBonus
+                self.summaryTotalCash = _G.PersistentState.cash
+            else
+                self.summaryTotalCash = 0
+            end
+
+            self.summaryOtherRewards = {}
+            if game.awardedBattleRewards then
+                for _, r in ipairs(game.awardedBattleRewards) do
+                    if r.type ~= "gold" and r.name then
+                        local desc = r.name
+                        if r.amount and r.amount > 1 then
+                            desc = desc .. " (x" .. r.amount .. ")"
+                        end
+                        table.insert(self.summaryOtherRewards, desc)
+                    end
+                end
+            end
+            return
         end
-        return
     end
     
     if self.showingSummary then return end
@@ -125,20 +141,60 @@ function game_scene:draw()
         love.graphics.setColor(0, 0, 0, 0.85)
         love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
         
+        -- Centered rounded container box
+        local boxW = 460
+        local hasOther = (self.summaryOtherRewards and #self.summaryOtherRewards > 0)
+        local boxH = hasOther and 340 or 300
+        local boxX = math.floor((VIRTUAL_WIDTH - boxW) / 2)
+        local boxY = math.floor((VIRTUAL_HEIGHT - boxH) / 2) - 10
+        
+        -- Box background (dark tech-glass)
+        love.graphics.setColor(0.06, 0.08, 0.12, 0.96)
+        love.graphics.rectangle("fill", boxX, boxY, boxW, boxH, 12, 12)
+        
+        -- Box glowing cyan/teal border
+        love.graphics.setColor(0.2, 0.6, 0.85, 0.8)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", boxX, boxY, boxW, boxH, 12, 12)
+        love.graphics.setLineWidth(1)
+        
+        -- Header title
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("BATTLE COMPLETE", 0, VIRTUAL_HEIGHT / 2 - 100, VIRTUAL_WIDTH, "center")
+        love.graphics.printf("BATTLE COMPLETE", boxX, boxY + 22, boxW, "center")
         
-        love.graphics.printf("Damage Taken: " .. self.summaryDamage, 0, VIRTUAL_HEIGHT / 2 - 50, VIRTUAL_WIDTH, "center")
-        love.graphics.setColor(0.2, 0.8, 0.2, 1)
-        love.graphics.printf("Income: +$" .. self.summaryIncome, 0, VIRTUAL_HEIGHT / 2 - 20, VIRTUAL_WIDTH, "center")
-        love.graphics.printf("Perfect Bonus: +$" .. self.summaryPerfectBonus, 0, VIRTUAL_HEIGHT / 2 + 10, VIRTUAL_WIDTH, "center")
-        love.graphics.printf("Interest: +$" .. self.summaryInterest, 0, VIRTUAL_HEIGHT / 2 + 40, VIRTUAL_WIDTH, "center")
+        -- Thin divider below header
+        love.graphics.setColor(0.3, 0.5, 0.7, 0.4)
+        love.graphics.line(boxX + 24, boxY + 48, boxX + boxW - 24, boxY + 48)
         
-        love.graphics.setColor(0.2, 1.0, 0.2, 1)
-        love.graphics.printf("Total Cash: $" .. self.summaryTotalCash, 0, VIRTUAL_HEIGHT / 2 + 80, VIRTUAL_WIDTH, "center")
+        -- Battle statistics
+        love.graphics.setColor(0.85, 0.85, 0.9, 1)
+        love.graphics.printf("Damage Taken: " .. self.summaryDamage, boxX, boxY + 65, boxW, "center")
         
-        love.graphics.setColor(0.6, 0.6, 0.6, 1)
-        love.graphics.printf("Click anywhere to continue", 0, VIRTUAL_HEIGHT / 2 + 120, VIRTUAL_WIDTH, "center")
+        love.graphics.setColor(0.2, 0.9, 0.35, 1)
+        love.graphics.printf("Cash: +$" .. self.summaryIncome, boxX, boxY + 95, boxW, "center")
+        love.graphics.printf("Perfect Bonus: +$" .. self.summaryPerfectBonus, boxX, boxY + 125, boxW, "center")
+        love.graphics.printf("Interest: +$" .. self.summaryInterest, boxX, boxY + 155, boxW, "center")
+        
+        -- Thin divider above Total Cash
+        love.graphics.setColor(0.3, 0.5, 0.7, 0.4)
+        love.graphics.line(boxX + 24, boxY + 185, boxX + boxW - 24, boxY + 185)
+        
+        love.graphics.setColor(0.3, 1.0, 0.5, 1)
+        love.graphics.printf("Total Cash: $" .. self.summaryTotalCash, boxX, boxY + 198, boxW, "center")
+
+        local nextY = boxY + 232
+        if hasOther then
+            love.graphics.setColor(1, 0.85, 0.3, 1)
+            local otherText = "Other Rewards: " .. table.concat(self.summaryOtherRewards, ", ")
+            love.graphics.printf(otherText, boxX + 15, nextY, boxW - 30, "center")
+            nextY = nextY + 36
+        end
+        
+        love.graphics.setColor(0.55, 0.6, 0.68, 1)
+        love.graphics.printf("Click anywhere to continue", boxX, nextY + 12, boxW, "center")
+        
+        -- Restore standard OS cursor over the summary screen
+        Cursor.applyOS()
     end
     
     -- love.graphics.print("Tokens: " .. game.tokens, 10, 10)

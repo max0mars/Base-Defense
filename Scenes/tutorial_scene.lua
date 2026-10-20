@@ -162,17 +162,26 @@ function tutorial_scene:load()
         local step = self.steps[self.stepIndex]
         if not step then return end
         
+        local RewardIndex = require("Game.Rewards.RewardIndex")
+        local function getRewardCopy(id)
+            for _, rarityList in pairs(RewardIndex) do
+                if type(rarityList) == "table" then
+                    for _, item in ipairs(rarityList) do
+                        if item.id == id then
+                            local copy = {}
+                            for k, v in pairs(item) do copy[k] = v end
+                            return copy
+                        end
+                    end
+                end
+            end
+            return nil
+        end
+
         local choicesData = {}
         if step.type == "select_sentry" or step.type == "buy_sentry" then
             choicesData = {
-                {
-                    id = "sentry",
-                    name = "Sentry",
-                    description = "Standard defense turret.",
-                    type = "building",
-                    building = require("Buildings.Turrets.Sentry"),
-                    rarity = "common"
-                },
+                getRewardCopy("sentry"),
                 {
                     id = "smallbox",
                     name = "Small Box",
@@ -181,14 +190,7 @@ function tutorial_scene:load()
                     building = require("Buildings.Blockers.SmallBox"),
                     rarity = "common"
                 },
-                {
-                    id = "shotgunTurret",
-                    name = "Shotgun Turret",
-                    description = "Short range spread fire.",
-                    type = "building",
-                    building = require("Buildings.Turrets.ShotgunTurret"),
-                    rarity = "common"
-                }
+                getRewardCopy("shotgunTurret")
             }
         elseif step.type == "select_box" or step.type == "buy_box" then
             choicesData = {
@@ -200,26 +202,12 @@ function tutorial_scene:load()
                     building = require("Buildings.Blockers.SmallBox"),
                     rarity = "common"
                 },
-                {
-                    id = "sentry",
-                    name = "Sentry",
-                    description = "Standard defense turret.",
-                    type = "building",
-                    building = require("Buildings.Turrets.Sentry"),
-                    rarity = "common"
-                },
-                {
-                    id = "shotgunTurret",
-                    name = "Shotgun Turret",
-                    description = "Short range spread fire.",
-                    type = "building",
-                    building = require("Buildings.Turrets.ShotgunTurret"),
-                    rarity = "common"
-                }
+                getRewardCopy("sentry"),
+                getRewardCopy("shotgunTurret")
             }
         elseif step.type == "select_cache" or step.type == "buy_cache" then
             choicesData = {
-                {
+                getRewardCopy("ammoCache") or {
                     id = "ammoCache",
                     name = "Ammo Cache",
                     description = "Increase nearby turret damage by 20%",
@@ -228,14 +216,7 @@ function tutorial_scene:load()
                     rarity = "uncommon",
                     iconCategory = "buff"
                 },
-                {
-                    id = "sentry",
-                    name = "Sentry",
-                    description = "Standard defense turret.",
-                    type = "building",
-                    building = require("Buildings.Turrets.Sentry"),
-                    rarity = "common"
-                },
+                getRewardCopy("sentry"),
                 {
                     id = "smallbox",
                     name = "Small Box",
