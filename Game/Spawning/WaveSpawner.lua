@@ -42,7 +42,7 @@ function WaveSpawner:update(dt)
             if not (_G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0) then
                 local BattleDirector = require("Game.Spawning.BattleDirector")
                 local bd = BattleDirector:new(self.game)
-                local upcomingWaves, upcomingSummaries = bd:generateBattle(_G.PersistentState and _G.PersistentState.globalDifficulty or 1)
+                local upcomingWaves, upcomingSummaries = bd:generateBattle(1)
                 _G.PersistentState = _G.PersistentState or {}
                 _G.PersistentState.upcomingWaves = upcomingWaves
                 _G.PersistentState.upcomingSummaries = upcomingSummaries
@@ -184,7 +184,7 @@ function WaveSpawner:prepareUpcomingWave()
     if not (_G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0) then
         local BattleDirector = require("Game.Spawning.BattleDirector")
         local bd = BattleDirector:new(self.game)
-        local upcomingWaves, upcomingSummaries = bd:generateBattle(_G.PersistentState and _G.PersistentState.globalDifficulty or 1)
+        local upcomingWaves, upcomingSummaries = bd:generateBattle(1)
         _G.PersistentState = _G.PersistentState or {}
         _G.PersistentState.upcomingWaves = upcomingWaves
         _G.PersistentState.upcomingSummaries = upcomingSummaries

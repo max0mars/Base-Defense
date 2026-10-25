@@ -129,7 +129,6 @@ function game:load(saveData, isTesting)
         self.blockerCost          = 3
         self.drawCost             = 1
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
-        self.mutationInterval     = 5 -- Waves between enemy mutations
         self.inputMode            = "idle"
         self.useHybridSeparation  = false
         self.pulseTimer           = 0
@@ -281,29 +280,8 @@ function game:update(dt)
             self:winBattle()
             return
         end
-        
-        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
-        
-        -- Interval 1: New Enemy (5, 10, 15...)
-        if self.wave % self.mutationInterval == 0 then
-            local options = EnemyRegistry:getMutationOptions(2)
-            if #options > 0 then
-                self:setState("enemy_mutation")
-                self.gui.mutation:activate(options, "enemy")
-                return -- Exit early to prioritize this menu
-            end
-        end
 
-        -- Interval 2: Enemy Upgrade (8, 13, 18...)
-        if (self.wave - 3) % 5 == 0 and self.wave ~= 3 then
-            local options = EnemyRegistry:getUpgradeOptions(2)
-            if #options > 0 then
-                self:setState("upgrade_mutation")
-                self.gui.mutation:activate(options, "upgrade")
-                return -- Exit early to prioritize this menu
-            end
-        end
-
+        -- Enemy discovery and mutations happen between battles (preparation_scene)
         self:setState("preparing")
     end
     
@@ -1067,6 +1045,20 @@ function game:consumeCard(card)
     if self.inputMode ~= "aiming" then
         self.inputMode = "idle"
     end
+end
+
+--- Tokens the active card will spend when it resolves (spells spend mana instead).
+function game:getActiveCardTokenCost()
+    local card = self.activeCard
+    if not card then return 0 end
+    local isSpell = (card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell)
+    if isSpell then return 0 end
+    return card:getCost()
+end
+
+--- Placement spends slot unlocks and then the card itself (in consumeCard), so both must fit.
+function game:canAffordPlacement(unlockCost)
+    return self.tokens >= unlockCost + self:getActiveCardTokenCost()
 end
 
 function game:refundCard(card)

@@ -1,5 +1,5 @@
 -- Game/Cards/InstantCardRegistry.lua
-local InstantCard = require("Instants.instant")
+local InstantCard = require("Instants.Instant")
 
 local CardRegistry = {}
 

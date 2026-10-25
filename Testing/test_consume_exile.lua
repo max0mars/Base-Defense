@@ -4,7 +4,7 @@
 package.path = package.path .. ";./?.lua"
 
 local Card = require("Game.Cards.Card")
-local Instant = require("Instants.instant")
+local Instant = require("Instants.Instant")
 local Spell = require("Spells.Spell")
 local ExecutionType = require("Game.Cards.ExecutionType")
 

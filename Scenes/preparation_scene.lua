@@ -233,7 +233,7 @@ function preparation_scene:applyLevelChoice(choice)
     local bd = BattleDirector:new(dummyGame)
     
     local template = choice.template
-    local upcomingWaves, upcomingSummaries, forecastTotals = bd:generateBattle(choice.difficultyMultiplier or 1, { template = template, roster = choice.roster })
+    local upcomingWaves, upcomingSummaries, forecastTotals = bd:generateBattle(choice.difficultyMultiplier or 1, { template = template, roster = choice.roster, level = choice.playerLevel })
     _G.PersistentState.upcomingWaves = upcomingWaves
     _G.PersistentState.upcomingSummaries = upcomingSummaries
     
@@ -247,12 +247,24 @@ function preparation_scene:applyLevelChoice(choice)
     }
 end
 
+-- Each shop level needs XP_PER_SHOP_LEVEL more XP than the last (level N needs 2N)
+preparation_scene.XP_PER_SHOP_LEVEL = 2
+
 function preparation_scene:getRequiredXP(level)
-    if level < 3 then return 2 end
-    if level < 5 then return 3 end
-    if level < 7 then return 4 end
-    if level < 9 then return 5 end
-    return 6
+    return self.XP_PER_SHOP_LEVEL * level
+end
+
+-- XP dots keep 18px spacing and 6px radius until they would overflow the stat column,
+-- then tighten (and shrink, keeping a 2px gap) to fit.
+preparation_scene.XP_DOT_COLUMN_WIDTH = 200
+
+function preparation_scene:getXPDotLayout(reqXP)
+    local startX, spacing, radius = 20, 18, 6
+    if reqXP > 1 then
+        spacing = math.min(spacing, (self.XP_DOT_COLUMN_WIDTH - radius) / (reqXP - 1))
+        radius = math.min(radius, (spacing - 2) / 2)
+    end
+    return startX, spacing, radius
 end
 
 function preparation_scene:addShopXP(amount)
@@ -1192,10 +1204,8 @@ function preparation_scene:draw()
     -- Draw XP circles
     if shopLevel < 10 then
         local reqXP = self:getRequiredXP(shopLevel)
-        local startX = 20
+        local startX, spacing, radius = self:getXPDotLayout(reqXP)
         local cy = 95
-        local radius = 6
-        local spacing = 18
         
         for i = 1, reqXP do
             local drawX = startX + (i - 1) * spacing

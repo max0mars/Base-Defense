@@ -245,24 +245,28 @@ function InputHandler:handleBuildingSlotHover()
                 invalidSlots = slotsToOccupy
             end
             
+            -- A click here would be refused if unlock + card cost exceed tokens, so preview it as invalid too
+            local totalCost = 0
+            if #invalidSlots == 0 then
+                totalCost = self:getUnlockCost(slotsToOccupy, buildGrid, isBattlefield)
+                if totalCost > 0 then
+                    local affordable = game:canAffordPlacement(totalCost)
+                    local unit = (totalCost == 1) and " Token)" or " Tokens)"
+                    local text = affordable and ("Unlock slot(s) and place building? (" .. totalCost .. unit)
+                        or ("Not enough tokens to unlock and place (" .. (totalCost + game:getActiveCardTokenCost()) .. " needed)")
+                    base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = text, cost = totalCost, affordable = affordable}
+                    if not affordable then
+                        invalidSlots = slotsToOccupy
+                    end
+                end
+            end
+
             if #invalidSlots > 0 then
                 activeStateBox.selectedSlots = nil
                 activeStateBox.invalidSlots = slotsToOccupy
             else
                 activeStateBox.selectedSlots = slotsToOccupy
                 activeStateBox.invalidSlots = nil
-                
-                local totalCost = 0
-                for _, s in ipairs(slotsToOccupy) do
-                    if not buildGrid.unlocked[s] and not isBattlefield then
-                        totalCost = totalCost + base:getSlotPrice(s)
-                    end
-                end
-                
-                if totalCost > 0 then
-                    local unit = (totalCost == 1) and " Token)" or " Tokens)"
-                    base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot(s) and place building? (" .. totalCost .. unit, cost = totalCost}
-                end
             end
             
             if not isBattlefield and game.blueprint.getAffectedSlotsFromAnchor and #invalidSlots == 0 then
@@ -283,6 +287,18 @@ function InputHandler:handleBuildingSlotHover()
         self.snappedX = nil
         self.snappedY = nil
     end
+end
+
+--- Token cost of unlocking the locked base slots a placement would occupy (battlefield slots are free).
+function InputHandler:getUnlockCost(slotsToOccupy, buildGrid, isBattlefield)
+    if isBattlefield then return 0 end
+    local totalCost = 0
+    for _, s in ipairs(slotsToOccupy) do
+        if not buildGrid.unlocked[s] then
+            totalCost = totalCost + self.game.base:getSlotPrice(s)
+        end
+    end
+    return totalCost
 end
 
 function InputHandler:handleLockedSlotHover()
@@ -519,22 +535,16 @@ function InputHandler:mousepressed(x, y, button)
             local slotsToOccupy = game.blueprint:getSlotsFromPattern(anchorSlot)
             if activeStateBox:areSlotsAvailable(game.blueprint, slotsToOccupy, anchorSlot) then
             
-                local totalCost = 0
-                for _, s in ipairs(slotsToOccupy) do
-                    if not buildGrid.unlocked[s] and not isBattlefield then
-                        totalCost = totalCost + base:getSlotPrice(s)
-                    end
-                end
+                local totalCost = self:getUnlockCost(slotsToOccupy, buildGrid, isBattlefield)
                 
                 if totalCost > 0 then
-                    if game.tokens >= totalCost then
+                    if game:canAffordPlacement(totalCost) then
                         game.tokens = game.tokens - totalCost
-        if game.tokens < 0 then game.tokens = 0 end
                         for _, s in ipairs(slotsToOccupy) do
                             buildGrid.unlocked[s] = true
                         end
                     else
-                        print("Cannot place building: Not enough tokens to unlock slots!")
+                        print("Cannot place building: Not enough tokens to unlock slots and pay for the card!")
                         return
                     end
                 end

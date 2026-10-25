@@ -2,7 +2,7 @@
 -- Standalone script to verify the InstantCard logic
 
 local InstantCardRegistry = require("Instants.InstantCardRegistry")
-local InstantCard = require("Instants.instant")
+local InstantCard = require("Instants.Instant")
 
 print("--- Starting Instant Cards Tests ---")
 

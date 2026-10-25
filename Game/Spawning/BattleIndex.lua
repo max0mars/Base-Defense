@@ -1,23 +1,29 @@
 local BattleTemplate = require("Game.Spawning.BattleTemplate")
 
-local function calculateSigmoidBudget(wave)
+-- The sigmoid flattens past wave 5, so a quadratic kicker keeps waves 6-8 escalating.
+local LATE_WAVE_START = 5
+local LATE_WAVE_RAMP = 0.08
+
+local function calculateWaveBudget(wave)
     local min_val = 25
     local max_val = 300
     local k = 0.8
     local x0 = 5.2
     local val = min_val + (max_val - min_val) / (1 + math.exp(-k * (wave - x0)))
+    local lateWaves = math.max(0, wave - LATE_WAVE_START)
+    val = val * (1 + LATE_WAVE_RAMP * lateWaves * lateWaves)
     return math.floor(val + 0.5)
 end
 
 local DEFAULT_BUDGETS = {}
 for i = 1, 100 do
-    DEFAULT_BUDGETS[i] = calculateSigmoidBudget(i)
+    DEFAULT_BUDGETS[i] = calculateWaveBudget(i)
 end
 
 setmetatable(DEFAULT_BUDGETS, {
     __index = function(t, wave)
         if type(wave) == "number" and wave > 0 then
-            return calculateSigmoidBudget(wave)
+            return calculateWaveBudget(wave)
         end
         return nil
     end
@@ -166,6 +172,7 @@ local BattleTemplateDictionary = {
         minimumLevel = 14,
         maximumLevel = 19,
         battleDangerTiers = {tier1min = 2, tier1max = 2, tier2min = 2, tier2max = 3}, -- 4 to 5 distinct types
+        fillerTiers = {tier0min = 1, tier0max = 1}, -- Low-tier fodder, capped share of each wave
         weight = 50
     }),
     battle_late_heavy_offensive = BattleTemplate:new({
@@ -173,6 +180,7 @@ local BattleTemplateDictionary = {
         minimumLevel = 15,
         maximumLevel = 20,
         battleDangerTiers = {tier1min = 2, tier1max = 2, tier2min = 2, tier2max = 2, tier3min = 1, tier3max = 1}, -- 5 distinct types
+        fillerTiers = {tier0min = 1, tier0max = 1}, -- Low-tier fodder, capped share of each wave
         weight = 50
     }),
     battle_late_combined_arms = BattleTemplate:new({
@@ -194,6 +202,7 @@ local BattleTemplateDictionary = {
         minimumLevel = 17,
         maximumLevel = 20,
         battleDangerTiers = {tier2min = 3, tier2max = 3, tier3min = 2, tier3max = 2}, -- 5 distinct elite types
+        fillerTiers = {tier0min = 1, tier0max = 1, tier1min = 1, tier1max = 1}, -- Low-tier fodder, capped share of each wave
         weight = 50
     }),
 
@@ -206,6 +215,7 @@ local BattleTemplateDictionary = {
         minimumLevel = 20,
         maximumLevel = 20,
         battleDangerTiers = {tier1min = 2, tier1max = 2, tier2min = 3, tier2max = 3, tier3min = 2, tier3max = 2},
+        fillerTiers = {tier0min = 1, tier0max = 1}, -- Low-tier fodder, capped share of each wave
         weight = 100
     }),
 }

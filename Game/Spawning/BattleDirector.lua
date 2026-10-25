@@ -1,4 +1,5 @@
 local WaveDirector = require("Game.Spawning.WaveDirector")
+local BattleTemplate = require("Game.Spawning.BattleTemplate")
 
 local BattleDirector = {}
 BattleDirector.__index = BattleDirector
@@ -62,15 +63,23 @@ function BattleDirector:new(game)
     return obj
 end
 
-function BattleDirector:getBudgetForWave(template, waveNumber, globalDifficulty)
+-- Spawn budget grows linearly with the player's level: +10% per level above 1.
+BattleDirector.BUDGET_GROWTH_PER_LEVEL = 0.10
+
+function BattleDirector:getLevelBudgetMultiplier(level)
+    return 1 + self.BUDGET_GROWTH_PER_LEVEL * (math.max(1, level or 1) - 1)
+end
+
+function BattleDirector:getBudgetForWave(template, waveNumber, level)
     local baseBudgets = template and template.budgets or require("Game.Spawning.BattleIndex").DEFAULT_BUDGETS
     local wave = math.max(1, math.min(#baseBudgets, waveNumber))
     local base = baseBudgets[wave]
-    local multiplier = 1.25 ^ (globalDifficulty - 1)
-    return math.floor(base * multiplier)
+    return math.floor(base * self:getLevelBudgetMultiplier(level or self:getCurrentLevel()))
 end
 
-function BattleDirector:generateBattle(globalDifficulty, profile)
+-- @param difficultyMultiplier number: the chosen battle's difficulty (1.0-2.0), applied once on top of level scaling
+-- @param profile table: optional { template, roster, level, difficultyMultiplier }
+function BattleDirector:generateBattle(difficultyMultiplier, profile)
     local wd = WaveDirector:new(self.game)
     
     if profile then
@@ -80,7 +89,7 @@ function BattleDirector:generateBattle(globalDifficulty, profile)
     end
     
     -- Select template based on passed profile/template or current battle number in state
-    local battleNum = self:getCurrentLevel()
+    local battleNum = (profile and profile.level) or self:getCurrentLevel()
     local template = (profile and profile.template) or self:selectTemplate(battleNum)
     if template then
         self:updateDiscoveryPool(template)
@@ -92,10 +101,10 @@ function BattleDirector:generateBattle(globalDifficulty, profile)
     local forecastTotals = {}
     local numWaves = (template and template.numWaves) or self:getNumWavesForLevel(battleNum)
     for i = 1, numWaves do
-        -- Calculate budget, scaled by global difficulty and battle choice difficulty multiplier
-        local budget = self:getBudgetForWave(template, i, globalDifficulty or 1)
-        local diffMult = (profile and profile.difficultyMultiplier) or (type(globalDifficulty) == "number" and globalDifficulty > 0 and globalDifficulty) or 1
-        if diffMult and diffMult ~= 1 then
+        -- Calculate budget, scaled by player level and battle choice difficulty multiplier
+        local budget = self:getBudgetForWave(template, i, battleNum)
+        local diffMult = (profile and profile.difficultyMultiplier) or difficultyMultiplier or 1
+        if diffMult ~= 1 then
             budget = math.floor(budget * diffMult)
         end
         if template and template.relativeDifficulty and template.relativeDifficulty[i] then
@@ -351,6 +360,23 @@ function BattleDirector:buildBattleRoster(selectedTemplate)
             end
             if enemyData then
                 addUnique(enemyData)
+            end
+        end
+    end
+
+    -- Filler tiers: familiar low-tier fodder (discovered only); WaveDirector caps their budget share
+    if selectedTemplate and selectedTemplate.fillerTiers then
+        local offset = (self.game and self.game.testingMode) and 2 or 0
+        for tier, limits in pairs(BattleTemplate.parseTierLimits(selectedTemplate.fillerTiers, offset)) do
+            local candidates = {}
+            for _, e in ipairs(EnemyRegistry.allEnemies) do
+                if e.tier == tier and EnemyRegistry.discoveredEnemiesMap[e.id] and not addedIds[e.id] then
+                    table.insert(candidates, e)
+                end
+            end
+            local selectCount = math.random(limits.min, limits.max)
+            for _ = 1, math.min(selectCount, #candidates) do
+                addUnique(table.remove(candidates, math.random(1, #candidates)))
             end
         end
     end

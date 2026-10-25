@@ -146,10 +146,18 @@ function EnemyRegistry:triggerRandomMutation()
     end
 end
 
+-- Accepts both spawned instances and plain index entries (getAvailableEnemies),
+-- so it reads fields directly instead of calling object:isType.
+local function isMutationTarget(enemy, target)
+    if target == "All" then return true end
+    if (enemy.enemyId or enemy.id) == target then return true end
+    return enemy.types ~= nil and enemy.types[target:lower()] == true
+end
+
 function EnemyRegistry:applyActiveMutations(enemyInstance)
     if not _G.PersistentState or not _G.PersistentState.activeMutations then return end
     for _, upgrade in ipairs(_G.PersistentState.activeMutations) do
-        if enemyInstance:isType(upgrade.target:lower()) or upgrade.target == "All" then
+        if isMutationTarget(enemyInstance, upgrade.target) then
             if upgrade.modifiers then
                 for stat, modifier in pairs(upgrade.modifiers) do
                     local isSet = type(modifier) == "table" and modifier.set ~= nil

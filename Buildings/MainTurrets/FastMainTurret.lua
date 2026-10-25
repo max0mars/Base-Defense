@@ -3,7 +3,7 @@ local Utils = require("Classes.Utils")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
-local InstantCard = require("Instants.instant")
+local InstantCard = require("Instants.Instant")
 
 local FastMainTurret = setmetatable({}, { __index = StandardMainTurret })
 FastMainTurret.__index = FastMainTurret

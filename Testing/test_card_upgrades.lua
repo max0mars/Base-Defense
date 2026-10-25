@@ -213,7 +213,7 @@ assert(disabledTurret:isUpgradable() == false, "Turret with upgradable=false fla
 assert(disabledTurret:canUpgrade() == false, "Locked turret cannot be upgraded")
 
 -- 12. Test deck with mixed card types: only upgradable cards appear in Upgrade Window
-local InstantCard = require("Instants.instant")
+local InstantCard = require("Instants.Instant")
 local Spell = require("Spells.Spell")
 
 local inst = InstantCard.new({ id = "test_instant", name = "Test Instant", cost = 1 })

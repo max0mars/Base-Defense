@@ -22,6 +22,7 @@ function BattleTemplate:new(config)
     obj.relativeDifficulty = config.relativeDifficulty or {}
     obj.waveDangerTiers = config.waveDangerTiers or {}
     obj.allowedTypes = config.allowedTypes or {}
+    obj.fillerTiers = config.fillerTiers or {} -- Same format as battleDangerTiers; see WaveDirector.FILLER_BUDGET_SHARE
     obj.specificEnemies = config.specificEnemies or {}
     obj.specificWaveEnemies = config.specificWaveEnemies or {}
     obj.budgets = config.budgets
@@ -29,6 +30,25 @@ function BattleTemplate:new(config)
     obj.limit = config.limit
 
     return obj
+end
+
+-- Parses {tierNmin = a, tierNmax = b} into {[N + offset] = {min = a, max = b}}; max defaults to min.
+-- offset shifts tier numbers (testing mode uses +2).
+function BattleTemplate.parseTierLimits(tierTable, offset)
+    local limits = {}
+    for key, val in pairs(tierTable or {}) do
+        local tierNum, bound = key:match("^tier(%d+)(%a+)$")
+        if tierNum and (bound == "min" or bound == "max") then
+            local tier = tonumber(tierNum) + (offset or 0)
+            limits[tier] = limits[tier] or {}
+            limits[tier][bound] = val
+        end
+    end
+    for _, l in pairs(limits) do
+        l.min = l.min or 0
+        l.max = l.max or l.min
+    end
+    return limits
 end
 
 -- Checks if this template can be rolled for the current battle

@@ -35,7 +35,16 @@ function Reward:new(config)
     -- Additional metadata
     reward.category = config.category or "general" -- weapon, defense, utility, etc.
     reward.game = config.game
-    reward.rawConfig = config
+
+    -- rawConfig becomes a drafted card's payload.config, which is deep-copied every battle
+    -- and on every play. Keep it a copy without the live game: a game reference there
+    -- drags the whole game graph into each copy and grows exponentially across battles.
+    reward.rawConfig = {}
+    for k, v in pairs(config) do
+        if k ~= "game" then
+            reward.rawConfig[k] = v
+        end
+    end
 
     -- Preserve all config fields (e.g. fireRate, damage, range, bulletSpeed, firingArc, etc.)
     for k, v in pairs(config) do
@@ -43,11 +52,14 @@ function Reward:new(config)
             reward[k] = v
         end
     end
-    
+
     -- Create dummy building if it's a building type, to read properties for icons
     if reward.building and type(reward.building) == "table" and reward.building.new and reward.game then
-        -- Pass 'config' instead of 'reward' since 'config' contains all the raw stats (damage, rotation, etc.)
-        local success, b = pcall(reward.building.new, reward.building, config)
+        -- Building constructors write runtime state (effectManager, shapePattern...) into the
+        -- config they are given, so build the preview from a private copy of the raw stats.
+        local buildConfig = {}
+        for k, v in pairs(config) do buildConfig[k] = v end
+        local success, b = pcall(reward.building.new, reward.building, buildConfig)
         if success then
             reward.dummyBuilding = b
         else

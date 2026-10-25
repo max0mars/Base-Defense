@@ -74,7 +74,7 @@ function TooltipManager:draw()
     
     -- Draw slot unlock tooltip
     if self.hoverTooltip then
-        self:drawSimpleTooltip(self.hoverTooltip.x, self.hoverTooltip.y, self.hoverTooltip.text, self.hoverTooltip.cost or 0)
+        self:drawSimpleTooltip(self.hoverTooltip.x, self.hoverTooltip.y, self.hoverTooltip.text, self.hoverTooltip.cost or 0, self.hoverTooltip.affordable)
     end
     
     -- Hovered building/enemy detail now renders in the left column's INSPECT
@@ -398,14 +398,16 @@ function TooltipManager:drawEnemyTooltip(enemy)
     self:drawLineBox(els, { x = sx, y = sy, halfH = (enemy.h or enemy.size or 20) / 2 })
 end
 
-function TooltipManager:drawSimpleTooltip(x, y, text, cost)
+-- affordable overrides the tokens >= cost check (placement also has to pay for the card)
+function TooltipManager:drawSimpleTooltip(x, y, text, cost, affordable)
     love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
     local font = love.graphics.getFont()
     local tw = font:getWidth(text)
     local th = font:getHeight()
     love.graphics.rectangle("fill", x, y, tw + 10, th + 10)
     
-    if self.game.tokens >= cost then
+    if affordable == nil then affordable = self.game.tokens >= cost end
+    if affordable then
         love.graphics.setColor(0, 1, 0, 1)
     else
         love.graphics.setColor(1, 0, 0, 1)

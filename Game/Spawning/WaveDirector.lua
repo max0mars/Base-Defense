@@ -1,7 +1,12 @@
 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+local BattleTemplate = require("Game.Spawning.BattleTemplate")
 
 local WaveDirector = {}
 WaveDirector.__index = WaveDirector
+
+-- Max share of a wave's budget spent on a template's filler-tier enemies, so low-tier
+-- fodder shows up in late waves without crowding out the battle's real threats.
+WaveDirector.FILLER_BUDGET_SHARE = 0.1
 
 function WaveDirector:new(game)
     local obj = setmetatable({}, self)
@@ -33,6 +38,10 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget
         laneCount = laneCount or 1
     end
 
+    local tierOffset = (self.game and self.game.testingMode) and 2 or 0
+    local fillerTiers = BattleTemplate.parseTierLimits(template and template.fillerTiers, tierOffset)
+    local dangerTiers = BattleTemplate.parseTierLimits(template and template.battleDangerTiers, tierOffset)
+
     local available = {}
     if template and template.waveDangerTiers and template.waveDangerTiers[waveIndex] then
         local allowedTiers = {}
@@ -48,7 +57,7 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget
         end
 
         for _, e in ipairs(battleRoster) do
-            if allowedTiers[e.tier] then
+            if allowedTiers[e.tier] or fillerTiers[e.tier] then
                 table.insert(available, e)
             end
         end
@@ -123,28 +132,49 @@ function WaveDirector:generateWaveList(waveIndex, battleRoster, template, budget
         end
     end
 
-    while remainingBudget > 0 do
-        local affordable = {}
-        local totalWeight = 0
+    -- Weighted random purchases from pool until remainingBudget drops to budgetFloor
+    local function spendDownTo(pool, budgetFloor)
+        while remainingBudget > budgetFloor do
+            local affordable = {}
+            local totalWeight = 0
 
-        for _, e in ipairs(available) do
-            if e.spawnCost <= remainingBudget and self:checkConstraints(e, currentCounts) then
-                table.insert(affordable, e)
-                totalWeight = totalWeight + (e.spawnWeight or 10)
+            for _, e in ipairs(pool) do
+                if e.spawnCost <= remainingBudget - budgetFloor and self:checkConstraints(e, currentCounts) then
+                    table.insert(affordable, e)
+                    totalWeight = totalWeight + (e.spawnWeight or 10)
+                end
+            end
+
+            if #affordable == 0 then break end
+
+            local r = math.random() * totalWeight
+            local runningWeight = 0
+            for _, e in ipairs(affordable) do
+                runningWeight = runningWeight + (e.spawnWeight or 10)
+                if r <= runningWeight then
+                    addEnemySpawns(e, 1)
+                    break
+                end
             end
         end
+    end
 
-        if #affordable == 0 then break end
-
-        local r = math.random() * totalWeight
-        local runningWeight = 0
-        for _, e in ipairs(affordable) do
-            runningWeight = runningWeight + (e.spawnWeight or 10)
-            if r <= runningWeight then
-                addEnemySpawns(e, 1)
-                break
-            end
+    -- Filler-tier enemies (not also a danger tier) get a capped share; the rest goes to the core roster
+    local core, fillers = {}, {}
+    for _, e in ipairs(available) do
+        if fillerTiers[e.tier] and not dangerTiers[e.tier] then
+            table.insert(fillers, e)
+        else
+            table.insert(core, e)
         end
+    end
+
+    if #fillers > 0 and #core > 0 then
+        local fillerBudget = math.min(remainingBudget, math.floor(totalBudget * self.FILLER_BUDGET_SHARE))
+        spendDownTo(fillers, remainingBudget - fillerBudget)
+        spendDownTo(core, 0)
+    else
+        spendDownTo(available, 0)
     end
 
     for i = #waveList, 2, -1 do
