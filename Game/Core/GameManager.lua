@@ -1128,6 +1128,7 @@ function game:winBattle()
     end
     if self.gui and self.gui.devSpawner then
         self.gui.devSpawner:close()
+        self.gui.devSpawner:clearQueue()
     end
 
     -- Clear all enemies and enemy bullets

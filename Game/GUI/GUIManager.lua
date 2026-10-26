@@ -194,6 +194,7 @@ function GUIManager:update(dt)
     if self.enemySpawner then self.enemySpawner:update(dt) end
     if self.wavePreview then self.wavePreview:update(dt) end
     if self.itemPicker then self.itemPicker:update(dt) end
+    if self.devSpawner then self.devSpawner:update(dt) end
     if self.infoColumn then self.infoColumn:update(dt) end
     if self.deckViewer then self.deckViewer:update(dt) end
 
