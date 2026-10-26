@@ -601,8 +601,8 @@ end
 function game:getMaxTokens()
     local max = self.maxTokens or 3
     for _, obj in ipairs(self.objects) do
-        if obj.name == "Bank" and not obj.destroyed then
-            max = max + 1
+        if obj.name == "Bank" and not obj.destroyed and obj.getTokenBonus then
+            max = max + obj:getTokenBonus()
         end
     end
     return max

@@ -34,17 +34,33 @@ function Bank:new(config)
     return b
 end
 
+-- Token cap bonus once the required neighbours (affectedSlots: top, bottom, right) are filled
+Bank.COVERED_BONUS = 1
+Bank.ALL_TURRETS_BONUS = 2
+
 function Bank:isSurrounded()
-    if not self.slot then return false end
-    local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
-    if #affectedSlots < #self.affectedSlots then return false end
-    for _, slot in ipairs(affectedSlots) do
+    return self:getTokenBonus() > 0
+end
+
+--- Token cap bonus this Bank currently provides (checked when tokens refill each wave).
+-- 0 unless every required neighbour is filled; more if they are all turrets.
+function Bank:getTokenBonus()
+    if not self.slot or not self.affectedSlots or not self.game or not self.game.base then return 0 end
+    local neighbourSlots = self:getAffectedSlotsFromAnchor(self.slot)
+    -- A neighbour off the edge of the grid can never be filled
+    if #neighbourSlots < #self.affectedSlots then return 0 end
+
+    local allTurrets = true
+    for _, slot in ipairs(neighbourSlots) do
         local b = self.game.base.buildGrid.buildings[slot]
         if not b or b.destroyed then
-            return false
+            return 0
+        end
+        if not (b.isType and b:isType("turret")) then
+            allTurrets = false
         end
     end
-    return true
+    return allTurrets and self.ALL_TURRETS_BONUS or self.COVERED_BONUS
 end
 
 function Bank:applyBuffs()
@@ -52,9 +68,11 @@ function Bank:applyBuffs()
 end
 
 function Bank:getTooltipStrings()
-    local strings = {}
-    table.insert(strings, "+1 Energy per turn")
-    return strings
+    local bonus = self:getTokenBonus()
+    if bonus == 0 then
+        return { "Inactive: fill top, bottom and right" }
+    end
+    return { string.format("+%d Token per wave", bonus) }
 end
 
 function Bank:checkPayout()
@@ -67,7 +85,11 @@ function Bank:draw(drawx, drawy)
     local originalColor = self.color
     local originalDisableGlow = self.disableGlow
     
-    if self:isSurrounded() then
+    local bonus = self:getTokenBonus()
+    if bonus >= self.ALL_TURRETS_BONUS then
+        self.color = {1, 0.95, 0.5, 1} -- Bright Gold: all neighbours are turrets
+        self.disableGlow = false
+    elseif bonus > 0 then
         self.color = {1, 0.84, 0, 1} -- Neon Gold
         self.disableGlow = false
     else
