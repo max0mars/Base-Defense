@@ -5,7 +5,7 @@ Damage Types (exactly one per hit, validated on takeDamage):
 - energy     - Blaster, Flux Cannon, Plasma Scattershot, Chimera, Main Lazer, Zap
 - explosive  - Grenadier, Missile Launcher, Mortar, and every explosion
 - fire       - Burn ticks, Fireball
-- poison     - Poison Turret, Poison and Toxic ticks, Toxic shards, Acid Cloud
+- poison     - Poison Turret, Poison and Toxic ticks, Acid Cloud
 - ice        - Slush Cannon
 - trueDamage - Judgment; ignores affinities entirely
 
@@ -17,7 +17,8 @@ Damage Tags (any number per hit, passed as takeDamage's damageTags):
 - hitscan    - default on hitscan bullets (Sniper)
 - aoe        - explosions, Fireball, Acid Cloud, Zap
 - dot        - Burn, Poison and Toxic ticks, Acid Cloud
-- toxic      - Toxic ticks and shards (poison damage, coloured purple)
+- toxic      - Toxic ticks (poison damage, coloured purple); Toxic shards carry
+               the tag but deal no damage
 
 Tags can't be a core damage type. Enemy affinities and "<tag>_damage" stat
 modifiers match both the damage type and the tags. A tag listed in

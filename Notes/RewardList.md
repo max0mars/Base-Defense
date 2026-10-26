@@ -18,6 +18,9 @@ Uncommon
 
 Rare
 - Chem Lab [Buildings.Passives.ToxicTotem]: Spreads deadly toxins. Highly contagious.
+  - Gives its diagonal neighbours Toxic Rounds: hits apply Toxic (10s, 2 poison damage per
+    second, -15% speed, one stack; reapplying refreshes it). An enemy that dies while Toxic
+    bursts into 4 shards that deal no damage but apply Toxic, so it chains without limit.
 - GTR-55 Gator [Buildings.Turrets.Gator]: Hard hitting rounds go right through enemies.
 - Unstable Laser [main_upgrade]: Gives your big lazer a 20% chance to burn enemies.
 - Missile Launcher [Buildings.Turrets.MissileLauncher]: Wouldn't want to get in the way of one of these.

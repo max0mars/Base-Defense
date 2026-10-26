@@ -1,5 +1,5 @@
 local Toxic = {
-    timePerTick = 0.5
+    timePerTick = 1
 }
 Toxic.__index = Toxic
 
@@ -10,11 +10,10 @@ function Toxic:new(config)
     -- Configurable variables
     instance.name = "toxic"
     instance.displayName = "Toxic"
-    instance.duration = config.duration or 16
-    instance.dps = config.dps or 6
+    instance.duration = config.duration or 10
+    instance.tickDamage = config.tickDamage or 2
     instance.speedMult = config.speedMult or -0.15
-    instance.bloomDamage = config.bloomDamage or 3
-    instance.recursion = config.recursion or 1 -- Default to 1 to prevent infinite loops
+    instance.bloomDamage = config.bloomDamage or 0
     instance.globalStacks = 1
     instance.isDebuff = true
     
@@ -32,21 +31,14 @@ end
 function Toxic:onUpdate(dt, target)
     self.time = self.time + dt
     if self.time >= self.timePerTick then
-        target:takeDamage(self.dps * self.timePerTick, "poison", nil, nil, { "dot", "toxic" }, self.damageSource)
+        target:takeDamage(self.tickDamage, "poison", nil, nil, { "dot", "toxic" }, self.damageSource)
         self.time = self.time - self.timePerTick
     end
 end
 
-function Toxic:onOverwrite(oldEffect)
-    if oldEffect.recursion and self.recursion then
-        self.recursion = math.max(self.recursion, oldEffect.recursion)
-    end
-end
-
+-- Bursts into shards that infect nearby enemies. Shards deal no damage, so the
+-- spread can chain indefinitely.
 function Toxic:onDeath(target)
-    if self.recursion <= 0 then return end
-
-    -- Spawn a burst of shards instead of an explosion
     local BulletIndex = require("Bullets.BulletIndex")
     local shardDef = BulletIndex.toxicShard
     local numShards = 4
@@ -65,7 +57,6 @@ function Toxic:onDeath(target)
             angle = angle,
             damage = self.bloomDamage,
             hitCache = {[target:getID()] = true}, -- Skip the enemy that just died
-            recursion = self.recursion - 1,
             name = "Toxic Shard",
             bulletSpeed = 350,
             pierce = 1,

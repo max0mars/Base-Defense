@@ -56,7 +56,7 @@ local PassiveIndex = {
             building = require("Buildings.Passives.ToxicTotem"),
             iconCategory = "buff",
             cost = 2,
-            affectedSlots = {{1,0},{-1,0},{0,1},{0,-1}}
+            affectedSlots = {{-1,-1},{-1,1},{1,-1},{1,1}}
         },
         {
             id = "conduit",
