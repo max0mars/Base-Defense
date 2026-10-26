@@ -242,14 +242,14 @@ local RewardIndex = {
         {
             id = "plasmaScattershot",
             name = "Plasma Scattershot",
-            description = "Fires plamsa rounds at high speed but has limited ammo. Reloads slowly.",
+            description = "Fires plasma rounds at high speed but has limited ammo. Reloads slowly.",
             type = "building",
             types = {"turret", "building", "shotgun"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 1.6, range = 150, firingArc = {direction = 0, minRange = 0, angle = math.rad(80)},
-            spread = math.rad(15), pelletCount = 10,
+            spread = math.rad(16.5), pelletCount = 10,
             ammoMax = 15, reloadTime = 4,
             bulletSpeed = 600, damageType = "energy", damage = 11,
             pierce = 2, lifespan = 0.5, bulletId = "plasmaBolt"

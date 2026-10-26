@@ -60,6 +60,7 @@ CardRegistry.Permafrost = InstantCard.new({
 -- more than CRYOELECTRONICS_MAX_PER_SHOT, so nothing freezes in a hit or two.
 local CRYOELECTRONICS_CHILL_PER_SECOND = 1.2 -- at 1 shot per second
 local CRYOELECTRONICS_RATE_SCALING = 0.5
+local CRYOELECTRONICS_PELLET_SCALING = 0.5 -- shotguns: 10 pellets count as ~3.2x fire rate
 local CRYOELECTRONICS_MAX_PER_SHOT = 2
 CardRegistry.Cryoelectronics = InstantCard.new({
     id = "inst_cryoelectronics_1",
@@ -82,6 +83,7 @@ CardRegistry.Cryoelectronics = InstantCard.new({
                     name = "cryoelectronics_chill",
                     perSecond = CRYOELECTRONICS_CHILL_PER_SECOND,
                     rateScaling = CRYOELECTRONICS_RATE_SCALING,
+                    pelletScaling = CRYOELECTRONICS_PELLET_SCALING,
                     maxPerShot = CRYOELECTRONICS_MAX_PER_SHOT,
                 }),
             })

@@ -248,6 +248,9 @@ ChillOnHit.__index = ChillOnHit
 --                      rateScaling (with perSecond, default 0: chill per second
 --                      grows as baseFireRate ^ rateScaling, so 0 = the same for
 --                      every turret and 1 = a fixed amount per shot),
+--                      pelletScaling (with perSecond, default 0: pellets count
+--                      as extra fire rate for rateScaling, pellets ^ pelletScaling
+--                      shots each, so 0 = they don't and 1 = each is a full shot),
 --                      maxPerShot (with perSecond: cap on the chill one shot's
 --                      pellets add up to),
 --                      name (default "chill"; turrets keep one hit effect per name)
@@ -259,6 +262,7 @@ function Chill.onHit(config)
         amount = config.amount or 1,
         perSecond = config.perSecond,
         rateScaling = config.rateScaling or 0,
+        pelletScaling = config.pelletScaling or 0,
         maxPerShot = config.maxPerShot or math.huge,
         hitChance = config.chance or 1,
     }, ChillOnHit)
@@ -273,7 +277,8 @@ function ChillOnHit:getAmount(source)
     local fireRate = shooter and shooter.fireRate or 0
     if fireRate <= 0 then return math.min(self.perSecond, self.maxPerShot) end
     local pellets = math.max(1, shooter.pelletCount or 1)
-    local perShot = self.perSecond * fireRate ^ (self.rateScaling - 1)
+    local effectiveRate = fireRate * pellets ^ self.pelletScaling
+    local perShot = self.perSecond * effectiveRate ^ self.rateScaling / fireRate
     return math.min(perShot, self.maxPerShot) / pellets
 end
 

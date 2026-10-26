@@ -143,10 +143,13 @@ local function perShot(t) return hitEffectOf(t):getAmount({ source = t }) * (t:g
 local function perSecond(t) return perShot(t) * t:getStat("fireRate") end
 -- 1.2 x sqrt(fire rate) per second
 assert(near(perSecond(blaster), 1.2 * math.sqrt(0.7)), string.format("Blaster chills %.2f/s", perSecond(blaster)))
-assert(near(perSecond(scatter), 1.2 * math.sqrt(1.6)), string.format("Plasma Scattershot chills %.2f/s", perSecond(scatter)))
+-- Pellets count as extra fire rate: 10 pellets = sqrt(10) shots
+assert(near(perSecond(scatter), 1.2 * math.sqrt(1.6 * math.sqrt(10))),
+    string.format("Plasma Scattershot chills %.2f/s (pellets count toward fire rate)", perSecond(scatter)))
 assert(perSecond(scatter) > perSecond(blaster) and perSecond(blaster) > perSecond(flux),
     "faster turrets chill more per second")
-assert(perShot(flux) > perShot(blaster) and perShot(blaster) > perShot(scatter), "slower turrets chill more per shot")
+assert(perShot(flux) > perShot(blaster), "slower single-shot turrets chill more per shot")
+assert(hitEffectOf(scatter):getAmount({ source = scatter }) < perShot(blaster), "each shotgun pellet chills less than a single shot")
 -- Flux Cannon would be 1.2 / sqrt(0.3) = 2.19 a shot: capped
 assert(near(perShot(flux), 2), "one shot never adds more than 2 stacks")
 
@@ -242,6 +245,40 @@ ArtifactManager.remove("cryo_coolant")
 game.artifacts.artifacts = {}
 game.artifacts:refresh()
 assert(near(gun:getStat("fireRate"), baseRate), "refreshing without the artifact clears its per-turret bonus")
+
+-- -----------------------------------------------------------------------------
+-- 4. Magazine turrets top up a partly used magazine when nothing is in range
+-- -----------------------------------------------------------------------------
+local mag = place("plasmaScattershot", 3, 10)
+mag.ammoCount = 3
+for _ = 1, math.floor(Turret.IDLE_RELOAD_DELAY * 60) - 5 do mag:update(1 / 60) end
+assert(not mag.isReloading, "a brief gap without a target doesn't trigger a reload")
+for _ = 1, 10 do mag:update(1 / 60) end
+assert(mag.isReloading, "a partly used magazine reloads after a while with no target")
+for _ = 1, math.ceil(mag.reloadTime * 60) + 1 do mag:update(1 / 60) end
+assert(not mag.isReloading and mag.ammoCount == mag.ammoMax, "...and comes back full")
+mag:update(1 / 60)
+assert(not mag.isReloading, "a full magazine doesn't reload")
+
+-- A target arriving mid top-up cancels the reload and the turret fires
+local mx, my = mag:getCenterPosition()
+local function enemyInFront()
+    local e = Enemy:new({ game = game, x = mx + 80, y = my, name = "Grunt", maxHp = 1e6 })
+    game:addObject(e)
+    return e
+end
+mag.ammoCount = 5
+mag.isReloading, mag.reloadTimer = true, mag.reloadTime
+local intruder = enemyInFront()
+mag.rotation = 0
+for _ = 1, 30 do mag:update(1 / 60) end
+assert(not mag.isReloading and mag.ammoCount < 5, "a target cancels a top-up reload and the turret fires")
+-- An empty magazine still finishes reloading first
+mag.ammoCount = 0
+mag.isReloading, mag.reloadTimer = true, mag.reloadTime
+for _ = 1, 30 do mag:update(1 / 60) end
+assert(mag.isReloading and mag.ammoCount == 0, "an empty magazine can't be interrupted")
+intruder:died()
 
 print(string.format("\n%d failure(s)", failures))
 if failures > 0 then os.exit(1) end
