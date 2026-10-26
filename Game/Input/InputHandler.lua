@@ -949,6 +949,7 @@ function InputHandler:keypressed(key)
             game:recalculateAllBuffs() -- Recalculate all buffs before wave starts
             game.WaveSpawner:startNextWave()
             game:setState("wave")
+            if game.artifacts then game.artifacts:trigger("onWaveStart") end
         end
     elseif key == "tab" then
         -- Toggle autofire
