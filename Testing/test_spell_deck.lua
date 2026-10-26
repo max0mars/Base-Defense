@@ -86,7 +86,7 @@ game.inputHandler = ih
 game.mainLazer = { PlayerClick = function() fired = fired + 1 end }
 -- A build grid far off the field, so idle clicks don't hit a slot.
 game.base = { buildGrid = { x = 0, y = -10000, width = 1, height = 1, cellSize = 1, buildings = {}, unlocked = {} } }
-local hand = setmetatable({ game = game }, HandUI)
+local hand = setmetatable({ game = game, drawAnims = {}, cardX = {}, inHand = {}, falling = {}, drawHold = 0, flyAnims = {} }, HandUI)
 game.gui = { hand = hand, mousepressed = function() return false end, overlayActive = function() return false end }
 
 mouseX = Layout.field.x + Layout.field.w / 2
@@ -145,6 +145,24 @@ game:discardHand()
 assert(#game.hand == 0, "Hand emptied")
 assert(#game.spellDiscardPile == 3, "All spells are back in the spell discard pile")
 assert(#game.discardPile == 3, "Build discard pile untouched")
+
+-- 7. Outside a wave, number keys pick from the whole build hand
+game:setState("startup")
+local function buildCard(name)
+    return { name = name, executionType = "Targeted", getCost = function() return 0 end }
+end
+game.hand = { buildCard("b1"), buildCard("b2") }
+hand:update(0)
+hand.drawAnims = {} -- skip the draw animation
+game.tokens = 10
+ih:keypressed("2")
+assert(game.activeCard == game.hand[2] and game.inputMode == "targeting_card", "Key 2 selects the second build card")
+ih:keypressed("2")
+assert(game.activeCard == nil, "Pressing it again puts the card back")
+game.gui.overlayActive = function() return true end
+ih:keypressed("1")
+assert(game.activeCard == nil, "Number keys do nothing behind an overlay")
+game.gui.overlayActive = function() return false end
 
 if failures > 0 then
     print(failures .. " test(s) failed")

@@ -896,12 +896,12 @@ function InputHandler:keypressed(key)
         game.debugMode = not game.debugMode
     end
 
-    -- Number keys pick a spell from the hand (1 = leftmost) during a wave.
-    -- Targeting only starts here; the cast needs a fresh left click, so a button
-    -- already held for turret fire never casts it.
+    -- Number keys pick a card from the hand (1 = leftmost); during a wave only
+    -- spells count. Targeting only starts here; the cast needs a fresh left
+    -- click, so a button already held for turret fire never casts it.
     local slot = tonumber(key)
-    if slot and slot >= 1 and game:isState("wave") and game.gui and game.gui.hand then
-        game.gui.hand:selectSpellSlot(slot)
+    if slot and slot >= 1 and game.gui and game.gui.hand and not game.gui:overlayActive() then
+        game.gui.hand:selectHotkeyCard(slot)
         return
     end
 
