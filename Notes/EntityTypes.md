@@ -48,7 +48,6 @@ All main turrets inherit from `StandardMainTurret.lua`, which adds the `mainturr
 * **Bank**: `passive`, `economy`
 * **Chem Lab** (`ToxicTotem.lua`): `passive`, `toxic`
 * **Conduit**: `passive`, `economy`
-* **Frost Trap** (`FrostTrap.lua`): `passive`, `slow`, `control`
 * **Explosive Bullets** (`ExplosiveTotem.lua`): `passive`, `explosive`
 
 ---

@@ -2,6 +2,7 @@ local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local Layout = require("Game.GUI.Layout")
 local HitscanBullet = require("Bullets.HitscanBullet")
 local BurnEffect = require("Game.Effects.StatusEffects.Burn")
+local Chill = require("Game.Effects.StatusEffects.Chill")
 local Utils = require("Classes.Utils")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local Card = require("Game.Cards.Card")
@@ -118,7 +119,8 @@ function MainLazer:updateElectricField(dt)
             local target = potentialTargets[love.math.random(1, #potentialTargets)]
             if AUDIO then AUDIO:playSFX("lightning_01") end
             self:applyHitEffects(target)
-            target:takeDamage(self:getStat("damage"), "energy", target.x, target.y, nil, self)
+            local damage = self:getStat("damage") * Chill.getDamageMultiplier(target, self:getDamageVsChill())
+            target:takeDamage(damage, "energy", target.x, target.y, nil, self)
             if self.game.spawnLightningBolt then self.game:spawnLightningBolt(target.x, target.y) end
             if self.game.spawnParticleExplosion then self.game:spawnParticleExplosion({0.4, 0.7, 1, 1}, 5, target.x, target.y) end
             

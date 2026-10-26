@@ -78,9 +78,11 @@ function game_scene:update(dt)
             self.summaryDamage = game.damageTakenThisBattle or 0
             self.summaryIncome = game.battleReward or 0
             self.summaryPerfectBonus = (self.summaryDamage == 0) and 25 or 0
-            
+            -- Already added to cash during the battle, as frozen enemies died
+            self.summaryIceMarket = game.iceMarketIncome or 0
+
             local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
-            local cashBeforeBattle = currentCash - self.summaryIncome
+            local cashBeforeBattle = currentCash - self.summaryIncome - self.summaryIceMarket
             if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
             self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
             
@@ -158,7 +160,8 @@ function game_scene:draw()
         local top = self.summaryTopTurrets or {}
         -- MVP block: name + damage line, then one line per runner-up, then a divider
         local mvpH = (#top > 0) and (58 + (#top - 1) * 20) or 0
-        local boxH = (hasOther and 340 or 300) + mvpH
+        local iceRowH = ((self.summaryIceMarket or 0) > 0) and 30 or 0
+        local boxH = (hasOther and 340 or 300) + mvpH + iceRowH
         local boxX = math.floor((VIRTUAL_WIDTH - boxW) / 2)
         local boxY = math.floor((VIRTUAL_HEIGHT - boxH) / 2) - 10
         
@@ -208,6 +211,10 @@ function game_scene:draw()
         love.graphics.printf("Cash: +$" .. self.summaryIncome, boxX, oy + 95, boxW, "center")
         love.graphics.printf("Perfect Bonus: +$" .. self.summaryPerfectBonus, boxX, oy + 125, boxW, "center")
         love.graphics.printf("Interest: +$" .. self.summaryInterest, boxX, oy + 155, boxW, "center")
+        if iceRowH > 0 then
+            love.graphics.printf("Ice Market: +$" .. self.summaryIceMarket, boxX, oy + 185, boxW, "center")
+        end
+        oy = oy + iceRowH -- Rows below shift down when the Ice Market line shows
 
         -- Thin divider above Total Cash
         love.graphics.setColor(0.3, 0.5, 0.7, 0.4)

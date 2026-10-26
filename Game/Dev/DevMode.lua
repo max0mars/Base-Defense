@@ -24,7 +24,7 @@ DevMode.BINDINGS = {
     { key = "f1",  label = "Show / hide this list",          scope = "both" },
     { key = "f2",  label = "Unlimited tokens & mana",        scope = "battle", flag = "infiniteTokens" },
     { key = "f3",  label = "Invincible base",                scope = "battle", flag = "invincible" },
-    { key = "f4",  label = "Spawn any turret / building",    scope = "battle" },
+    { key = "f4",  label = "Spawn any card (spells to hand)", scope = "battle" },
     { key = "f5",  label = "Win battle instantly",           scope = "battle" },
     { key = "f6",  label = "Draw " .. DevMode.DRAW .. " cards", scope = "battle" },
     { key = "f7",  label = "Grant random artifact",          scope = "both" },

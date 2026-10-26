@@ -262,21 +262,6 @@ assert(unstableCard:isUpgradable() == false, "Unstable Laser must not be upgrada
 local canUpUnstable, reasonUnstable = unstableCard:canUpgrade()
 assert(canUpUnstable == false and reasonUnstable == "not_upgradable", "Unstable Laser cannot be upgraded")
 
-local FrostTrap = require("Buildings.Passives.FrostTrap")
-local frostCard = Card:new({
-    id = "frostTrap",
-    name = "Frost Trap",
-    executionType = ExecutionType.Placement,
-    cost = 1,
-    payload = {
-        buildingClass = FrostTrap,
-        config = {},
-        iconCategory = "buff"
-    }
-})
-assert(frostCard:isTurret() == false, "Frost Trap must not be recognized as a turret")
-assert(frostCard:isUpgradable() == false, "Frost Trap must not be upgradable")
-
 local BuffClass = require("Buildings.Passives.Buff")
 local ammoCacheCard = Card:new({
     id = "ammoCache",

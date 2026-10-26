@@ -167,4 +167,95 @@ SpellCardRegistry.Zap = Spell.new({
     end
 })
 
+-- -----------------------------------------------------------------------------
+-- Ice synergy spells (chill / freeze, see Chill.lua)
+-- -----------------------------------------------------------------------------
+
+-- Blizzard: Acid Cloud-style lingering area that slows and chills
+SpellCardRegistry.Blizzard = Spell.new({
+    id = "spell_blizzard",
+    name = "Blizzard",
+    description = "Creates a blizzard that deals ice damage over time and slows and chills enemies inside.",
+    cost = 30,
+    rarity = "Uncommon",
+    radius = 75,
+    dps = 5,
+    customExecute = function(self, x, y, game)
+        local AcidCloudVisual = require("Graphics.Animations.AcidCloudVisual")
+        local r = self:getStat("radius")
+        table.insert(game.animations, AcidCloudVisual:new(x, y, r, 5.0, {0.55, 0.85, 1}))
+
+        if game.enemyEffectManager then
+            local BlizzardEffect = require("Spells.BlizzardEffect")
+            game.enemyEffectManager:applyEffect(BlizzardEffect:new({
+                x = x,
+                y = y,
+                radius = r,
+                dps = self:getStat("dps"),
+                chillPerSecond = 0.5,
+                slow = 0.2,
+                duration = 5.0,
+                game = game
+            }))
+        end
+    end
+})
+
+-- Flash Freeze: instantly freezes every chilled enemy in the area
+SpellCardRegistry.FlashFreeze = Spell.new({
+    id = "spell_flashfreeze",
+    name = "Flash Freeze",
+    description = "Instantly freezes every chilled enemy in an area.",
+    cost = 25,
+    rarity = "Rare",
+    radius = 60,
+    customExecute = function(self, x, y, game)
+        local Chill = require("Game.Effects.StatusEffects.Chill")
+        local r = self:getStat("radius")
+        if game.spawnExpandingCircle then
+            game:spawnExpandingCircle(x, y, 4, r, {0.75, 0.95, 1, 0.6}, 0.35)
+        end
+        if AUDIO then
+            AUDIO:playSFX("lightning_01")
+        end
+
+        -- Any amount of chill qualifies; thawing enemies have no chill and stay immune.
+        local r2 = r * r
+        for _, obj in ipairs(game.objects) do
+            if obj:isType("enemy") and not obj.destroyed then
+                local dx = obj.x - x
+                local dy = obj.y - y
+                if dx * dx + dy * dy <= r2 and Chill.getStacks(obj) > 0 then
+                    Chill.freeze(obj)
+                end
+            end
+        end
+    end
+})
+
+-- Overchill (Global): all chill applied is doubled for 5 seconds
+SpellCardRegistry.Overchill = Spell.new({
+    id = "spell_overchill",
+    name = "Overchill",
+    description = "For 5 seconds, all chill applied is doubled.",
+    cost = 25,
+    rarity = "Rare",
+    radius = 0,
+    isGlobalSpell = true,
+    customExecute = function(self, x, y, game)
+        local em = game.enemyEffectManager
+        if not em then return end
+        -- Recasting refreshes the duration instead of stacking the multiplier.
+        local existing = em:getEffect("overchill")
+        if existing then
+            existing.duration = 5.0
+        else
+            em:applyEffect({ name = "overchill", displayName = "Overchill", duration = 5.0, chillMultiplier = 2 })
+        end
+        if game.spawnFloatingText then
+            game:spawnFloatingText("OVERCHILL", x, y, {0.55, 0.85, 1, 1})
+        end
+    end
+})
+
 return SpellCardRegistry

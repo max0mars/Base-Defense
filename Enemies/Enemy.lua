@@ -1,6 +1,7 @@
 local living_object = require("Classes.living_object")
 local DamageTypes = require("Classes.DamageTypes")
 local Navigators = require("Physics.Navigators")
+local Chill = require("Game.Effects.StatusEffects.Chill")
 local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
 
@@ -57,6 +58,7 @@ function Enemy:new(config)
         config.shape = config.shape or base.shape
         config.size = config.size or base.size
         config.isFlying = (config.isFlying == nil and base.isFlying) or config.isFlying
+        config.tier = config.tier or base.tier -- tier 5 = boss (e.g. harder to freeze)
         if base.affinities and not config.affinities then
             config.affinities = {}
             for k, v in pairs(base.affinities) do
@@ -373,6 +375,11 @@ end
 
 function Enemy:drawHealthBar()
     -- Health is now drawn as a fill effect inside the enemy sprite
+end
+
+function Enemy:drawStatusEffects()
+    living_object.drawStatusEffects(self)
+    Chill.draw(self)
 end
 
 function Enemy:drawCustomShape(mode, cx, cy)

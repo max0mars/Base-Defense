@@ -9,8 +9,9 @@
 -- Each battle, GameManager builds an ArtifactManager instance that:
 --   * applies every artifact's stat effects to the global player/enemy
 --     EffectManagers (so they reach every turret / enemy through the parent
---     chain and show up in turret tooltips), re-evaluating board-dependent
---     effects whenever the board changes (refresh)
+--     chain and show up in turret tooltips), plus per-turret effects to the
+--     turrets themselves, re-evaluating board-dependent effects whenever the
+--     board changes (refresh)
 --   * forwards game events to artifact hooks (trigger)
 --   * lets artifacts adjust values the game computes (modify)
 --
@@ -21,6 +22,7 @@
 --   onEnemyKilled(enemy, killingBlow)  an enemy died to damage (not by reaching
 --                                      the base); killingBlow = {source,
 --                                      damageType, damageTags}
+--   onEnemyThaw(enemy)                 a frozen enemy started thawing
 --
 -- Modifier hooks  -- artifact:hook(game, value, ...) -> new value
 --   modifyMaxTokens(maxTokens)
@@ -139,9 +141,14 @@ function ArtifactManager:has(id)
     return false
 end
 
---- Removes every artifact effect from the player and enemy EffectManagers.
+--- Removes every artifact effect from the player and enemy EffectManagers, and
+--- the per-turret ones (getTurretEffects) from every object.
 function ArtifactManager:clearEffects()
-    for _, em in ipairs({ self.game.playerEffectManager, self.game.enemyEffectManager }) do
+    local managers = { self.game.playerEffectManager, self.game.enemyEffectManager }
+    for _, obj in ipairs(self.game.objects or {}) do
+        if obj.effectManager then table.insert(managers, obj.effectManager) end
+    end
+    for _, em in ipairs(managers) do
         for i = #em.activeEffects, 1, -1 do
             local effect = em.activeEffects[i]
             if effect.isArtifactEffect then
@@ -153,8 +160,19 @@ function ArtifactManager:clearEffects()
     end
 end
 
+local function addArtifactEffect(em, artifact, template, key)
+    local effect = {}
+    for k, v in pairs(template) do effect[k] = v end
+    effect.target = nil
+    effect.name = "artifact_" .. artifact.id .. "_" .. key
+    effect.displayName = artifact.name
+    effect.isArtifactEffect = true
+    table.insert(em.activeEffects, effect)
+    em.effectCounts[effect.name] = (em.effectCounts[effect.name] or 0) + 1
+end
+
 --- (Re)applies every artifact's stat effects. Call whenever the board changes so
---- board-dependent effects (getEffects) stay current.
+--- board-dependent effects (getEffects, getTurretEffects) stay current.
 function ArtifactManager:refresh()
     local game = self.game
     if not (game.playerEffectManager and game.enemyEffectManager) then return end
@@ -172,14 +190,17 @@ function ArtifactManager:refresh()
 
         for i, template in ipairs(templates) do
             local em = (template.target == "enemy") and game.enemyEffectManager or game.playerEffectManager
-            local effect = {}
-            for k, v in pairs(template) do effect[k] = v end
-            effect.target = nil
-            effect.name = "artifact_" .. artifact.id .. "_" .. i
-            effect.displayName = artifact.name
-            effect.isArtifactEffect = true
-            table.insert(em.activeEffects, effect)
-            em.effectCounts[effect.name] = (em.effectCounts[effect.name] or 0) + 1
+            addArtifactEffect(em, artifact, template, i)
+        end
+
+        if artifact.getTurretEffects then
+            for _, obj in ipairs(game.objects or {}) do
+                if not obj.destroyed and obj.effectManager and obj.isType and obj:isType("turret") then
+                    for i, template in ipairs(artifact:getTurretEffects(game, obj)) do
+                        addArtifactEffect(obj.effectManager, artifact, template, "turret_" .. i)
+                    end
+                end
+            end
         end
     end
 

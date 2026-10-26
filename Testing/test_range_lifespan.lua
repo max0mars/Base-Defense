@@ -79,7 +79,7 @@ end
 
 -- Straight-flying turrets whose reach is closest to their range at base stats
 -- (Airburst reaches via shrapnel after bursting; see test_airburst.lua)
-local ids = { "sentry", "autoCannon", "fluxCannon" }
+local ids = { "sentry", "autoCannon", "fluxCannon", "iceShard" }
 
 for _, id in ipairs(ids) do
     -- 1. Base stats: unchanged lifespan

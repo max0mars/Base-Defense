@@ -1,8 +1,8 @@
 -- DevEnemySpawnerUI.lua: Developer-mode panel listing every enemy in the game.
 -- Click one to queue it (shift+click queues several). Stays open so you can build
 -- a mix; the battle is frozen while it's open. Once closed (F11 or click outside),
--- the queue is released one enemy at a time, spaced further apart than a real
--- wave (DELAY_MULT), so large groups don't spawn on top of each other.
+-- the queue is released one enemy at a time, spaced by a fraction of a real
+-- wave's delay (DELAY_MULT), so large groups don't spawn on top of each other.
 
 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
 local SpawningUtils = require("Game.Spawning.SpawningUtils")
@@ -13,7 +13,7 @@ local DevEnemySpawnerUI = {}
 DevEnemySpawnerUI.__index = DevEnemySpawnerUI
 
 DevEnemySpawnerUI.BULK = 5 -- Enemies queued per shift+click
-DevEnemySpawnerUI.DELAY_MULT = 2 -- Queued enemies are spaced this many times further apart than in a wave
+DevEnemySpawnerUI.DELAY_MULT = 0.5 -- Multiplier on a wave's spawn delay for queued enemies
 
 -- Layout constants.
 local NUM_COLS = 3
