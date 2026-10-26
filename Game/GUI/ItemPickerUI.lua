@@ -1,10 +1,11 @@
 -- ItemPickerUI.lua: Testing-mode menu listing every turret / buff /
 -- main-lazer upgrade in the game. Click a building to drop into placement mode,
--- or an upgrade to apply it instantly. Toggle with 'g' (testing mode only).
+-- or an upgrade to apply it instantly. Toggle with 'g' (testing mode) or F4 (developer mode).
 
 local NormalRewardIndex  = require("Game.Rewards.RewardIndex")
 
 local Reward             = require("Game.Rewards.Reward")
+local DevMode            = require("Game.Dev.DevMode")
 
 local ItemPickerUI = {}
 ItemPickerUI.__index = ItemPickerUI
@@ -76,7 +77,7 @@ function ItemPickerUI:cellRect(i)
 end
 
 function ItemPickerUI:draw()
-    if not self.isActive or not self.game.testingMode then return end
+    if not self.isActive or not (self.game.testingMode or DevMode.isActive()) then return end
 
     local mx, my = love.mouse.getPosition()
 
@@ -95,7 +96,7 @@ function ItemPickerUI:draw()
     love.graphics.setColor(0.0, 0.85, 1.0, 0.9)
     love.graphics.printf("ITEM PICKER", self.panelX, self.panelY + 8, self.panelW, "center")
     love.graphics.setColor(0.6, 0.6, 0.65, 1)
-    love.graphics.printf("click an item   ·   'g' to close", self.panelX, self.panelY + 22, self.panelW, "center")
+    love.graphics.printf("click an item   ·   'g' / F4 to close", self.panelX, self.panelY + 22, self.panelW, "center")
 
     -- Cells.
     local font = love.graphics.getFont()
@@ -150,7 +151,7 @@ function ItemPickerUI:select(entry)
 end
 
 function ItemPickerUI:mousepressed(x, y, button)
-    if not self.isActive or not self.game.testingMode then return false end
+    if not self.isActive or not (self.game.testingMode or DevMode.isActive()) then return false end
 
     if button == 1 then
         for i, entry in ipairs(self.items) do

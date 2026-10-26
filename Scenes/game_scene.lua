@@ -9,6 +9,7 @@ local game = require("Game.Core.GameManager") -- Import the game module
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local Cursor = require("Game.GUI.Cursor")
 local DamageStats = require("Game.Core.DamageStats")
+local DevMode = require("Game.Dev.DevMode")
 
 function game_scene:load()
     local isTesting = game.testingMode
@@ -128,7 +129,8 @@ function game_scene:update(dt)
        (game.gui.mutation and game.gui.mutation.isActive) or
        (game.gui.confirmation and game.gui.confirmation.active) or
        (game.gui.enemySpawner and game.gui.enemySpawner.isActive) or
-       (game.gui.itemPicker and game.gui.itemPicker.isActive) then
+       (game.gui.itemPicker and game.gui.itemPicker.isActive) or
+       (game.gui.devSpawner and game.gui.devSpawner.isActive) then
         effectiveDt = 0
     end
     
@@ -236,6 +238,9 @@ function game_scene:draw()
         Cursor.applyOS()
     end
     
+    -- Key list steps aside while a menu (e.g. a dev panel) is open over the battle
+    DevMode.draw(true, game.gui:overlayActive())
+
     -- love.graphics.print("Tokens: " .. game.tokens, 10, 10)
     -- --love.graphics.print("Time Multiplier: " .. string.format("%.1f", time_mul) .. "x", 10, 30)
     -- love.graphics.print("Wave: " .. game.wave, 10, 30)
@@ -247,6 +252,11 @@ function game_scene:draw()
 end
 
 function game_scene:keypressed(key)
+    -- Developer mode F keys (not on the post-battle summary: the battle is already over)
+    if not self.showingSummary and not game.battleComplete and DevMode.keypressed(key, game) then
+        return
+    end
+
     -- Testing debug command: Shift + Z instantly wins the battle
     if (key == "z" or key == "Z") and (love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")) then
         paused = 0

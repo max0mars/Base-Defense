@@ -22,6 +22,7 @@ local RewardSystem       = require("Game.Rewards.RewardSystem")
 local Inventory          = require("Game.Inventory.Inventory")
 local EffectManager      = require("Game.Effects.EffectManager")
 local ArtifactManager    = require("Game.Artifacts.ArtifactManager")
+local DevMode            = require("Game.Dev.DevMode")
 
 -- Entities & UI
 -- Dynamically load the main turret later
@@ -302,6 +303,8 @@ function game:update(dt)
         self:setState("gameover")
         return
     end
+
+    DevMode.update(self)
 
     -- Update GUI (will receive dt=0 if game is frozen)
     self.gui:update(dt)
@@ -600,6 +603,7 @@ function game:draw()
             or (self.gui and self.gui.codex and self.gui.codex.isActive)
             or (self.gui and self.gui.enemySpawner and self.gui.enemySpawner.isActive)
             or (self.gui and self.gui.itemPicker and self.gui.itemPicker.isActive)
+            or (self.gui and self.gui.devSpawner and self.gui.devSpawner.isActive)
             or self:isState("enemy_mutation") or self:isState("upgrade_mutation")
             or self:isState("mulligan") or self.battleComplete
         -- Over the base build area, use the OS pointer (hand for clickable slots)
@@ -1140,6 +1144,9 @@ function game:winBattle()
     end
     if self.gui and self.gui.itemPicker then
         self.gui.itemPicker.isActive = false
+    end
+    if self.gui and self.gui.devSpawner then
+        self.gui.devSpawner:close()
     end
 
     -- Clear all enemies and enemy bullets
