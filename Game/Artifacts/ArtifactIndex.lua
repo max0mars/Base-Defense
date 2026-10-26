@@ -17,6 +17,8 @@
 -- or "enemy" (every enemy).
 -- =============================================================================
 
+local Chill = require("Game.Effects.StatusEffects.Chill")
+
 local ArtifactIndex = {}
 
 --- Living turrets on the field; the main turret is left out unless includeMain is set.
@@ -129,6 +131,39 @@ ArtifactIndex.list = {
             return {
                 { targetTypes = { [bestType] = true }, statModifiers = { damage = { mult = bonus } } },
             }
+        end,
+    },
+
+    -- -------------------------------------------------------------------------
+    -- Ice synergy (chill / freeze, see Chill.lua)
+    -- -------------------------------------------------------------------------
+    {
+        id = "brittle_ice",
+        name = "Brittle Ice",
+        rarity = "rare",
+        icon = "crystal",
+        color = {0.55, 0.85, 1, 1},
+        description = "Frozen enemies take 30% more damage.",
+        BONUS = 0.3,
+        modifyEnemyDamage = function(self, game, amount, enemy)
+            if Chill.isFrozen(enemy) then
+                return amount * (1 + self.BONUS)
+            end
+            return amount
+        end,
+    },
+    {
+        id = "heart_of_the_tundra",
+        name = "Heart of the Tundra",
+        rarity = "rare",
+        icon = "diamond",
+        color = {0.75, 0.95, 1, 1},
+        description = "When a frozen enemy thaws, it takes damage equal to 15% of its max HP.",
+        MAX_HP_FRACTION = 0.15,
+        onEnemyThaw = function(self, game, enemy)
+            if enemy.destroyed then return end
+            local damage = enemy:getStat("maxHp") * self.MAX_HP_FRACTION
+            enemy:takeDamage(damage, "ice", nil, nil, { "thaw" })
         end,
     },
 }

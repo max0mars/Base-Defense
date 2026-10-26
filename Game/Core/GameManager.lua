@@ -137,6 +137,7 @@ function game:load(saveData, isTesting)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
         self.damageStats  = DamageStats.new() -- Per-turret damage / kills this battle (MVP)
+        self.iceMarketIncome = 0              -- Cash from Ice Markets this battle (summary line)
         
         -- Initialize Core Gameplay Systems
         self.base            = Base:new({game = self})
@@ -713,6 +714,24 @@ function game:waveComplete()
     if self.artifacts then
         self.artifacts:trigger("onWaveComplete")
     end
+end
+
+--- A frozen enemy died: every placed Ice Market pays out its cash right away.
+--- The total is also tallied for the battle summary.
+function game:onFrozenEnemyDied(enemy)
+    local payout = 0
+    for _, obj in ipairs(self.objects) do
+        if obj.cashPerFrozenKill and obj.slot and not obj.destroyed then
+            payout = payout + obj.cashPerFrozenKill
+        end
+    end
+    if payout <= 0 then return end
+
+    if _G.PersistentState then
+        _G.PersistentState.cash = (_G.PersistentState.cash or 0) + payout
+    end
+    self.iceMarketIncome = (self.iceMarketIncome or 0) + payout
+    self:spawnFloatingText("+$" .. payout, enemy.x, enemy.y, {0.3, 1.0, 0.5, 1})
 end
 
 function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)

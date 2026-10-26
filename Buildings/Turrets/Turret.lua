@@ -102,6 +102,21 @@ function Turret:new(config)
     return t
 end
 
+--- Chill-damage bonuses for this turret's hits: its own `damageVsChill` plus any
+--- granted by active effects (e.g. Cold Tactics). nil when there are none.
+function Turret:getDamageVsChill()
+    local list = {}
+    if self.damageVsChill then table.insert(list, self.damageVsChill) end
+    local function collect(em)
+        for _, effect in ipairs(em.activeEffects) do
+            if effect.damageVsChill then table.insert(list, effect.damageVsChill) end
+        end
+        if em.parent then collect(em.parent) end
+    end
+    if self.effectManager then collect(self.effectManager) end
+    return #list > 0 and list or nil
+end
+
 function Turret:addHitEffect(effect)
     table.insert(self.hitEffects, effect)
 end
@@ -211,6 +226,7 @@ function Turret:fire(args)
             recursion = self:getStat("recursion"),
             recursionSpread = self:getStat("recursionSpread"),
             canDirectHit = self:getStat("canDirectHit"),
+            damageVsChill = self:getDamageVsChill(),
             game = self.game,
             source = self,
             color = self.color,

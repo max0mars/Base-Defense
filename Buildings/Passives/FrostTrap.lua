@@ -1,17 +1,20 @@
 local Buff = require("Buildings.Passives.Buff")
-local SlowEffect = require("Game.Effects.StatusEffects.Slow")
+local Chill = require("Game.Effects.StatusEffects.Chill")
 
 local FrostTrap = setmetatable({}, Buff)
 FrostTrap.__index = FrostTrap
 
+-- Placeable on the battlefield; as a passive it never blocks or reroutes
+-- enemies. While an enemy is in range it pulses, chilling everything in range.
 local default = {
     name = "Frost Trap",
     types = { passive = true, slow = true, control = true },
     color = {0.4, 0.6, 0.9, 1}, -- Cool bluish tone
     shapePattern = {{0, 0}},
     affectedSlots = {},
-    slowAmount = 0.2,
     range = 200,
+    pulseInterval = 1.2,
+    chillPerPulse = 1,
 }
 
 function FrostTrap:new(config)
@@ -24,43 +27,44 @@ function FrostTrap:new(config)
 
     local obj = Buff:new(config)
     setmetatable(obj, self)
-    obj.slowAmount = config.slowAmount
     obj.range = config.range
-
-    -- Pre-create the template to avoid table allocations each frame
-    obj.slowEffectTemplate = SlowEffect:new({
-        name = "slow_aura",
-        amount = obj.slowAmount,
-        duration = 0.2,
-        hidden = true,
-        maxStacks = 1
-    })
+    obj.pulseInterval = config.pulseInterval
+    obj.chillPerPulse = config.chillPerPulse
+    obj.pulseCooldown = 0
 
     return obj
 end
 
 function FrostTrap:applyBuffs()
-    -- Frost Trap slows enemies in range instead of buffing neighbours
+    -- Frost Trap chills enemies instead of buffing neighbours
 end
 
 function FrostTrap:update(dt)
     if self.isPreview then return end
     if not self.game or not self.game.objects or not self.slot then return end
 
+    self.pulseCooldown = math.max(0, self.pulseCooldown - dt)
+    if self.pulseCooldown > 0 then return end
+
     local cx, cy = self:getCenterPosition()
     local rSq = self.range * self.range
+    local pulsed = false
 
     for _, obj in ipairs(self.game.objects) do
         if obj:isType("enemy") and not obj.destroyed then
             local distSq = (obj.x - cx)^2 + (obj.y - cy)^2
-            if distSq <= rSq and obj.effectManager then
-                local existing = obj.effectManager:getEffect("slow_aura")
-                if existing then
-                    existing.duration = 0.2
-                else
-                    obj.effectManager:applyEffect(self.slowEffectTemplate, self)
-                end
+            if distSq <= rSq then
+                Chill.apply(obj, self.chillPerPulse)
+                pulsed = true
             end
+        end
+    end
+
+    -- Only pulse (and start the cooldown) when something was in range.
+    if pulsed then
+        self.pulseCooldown = self.pulseInterval
+        if self.game.spawnExpandingCircle then
+            self.game:spawnExpandingCircle(cx, cy, 8, self.range, {0.6, 0.85, 1, 0.5}, 0.4)
         end
     end
 end

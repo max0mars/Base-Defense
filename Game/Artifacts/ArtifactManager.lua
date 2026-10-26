@@ -21,6 +21,7 @@
 --   onEnemyKilled(enemy, killingBlow)  an enemy died to damage (not by reaching
 --                                      the base); killingBlow = {source,
 --                                      damageType, damageTags}
+--   onEnemyThaw(enemy)                 a frozen enemy started thawing
 --
 -- Modifier hooks  -- artifact:hook(game, value, ...) -> new value
 --   modifyMaxTokens(maxTokens)

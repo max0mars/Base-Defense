@@ -84,6 +84,31 @@ local BulletIndex = {
         color = {0.6, 0.9, 1, 1},
         shape = "rectangle"
     },
+    iceShard = {
+        class = Bullet,
+        name = "Ice Shard",
+        drawStyle = "shard",
+        w = 8, h = 3,
+        color = {0.55, 0.85, 1, 1},
+        shape = "rectangle"
+    },
+    icicle = {
+        class = Bullet,
+        name = "Icicle",
+        drawStyle = "shard",
+        maxTrail = 8,
+        w = 14, h = 4,
+        color = {0.8, 0.95, 1, 1},
+        shape = "rectangle"
+    },
+    frostPellet = {
+        class = Bullet,
+        name = "Frost Pellet",
+        drawStyle = "shard",
+        w = 5, h = 3,
+        color = {0.75, 0.92, 1, 1},
+        shape = "rectangle"
+    },
     toxicShard = {
         class = Bullet,
         drawStyle = "shard",

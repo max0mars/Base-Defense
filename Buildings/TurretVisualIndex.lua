@@ -43,6 +43,29 @@ local VisualIndex = {
         baseShape = "hexagon", barrelShape = "thick",
         sfx = "laser_02"
     },
+    iceShard = {
+        size = 15, barrel = 12, color = {0.55, 0.85, 1, 1},
+        baseShape = "diamond", barrelShape = "single",
+        sfx = "gunshot_01"
+    },
+    frostCannon = {
+        barrel = 14, color = {0.75, 0.92, 1, 1},
+        baseShape = "hexagon", barrelShape = "long",
+        sfx = "gunshot_03"
+    },
+    glacialMonolith = {
+        barrel = 4, color = {0.7, 0.9, 1, 1},
+        baseShape = "square", barrelShape = "thick"
+    },
+    icicleBallista = {
+        barrel = 15, color = {0.8, 0.95, 1, 1},
+        baseShape = "square", barrelShape = "long",
+        sfx = "gunshot_02"
+    },
+    cryoBeam = {
+        barrel = 12, color = {0.85, 0.97, 1, 1},
+        baseShape = "diamond", barrelShape = "single"
+    },
     gator = {
         size = 18, barrel = 15, color = {0.15, 0.5, 0.15, 1},
         sfx = "gunshot_02"

@@ -1,8 +1,8 @@
 local BounceEffect = require("Game.Effects.IndependantEffects.bounce")
 local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
 local PoisonEffect = require("Game.Effects.StatusEffects.Poison")
-local SlowEffect = require("Game.Effects.StatusEffects.Slow")
 local StunEffect = require("Game.Effects.StatusEffects.Stun")
+local Chill = require("Game.Effects.StatusEffects.Chill")
 local RewardIndex = {
     common = {
         {
@@ -80,6 +80,24 @@ local RewardIndex = {
     },
     uncommon = {
         {
+            id = "icicleBallista",
+            name = "Icicle Ballista",
+            description = "Fires heavy icicles that deal more damage the more chilled the target is, and the most to frozen enemies.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 1,
+            building = require("Buildings.Turrets.Turret"),
+            -- Between Sentry (0.7/s x 11, 380) and Heavy Gun (0.15/s x 54, 450),
+            -- with ~15% more base DPS (9.1) as an uncommon.
+            rotation = 0, fireRate = 0.35, range = 420,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/9},
+            bulletSpeed = 450, damageType = "ice", damage = 26,
+            pierce = 1, lifespan = 1.2, bulletId = "icicle",
+            -- Up to +60% as chill nears freezing, +100% against frozen enemies.
+            damageVsChill = { chilledMax = 0.6, frozen = 1.0 }
+        },
+        {
             id = "poisonTurret",
             name = "Poison Turret",
             description = "Fires toxic darts that damage over time.",
@@ -144,20 +162,52 @@ local RewardIndex = {
         {
             id = "slushCannon",
             name = "Slush Cannon",
-            description = "Fires heavy clumps of slush that slow enemies on impact.",
+            description = "Fires heavy clumps of slush. Each hit applies 1.5 stacks of chill.",
             type = "building",
             types = {"turret", "building", "slow", "control"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.25, range = 340,
+            rotation = 0, fireRate = 0.36, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 350, damageType = "ice", damage = 36,
+            bulletSpeed = 350, damageType = "ice", damage = 23.04,
             pierce = 1, lifespan = 2, bulletId = "slush",
-            hitEffects = { SlowEffect:new({name = "Slush Slow", duration = 2.0, amount = 0.4}) }
+            hitEffects = { Chill.onHit({ amount = 1.5 }) }
         },
     },
     rare = {
+        {
+            id = "glacialMonolith",
+            name = "Glacial Monolith",
+            description = "Deals no damage. Sends slow freezing waves through its arc that apply 2 stacks of chill.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 2,
+            building = require("Buildings.Turrets.GlacialMonolith"),
+            -- One wave every 2s: 2 chill per wave against 1/s decay nets zero,
+            -- so a lone monolith keeps enemies chilled without freezing them.
+            rotation = 0, fireRate = 0.5, range = 380,
+            firingArc = {direction = 0, minRange = 0, angle = math.rad(18)},
+            waveSpeed = 120, chillPerWave = 2,
+            bulletSpeed = 0, damageType = "ice", damage = 0,
+            pierce = 1, lifespan = 0
+        },
+        {
+            id = "iceShard",
+            name = "Ice Shard Gunner",
+            description = "Rapidly fires ice shards. Each hit adds a quarter stack of chill.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 1,
+            building = require("Buildings.Turrets.Turret"),
+            rotation = 0, fireRate = 2.3, range = 350,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
+            bulletSpeed = 450, damageType = "ice", damage = 5,
+            pierce = 1, lifespan = 0.8, bulletId = "iceShard",
+            hitEffects = { Chill.onHit({ amount = 0.25 }) }
+        },
         {
             id = "gator",
             name = "GTR-55 Gator",
@@ -232,6 +282,42 @@ local RewardIndex = {
         },
     },
     epic = {
+        {
+            id = "frostCannon",
+            name = "Frost Cannon",
+            description = "Long range, tight spread shotgun. Each pellet applies half a stack of chill.",
+            type = "building",
+            types = {"turret", "building", "shotgun"},
+            iconCategory = "turret",
+            cost = 1,
+            building = require("Buildings.Turrets.Turret"),
+            rotation = 0, fireRate = 0.8, range = 420,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
+            -- 8 degree cone: ~2 of 6 pellets land on a 20px enemy at max range.
+            spread = math.rad(8), pelletCount = 6,
+            -- Pellet speed varies +-10%, so 600 x 0.8s still reaches 420 at the slowest.
+            bulletSpeed = 600, damageType = "ice", damage = 12,
+            pierce = 1, lifespan = 0.8, bulletId = "frostPellet",
+            hitEffects = { Chill.onHit({ amount = 0.5 }) }
+        },
+        {
+            id = "cryoBeam",
+            name = "Cryo Beam",
+            description = "Locks a freezing beam onto one enemy. Freezes it after 3 seconds, then moves to the next target.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 1,
+            building = require("Buildings.Turrets.CryoBeam"),
+            -- Beam ticks: 4 per second x 6.25 damage = 25 DPS.
+            rotation = 0, fireRate = 4, range = 380,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
+            bulletSpeed = 0, damageType = "ice", damage = 6.25,
+            pierce = 1, lifespan = 0,
+            -- The first tick lands on lock, then every 0.25s while chill drains
+            -- 1/s, so 13 ticks (t = 3.0s) reach 5 stacks: 13a - 12 x 0.25 = 5.
+            hitEffects = { Chill.onHit({ amount = 8 / 13 }) }
+        },
         {
             id = "sniper",
             name = "Sniper Turret",
