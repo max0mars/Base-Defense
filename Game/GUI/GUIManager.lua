@@ -463,6 +463,15 @@ end
 function GUIManager:mousepressed(x, y, button)
     -- Handle input in reverse draw order (top to bottom)
 
+    -- The reward / card draft overlay is modal and drawn above the HUD: it gets
+    -- every click so nothing behind it (e.g. the hand) can be clicked through.
+    -- Only the confirmation prompt, drawn above it, takes priority.
+    local rewardSystem = self.game.rewardSystem
+    if rewardSystem and rewardSystem.isActive and not self.confirmation.active then
+        rewardSystem:mousepressed(x, y, button)
+        return true
+    end
+
     if self.deckViewer and self.deckViewer.isActive then
         self.deckViewer:mousepressed(x, y, button)
         return true

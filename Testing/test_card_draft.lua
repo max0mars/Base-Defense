@@ -116,6 +116,26 @@ rs:mousepressed(rs.skipBtnX + 1, rs.skipBtnY + 1, 1)
 assert(not rs.isActive, "Skip button closes the card draft")
 assert(#_G.PersistentState.deck.cards == deckSize, "Skipping adds no card to the deck")
 
+-- 4. While the draft is open, clicks go to it (Skip works) and never reach the hand behind it
+local GUIManager = require("Game.GUI.GUIManager")
+rs:activate("cards", 3)
+local handClicked = false
+local fakeGui = {
+    game = { rewardSystem = rs },
+    confirmation = { active = false, mousepressed = function() return false end },
+    mutation = { mousepressed = function() return false end },
+    hand ={ mousepressed = function() handClicked = true; return true end },
+}
+GUIManager.mousepressed(fakeGui, rs.skipBtnX + 1, rs.skipBtnY + 1, 1)
+assert(not handClicked, "Clicking Skip over the hand does not click the hand")
+assert(not rs.isActive, "Skip button closes the draft through the GUI click path")
+
+rs:activate("cards", 3)
+handClicked = false
+GUIManager.mousepressed(fakeGui, 700, 650, 1)
+assert(not handClicked, "Clicking empty overlay space over the hand does not click the hand")
+assert(rs.isActive, "Clicking empty overlay space keeps the draft open")
+
 if failures > 0 then
     print(failures .. " test(s) failed")
     os.exit(1)
