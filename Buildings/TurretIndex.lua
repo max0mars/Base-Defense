@@ -105,10 +105,11 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.4, range = 300,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
-            bulletSpeed = 400, damageType = "physical", damage = 23,
+            -- Slow shell that bursts at 60% of range into fast shrapnel (see AirburstBullet)
+            bulletSpeed = 180, damageType = "physical", damage = 23,
             -- No `spread`: Turret:fire uses it as aim jitter (±spread), so math.pi here made
             -- shells fly in random directions. The burst cone lives in AirburstBullet:airburst().
-            pierce = 1, lifespan = 1, splitamount = 6, splitDamage = 23, splitDamage_from_damage = 1.0,
+            pierce = 1, lifespan = 1.5, splitamount = 6, splitDamage = 23, splitDamage_from_damage = 1.0,
             bulletId = "airburst"
         },
         {

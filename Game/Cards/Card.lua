@@ -461,7 +461,11 @@ function Card:execute(game)
             if self:isUpgradable() and self.tier and self.tier > 1 then
                 local multiplier = 1.0 + (self.tier - 1) * CardUpgradeConfig.BONUS_PER_TIER
                 if config.damage then config.damage = config.damage * multiplier end
-                if config.range then config.range = config.range * multiplier end
+                if config.range then
+                    config.range = config.range * multiplier
+                    -- Hidden: stretch bullet lifespan with range so shots still reach max range
+                    config.lifespan = (config.lifespan or 1) * multiplier
+                end
                 if config.fireRate then config.fireRate = config.fireRate * multiplier end
                 if config.splitDamage then config.splitDamage = config.splitDamage * multiplier end
                 if config.explosionDamage then config.explosionDamage = config.explosionDamage * multiplier end

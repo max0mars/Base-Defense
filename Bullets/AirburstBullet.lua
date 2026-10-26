@@ -3,47 +3,69 @@ local Bullet = require("Bullets.Bullet")
 local AirburstBullet = setmetatable({}, { __index = Bullet })
 AirburstBullet.__index = AirburstBullet
 
+-- The shell bursts once it has flown this fraction of the turret's base range
+AirburstBullet.BURST_RANGE_FRACTION = 0.6
+AirburstBullet.SHRAPNEL_SPEED = 800
+AirburstBullet.SHRAPNEL_LIFESPAN = 0.5
+
 function AirburstBullet:new(config)
     local b = Bullet:new(config)
     setmetatable(b, { __index = self })
-    
-    b.airburstTimer = 0
-    b.airburstDelay = 1
-    
+
+    b.startX, b.startY = b.x, b.y
+    -- Base range excludes in-battle range buffs, so the burst point stays put
+    local baseRange = (config.source and config.source.range) or (b.bulletSpeed * b.lifespan)
+    b.burstDistance = baseRange * self.BURST_RANGE_FRACTION
+
     return b
 end
 
 function AirburstBullet:update(dt)
     if self.destroyed then return end
-    
-    -- Store destruction state before movement
-    local alreadyDead = self.destroyed
-    
+
+    -- Burst instead of silently expiring if lifespan would run out first
+    if self.lifespan - dt <= 0 then
+        self:airburst()
+        return
+    end
+
     -- Handle movement and collision
     Bullet.update(self, dt)
-    
-    -- If it hit an enemy and was destroyed, it doesn't airburst
-    if self.destroyed and not alreadyDead then return end
-    
-    -- Handle the airburst timer
-    self.airburstTimer = self.airburstTimer + dt
-    if self.airburstTimer >= self.airburstDelay then
+
+    -- If it hit an enemy or a wall, it doesn't airburst
+    if self.destroyed then return end
+
+    local dx, dy = self.x - self.startX, self.y - self.startY
+    if dx * dx + dy * dy >= self.burstDistance * self.burstDistance then
         self:airburst()
     end
 end
 
 function AirburstBullet:airburst()
-    -- Calculate damage multiplier relative to the source turret's base damage
-    -- This ensures that buffs applied to the turret are propagated to the shrapnel
-    local damageMult = 1
-    if self.source and self.source.effectManager then
-        damageMult = self.source.effectManager:getStatMult("damage")
+    -- Shrapnel damage follows the shell's (already buffed) damage, like split shards
+    local finalDamage
+    local mult = self:getStat("splitDamage_from_damage")
+    if mult > 0 then
+        finalDamage = self:getStat("damage") * mult
+    else
+        local damageMult = 1
+        if self.source and self.source.effectManager then
+            damageMult = self.source.effectManager:getStatMult("damage")
+        end
+        finalDamage = self:getStat("splitDamage") * damageMult
     end
-    
-    local burstDamage = (self.source and self.source:getStat("BurstDamage")) or self.BurstDamage or 25
-    local finalDamage = burstDamage * damageMult
-    
-    -- 5 high-damage Shrapnel bullets in a forward-facing cone
+    if finalDamage <= 0 then
+        finalDamage = self:getStat("damage")
+    end
+
+    -- Shrapnel must still reach the turret's current (possibly buffed) range
+    local dx, dy = self.x - self.startX, self.y - self.startY
+    local travelled = math.sqrt(dx * dx + dy * dy)
+    local currentRange = self.source and self.source:getStat("range") or 0
+    local remaining = math.max(0, currentRange - travelled)
+    local shrapnelLifespan = math.max(self.SHRAPNEL_LIFESPAN, remaining * 1.1 / self.SHRAPNEL_SPEED)
+
+    -- 5 small, fast Shrapnel bullets in a forward-facing cone
     local angles = {-30, -15, 0, 15, 30}
     for _, offsetDeg in ipairs(angles) do
         local offsetRad = math.rad(offsetDeg)
@@ -53,10 +75,10 @@ function AirburstBullet:airburst()
             x = self.x,
             y = self.y,
             angle = self.angle + offsetRad,
-            bulletSpeed = 800,
+            bulletSpeed = self.SHRAPNEL_SPEED,
             damage = finalDamage,
             pierce = 1,
-            lifespan = 0.5,
+            lifespan = shrapnelLifespan,
             w = 4,
             h = 6,
             shape = "ray",

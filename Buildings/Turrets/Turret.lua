@@ -106,6 +106,15 @@ function Turret:addHitEffect(effect)
     table.insert(self.hitEffects, effect)
 end
 
+-- Hidden shadow buff: when range is boosted above base (cards, passives), bullet
+-- lifespan grows by the same ratio so shots still reach targets at the edge of the
+-- boosted range. Never shrinks lifespan, and never shows up in tooltips.
+function Turret:getRangeLifespanScale()
+    local baseRange = self.range or 0
+    if baseRange <= 0 then return 1 end
+    return math.max(1, self:getStat("range") / baseRange)
+end
+
 function Turret:fire(args)
     if AUDIO then
         if self.sfx then
@@ -179,7 +188,7 @@ function Turret:fire(args)
             bulletSpeed = self:getStat("bulletSpeed") * speedFactor,
             damage = self:getStat("damage"),
             pierce = self:getStat("pierce"),
-            lifespan = self:getStat("lifespan"),
+            lifespan = self:getStat("lifespan") * self:getRangeLifespanScale(),
             displayLifespan = self:getStat("displayLifespan"),
             damageType = self:getStat("damageType"),
             w = self.bulletW,
