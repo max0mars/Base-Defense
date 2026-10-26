@@ -100,7 +100,7 @@ assert(Chill.getStacks(e) == 0, "stacks should reset to 0 on freeze")
 assert(e:getStat("stunned", 0) > 0, "frozen should act as a stun")
 print("[PASS] Partial stacks freeze at threshold and reset")
 
--- 5. Immune to chill while frozen and thawing; thaw slows by 50% for 2s
+-- 5. Immune to chill while frozen and thawing; thaw slows by 50% for 1.5s
 Chill.apply(e, 3)
 assert(Chill.getStacks(e) == 0, "chill should not apply while frozen")
 tick(e, 1.55)
@@ -109,10 +109,10 @@ assert(e:getStat("stunned", 0) == 0, "thawing enemy should no longer be stunned"
 assert(near(e:getStat("speed"), baseSpeed * 0.5), "thawing should slow by 50%")
 Chill.apply(e, 3)
 assert(Chill.getStacks(e) == 0, "chill should not apply while thawing")
-tick(e, 1.85)
-assert(Chill.isThawing(e), "thaw should still be running just before 2s")
+tick(e, 1.35)
+assert(Chill.isThawing(e), "thaw should still be running just before 1.5s")
 tick(e, 0.15)
-assert(not Chill.isThawing(e) and not Chill.isFrozen(e), "thaw should end after 2s")
+assert(not Chill.isThawing(e) and not Chill.isFrozen(e), "thaw should end after 1.5s")
 assert(near(e:getStat("speed"), baseSpeed), "speed restored after thaw")
 Chill.apply(e, 1)
 assert(near(Chill.getStacks(e), 1), "chill applies again after thawing")

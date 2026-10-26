@@ -18,7 +18,7 @@ local Chill = {
     BOSS_FREEZE_STACKS   = 10,
     FREEZE_DURATION      = 1.5,
     BOSS_FREEZE_DURATION = 0.75,
-    THAW_DURATION        = 2,
+    THAW_DURATION        = 1.5,
     THAW_SLOW            = 0.5,
     BOSS_TIER            = 5,
 
