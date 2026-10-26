@@ -318,6 +318,7 @@ function InputHandler:handleButtonHold()
     if self.destructionTarget then return end
     if game.rewardSystem and game.rewardSystem.isActive then return end
     if self.fireDelay > 0 then return end
+    if self.holdFireUntilRelease then return end
 
     -- Only fire when the cursor is over the battlefield (not the surrounding HUD).
     if not Layout.inFieldScreen(self.screenMouseX, self.screenMouseY) then return end
@@ -624,6 +625,8 @@ function InputHandler:mousepressed(x, y, button)
             end
         end
         game.inputMode = "idle"
+        -- The casting click must not turn into main-turret fire while still held.
+        self.holdFireUntilRelease = true
         return
     end
 
@@ -837,6 +840,7 @@ end
 function InputHandler:mousereleased(x, y, button)
     if button == 1 then
         self.isMouseDown = false
+        self.holdFireUntilRelease = false
         if self.editMode and self.dragStart then
             self:finishEditDrag()
         end
@@ -888,8 +892,17 @@ function InputHandler:keypressed(key)
         return
     end
 
-    if key == "1" then
+    if key == "`" then
         game.debugMode = not game.debugMode
+    end
+
+    -- Number keys pick a spell from the hand (1 = leftmost) during a wave.
+    -- Targeting only starts here; the cast needs a fresh left click, so a button
+    -- already held for turret fire never casts it.
+    local slot = tonumber(key)
+    if slot and slot >= 1 and game:isState("wave") and game.gui and game.gui.hand then
+        game.gui.hand:selectSpellSlot(slot)
+        return
     end
 
     if key == "0" then
@@ -930,8 +943,7 @@ function InputHandler:keypressed(key)
             end
             
             if total > 0 then
-                game.WaveSpawner:startCustomWave(customWaveList)
-                game:setState("wave")
+                game:startWave(customWaveList)
             end
             game.gui.enemySpawner.isActive = false
             return
@@ -946,10 +958,7 @@ function InputHandler:keypressed(key)
         -- between-wave preparing screen (both show the same single prompt).
         if game:isState("startup") or game:isState("preparing") then
             if self.editMode then self:exitEditMode() end
-            game:recalculateAllBuffs() -- Recalculate all buffs before wave starts
-            game.WaveSpawner:startNextWave()
-            game:setState("wave")
-            if game.artifacts then game.artifacts:trigger("onWaveStart") end
+            game:startWave()
         end
     elseif key == "tab" then
         -- Toggle autofire

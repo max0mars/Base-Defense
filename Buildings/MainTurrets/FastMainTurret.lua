@@ -15,7 +15,7 @@ FastMainTurret.template = {
     size = 20,
     rotation = 0,
 
-    fireRate = 8, -- fast fire rate
+    fireRate = 6, -- fast fire rate
     range = 450,
     barrel = 20,
     color = {0.6, 0.6, 0.6, 1},
@@ -30,7 +30,7 @@ FastMainTurret.template = {
     bulletName = "Standard Bullet",
     bulletColor = {1, 0.8, 0.2},
     bulletSpeed = 700,
-    damage = 4,
+    damage = 4.6,
     pierce = 1,
     spread = math.rad(5),
     lifespan = 1.5,
@@ -110,6 +110,8 @@ function FastMainTurret.getStartingDeck()
     StandardMainTurret.addCard(deck, "inst_overclock_1", 2)
     StandardMainTurret.addCard(deck, "inst_range_1", 2)
     StandardMainTurret.addCard(deck, "inst_frenzy_1", 1)
+    StandardMainTurret.addCard(deck, "spell_stunburst", 1)
+    StandardMainTurret.addCard(deck, "spell_acidcloud", 1)
     
     deck:addCard(InstantCard.new({
         id = "stabilizing_shots",

@@ -132,7 +132,9 @@ function game:load(saveData, isTesting)
             self.tokens   = _G.PersistentState and _G.PersistentState.startingTokens or 3
         end
         self.maxTokens    = _G.PersistentState and _G.PersistentState.startingTokens or 3
-        self.mana         = 100
+        self.maxMana      = 100
+        self.manaRegenPerWave = 25    -- Mana refilled after every wave (capped at maxMana)
+        self.mana         = self.maxMana
         EnemyRegistry:reset(self)
         self.shopLevel    = _G.PersistentState and _G.PersistentState.shopLevel or 1
         self.wave         = 0
@@ -157,7 +159,7 @@ function game:load(saveData, isTesting)
         
         -- Configuration
         self.rewardCost           = 2
-        self.drawCost             = 1
+        self.spellHandSize        = 4 -- Spells drawn when a wave starts
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.inputMode            = "idle"
         self.useHybridSeparation  = false
@@ -669,20 +671,12 @@ function game:interest()
     self:addTokens(math.floor(self.tokens * 0.1))
 end
 function game:waveComplete()
-    self.drawCost = 1
-    
-    -- Wave-Transition Economy (Token Reset)
+    -- Wave-Transition Economy (Token Reset, Mana Regen)
     self.tokens = self:getMaxTokens()
-    
-    if self.activeCard then
-        self:refundCard(self.activeCard)
-    end
-    
-    -- Wave-Transition Hand Wiping
-    for _, card in ipairs(self.hand) do
-        table.insert(self.discardPile, card)
-    end
-    self.hand = {}
+    self:addMana(self.manaRegenPerWave or 0)
+
+    -- Wave-Transition Hand Wiping (the spell hand goes back to the spell deck)
+    self:discardHand()
     
     if self.gui and self.gui.incomeFeedback then
         self.gui.incomeFeedback:triggerSequence()
@@ -955,7 +949,10 @@ function game:initBattleDeck()
     self.consumedPile = {}
     self.discardPile = {}
     self.exiledPile = {}
-    
+    -- Spells live in their own deck, drawn only while a wave is running.
+    self.spellDrawPile = {}
+    self.spellDiscardPile = {}
+
     if _G.PersistentState and _G.PersistentState.deck then
         local function deepcopy(orig, copies)
             copies = copies or {}
@@ -979,49 +976,102 @@ function game:initBattleDeck()
         end
         
         for _, card in ipairs(_G.PersistentState.deck:getCards()) do
+            local pile = self:isSpellCard(card) and self.spellDrawPile or self.drawPile
             for i = 1, (card.quantity or 1) do
-                table.insert(self.drawPile, deepcopy(card))
+                table.insert(pile, deepcopy(card))
             end
         end
     end
-    
+
     -- Shuffle
-    for i = #self.drawPile, 2, -1 do
-        local j = math.random(i)
-        self.drawPile[i], self.drawPile[j] = self.drawPile[j], self.drawPile[i]
+    for _, pile in ipairs({ self.drawPile, self.spellDrawPile }) do
+        for i = #pile, 2, -1 do
+            local j = math.random(i)
+            pile[i], pile[j] = pile[j], pile[i]
+        end
     end
 end
 
-function game:drawCard(amount)
+function game:isSpellCard(card)
+    return card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell or false
+end
+
+--- Adds mana, capped at maxMana (a dev-mode top-up above the cap is kept, not cut).
+function game:addMana(amount)
+    local cap = math.max(self.maxMana or math.huge, self.mana or 0)
+    self.mana = math.min(cap, (self.mana or 0) + amount)
+end
+
+--- Names of the draw/discard piles for the build deck or the spell deck.
+local function pileKeys(spells)
+    if spells then return "spellDrawPile", "spellDiscardPile" end
+    return "drawPile", "discardPile"
+end
+
+--- Moves every card in hand to its own deck's discard pile, cancelling any active card.
+function game:discardHand()
+    if self.activeCard then
+        self:refundCard(self.activeCard)
+    end
+    for _, card in ipairs(self.hand) do
+        local _, discardKey = pileKeys(self:isSpellCard(card))
+        self[discardKey] = self[discardKey] or {}
+        table.insert(self[discardKey], card)
+    end
+    self.hand = {}
+end
+
+--- Starts the next wave (or a custom dev wave). Sending a wave swaps the build
+--- hand for a hand drawn from the spell deck.
+function game:startWave(customWaveList)
+    self:recalculateAllBuffs() -- Recalculate all buffs before wave starts
+    if customWaveList then
+        self.WaveSpawner:startCustomWave(customWaveList)
+    else
+        self.WaveSpawner:startNextWave()
+    end
+    self:setState("wave")
+    self:discardHand()
+    self:drawCard(self.spellHandSize or 4, true)
+    if self.artifacts then self.artifacts:trigger("onWaveStart") end
+end
+
+--- Draws from the build deck, or from the spell deck when `spells` is true.
+function game:drawCard(amount, spells)
     amount = amount or 1
+    local drawKey, discardKey = pileKeys(spells)
+    self[drawKey] = self[drawKey] or {}
+    self[discardKey] = self[discardKey] or {}
     local drawn = 0
     for i = 1, amount do
         if #self.hand >= 8 then
             self:spawnFloatingText("Hand is full!", 400, 300, {0.8, 0.2, 0.2, 1})
             break
         end
-        
-        if #self.drawPile == 0 then
-            if #self.discardPile > 0 then
+
+        local drawPile = self[drawKey]
+        if #drawPile == 0 then
+            local discardPile = self[discardKey]
+            if #discardPile > 0 then
                 -- Reshuffle Discard Pile into Draw Pile
-                for _, c in ipairs(self.discardPile) do
-                    table.insert(self.drawPile, c)
+                for _, c in ipairs(discardPile) do
+                    table.insert(drawPile, c)
                 end
-                self.discardPile = {}
-                
-                for j = #self.drawPile, 2, -1 do
+                self[discardKey] = {}
+
+                for j = #drawPile, 2, -1 do
                     local r = math.random(j)
-                    self.drawPile[j], self.drawPile[r] = self.drawPile[r], self.drawPile[j]
+                    drawPile[j], drawPile[r] = drawPile[r], drawPile[j]
                 end
-                
-                self:spawnFloatingText("Deck Reshuffled!", 400, 300, {0.4, 0.8, 1.0, 1})
+
+                self:spawnFloatingText(spells and "Spells Reshuffled!" or "Deck Reshuffled!", 400, 300, {0.4, 0.8, 1.0, 1})
             else
                 -- Both piles empty
                 break
             end
         end
-        
-        local card = table.remove(self.drawPile, 1)
+
+        local card = table.remove(drawPile, 1)
         card.game = self
         if card.effectManager then
             card.effectManager.game = self
@@ -1038,9 +1088,9 @@ function game:drawCard(amount)
 end
 
 function game:consumeCard(card)
-    local isSpell = (card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell)
+    local isSpell = self:isSpellCard(card)
     if isSpell then
-        self.mana = (self.mana or 100) - card:getCost()
+        self.mana = (self.mana or 0) - card:getCost()
     else
         self.tokens = self.tokens - card:getCost()
     end
@@ -1064,6 +1114,9 @@ function game:consumeCard(card)
                 else
                     table.insert(self.consumedPile, card)
                 end
+            elseif isSpell then
+                self.spellDiscardPile = self.spellDiscardPile or {}
+                table.insert(self.spellDiscardPile, card)
             else
                 table.insert(self.discardPile, card)
             end
@@ -1080,8 +1133,7 @@ end
 function game:getActiveCardTokenCost()
     local card = self.activeCard
     if not card then return 0 end
-    local isSpell = (card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell)
-    if isSpell then return 0 end
+    if self:isSpellCard(card) then return 0 end
     return card:getCost()
 end
 
