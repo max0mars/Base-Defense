@@ -90,7 +90,7 @@ local BulletIndex = {
         w = 8, h = 3,
         color = {0.7, 0.2, 0.9, 1},
         shape = "rectangle",
-        hitEffects = { ToxicEffect:new({recursion = 0}) },
+        hitEffects = { ToxicEffect:new() },
         hitbox = true,
         types = { bullet = true }
     },
