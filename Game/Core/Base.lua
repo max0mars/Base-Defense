@@ -61,6 +61,10 @@ function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTag
     if self.game.testingMode and self.game.baseInvincible then
         return 0
     end
+
+    if self.game.artifacts then
+        amount = self.game.artifacts:modify("modifyBaseDamage", amount, sourceEntity)
+    end
     
     if sourceEntity then
         local enemyName = sourceEntity.name or "Enemy"

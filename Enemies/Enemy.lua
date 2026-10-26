@@ -151,6 +151,7 @@ function Enemy:update(dt)
     
     if self.x < self.target then
         self.game.base:takeDamage(self:getStat("damage"), "ballistic", self.x, self.y, self) -- Damage the base if the enemy reaches it
+        self.reachedBase = true -- Not a kill (artifacts' onEnemyKilled skips it)
         self:died() -- Destroy the enemy if it reaches the base
     end
 end
@@ -176,6 +177,10 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags, source)
     -- Apply Damage Reduction (from Guardian Aura or other effects)
     local reduction = self:getStat("damageReductionMultiplier", 1)
     amount = amount * reduction
+
+    if self.game.artifacts then
+        amount = self.game.artifacts:modify("modifyEnemyDamage", amount, self, damageType, damageTags, source)
+    end
 
     if amount > 1 then
         self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness, damageTags)
@@ -204,6 +209,9 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags, source)
         self.hp = self.hp - amount
     end
     self:creditDamage(source, math.max(0, math.min(amount, hpBefore)), hpBefore > 0 and self.hp <= 0)
+    if hpBefore > 0 and self.hp <= 0 then
+        self.killingBlow = { source = source, damageType = damageType, damageTags = damageTags }
+    end
 
     if self.hp <= 0 then
         self:died()

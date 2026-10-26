@@ -16,6 +16,8 @@ local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local CardDraw = require("Game.Cards.CardDraw")
+local ArtifactManager = require("Game.Artifacts.ArtifactManager")
+local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
 
 function preparation_scene:drawTrashIcon(cx, cy, size, col)
     local w = size or 22
@@ -162,6 +164,12 @@ function preparation_scene:load(isPostBattle)
         color = {0.15, 0.4, 0.3, 1}, hoverColor = {0.2, 0.55, 0.4, 1}, borderColor = {0.3, 0.85, 0.6, 1}
     }
     
+    self.artifactsButton = {
+        x = 360, y = VIRTUAL_HEIGHT - 60, w = 150, h = 45, label = "ARTIFACTS",
+        color = {0.3, 0.2, 0.45, 1}, hoverColor = {0.42, 0.28, 0.62, 1}, borderColor = {0.75, 0.55, 1, 1}
+    }
+    self.artifactViewer = ArtifactViewerUI:new()
+
     self.previewBattlesButton = {
         x = VIRTUAL_WIDTH - 200, y = 20, w = 180, h = 42, label = "SCOUTING REPORT",
         color = {0.15, 0.35, 0.55, 1}, hoverColor = {0.2, 0.48, 0.75, 1}, borderColor = {0.4, 0.75, 1, 1}
@@ -1202,7 +1210,13 @@ function preparation_scene:draw()
     self:drawButton(self.startButton, mx, my)
     self:drawButton(self.deckButton, mx, my)
     self:drawButton(self.upgradeCardsButton, mx, my)
+    self.artifactsButton.label = "ARTIFACTS (" .. #ArtifactManager.getOwnedIds() .. ")"
+    self:drawButton(self.artifactsButton, mx, my)
     self:drawButton(self.previewBattlesButton, mx, my)
+
+    -- Owned artifacts at a glance (hover for details, click to open the full list)
+    self.artifactStripRect = self.artifactViewer:getStripRect(20, VIRTUAL_HEIGHT - 110)
+    local hoveredArtifact = self.artifactViewer:drawStrip(self.artifactStripRect.x, self.artifactStripRect.y, mx, my)
     
     if self.viewingDeck then
         self:drawDeck()
@@ -1222,9 +1236,20 @@ function preparation_scene:draw()
         Cursor.wantHand = true
     end
 
+    if self.artifactViewer.isActive then
+        self.artifactViewer:draw(mx, my)
+        Cursor.wantHand = true
+    end
+
     if self.showUpgradeChoice then
         self:drawUpgradeChoice(mx, my)
         Cursor.wantHand = true
+    end
+
+    local modalOpen = self.viewingDeck or self.viewingUpgrades or self.viewingLevelSelect
+        or self.showUpgradeChoice or self.artifactViewer.isActive
+    if hoveredArtifact and not modalOpen then
+        ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my)
     end
 
     love.mouse.setCursor(Cursor.wantHand and self.handCursor or self.arrowCursor)
@@ -1479,6 +1504,11 @@ function preparation_scene:mousepressed(x, y, button)
     end
     
     if button ~= 1 then return end
+
+    if self.artifactViewer.isActive then
+        self.artifactViewer:mousepressed(x, y)
+        return
+    end
     
     if self.viewingLevelSelect then
         if self.closeLevelSelectBtn then
@@ -1694,6 +1724,14 @@ function preparation_scene:mousepressed(x, y, button)
         return
     end
     
+    btn = self.artifactsButton
+    local strip = self.artifactStripRect
+    if (x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h)
+        or (strip and strip.w > 0 and x >= strip.x and x <= strip.x + strip.w and y >= strip.y and y <= strip.y + strip.h) then
+        self.artifactViewer:open()
+        return
+    end
+
     btn = self.upgradeCardsButton
     if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
         self.viewingUpgrades = true
@@ -1741,7 +1779,17 @@ function preparation_scene:mousereleased(x, y, button)
 end
 
 function preparation_scene:keypressed(key)
+    -- Dev hotkey until artifacts can be earned in a run: grant a random one
+    if key == "f8" then
+        ArtifactManager.grantRandom()
+        return
+    end
+
     if key == "escape" or key == "p" then
+        if self.artifactViewer.isActive then
+            self.artifactViewer:close()
+            return
+        end
         if self.viewingDeck then
             if self.destroyConfirmCard then
                 self.destroyConfirmCard = nil
@@ -1763,7 +1811,7 @@ function preparation_scene:keypressed(key)
         return
     end
 
-    if key == "return" and not self.viewingDeck and not self.viewingUpgrades then
+    if key == "return" and not self.viewingDeck and not self.viewingUpgrades and not self.artifactViewer.isActive then
         self.scene_manager.switch("game")
     end
 end

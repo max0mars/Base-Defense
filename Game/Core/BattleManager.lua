@@ -193,8 +193,13 @@ function BattleManager:applyRewards(rewards, game)
                 game.rewardSystem:activate("cards", 3)
             end
         elseif reward.type == BattleManager.REWARD_TYPES.RELIC then
-            -- TODO: Relic system hook placeholder
-            print("[BattleManager] Relic awarded (Placeholder): " .. tostring(reward.name))
+            -- Relics are artifacts: a specific one if the reward names it, else a random unowned one
+            local ArtifactManager = require("Game.Artifacts.ArtifactManager")
+            if reward.artifactId then
+                ArtifactManager.grant(reward.artifactId)
+            else
+                ArtifactManager.grantRandom()
+            end
         end
     end
 end

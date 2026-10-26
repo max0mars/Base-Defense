@@ -21,6 +21,7 @@ local RewardSystem       = require("Game.Rewards.RewardSystem")
 
 local Inventory          = require("Game.Inventory.Inventory")
 local EffectManager      = require("Game.Effects.EffectManager")
+local ArtifactManager    = require("Game.Artifacts.ArtifactManager")
 
 -- Entities & UI
 -- Dynamically load the main turret later
@@ -165,6 +166,7 @@ function game:load(saveData, isTesting)
         -- Global Status Effect Managers
         self.playerEffectManager = EffectManager:new(nil, self) 
         self.enemyEffectManager  = EffectManager:new(nil, self)
+        self.artifacts           = ArtifactManager:new(self)
         -- self.luckCosts removed since it's no longer purchasable in-game
         self.showDamageNumbers   = true
 
@@ -201,6 +203,8 @@ function game:load(saveData, isTesting)
     self.base:initMainLazer(MainTurretClass)
     self.mainLazer = self.base.mainLazer
 
+    self.artifacts:refresh()
+    self.artifacts:trigger("onBattleStart")
     
     love.mouse.setVisible(false)
 end
@@ -256,6 +260,8 @@ function game:updateBuildingCounts()
             end
         end
     end
+    -- Board changed: re-evaluate artifacts whose effects depend on it
+    if self.artifacts then self.artifacts:refresh() end
 end
 
 --- Cleanup: Removes objects marked as 'destroyed' from the master table
@@ -622,6 +628,9 @@ function game:getMaxTokens()
             max = max + obj:getTokenBonus()
         end
     end
+    if self.artifacts then
+        max = self.artifacts:modify("modifyMaxTokens", max)
+    end
     return max
 end
 
@@ -700,6 +709,10 @@ function game:waveComplete()
         self.enemyEffectManager:clearWaveEffects()
         self.enemyEffectManager:recalculateStats()
     end
+
+    if self.artifacts then
+        self.artifacts:trigger("onWaveComplete")
+    end
 end
 
 function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)
@@ -740,6 +753,9 @@ function game:EnemyDied(enemy)
     -- Drain this enemy's slot from the in-progress wave panel (with a flash).
     if self.WaveSpawner and self.WaveSpawner.notifyEnemyKilled then
         self.WaveSpawner:notifyEnemyKilled(enemy)
+    end
+    if self.artifacts and not enemy.reachedBase then
+        self.artifacts:trigger("onEnemyKilled", enemy, enemy.killingBlow)
     end
 end
 
