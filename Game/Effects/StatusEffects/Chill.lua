@@ -10,8 +10,8 @@
 -- Usage from code:     Chill.apply(enemy, amount)
 
 local Chill = {
-    SLOW_PER_STACK       = 0.08, -- each stack: speed x0.92
-    DECAY_PER_SECOND     = 1,
+    SLOW_PER_STACK       = 0.10, -- each stack: speed x0.9 (partial stacks scale smoothly)
+    DECAY_PER_SECOND     = 1 / 1.5, -- one stack every 1.5s
     FREEZE_STACKS        = 5,
     BOSS_FREEZE_STACKS   = 10,
     FREEZE_DURATION      = 1.5,

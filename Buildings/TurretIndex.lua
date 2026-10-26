@@ -162,7 +162,7 @@ local RewardIndex = {
         {
             id = "slushCannon",
             name = "Slush Cannon",
-            description = "Fires heavy clumps of slush. Each hit applies 1.5 stacks of chill.",
+            description = "Fires heavy clumps of slush. Each hit applies 2 stacks of chill.",
             type = "building",
             types = {"turret", "building", "slow", "control"},
             iconCategory = "turret",
@@ -172,7 +172,7 @@ local RewardIndex = {
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 350, damageType = "ice", damage = 23.04,
             pierce = 1, lifespan = 2, bulletId = "slush",
-            hitEffects = { Chill.onHit({ amount = 1.5 }) }
+            hitEffects = { Chill.onHit({ amount = 2 }) }
         },
     },
     rare = {
@@ -185,28 +185,30 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.GlacialMonolith"),
-            -- One wave every 2s: 2 chill per wave against 1/s decay nets zero,
-            -- so a lone monolith keeps enemies chilled without freezing them.
-            rotation = 0, fireRate = 0.5, range = 380,
-            firingArc = {direction = 0, minRange = 0, angle = math.rad(18)},
-            waveSpeed = 120, chillPerWave = 2,
+            -- One wave every 3s: 2 chill per wave against 1 stack / 1.5s decay
+            -- nets zero, so a lone monolith keeps enemies chilled without freezing them.
+            rotation = 0, fireRate = 1 / 3, range = 380,
+            -- Detects in a 28 degree arc; each ring is 18 degrees wide, aimed at the
+            -- target but kept fully inside the arc.
+            firingArc = {direction = 0, minRange = 0, angle = math.rad(28)},
+            ringAngle = math.rad(18), waveSpeed = 120, chillPerWave = 2,
             bulletSpeed = 0, damageType = "ice", damage = 0,
             pierce = 1, lifespan = 0
         },
         {
             id = "iceShard",
             name = "Ice Shard Gunner",
-            description = "Rapidly fires ice shards. Each hit adds a quarter stack of chill.",
+            description = "Rapidly fires ice shards. Each hit adds half a stack of chill.",
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 2.3, range = 350,
-            firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
+            firingArc = {direction = 0, minRange = 0, angle = math.rad(35)},
             bulletSpeed = 450, damageType = "ice", damage = 5,
             pierce = 1, lifespan = 0.8, bulletId = "iceShard",
-            hitEffects = { Chill.onHit({ amount = 0.25 }) }
+            hitEffects = { Chill.onHit({ amount = 0.5 }) }
         },
         {
             id = "gator",
@@ -292,7 +294,7 @@ local RewardIndex = {
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.8, range = 420,
-            firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
+            firingArc = {direction = 0, minRange = 0, angle = math.rad(45 * 0.75)},
             -- 8 degree cone: ~2 of 6 pellets land on a 20px enemy at max range.
             spread = math.rad(8), pelletCount = 6,
             -- Pellet speed varies +-10%, so 600 x 0.8s still reaches 420 at the slowest.
@@ -303,7 +305,7 @@ local RewardIndex = {
         {
             id = "cryoBeam",
             name = "Cryo Beam",
-            description = "Locks a freezing beam onto one enemy. Freezes it after 3 seconds, then moves to the next target.",
+            description = "Locks a freezing beam onto one enemy. Freezes it in about 3 seconds, then moves to the next target.",
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
@@ -315,8 +317,9 @@ local RewardIndex = {
             bulletSpeed = 0, damageType = "ice", damage = 6.25,
             pierce = 1, lifespan = 0,
             -- The first tick lands on lock, then every 0.25s while chill drains
-            -- 1/s, so 13 ticks (t = 3.0s) reach 5 stacks: 13a - 12 x 0.25 = 5.
-            hitEffects = { Chill.onHit({ amount = 8 / 13 }) }
+            -- 1 stack per 1.5s (1/6 per tick): 13a - 12/6 = 5, so the 13th tick
+            -- (t = 3.0s) reaches 5 stacks.
+            hitEffects = { Chill.onHit({ amount = 7 / 13 }) }
         },
         {
             id = "sniper",

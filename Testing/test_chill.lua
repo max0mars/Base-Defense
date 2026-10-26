@@ -27,32 +27,51 @@ local function tick(enemy, seconds)
     local steps = math.floor(seconds / 0.01 + 0.5)
     for _ = 1, steps do enemy.effectManager:update(0.01) end
 end
+-- A Grunt: a real index entry, so it has a non-zero base speed for the slow checks.
 local function newBasic()
-    local e = Enemy:new({ game = mockGame, x = 100, y = 100, name = "Basic" })
+    local e = Enemy:new({ game = mockGame, x = 100, y = 100, name = "Grunt" })
     mockGame:addObject(e)
     return e
 end
 
--- 1. Stacks slow multiplicatively: 2 stacks = 0.92^2
+-- 1. Stacks slow multiplicatively, 10% each: 2 stacks = 0.9^2
 local e = newBasic()
 local baseSpeed = e:getStat("speed")
+assert(baseSpeed > 0, "test enemy needs a real base speed")
 Chill.apply(e, 2)
 assert(near(Chill.getStacks(e), 2), "expected 2 stacks")
-assert(near(e:getStat("speed"), baseSpeed * 0.92 ^ 2), "chill slow should compound per stack")
+assert(near(e:getStat("speed"), baseSpeed * 0.9 ^ 2), "chill slow should compound per stack")
+do
+    local one = newBasic()
+    Chill.apply(one, 1)
+    assert(near(one:getStat("speed"), baseSpeed * 0.9), "1 stack slows by 10%")
+    local half = newBasic()
+    Chill.apply(half, 0.5)
+    assert(near(half:getStat("speed"), baseSpeed * 0.9 ^ 0.5), "half a stack slows too (~5%)")
+    local quarter = newBasic()
+    Chill.apply(quarter, 0.25)
+    assert(quarter:getStat("speed") < baseSpeed and quarter:getStat("speed") > half:getStat("speed"),
+        "a quarter stack slows, but less than half a stack")
+    -- Decay also eases the slow continuously, not one whole stack at a time.
+    tick(half, 0.3)
+    local eased = half:getStat("speed")
+    assert(eased > baseSpeed * 0.9 ^ 0.5 and eased < baseSpeed, "slow eases off smoothly as chill decays")
+end
 print("[PASS] Chill stacks slow multiplicatively")
 
 -- 2. Compounds with other slows
 local SlowEffect = require("Game.Effects.StatusEffects.Slow")
 e.effectManager:applyEffect(SlowEffect:new({ name = "test_slow", duration = 10, amount = 0.5 }))
-assert(near(e:getStat("speed"), baseSpeed * 0.92 ^ 2 * 0.5), "chill should combine with other slows")
+assert(near(e:getStat("speed"), baseSpeed * 0.9 ^ 2 * 0.5), "chill should combine with other slows")
 print("[PASS] Chill combines with other slows")
 
--- 3. Decays at 1 stack per second and is removed at 0
+-- 3. Decays at 1 stack per 1.5 seconds and is removed at 0
+assert(near(Chill.DECAY_PER_SECOND, 1 / 1.5), "chill decays one stack every 1.5s")
 e = newBasic()
 Chill.apply(e, 2)
-tick(e, 1)
-assert(math.abs(Chill.getStacks(e) - 1) < 0.02, "expected ~1 stack after 1s, got " .. Chill.getStacks(e))
-tick(e, 1.1)
+tick(e, 1.5)
+assert(math.abs(Chill.getStacks(e) - 1) < 0.02, "expected ~1 stack after 1.5s, got " .. Chill.getStacks(e))
+tick(e, 1.6)
 assert(Chill.getStacks(e) == 0, "chill should be fully drained")
 assert(e.effectManager:getEffect(Chill.CHILL_NAME) == nil, "drained chill state should be removed")
 assert(near(e:getStat("speed"), baseSpeed), "speed should be restored after chill drains")
@@ -124,14 +143,15 @@ assert(gunner and gunner.name == "Ice Shard Gunner", "Ice Shard Gunner should be
 assert(gunner.cost == 1 and gunner.fireRate == 2.3 and gunner.range == 350, "Gunner: 1 token, 2.3/s, 350 range")
 assert(gunner.bulletSpeed * gunner.lifespan >= gunner.range, "Gunner shards must reach max range")
 local hit = gunner.hitEffects[1]
-assert(hit.amount == 0.25 and hit.hitChance == 1, "Gunner: quarter stack on every hit")
+assert(hit.amount == 0.5 and hit.hitChance == 1, "Gunner: half a stack on every hit")
+assert(near(gunner.firingArc.angle, math.rad(35)), "Gunner: 35 degree arc")
 print("[PASS] Ice Shard Gunner registered")
 
 local cannon = find("epic", "frostCannon")
 assert(cannon, "Frost Cannon should be an epic turret")
 assert(cannon.cost == 1 and cannon.pelletCount == 6 and cannon.damage == 12, "Cannon: 1 token, 6 x 12 dmg")
 assert(cannon.range == 420 and cannon.fireRate == 0.8, "Cannon: 420 range, 0.8/s")
-assert(math.abs(cannon.firingArc.angle - math.rad(45)) < 1e-9, "Cannon: 45 degree arc")
+assert(near(cannon.firingArc.angle, math.rad(45) * 0.75), "Cannon: arc 25% narrower than 45 degrees")
 assert(cannon.hitEffects[1].amount == 0.5 and cannon.hitEffects[1].hitChance == 1, "Cannon: half a chill stack per pellet")
 -- Slowest pellet (speed x0.9) still reaches max range
 assert(cannon.bulletSpeed * 0.9 * cannon.lifespan >= cannon.range, "Cannon pellets must reach max range")
@@ -145,11 +165,11 @@ local slush = find("uncommon", "slushCannon")
 assert(slush, "Slush Cannon should be an uncommon turret")
 assert(near(slush.damage, 36 * 0.8 * 0.8) and near(slush.fireRate, 0.25 * 1.2 * 1.2),
     "Slush: two rounds of -20% damage / +20% fire rate")
-assert(#slush.hitEffects == 1 and slush.hitEffects[1].amount == 1.5 and slush.hitEffects[1].hitChance == 1,
-    "Slush: 1.5 chill per hit and no separate slow")
+assert(#slush.hitEffects == 1 and slush.hitEffects[1].amount == 2 and slush.hitEffects[1].hitChance == 1,
+    "Slush: 2 chill per hit and no separate slow")
 print("[PASS] Slush Cannon reworked")
 
--- 9. Cryo Beam: locks on, 25 DPS, freezes a locked target at ~3 seconds
+-- 9. Cryo Beam: locks on, 25 DPS, freezes a locked target at ~3s
 local beamEntry = find("epic", "cryoBeam")
 assert(beamEntry and beamEntry.cost == 1, "Cryo Beam should be an epic costing 1")
 assert(beamEntry.range == 380, "Cryo Beam range matches the Sentry")
@@ -247,10 +267,11 @@ Chill.apply(boss, 9)
 assert(Chill.getDamageMultiplier(boss, bonus) < mFrozen, "a heavily chilled boss still takes less than a frozen enemy")
 print(string.format("[PASS] Icicle Ballista (%.1f DPS; x%.2f at 2 stacks, x%.2f at 4, x%.2f frozen)", dpsOf(ballista), m2, m4, mFrozen))
 
--- 11. Glacial Monolith: rare, cost 2, Sentry range, 18 deg arc, 2 chill per wave, net-zero chill
+-- 11. Glacial Monolith: rare, cost 2, Sentry range, 28 deg arc with 18 deg rings, 2 chill per wave
 local mono = find("rare", "glacialMonolith")
 assert(mono and mono.cost == 2 and mono.range == sentry.range, "Monolith: rare, cost 2, Sentry range")
-assert(near(mono.firingArc.angle, math.rad(18)) and mono.damage == 0, "Monolith: 18 degree arc, no damage")
+assert(near(mono.firingArc.angle, math.rad(28)) and mono.damage == 0, "Monolith: 28 degree arc, no damage")
+assert(near(mono.ringAngle, math.rad(18)), "Monolith: rings stay 18 degrees wide")
 assert(mono.chillPerWave == 2, "Monolith: 2 chill per wave")
 assert(near(mono.chillPerWave * mono.fireRate, Chill.DECAY_PER_SECOND), "Monolith: chill applied per second equals decay")
 
@@ -293,6 +314,47 @@ assert(peak <= 2.05, string.format("chill should not build up past one wave (pea
 assert(inArc.hp == inArc.maxHp, "monolith deals no damage")
 print(string.format("[PASS] Glacial Monolith (peak chill %.2f, never freezes alone)", peak))
 
+-- Rings aim at the enemy but stay fully inside the arc.
+do
+    local g = { objects = {}, seenEnemies = {}, inputMode = "idle", inputHandler = {}, base = { x = 0, w = 100 } }
+    function g:addObject(obj) table.insert(self.objects, obj); obj.game = self end
+    function g:EnemyDied() end
+    function g:spawnDamageNumber() end
+    local cfg = {}
+    for k, v in pairs(mono) do cfg[k] = v end
+    cfg.game = g
+    local m = mono.building:new(cfg)
+    m.x, m.y = 0, 100
+    local function at(deg, dist)
+        local en = Enemy:new({ game = g, x = math.cos(math.rad(deg)) * dist, y = 100 + math.sin(math.rad(deg)) * dist,
+            name = "Basic", maxHp = 100000, size = 4 })
+        return en
+    end
+    -- Target near the arc's edge (+12 of +-14 degrees): the ring centre is clamped to +5,
+    -- so the ring spans -4..+14 degrees.
+    local edge = at(12, 120)
+    g:addObject(edge)
+    m:update(dt)
+    local center = m.waves[1].center
+    assert(near(math.deg(center), 5), "ring centre is clamped so the 18 degree ring stays inside the 28 degree arc")
+    local opposite = at(-10, 200) -- inside the arc, but outside this ring
+    g:addObject(opposite)
+    for _ = 1, math.floor(2 / dt) do
+        for _, o in ipairs(g.objects) do o.effectManager:update(dt) end
+        m:updateWaves(dt)
+    end
+    assert(Chill.getStacks(edge) > 0, "the ring chills the enemy it was aimed at")
+    assert(Chill.getStacks(opposite) == 0, "the 18 degree ring misses enemies on the other side of the arc")
+    -- A target straight ahead gets a ring centred on it.
+    local m2 = mono.building:new(cfg)
+    m2.x, m2.y = 0, 100
+    g.objects = {}
+    g:addObject(at(2, 150))
+    m2:update(dt)
+    assert(near(math.deg(m2.waves[1].center), 2), "an unclamped ring centres on its target")
+end
+print("[PASS] Glacial Monolith rings aim within the arc")
+
 -- 12. Frost Trap: same card, pulses 1 chill every 1.2s only while enemies are in range
 local PassiveIndex = require("Buildings.PassiveIndex")
 local trapEntry
@@ -332,8 +394,9 @@ stepTrap(1.1)
 assert(trapGame.pulses == 1, "waits 1.2s between pulses")
 stepTrap(0.15)
 assert(trapGame.pulses == 2, "pulses again after 1.2s")
-assert(not Chill.isImmune(near1) and Chill.getStacks(near1) < 2,
-    "1 chill per 1.2s drains faster than it builds, so a lone trap never freezes")
+-- Left as-is when decay slowed to 1 stack / 1.5s: 1 chill per 1.2s now slowly
+-- builds, so a lone trap freezes a stationary enemy eventually.
+assert(not Chill.isImmune(near1) and Chill.getStacks(near1) < 2, "two pulses don't freeze")
 
 -- As a passive it is never registered as a battlefield obstacle (no path blocking).
 local BattlefieldGrid = require("Game.Core.BattlefieldGrid")

@@ -16,12 +16,12 @@ Uncommon
 - Flux Cannon [Buildings.Turrets.FluxCannon]: Energy damage that ignores heavy armor.
 - Bank [Buildings.Passives.Bank]: Generates 1 Token per wave if adjacent slots are occupied.
 - Grenadier [Buildings.Turrets.Grenadier]: Lobs grenades that explode after a short delay.
-- Slush Cannon [Buildings.Turrets.SlushCannon]: Fires heavy clumps of slush. Each hit applies 1.5 stacks of chill.
+- Slush Cannon [Buildings.Turrets.SlushCannon]: Fires heavy clumps of slush. Each hit applies 2 stacks of chill.
 
 Rare
 - Cold Tactics [Buildings.Passives.ColdTactics]: Nearby turrets deal more damage the closer the enemy hit is to freezing, up to +50%. Frozen enemies take +50%.
 - Glacial Monolith [Buildings.Turrets.GlacialMonolith]: Deals no damage. Sends slow freezing waves through its arc that apply 2 stacks of chill.
-- Ice Shard Gunner [Buildings.Turrets.Turret]: Rapidly fires ice shards. Each hit adds a quarter stack of chill.
+- Ice Shard Gunner [Buildings.Turrets.Turret]: Rapidly fires ice shards. Each hit adds half a stack of chill.
 - Chem Lab [Buildings.Passives.ToxicTotem]: Spreads deadly toxins. Highly contagious.
 - GTR-55 Gator [Buildings.Turrets.Gator]: Hard hitting rounds go right through enemies.
 - Unstable Laser [main_upgrade]: Gives your big lazer a 20% chance to burn enemies.
@@ -33,7 +33,7 @@ Rare
 
 Epic
 - Frost Cannon [Buildings.Turrets.Turret]: Long range, tight spread shotgun. Each pellet applies half a stack of chill.
-- Cryo Beam [Buildings.Turrets.CryoBeam]: Locks a freezing beam onto one enemy. Freezes it after 3 seconds, then moves to the next target.
+- Cryo Beam [Buildings.Turrets.CryoBeam]: Locks a freezing beam onto one enemy. Freezes it in about 3 seconds, then moves to the next target.
 - Sniper Turret [Buildings.Turrets.Sniper]: High damage, long range.
 - Mortar [Buildings.Turrets.Mortar]: KABOOM!
 - Explosive Bullets [Buildings.Passives.ExplosiveTotem]: Adds a little extra something to nearby turrets.

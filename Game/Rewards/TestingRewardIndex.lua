@@ -3,7 +3,7 @@ local RewardIndex = {
         {
             id = "slushCannon",
             name = "The Slush Cannon",
-            description = "Fires heavy clumps of slush. Each hit applies 1.5 stacks of chill.",
+            description = "Fires heavy clumps of slush. Each hit applies 2 stacks of chill.",
             type = "building",
             building = require("Buildings.Turrets.Turret"),
             iconCategory = "turret"
