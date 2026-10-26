@@ -224,7 +224,8 @@ _G.PersistentState.cardRemovals = 0
 
 local testRewards = {
     { type = "gold", amount = 150 },
-    { type = "upgrade_material", amount = 2 },
+    { type = "upgrade_material", materialId = "energy_cells", amount = 2 },
+    { type = "upgrade_material", amount = 1 }, -- No material id: falls back to the default (Scrap)
     { type = "card_removal", amount = 1 },
     { type = "card_draw", amount = 1 },
     { type = "relic", isPlaceholder = true }
@@ -232,7 +233,8 @@ local testRewards = {
 
 bm:applyRewards(testRewards, mockGame)
 assert(_G.PersistentState.cash == 250, "Gold application failed: " .. _G.PersistentState.cash)
-assert(_G.PersistentState.materials["Upgrade Material"] == 2, "Upgrade material application failed")
+assert(_G.PersistentState.materials.energy_cells == 2, "Typed material reward application failed")
+assert(_G.PersistentState.materials.scrap == 1, "Untyped material reward should fall back to Scrap")
 assert(_G.PersistentState.cardRemovals == 1, "Card removal application failed")
 assert(mockGame.rewardSystem.activateCount == 1, "Card draw reward activation failed")
 

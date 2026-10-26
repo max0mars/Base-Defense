@@ -8,10 +8,10 @@
 - **Description**: Standard basic defense turret.
 
 ## Sniper Turret
-- **Damage**: 250
-- **Range**: 1000
-- **Fire Rate**: 0.2
-- **DPS**: 50.0
+- **Damage**: 225
+- **Range**: 550 (minimum 150: can't hit enemies closer than that)
+- **Fire Rate**: 0.1
+- **DPS**: 22.5
 - **Description**: Slow firing but deals massive damage at extremely long range.
 
 ## Shotgun Turret
@@ -50,11 +50,11 @@
 - **Description**: Standard turret variant with high pierce, able to hit multiple enemies.
 
 ## Blaster
-- **Damage**: 7
-- **Range**: 400
-- **Fire Rate**: 0.85
-- **DPS**: 5.95 (per bolt) | 11.9 (Max Theoretical DPS)
-- **Description**: Energy turret that fires 2-bolt bursts.
+- **Damage**: 6
+- **Range**: 340
+- **Fire Rate**: 0.7
+- **DPS**: 4.2 (per bolt) | 12.6 (Max Theoretical DPS)
+- **Description**: Energy turret that fires 3-bolt bursts. Buffed by energy passives.
 
 ## Flux Cannon
 - **Damage**: 60

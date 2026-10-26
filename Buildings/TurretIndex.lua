@@ -24,15 +24,15 @@ local RewardIndex = {
             name = "Blaster",
             description = "Fires energy bolts, effective against armor.",
             type = "building",
-            types = {"turret", "building"},
+            types = {"turret", "building", "energy"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.7, range = 300,
+            rotation = 0, fireRate = 0.7, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/8},
             bulletSpeed = 450, damageType = "energy", damage = 6,
             pierce = 1, lifespan = 1.5, bulletId = "energyBolt",
-            burstCount = 2, burstDelay = 0.1, spread = math.rad(2)
+            burstCount = 3, burstDelay = 0.1, spread = math.rad(2)
         },
         {
             id = "autoCannon",
@@ -241,7 +241,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.15, range = 750, firingArc = {direction = 0, minRange = 0, angle = math.pi/2},
+            rotation = 0, fireRate = 0.10, range = 550, firingArc = {direction = 0, minRange = 150, angle = math.pi/2},
             bulletSpeed = 0, damageType = "physical", damage = 225,
             pierce = 1, lifespan = 0.3, maxLifespan = 0.3, bulletId = "sniperShot"
         },
