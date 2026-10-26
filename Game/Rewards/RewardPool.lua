@@ -52,6 +52,25 @@ function RewardPool.getCardDraftRarityWeights(battleLevel)
     return weights
 end
 
+--- Rolls a rarity from a weight table.
+-- @param weights table: {rarity -> weight}
+-- @return string: Rolled rarity ("common" if all weights are zero)
+function RewardPool.rollRarity(weights)
+    local totalWeight = 0
+    for _, w in pairs(weights) do totalWeight = totalWeight + w end
+    if totalWeight <= 0 then return "common" end
+
+    local roll = math.random(1, totalWeight)
+    local runningWeight = 0
+    for _, rarity in ipairs(RewardPool.RarityOrder) do
+        runningWeight = runningWeight + (weights[rarity] or 0)
+        if roll <= runningWeight then
+            return rarity
+        end
+    end
+    return "common"
+end
+
 function RewardPool:new(rewardIndex, game)
     local obj = setmetatable({
         index = rewardIndex,
@@ -69,25 +88,10 @@ function RewardPool:generateChoicesWithWeights(count, weights)
     local choices = {}
     local chosenIds = {}
 
-    local totalWeight = 0
-    for _, w in pairs(weights) do totalWeight = totalWeight + w end
-
     for i = 1, count do
         -- Step 1: Roll for Tier
-        local roll = math.random(1, totalWeight)
-        local runningWeight = 0
-        local rolledRarity = "common"
-        
-        for _, r in ipairs(self.RarityOrder) do
-            local rarity = r
-            local w = weights[rarity]
-            runningWeight = runningWeight + w
-            if roll <= runningWeight then
-                rolledRarity = rarity
-                break
-            end
-        end
-        
+        local rolledRarity = RewardPool.rollRarity(weights)
+
         -- Step 2 & 3: Roll for Reward (with internal same-tier unique check and fallback)
         local reward = self:getRandomRewardFromTier(rolledRarity, chosenIds)
         
