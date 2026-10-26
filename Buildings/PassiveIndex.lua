@@ -61,7 +61,7 @@ local PassiveIndex = {
         {
             id = "coldTactics",
             name = "Cold Tactics",
-            description = "Nearby turrets deal +10% damage per stack of chill on the enemy hit. Frozen enemies count as max stacks.",
+            description = "Nearby turrets deal more damage the closer the enemy hit is to freezing, up to +50%. Frozen enemies take +50%.",
             type = "building",
             types = {"passive", "building"},
             building = require("Buildings.Passives.ColdTactics"),

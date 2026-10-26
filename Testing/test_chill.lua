@@ -356,25 +356,26 @@ for _, s in ipairs(ctEntry.affectedSlots) do
     assert(s[1] >= 0 and not (s[1] == 0 and s[2] == 0), "Cold Tactics never affects its left side or itself")
 end
 
-local perStack = { { perStack = 0.1 } }
+local ColdTactics = require("Buildings.Passives.ColdTactics")
+local ct = ColdTactics:new({ game = mockGame })
+local ctBonus = { ct.effect.damageVsChill }
 e = newBasic()
 Chill.apply(e, 3)
-assert(near(Chill.getDamageMultiplier(e, perStack), 1.3), "+10% per stack (3 stacks -> x1.3)")
+assert(near(Chill.getDamageMultiplier(e, ctBonus), 1.3), "normal enemy: +10% per stack (3 stacks -> x1.3)")
 Chill.apply(e, 2)
-assert(Chill.isFrozen(e) and near(Chill.getDamageMultiplier(e, perStack), 1.5), "frozen counts as 5 stacks (x1.5)")
+assert(Chill.isFrozen(e) and near(Chill.getDamageMultiplier(e, ctBonus), 1.5), "frozen: +50%")
+-- Bosses scale with progress toward their 10-stack freeze, up to the same +50%.
+local chilledBoss = Tank:new({ game = mockGame, x = 100, y = 100, name = "Tank" })
+Chill.apply(chilledBoss, 5)
+assert(near(Chill.getDamageMultiplier(chilledBoss, ctBonus), 1.25), "boss halfway to freezing: +25%")
 local frozenBoss = Tank:new({ game = mockGame, x = 100, y = 100, name = "Tank" })
 Chill.apply(frozenBoss, 10)
-assert(near(Chill.getDamageMultiplier(frozenBoss, perStack), 1.5), "frozen boss is capped at +50%")
-local chilledBoss = Tank:new({ game = mockGame, x = 100, y = 100, name = "Tank" })
-Chill.apply(chilledBoss, 8)
-assert(near(Chill.getDamageMultiplier(chilledBoss, perStack), 1.5), "a boss above 5 stacks is also capped at +50%")
+assert(near(Chill.getDamageMultiplier(frozenBoss, ctBonus), 1.5), "frozen boss: +50%")
 -- Bonuses from several sources add together (Ballista + Cold Tactics).
-local both = { ballista.damageVsChill, { perStack = 0.1 } }
+local both = { ballista.damageVsChill, ct.effect.damageVsChill }
 assert(near(Chill.getDamageMultiplier(e, both), 1 + 1.0 + 0.5), "Ballista and Cold Tactics bonuses add")
 
 -- A turret carrying the Cold Tactics effect passes the bonus to its bullets.
-local ColdTactics = require("Buildings.Passives.ColdTactics")
-local ct = ColdTactics:new({ game = mockGame })
 local sentryCfg = {}
 for k, v in pairs(sentry) do sentryCfg[k] = v end
 sentryCfg.game = mockGame
@@ -384,7 +385,8 @@ local granted = {}
 for k, v in pairs(ct.effect) do granted[k] = v end
 buffed.effectManager:applyEffect(granted)
 local list = buffed:getDamageVsChill()
-assert(list and #list == 1 and list[1].perStack == 0.1, "Cold Tactics grants its bonus to the turret")
+assert(list and #list == 1 and list[1].chilledMax == 0.5 and list[1].frozen == 0.5,
+    "Cold Tactics grants its bonus to the turret")
 
 -- Two Cold Tactics around the same turret stack (+20% per chill stack).
 local ctGrid = { width = 4, height = 4, cellSize = 32, x = 0, y = 0, buildings = {}, unlocked = {} }

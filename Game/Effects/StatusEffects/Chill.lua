@@ -139,26 +139,14 @@ function Chill.isThawing(target)
     return state ~= nil and state.phase == "thawing"
 end
 
---- Extra damage fraction against a target from one chill-damage bonus.
--- Two kinds of bonus:
---   { perStack = x }             x per chill stack; frozen counts as max stacks.
---                                Counts at most FREEZE_STACKS, so bosses (which
---                                need more stacks) cap at the same bonus.
---   { chilledMax = x, frozen = y } scales 0..x with progress toward freezing (so
---                                bosses, which need more stacks, scale the same
---                                way); frozen targets always get y.
+--- Extra damage fraction against a target from one chill-damage bonus
+--- { chilledMax = x, frozen = y }: scales 0..x with progress toward freezing
+--- (so bosses, which need more stacks, scale the same way); frozen targets get y.
 function Chill.getDamageBonus(target, bonus)
-    local threshold = Chill.getFreezeThreshold(target)
-    local frozen = Chill.isFrozen(target)
-    if bonus.perStack then
-        local maxStacks = Chill.FREEZE_STACKS
-        local stacks = frozen and maxStacks or math.min(Chill.getStacks(target), maxStacks)
-        return bonus.perStack * stacks
-    end
-    if frozen then
+    if Chill.isFrozen(target) then
         return bonus.frozen
     end
-    return bonus.chilledMax * math.min(1, Chill.getStacks(target) / threshold)
+    return bonus.chilledMax * math.min(1, Chill.getStacks(target) / Chill.getFreezeThreshold(target))
 end
 
 --- Damage multiplier against a target from a list of chill-damage bonuses

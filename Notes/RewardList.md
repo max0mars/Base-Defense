@@ -19,7 +19,7 @@ Uncommon
 - Slush Cannon [Buildings.Turrets.SlushCannon]: Fires heavy clumps of slush. Each hit applies 1.5 stacks of chill.
 
 Rare
-- Cold Tactics [Buildings.Passives.ColdTactics]: Nearby turrets deal +10% damage per stack of chill on the enemy hit. Frozen enemies count as max stacks.
+- Cold Tactics [Buildings.Passives.ColdTactics]: Nearby turrets deal more damage the closer the enemy hit is to freezing, up to +50%. Frozen enemies take +50%.
 - Glacial Monolith [Buildings.Turrets.GlacialMonolith]: Deals no damage. Sends slow freezing waves through its arc that apply 2 stacks of chill.
 - Ice Shard Gunner [Buildings.Turrets.Turret]: Rapidly fires ice shards. Each hit adds a quarter stack of chill.
 - Chem Lab [Buildings.Passives.ToxicTotem]: Spreads deadly toxins. Highly contagious.
