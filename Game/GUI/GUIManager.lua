@@ -38,9 +38,18 @@ local function drawGlowRect(x, y, w, h, r, g, b, thickness, rx, ry, pulse)
 end
 
 -- Borderless toggle indicator: a status LED followed by a label. No box/frame.
-local function drawToggle(btn, label, isEnabled, isHovered, pulse)
+-- A disabled toggle is drawn dimmed and ignores hover.
+local function drawToggle(btn, label, isEnabled, isHovered, pulse, isDisabled)
     pulse = pulse or 0
     love.graphics.push("all")
+
+    if isDisabled then
+        love.graphics.setColor(0.4, 0.45, 0.5, 0.5)
+        love.graphics.circle("line", btn.x + 6, btn.y + btn.h / 2, 4)
+        love.graphics.print(label, btn.x + 16, btn.y + btn.h / 2 - 6)
+        love.graphics.pop()
+        return
+    end
 
     -- LED status dot.
     local ledX = btn.x + 6
@@ -132,6 +141,7 @@ function GUIManager:new(game)
         speedMinusButton = { x = Layout.W - 188, y = Layout.tray.y + 72, w = 24, h = 24 },
         speedPanel       = { x = Layout.W - 188 + 28, y = Layout.tray.y + 72, w = 120, h = 24 },
         speedPlusButton  = { x = Layout.W - 188 + 156, y = Layout.tray.y + 72, w = 24, h = 24 },
+        editModeButton   = { x = Layout.W - 188, y = Layout.tray.y + 100, w = 180, h = 24 },
         
         mutation = MutationUI:new(game),
         incomeFeedback = IncomeFeedbackManager:new(game),
@@ -273,8 +283,16 @@ function GUIManager:drawHUD()
     if game:isState("startup") or game:isState("preparing") or game:isState("enemy_mutation") or game:isState("upgrade_mutation") then
         displayWave = displayWave + 1
     end
-    love.graphics.print(tostring(displayWave), sx + 50, sy)
-    
+    -- Waves already started plus those still queued: invariant across a wave
+    -- start, since game.wave increments as a wave is removed from the queue.
+    local upcoming = _G.PersistentState and _G.PersistentState.upcomingWaves
+    local totalWaves = game.wave + (upcoming and #upcoming or 0)
+    local waveText = tostring(displayWave)
+    if totalWaves >= displayWave then
+        waveText = waveText .. "/" .. totalWaves
+    end
+    love.graphics.print(waveText, sx + 50, sy)
+
     local currentLevel = _G.PersistentState and _G.PersistentState.battlesCompleted and (_G.PersistentState.battlesCompleted + 1) or 1
     love.graphics.setColor(0, 0.85, 1.0, 0.8)
     love.graphics.print("LEVEL", sx + 90, sy)
@@ -350,6 +368,12 @@ function GUIManager:drawHUD()
     drawToggle(self.autoFireButton, "AUTO-FIRE", autofireEnabled, hoverAutoFire, pulse * 0.4)
     drawToggle(self.dmgNumsButton, "DMG NUMS", game.showDamageNumbers, hoverDmgNums, pulse * 0.4)
 
+    local ih = game.inputHandler
+    local canEdit = ih and ih:canEdit()
+    local hoverEdit = canEdit and mx >= self.editModeButton.x and mx <= self.editModeButton.x + self.editModeButton.w and
+                      my >= self.editModeButton.y and my <= self.editModeButton.y + self.editModeButton.h
+    drawToggle(self.editModeButton, "EDIT MODE (Q)", ih and ih.editMode, hoverEdit, pulse * 0.4, not canEdit)
+
     -- ==========================================
     -- TOP STRIP: Speed control  ( -  >>  + ), borderless
     -- ==========================================
@@ -383,7 +407,8 @@ function GUIManager:drawHUD()
     -- Hand cursor over any HUD button (mx is neutralized while an overlay is open).
     for _, btn in ipairs({
         self.autoFireButton, self.dmgNumsButton,
-        self.speedMinusButton, self.speedPlusButton }) do
+        self.speedMinusButton, self.speedPlusButton,
+        (ih and ih:canEdit()) and self.editModeButton or nil }) do
         if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
             Cursor.wantHand = true
             break
@@ -392,7 +417,27 @@ function GUIManager:drawHUD()
 
     -- Single "press enter" call-to-action, shown before wave 1 (startup) and
     -- between waves (preparing), in a bordered panel centered on the battlefield.
-    if game:isState("startup") or game:isState("preparing") then
+    if ih and ih.editMode then
+        -- Edit mode swaps the centered prompt for a slim instruction strip along
+        -- the top of the battlefield, so the turrets stay visible.
+        local f = Layout.field
+        local text = (#ih.editSelection > 0)
+            and ("AIMING " .. #ih.editSelection .. " TURRET" .. (#ih.editSelection == 1 and "" or "S") .. "  -  CLICK TO SET  /  RIGHT-CLICK TO CANCEL")
+            or "EDIT MODE  -  DRAG TO SELECT TURRETS  /  Q TO EXIT"
+        local font = love.graphics.getFont()
+        local boxW, boxH = font:getWidth(text) + 32, 28
+        local bx = f.x + (f.w - boxW) / 2
+        local by = f.y + 10
+        love.graphics.push("all")
+        love.graphics.setColor(0.04, 0.06, 0.09, 0.85)
+        love.graphics.rectangle("fill", bx, by, boxW, boxH, 6, 6)
+        love.graphics.setColor(1.0, 0.75, 0.2, 0.5 + pulse * 0.5)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", bx, by, boxW, boxH, 6, 6)
+        love.graphics.setColor(1.0, 0.8, 0.3, 0.9)
+        love.graphics.printf(text, bx, by + boxH / 2 - font:getHeight() / 2, boxW, "center")
+        love.graphics.pop()
+    elseif game:isState("startup") or game:isState("preparing") then
         local f = Layout.field
         local boxW, boxH = 320, 60
         local bx = f.x + (f.w - boxW) / 2
@@ -540,6 +585,16 @@ function GUIManager:mousepressed(x, y, button)
         if x >= self.speedPlusButton.x and x <= self.speedPlusButton.x + self.speedPlusButton.w and
            y >= self.speedPlusButton.y and y <= self.speedPlusButton.y + self.speedPlusButton.h then
             self.game.time_mul = math.min(self.game.time_mul + 0.5, 2.0)
+            return true
+        end
+
+        -- Check Edit Mode Button (only responds between waves)
+        if x >= self.editModeButton.x and x <= self.editModeButton.x + self.editModeButton.w and
+           y >= self.editModeButton.y and y <= self.editModeButton.y + self.editModeButton.h then
+            local ih = self.game.inputHandler
+            if ih and (ih.editMode or ih:canEdit()) then
+                ih:toggleEditMode()
+            end
             return true
         end
     end

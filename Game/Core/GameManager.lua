@@ -66,6 +66,32 @@ local function drawCircularArrow(cx, cy, r)
     love.graphics.pop()
 end
 
+-- Outlines just the PERIMETER of a placed building's occupied cells.
+local function drawBuildingOutline(b, color)
+    if not (b.slot and b.buildGrid and not b.destroyed and b.getSlotsFromPattern) then return end
+    local bg = b.buildGrid
+    local cs = bg.cellSize
+    local occ, cells = {}, {}
+    for _, slot in ipairs(b:getSlotsFromPattern(b.slot)) do
+        local i = ((slot - 1) % bg.width) + 1
+        local j = math.ceil(slot / bg.width)
+        occ[i .. "," .. j] = true
+        cells[#cells + 1] = { i = i, j = j }
+    end
+    love.graphics.push("all")
+    love.graphics.setColor(color)
+    love.graphics.setLineWidth(2)
+    for _, c in ipairs(cells) do
+        local x0 = bg.x + (c.i - 1) * cs
+        local y0 = bg.y + (c.j - 1) * cs
+        if not occ[c.i .. "," .. (c.j - 1)] then love.graphics.line(x0, y0, x0 + cs, y0) end           -- top
+        if not occ[c.i .. "," .. (c.j + 1)] then love.graphics.line(x0, y0 + cs, x0 + cs, y0 + cs) end  -- bottom
+        if not occ[(c.i - 1) .. "," .. c.j] then love.graphics.line(x0, y0, x0, y0 + cs) end            -- left
+        if not occ[(c.i + 1) .. "," .. c.j] then love.graphics.line(x0 + cs, y0, x0 + cs, y0 + cs) end  -- right
+    end
+    love.graphics.pop()
+end
+
 -- -----------------------------------------------------------------------------
 -- Scene Draw Data
 -- -----------------------------------------------------------------------------
@@ -442,29 +468,10 @@ function game:draw()
     end
 
     -- Building: white outline around just the PERIMETER of its occupied cells.
-    if hb and hb.slot and hb.buildGrid and not hb.destroyed and hb.getSlotsFromPattern then
-        local bg = hb.buildGrid
-        local cs = bg.cellSize
-        local occ, cells = {}, {}
-        for _, slot in ipairs(hb:getSlotsFromPattern(hb.slot)) do
-            local i = ((slot - 1) % bg.width) + 1
-            local j = math.ceil(slot / bg.width)
-            occ[i .. "," .. j] = true
-            cells[#cells + 1] = { i = i, j = j }
-        end
-        love.graphics.push("all")
-        love.graphics.setColor(1, 1, 1, 0.9)
-        love.graphics.setLineWidth(2)
-        for _, c in ipairs(cells) do
-            local x0 = bg.x + (c.i - 1) * cs
-            local y0 = bg.y + (c.j - 1) * cs
-            if not occ[c.i .. "," .. (c.j - 1)] then love.graphics.line(x0, y0, x0 + cs, y0) end           -- top
-            if not occ[c.i .. "," .. (c.j + 1)] then love.graphics.line(x0, y0 + cs, x0 + cs, y0 + cs) end  -- bottom
-            if not occ[(c.i - 1) .. "," .. c.j] then love.graphics.line(x0, y0, x0, y0 + cs) end            -- left
-            if not occ[(c.i + 1) .. "," .. c.j] then love.graphics.line(x0 + cs, y0, x0 + cs, y0 + cs) end  -- right
-        end
-        love.graphics.pop()
-    end
+    if hb then drawBuildingOutline(hb, {1, 1, 1, 0.9}) end
+
+    -- Edit mode: drag-select box and outlines on the turrets being aimed.
+    if ih then ih:drawEditOverlay(drawBuildingOutline) end
 
     -- Enemy: lighten it by overlaying a faint white fill in its own shape.
     if he and not he.destroyed and he.drawCustomShape then

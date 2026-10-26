@@ -1,3 +1,5 @@
+local Layout = require("Game.GUI.Layout")
+
 local ConfirmationUI = {}
 ConfirmationUI.__index = ConfirmationUI
 
@@ -41,14 +43,20 @@ function ConfirmationUI:update(dt)
     if self.active and not self.target and self.sliders then
         self.sliders:update(dt)
     end
-    -- Handle the legacy destruction target auto-activation
+    -- Right-clicking a placed building sets a destruction target; confirm it here.
     if not self.active and self.game.inputHandler and self.game.inputHandler.destructionTarget then
         self:activate(
-            "Do you want to destroy this building?",
+            "Destroy this building? It won't return this battle.",
             function()
-                local target = self.game.inputHandler.destructionTarget
+                local ih = self.game.inputHandler
+                local target = ih.destructionTarget
+                if ih.selectedBuilding == target then
+                    ih:clearSelection()
+                    if self.game.inputMode == "aiming" then self.game.inputMode = "idle" end
+                end
+                if ih.hoveredBuilding == target then ih.hoveredBuilding = nil end
                 target:remove()
-                self.game.inputHandler.destructionTarget = nil
+                ih.destructionTarget = nil
                 self.game:recalculateAllBuffs()
             end,
             function()
@@ -70,6 +78,8 @@ function ConfirmationUI:draw()
     if self.target then
         local tipX, tipY = self.target.x, self.target.y
         if self.target.getCenterPosition then tipX, tipY = self.target:getCenterPosition() end
+        -- Targets live in world space; the box is drawn in screen space.
+        tipX, tipY = Layout.worldToScreen(tipX, tipY)
         cx = math.floor(tipX - self.boxW / 2)
         cy = math.floor(tipY - self.boxH - 40)
     else

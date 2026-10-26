@@ -16,7 +16,166 @@ function InputHandler:new(game)
     obj.confirmRect = nil
     obj.fireDelay = 0
     obj.isMouseDown = false
+    -- Edit mode (between waves only): drag-select turrets, then aim them together.
+    obj.editMode = false
+    obj.editSelection = {}       -- turrets currently being aimed as a group
+    obj.editSavedDirections = {} -- turret -> arc direction before aiming (for cancel)
+    obj.dragStart = nil          -- field-space {x, y} of an in-progress drag
     return obj
+end
+
+-- Drags shorter than this (world px) on both axes count as a plain click.
+local DRAG_THRESHOLD = 4
+
+--- Edit mode only lives between waves, with no card or placement in progress.
+function InputHandler:isEditPhase()
+    local game = self.game
+    return (game:isState("startup") or game:isState("preparing")) and game.inputMode == "idle"
+end
+
+--- Whether edit mode can be switched on right now (also blocked behind overlays).
+function InputHandler:canEdit()
+    return self:isEditPhase() and not (self.game.gui and self.game.gui:overlayActive())
+end
+
+function InputHandler:toggleEditMode()
+    if self.editMode then
+        self:exitEditMode()
+    elseif self:canEdit() then
+        self:clearSelection()
+        self.editMode = true
+    end
+end
+
+--- Leaves edit mode, keeping whatever aim the group currently has.
+function InputHandler:exitEditMode()
+    self:commitEditAim()
+    self.dragStart = nil
+    self.editMode = false
+end
+
+--- Turrets the group aim can steer. The main turret is aimed by the player directly.
+function InputHandler:isEditAimable(obj)
+    return obj:isType("turret") and not obj:isType("mainturret") and obj.firingArc
+        and obj.slot and not obj.destroyed
+end
+
+function InputHandler:isEditSelected(obj)
+    for _, b in ipairs(self.editSelection) do
+        if b == obj then return true end
+    end
+    return false
+end
+
+--- Normalized field-space rectangle of the current drag, or nil when not dragging.
+function InputHandler:getDragRect()
+    if not self.dragStart then return nil end
+    local x1, y1 = self.dragStart.x, self.dragStart.y
+    local x2, y2 = self.mouseX, self.mouseY
+    return math.min(x1, x2), math.min(y1, y2), math.abs(x2 - x1), math.abs(y2 - y1)
+end
+
+local function isBuildingInRect(obj, rx, ry, rw, rh)
+    local cx, cy = obj:getCenterPosition()
+    return cx >= rx and cx <= rx + rw and cy >= ry and cy <= ry + rh
+end
+
+--- Selected turrets plus any turret inside the live drag box (for arc previews).
+function InputHandler:isEditHighlighted(obj)
+    if not self.editMode then return false end
+    if self:isEditSelected(obj) then return true end
+    local rx, ry, rw, rh = self:getDragRect()
+    if rx and (rw > DRAG_THRESHOLD or rh > DRAG_THRESHOLD) and self:isEditAimable(obj) then
+        return isBuildingInRect(obj, rx, ry, rw, rh)
+    end
+    return false
+end
+
+function InputHandler:setEditSelection(buildings)
+    self.editSelection = buildings
+    self.editSavedDirections = {}
+    for _, b in ipairs(buildings) do
+        self.editSavedDirections[b] = b.firingArc.direction
+    end
+end
+
+--- Locks in the group's current aim and clears the selection.
+function InputHandler:commitEditAim()
+    self.editSelection = {}
+    self.editSavedDirections = {}
+end
+
+--- Restores the group's pre-aim directions and clears the selection.
+function InputHandler:cancelEditAim()
+    for b, dir in pairs(self.editSavedDirections) do
+        b.firingArc.direction = dir
+        b.rotation = dir
+        b.targetRotation = dir
+    end
+    self:commitEditAim()
+end
+
+--- Each selected turret faces the cursor, so the whole group converges on one point.
+function InputHandler:updateEditAim()
+    for i = #self.editSelection, 1, -1 do
+        local b = self.editSelection[i]
+        if b.destroyed then
+            table.remove(self.editSelection, i)
+            self.editSavedDirections[b] = nil
+        else
+            local cx, cy = b:getCenterPosition()
+            local angle = math.atan2(self.mouseY - cy, self.mouseX - cx)
+            if angle < 0 then angle = angle + 2 * math.pi end
+            b.firingArc.direction = angle
+            b.rotation = angle
+            b.targetRotation = angle
+        end
+    end
+end
+
+function InputHandler:finishEditDrag()
+    local rx, ry, rw, rh = self:getDragRect()
+    self.dragStart = nil
+    if not rx then return end
+
+    local picked = {}
+    if rw <= DRAG_THRESHOLD and rh <= DRAG_THRESHOLD then
+        -- Plain click: pick the single turret under the cursor, if any.
+        for _, obj in ipairs(self.game.objects) do
+            if self:isEditAimable(obj) and self:isMouseOverBuilding(obj) then
+                picked[1] = obj
+                break
+            end
+        end
+    else
+        for _, obj in ipairs(self.game.objects) do
+            if self:isEditAimable(obj) and isBuildingInRect(obj, rx, ry, rw, rh) then
+                table.insert(picked, obj)
+            end
+        end
+    end
+    self:setEditSelection(picked)
+end
+
+--- World-space overlay: the drag box and an outline on each highlighted turret.
+-- @param drawOutline function(building, color) that outlines a building's cells
+function InputHandler:drawEditOverlay(drawOutline)
+    if not self.editMode then return end
+    love.graphics.push("all")
+    local rx, ry, rw, rh = self:getDragRect()
+    if rx and (rw > DRAG_THRESHOLD or rh > DRAG_THRESHOLD) then
+        love.graphics.setColor(1.0, 0.75, 0.2, 0.12)
+        love.graphics.rectangle("fill", rx, ry, rw, rh)
+        love.graphics.setColor(1.0, 0.75, 0.2, 0.8)
+        love.graphics.setLineWidth(1)
+        love.graphics.rectangle("line", rx, ry, rw, rh)
+    end
+    for _, obj in ipairs(self.game.objects) do
+        if self:isEditHighlighted(obj) then
+            drawOutline(obj, {1.0, 0.75, 0.2, 0.9})
+        end
+    end
+    love.graphics.pop()
 end
 
 function InputHandler:update(dt)
@@ -33,6 +192,13 @@ function InputHandler:update(dt)
     -- Field-local cursor, used for all world/grid interactions.
     self.mouseX, self.mouseY = Layout.mouseToField(self.screenMouseX, self.screenMouseY)
 
+    -- Edit mode ends as soon as a wave starts or a card is played.
+    if self.editMode and not self:isEditPhase() then
+        self:exitEditMode()
+    end
+    if self.editMode then
+        self:updateEditAim()
+    end
 
     
     -- Handle space key hold for showing all firing arcs
@@ -43,7 +209,7 @@ function InputHandler:update(dt)
                 obj.showArc = true
             else
                 -- Only keep selected building's arc visible when space not held
-                obj.showArc = (obj == self.selectedBuilding)
+                obj.showArc = (obj == self.selectedBuilding) or self:isEditHighlighted(obj)
             end
         end
     end
@@ -77,7 +243,7 @@ function InputHandler:update(dt)
         -- Only handle building slot hover when placing
         if game.inputMode == "placing" then
             self:handleBuildingSlotHover()
-        elseif game.inputMode == "idle" and not self.destructionTarget then
+        elseif game.inputMode == "idle" and not self.destructionTarget and not self.editMode then
             self:handleLockedSlotHover()
         end
     end
@@ -132,7 +298,8 @@ function InputHandler:handleBuildingHover()
     -- Cleanup arcs for all non-hovered/non-selected buildings
     for _, obj in ipairs(gameObjects) do
         if (obj:isType("turret") or obj:isType("passive")) and not obj.destroyed then
-            if obj ~= self.hoveredBuilding and obj ~= self.selectedBuilding and not showAllArcs then
+            if obj ~= self.hoveredBuilding and obj ~= self.selectedBuilding and not showAllArcs
+               and not self:isEditHighlighted(obj) then
                 if obj:isType("turret") or (obj:isType("passive") and obj.range) then
                     obj.showArc = false
                     obj.showEffects = false
@@ -347,7 +514,24 @@ function InputHandler:mousepressed(x, y, button)
 
     local base = game.base
     local mainLazer = game.mainLazer
-    
+
+    -- Edit mode owns the battlefield: left drags select / clicks commit the aim,
+    -- right-click cancels an aim in progress (otherwise falls through to destroy).
+    if self.editMode then
+        if button == 1 then
+            if #self.editSelection > 0 then
+                self:commitEditAim()
+            elseif Layout.inFieldScreen(self.screenMouseX, self.screenMouseY) then
+                self.dragStart = { x = x, y = y }
+            end
+            return
+        elseif button == 2 and (#self.editSelection > 0 or self.dragStart) then
+            self.dragStart = nil
+            self:cancelEditAim()
+            return
+        end
+    end
+
     if button == 2 then
         if game.inputMode == "placing" or game.inputMode == "targeting_card" or game.inputMode == "targeting_global" or game.inputMode == "targeting_spell" then
             if game.activeCard then
@@ -371,9 +555,10 @@ function InputHandler:mousepressed(x, y, button)
                 end
             end
         end
-        -- Right-click picks the building up and returns it to the deck.
+        -- Right-click asks to destroy the building (confirmed via ConfirmationUI),
+        -- freeing its slots for a new one. The main turret is excluded above.
         if bestTarget then
-            game:pickUpBuilding(bestTarget)
+            self.destructionTarget = bestTarget
         end
         return
     end
@@ -650,7 +835,12 @@ function InputHandler:mousepressed(x, y, button)
 end
 
 function InputHandler:mousereleased(x, y, button)
-    if button == 1 then self.isMouseDown = false end
+    if button == 1 then
+        self.isMouseDown = false
+        if self.editMode and self.dragStart then
+            self:finishEditDrag()
+        end
+    end
 end
 
 function InputHandler:selectBuilding(building)
@@ -755,6 +945,7 @@ function InputHandler:keypressed(key)
         -- Start the wave directly from either the initial startup screen or the
         -- between-wave preparing screen (both show the same single prompt).
         if game:isState("startup") or game:isState("preparing") then
+            if self.editMode then self:exitEditMode() end
             game:recalculateAllBuffs() -- Recalculate all buffs before wave starts
             game.WaveSpawner:startNextWave()
             game:setState("wave")
@@ -764,6 +955,8 @@ function InputHandler:keypressed(key)
         if game.mainLazer then
             game.mainLazer.autofire = not game.mainLazer.autofire
         end
+    elseif key == "q" then
+        self:toggleEditMode()
     elseif key == "h" then
         if game.gui and game.gui.hand then
             game.gui.hand.isHidden = not game.gui.hand.isHidden
