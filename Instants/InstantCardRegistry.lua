@@ -1,5 +1,6 @@
 -- Game/Cards/InstantCardRegistry.lua
 local InstantCard = require("Instants.Instant")
+local Chill = require("Game.Effects.StatusEffects.Chill")
 
 local CardRegistry = {}
 
@@ -37,6 +38,55 @@ CardRegistry.Frenzy = InstantCard.new({
     rarity = "Uncommon",
     executionType = InstantCard.ExecutionType.Group,
     statModifiers = { fireRate = { mult = 0.2 } }
+})
+
+-- Global, so ice turrets placed later in the battle get it too
+CardRegistry.Permafrost = InstantCard.new({
+    id = "inst_permafrost_1",
+    name = "Permafrost",
+    description = "Ice turrets deal 20% more damage this battle.",
+    cost = 2,
+    rarity = "Uncommon",
+    executionType = InstantCard.ExecutionType.Global,
+    statModifiers = { ice_damage = { mult = 0.2 } }
+})
+
+-- ==========================================
+-- TIER 3: RARE CARDS
+-- ==========================================
+-- Chill per second grows with the square root of the turret's base fire rate:
+-- fast turrets chill faster overall in small hits, slow turrets chill slower in
+-- big hits (which also lose more to decay between shots). One shot never adds
+-- more than CRYOELECTRONICS_MAX_PER_SHOT, so nothing freezes in a hit or two.
+local CRYOELECTRONICS_CHILL_PER_SECOND = 1.2 -- at 1 shot per second
+local CRYOELECTRONICS_RATE_SCALING = 0.5
+local CRYOELECTRONICS_MAX_PER_SHOT = 2
+CardRegistry.Cryoelectronics = InstantCard.new({
+    id = "inst_cryoelectronics_1",
+    name = "Cryoelectronics",
+    description = "Give an energy turret's attacks a chilling effect.",
+    cost = 1,
+    rarity = "Rare",
+    executionType = InstantCard.ExecutionType.Targeted,
+    canTarget = function(target)
+        if target.damageType ~= "energy" then return false end
+        -- Already converted: playing it again would do nothing
+        return not (target.effectManager and target.effectManager:getEffect("inst_cryoelectronics_1_eff"))
+    end,
+    customExecute = function(targetEntity)
+        if targetEntity and targetEntity.effectManager then
+            targetEntity.effectManager:applyEffect({
+                name = "inst_cryoelectronics_1_eff",
+                displayName = "Cryoelectronics",
+                grantedHitEffect = Chill.onHit({
+                    name = "cryoelectronics_chill",
+                    perSecond = CRYOELECTRONICS_CHILL_PER_SECOND,
+                    rateScaling = CRYOELECTRONICS_RATE_SCALING,
+                    maxPerShot = CRYOELECTRONICS_MAX_PER_SHOT,
+                }),
+            })
+        end
+    end
 })
 
 -- ==========================================

@@ -30,6 +30,7 @@ function Instant.new(config)
     self.statModifiers = config.statModifiers or {}
     self.customExecute = config.customExecute or nil
     self.requiredType = config.requiredType or nil
+    self.canTarget = config.canTarget or nil -- function(target) -> bool, extra check for targeted cards
     self.targetTypes = config.targetTypes or nil
     
     self.isConsume = config.isConsume or false
@@ -112,8 +113,10 @@ function Instant:isValidTarget(targetEntity)
         return false
     end
 
-    -- (Optional) You can add logic here for specific cards, 
-    -- e.g., ensuring a "Sniper Buff" only targets Snipers.
+    if self.canTarget and not self.canTarget(targetEntity) then
+        return false
+    end
+
     return true
 end
 

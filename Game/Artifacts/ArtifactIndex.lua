@@ -9,6 +9,9 @@
 --   effects       static effect templates, applied for the whole battle
 --   getEffects    function(self, game) -> templates; re-evaluated whenever the
 --                 board changes, for effects that scale with what's placed
+--   getTurretEffects  function(self, game, turret) -> templates applied to that
+--                 one turret (e.g. based on its neighbours); re-evaluated with
+--                 getEffects
 --   hooks         any ArtifactManager hook (onBattleStart, onEnemyKilled,
 --                 modifyMaxTokens, ...) as a method on the definition
 --
@@ -30,6 +33,30 @@ local function fieldTurrets(game, includeMain)
         end
     end
     return turrets
+end
+
+--- Distinct ice turrets orthogonally next to `turret` on the base grid
+--- (0 for turrets that aren't on the base grid).
+local function countAdjacentIceTurrets(game, turret)
+    local grid = game.base and game.base.buildGrid
+    if not grid or turret.buildGrid ~= grid or not turret.slot then return 0 end
+    local seen, count = {}, 0
+    for _, slot in ipairs(turret:getSlotsFromPattern(turret.slot)) do
+        local x = (slot - 1) % grid.width
+        local y = math.floor((slot - 1) / grid.width)
+        for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+            local nx, ny = x + d[1], y + d[2]
+            if nx >= 0 and nx < grid.width and ny >= 0 and ny < grid.height then
+                local neighbour = grid.buildings[ny * grid.width + nx + 1]
+                if neighbour and neighbour ~= turret and not seen[neighbour]
+                   and not neighbour.destroyed and Chill.isIceTurret(neighbour) then
+                    seen[neighbour] = true
+                    count = count + 1
+                end
+            end
+        end
+    end
+    return count
 end
 
 ArtifactIndex.list = {
@@ -164,6 +191,23 @@ ArtifactIndex.list = {
             if enemy.destroyed then return end
             local damage = enemy:getStat("maxHp") * self.MAX_HP_FRACTION
             enemy:takeDamage(damage, "ice", nil, nil, { "thaw" })
+        end,
+    },
+    {
+        id = "cryo_coolant",
+        name = "Cryo Coolant",
+        rarity = "uncommon",
+        icon = "drop",
+        color = {0.45, 0.8, 1, 1},
+        description = "Non-ice turrets fire 10% faster for each ice turret next to them.",
+        PER_ICE_TURRET = 0.1,
+        getTurretEffects = function(self, game, turret)
+            if Chill.isIceTurret(turret) then return {} end
+            local count = countAdjacentIceTurrets(game, turret)
+            if count == 0 then return {} end
+            return {
+                { statModifiers = { fireRate = { mult = self.PER_ICE_TURRET * count } } },
+            }
         end,
     },
 }

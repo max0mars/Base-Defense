@@ -141,6 +141,11 @@ function Chill.isImmune(target)
     return em ~= nil and em:getEffect(Chill.FREEZE_NAME) ~= nil
 end
 
+--- Ice turrets are the ones that deal ice damage.
+function Chill.isIceTurret(obj)
+    return obj ~= nil and obj.isType ~= nil and obj:isType("turret") and obj.damageType == "ice"
+end
+
 function Chill.isThawing(target)
     local em = target and target.effectManager
     local state = em and em:getEffect(Chill.FREEZE_NAME)
@@ -235,22 +240,48 @@ ChillOnHit.__index = ChillOnHit
 
 --- Hit-effect template that applies chill to whatever the bullet hits.
 -- @param config table: amount (stacks per hit, may be fractional, default 1),
---                      chance (0-1, default 1)
+--                      chance (0-1, default 1),
+--                      perSecond (instead of amount: stacks per second for a
+--                      turret firing once a second, split across its shots and
+--                      pellets; uses base stats, so fire-rate and pellet buffs
+--                      add hits and raise it),
+--                      rateScaling (with perSecond, default 0: chill per second
+--                      grows as baseFireRate ^ rateScaling, so 0 = the same for
+--                      every turret and 1 = a fixed amount per shot),
+--                      maxPerShot (with perSecond: cap on the chill one shot's
+--                      pellets add up to),
+--                      name (default "chill"; turrets keep one hit effect per name)
 function Chill.onHit(config)
     config = config or {}
     return setmetatable({
-        name = "chill",
+        name = config.name or "chill",
         isIndependent = true,
         amount = config.amount or 1,
+        perSecond = config.perSecond,
+        rateScaling = config.rateScaling or 0,
+        maxPerShot = config.maxPerShot or math.huge,
         hitChance = config.chance or 1,
     }, ChillOnHit)
+end
+
+-- Chill one hit applies. `source` is the bullet (its turret is source.source)
+-- or, for beams, the turret itself.
+function ChillOnHit:getAmount(source)
+    if not self.perSecond then return self.amount end
+    -- Unbuffed values: buffs then add hits of the same size
+    local shooter = source and (source.source or source)
+    local fireRate = shooter and shooter.fireRate or 0
+    if fireRate <= 0 then return math.min(self.perSecond, self.maxPerShot) end
+    local pellets = math.max(1, shooter.pelletCount or 1)
+    local perShot = self.perSecond * fireRate ^ (self.rateScaling - 1)
+    return math.min(perShot, self.maxPerShot) / pellets
 end
 
 -- Bullets fire independent effects through trigger(target, bullet).
 function ChillOnHit:trigger(target, source)
     if not target or not target.isType or not target:isType("enemy") then return end
     if self.hitChance < 1 and math.random() > self.hitChance then return end
-    Chill.apply(target, self.amount)
+    Chill.apply(target, self:getAmount(source))
 end
 
 -- EffectManager:applyEffect routes independent effects through onApply.
