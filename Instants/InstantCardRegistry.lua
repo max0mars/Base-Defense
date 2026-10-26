@@ -110,6 +110,9 @@ CardRegistry.HastyDefenses = InstantCard.new({
     end
 })
 
+-- Flat rarity odds for Pocket Defenses turrets (no epic/legendary 1-cost turrets exist)
+local POCKET_DEFENSES_RARITY_WEIGHTS = { common = 65, uncommon = 28, rare = 7, epic = 0, legendary = 0 }
+
 CardRegistry.PocketDefenses = InstantCard.new({
     id = "inst_pocket_defenses_1",
     name = "Pocket Defenses",
@@ -125,22 +128,47 @@ CardRegistry.PocketDefenses = InstantCard.new({
         local Card = require("Game.Cards.Card")
         local ExecutionType = require("Game.Cards.ExecutionType")
         local RewardIndex = require("Game.Rewards.RewardIndex")
-        
-        -- Collect all cost-1 turrets from the reward index
-        local pool = {}
-        for _, rarityGroup in pairs(RewardIndex) do
-            if type(rarityGroup) == "table" then
-                for _, reward in ipairs(rarityGroup) do
-                    if reward.cost == 1 and reward.building and reward.type == "building"
-                       and reward.iconCategory == "turret" then
-                        table.insert(pool, reward)
-                    end
+        local RewardPool = require("Game.Rewards.RewardPool")
+
+        -- Collect all cost-1 turrets from the reward index, grouped by rarity
+        local poolByRarity = {}
+        local poolSize = 0
+        for _, rarity in ipairs(RewardPool.RarityOrder) do
+            poolByRarity[rarity] = {}
+            for _, reward in ipairs(RewardIndex[rarity] or {}) do
+                if reward.cost == 1 and reward.building and reward.type == "building"
+                   and reward.iconCategory == "turret" then
+                    table.insert(poolByRarity[rarity], reward)
+                    poolSize = poolSize + 1
                 end
             end
         end
-        
-        if #pool == 0 then return end
-        
+
+        if poolSize == 0 then return end
+
+        -- Each turret's rarity is rolled at a flat rate, independent of battle level
+        local weights = POCKET_DEFENSES_RARITY_WEIGHTS
+
+        -- Falls back to the next lower rarity that has a cost-1 turret
+        local function pickTurret(rolledRarity)
+            local foundStart = false
+            for _, rarity in ipairs(RewardPool.RarityOrder) do
+                if rarity == rolledRarity then foundStart = true end
+                local group = poolByRarity[rarity]
+                if foundStart and #group > 0 then
+                    return group[love.math.random(1, #group)], rarity
+                end
+            end
+            -- Nothing at or below the rolled rarity: take the lowest rarity that has any
+            for i = #RewardPool.RarityOrder, 1, -1 do
+                local rarity = RewardPool.RarityOrder[i]
+                local group = poolByRarity[rarity]
+                if #group > 0 then
+                    return group[love.math.random(1, #group)], rarity
+                end
+            end
+        end
+
         local added = 0
         for i = 1, 3 do
             if #gameObj.hand >= 8 then
@@ -148,8 +176,8 @@ CardRegistry.PocketDefenses = InstantCard.new({
                 break
             end
             
-            local pick = pool[love.math.random(1, #pool)]
-            
+            local pick, rarity = pickTurret(RewardPool.rollRarity(weights))
+
             local card = Card:new({
                 id = pick.id,
                 name = pick.name,
@@ -160,7 +188,7 @@ CardRegistry.PocketDefenses = InstantCard.new({
                 payload = {
                     buildingClass = pick.building,
                     config = pick,
-                    rarity = "common",
+                    rarity = rarity,
                     cost = 0,
                 }
             })
