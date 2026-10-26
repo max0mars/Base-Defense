@@ -1,7 +1,8 @@
 local AcidCloudVisual = {}
 AcidCloudVisual.__index = AcidCloudVisual
 
-function AcidCloudVisual:new(x, y, radius, duration)
+-- color is optional (defaults to acid green); Blizzard reuses this in ice blue.
+function AcidCloudVisual:new(x, y, radius, duration, color)
     local obj = setmetatable({}, self)
     obj.x = x
     obj.y = y
@@ -10,6 +11,7 @@ function AcidCloudVisual:new(x, y, radius, duration)
     obj.lifetime = obj.maxLifetime
     obj.destroyed = false
     obj.pulseTimer = 0
+    obj.color = color or {0.1, 0.7, 0.2}
     return obj
 end
 
@@ -28,7 +30,7 @@ function AcidCloudVisual:draw()
     end
     
     local pulse = math.sin(self.pulseTimer * 3) * 0.05 + 1.0
-    local r, g, b = 0.1, 0.7, 0.2 -- Green toxic/acid color
+    local r, g, b = self.color[1], self.color[2], self.color[3]
     
     -- Draw main soft toxic cloud
     love.graphics.setColor(r, g, b, alpha * 0.15)

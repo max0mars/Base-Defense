@@ -7,7 +7,6 @@ EffectManager.colors = {
     toxic = {0.7, 0.2, 0.9, 1},
     Toxic = {0.7, 0.2, 0.9, 1},
     slow = {0.5, 0.8, 1.0, 1},
-    slow_aura = {0.5, 0.8, 1.0, 1},
     GuardianAura = {0.6, 0.6, 0.6, 1},
     stun = {1, 1, 0, 1}, -- Yellow for stun
     -- add other effect colors here
@@ -196,12 +195,19 @@ function EffectManager:update(dt)
             end
         end
     end
-    if changed then
+    if changed or self.dirty then
+        self.dirty = false
         self:recalculateStats()
         if not self.owner then
             self:propagateRecalculation()
         end
     end
+end
+
+--- Called by an effect that changed its own statModifiers during onUpdate;
+--- stats are recalculated once at the end of this manager's update.
+function EffectManager:markDirty()
+    self.dirty = true
 end
 
 -- Removed drawStatusEffects (moved to UI/LivingObject)

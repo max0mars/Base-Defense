@@ -45,8 +45,30 @@ local PassiveIndex = {
             cost = 2,
             affectedSlots = {{1,0},{0,1},{0,-1}}
         },
+        {
+            id = "iceMarket",
+            name = "Ice Market",
+            description = "Gain $5 every time a frozen enemy dies.",
+            type = "building",
+            types = {"passive", "building", "economy"},
+            building = require("Buildings.Passives.IceMarket"),
+            iconCategory = "buff",
+            cost = 2,
+            affectedSlots = {}
+        },
     },
     rare = {
+        {
+            id = "coldTactics",
+            name = "Cold Tactics",
+            description = "Nearby turrets deal more damage the closer the enemy hit is to freezing, up to +50%. Frozen enemies take +50%.",
+            type = "building",
+            types = {"passive", "building"},
+            building = require("Buildings.Passives.ColdTactics"),
+            iconCategory = "buff",
+            cost = 1,
+            affectedSlots = {{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}}
+        },
         {
             id = "toxicTotem",
             name = "Chem Lab",
@@ -67,17 +89,6 @@ local PassiveIndex = {
             building = require("Buildings.Passives.Conduit"),
             iconCategory = "buff",
             cost = 2,
-            affectedSlots = {}
-        },
-        {
-            id = "frostTrap",
-            name = "Frost Trap",
-            description = "Slows down nearby enemies.",
-            type = "building",
-            types = {"passive", "building", "slow", "control"},
-            building = require("Buildings.Passives.FrostTrap"),
-            iconCategory = "buff",
-            cost = 1,
             affectedSlots = {}
         },
     },

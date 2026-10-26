@@ -4,6 +4,9 @@ local bullet = require("Bullets.Bullet")
 Turret = setmetatable({}, { __index = building })
 Turret.__index = Turret
 
+-- Magazine turrets top up after this long with nothing to shoot
+Turret.IDLE_RELOAD_DELAY = 2
+
 function Turret:new(config)
     if not config then
         error("Developer Error: Turret:new called with nil config.")
@@ -100,6 +103,21 @@ function Turret:new(config)
     if t.canDirectHit == nil then t.canDirectHit = true end
     
     return t
+end
+
+--- Chill-damage bonuses for this turret's hits: its own `damageVsChill` plus any
+--- granted by active effects (e.g. Cold Tactics). nil when there are none.
+function Turret:getDamageVsChill()
+    local list = {}
+    if self.damageVsChill then table.insert(list, self.damageVsChill) end
+    local function collect(em)
+        for _, effect in ipairs(em.activeEffects) do
+            if effect.damageVsChill then table.insert(list, effect.damageVsChill) end
+        end
+        if em.parent then collect(em.parent) end
+    end
+    if self.effectManager then collect(self.effectManager) end
+    return #list > 0 and list or nil
 end
 
 function Turret:addHitEffect(effect)
@@ -211,6 +229,7 @@ function Turret:fire(args)
             recursion = self:getStat("recursion"),
             recursionSpread = self:getStat("recursionSpread"),
             canDirectHit = self:getStat("canDirectHit"),
+            damageVsChill = self:getDamageVsChill(),
             game = self.game,
             source = self,
             color = self.color,
@@ -264,7 +283,16 @@ function Turret:update(dt)
             self.isReloading = false
             self.ammoCount = self.ammoMax
         end
-        return
+        -- Keep tracking so the first shot after reloading isn't spent re-aiming
+        self:getTargetArc()
+        if self.target then self:lookAt(self.target.x, self.target.y, dt) end
+        -- A top-up reload (ammo left) is cancelled as soon as there's something
+        -- to shoot; an empty magazine has to finish reloading
+        if self.isReloading and self.target and self.ammoCount > 0 then
+            self.isReloading = false
+        else
+            return
+        end
     end
 
     if (self.burstsRemaining or 0) > 0 then
@@ -288,6 +316,17 @@ function Turret:update(dt)
 
     self.cooldown = self.cooldown - dt
     self:getTargetArc()
+    -- Nothing to shoot for a while: top up a partly used magazine instead of
+    -- carrying it into the next fight (brief gaps between targets don't count)
+    if self.ammoMax then
+        self.idleTime = self.target and 0 or (self.idleTime or 0) + dt
+        if self.idleTime >= Turret.IDLE_RELOAD_DELAY and self.ammoCount < self.ammoMax then
+            self.isReloading = true
+            self.reloadTimer = self.reloadTime
+            self.idleTime = 0
+            return
+        end
+    end
     if self.target then
         local x, y = self.target.x, self.target.y
         self:lookAt(x, y, dt) -- Aim at the target's lead position
@@ -417,7 +456,23 @@ function Turret:draw(drawx, drawy)
     love.graphics.circle("fill", 0, 0, 1.5)
 
     love.graphics.pop()
-    
+
+    -- 4. Magazine: ammo left, or reload progress while reloading (placed turrets
+    -- only). Kept inside the base so it never spills onto neighbouring cells.
+    if self.ammoMax and not drawx then
+        local w, h = 12, 2
+        local bx, by = cx - w / 2, cy + 5
+        local fill = self.isReloading and (1 - self.reloadTimer / self.reloadTime) or (self.ammoCount / self.ammoMax)
+        love.graphics.setColor(0.05, 0.05, 0.08, 0.8)
+        love.graphics.rectangle("fill", bx, by, w, h)
+        if self.isReloading then
+            love.graphics.setColor(1, 0.6, 0.2, 0.9)
+        else
+            love.graphics.setColor(r, g, b, 0.9)
+        end
+        love.graphics.rectangle("fill", bx, by, w * math.max(0, math.min(1, fill)), h)
+    end
+
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
 end

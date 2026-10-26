@@ -49,7 +49,9 @@ local expected = {
     airburst = "scrap", gator = "scrap", sequenceTurret = "scrap", hookTurret = "scrap", sniper = "scrap",
     blaster = "energy_cells", fluxCannon = "energy_cells", plasmaScattershot = "energy_cells", chainLaser = "energy_cells",
     grenadier = "blast_powder", missileLauncher = "blast_powder", mortar = "blast_powder",
-    poisonTurret = "elemental_essence", slushCannon = "elemental_essence",
+    poisonTurret = "elemental_essence", slushCannon = "elemental_essence", iceShard = "elemental_essence",
+    frostCannon = "elemental_essence", cryoBeam = "elemental_essence",
+    icicleBallista = "elemental_essence", glacialMonolith = "elemental_essence",
 }
 for id, mat in pairs(expected) do
     local got = MaterialRegistry.resolve(findTurret(id))

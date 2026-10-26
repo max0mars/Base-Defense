@@ -1,4 +1,5 @@
 local object = require("Classes.object")
+local Chill = require("Game.Effects.StatusEffects.Chill")
 --local collision = require("Physics.collisionSystem")
 
 Bullet = setmetatable({}, object)
@@ -225,8 +226,12 @@ function Bullet:onHit(target)
     
     -- 3. Conditional Direct Impact Damage
     if self:getStat("canDirectHit") then
-        if target then 
-            target:takeDamage(self:getStat("damage"), self.damageType, nil, nil, self.damageTags, self)
+        if target then
+            local damage = self:getStat("damage")
+            if self.damageVsChill then
+                damage = damage * Chill.getDamageMultiplier(target, self.damageVsChill)
+            end
+            target:takeDamage(damage, self.damageType, nil, nil, self.damageTags, self)
         end
     end
 
