@@ -20,6 +20,30 @@ local function createParticleSystem(color, size, count, spread)
     return ps
 end
 
+-- Card back (sleek dark card back with glowing neon accents), centered on the origin.
+-- Shared with the hand's draw animation.
+function CardReveal.drawBack(width, height)
+    local radius = 10 * (width / 250)
+    love.graphics.setColor(0.08, 0.08, 0.11, 1)
+    love.graphics.rectangle("fill", -width/2, -height/2, width, height, radius)
+
+    love.graphics.setColor(0.3, 0.35, 0.45, 1)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", -width/2, -height/2, width, height, radius)
+
+    -- Inner decorative border
+    love.graphics.setColor(0.18, 0.22, 0.3, 0.8)
+    love.graphics.setLineWidth(1.5)
+    love.graphics.rectangle("line", -width/2 + 8, -height/2 + 8, width - 16, height - 16, math.max(2, radius - 4))
+
+    -- Center Emblem / Geometric Tech Pattern
+    love.graphics.setColor(0.4, 0.45, 0.6, 0.7)
+    local patternR = math.min(width, height) * 0.15
+    love.graphics.circle("line", 0, 0, patternR)
+    love.graphics.circle("line", 0, 0, patternR * 0.6)
+    love.graphics.polygon("line", 0, -patternR * 0.7, patternR * 0.6, patternR * 0.35, -patternR * 0.6, patternR * 0.35)
+end
+
 function CardReveal:new(reward, x, y, width, height)
     local obj = setmetatable({}, self)
     obj.reward = reward
@@ -184,25 +208,7 @@ function CardReveal:draw(isSelected)
     local radius = 10 * (self.width / 250)
 
     if self.state == "hidden" or (self.state == "flipping" and not self.effectsTriggered) then
-        -- Draw Card Back (Sleek dark card back with glowing neon accents)
-        love.graphics.setColor(0.08, 0.08, 0.11, 1)
-        love.graphics.rectangle("fill", -self.width/2, -self.height/2, self.width, self.height, radius)
-
-        love.graphics.setColor(0.3, 0.35, 0.45, 1)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", -self.width/2, -self.height/2, self.width, self.height, radius)
-
-        -- Inner decorative border
-        love.graphics.setColor(0.18, 0.22, 0.3, 0.8)
-        love.graphics.setLineWidth(1.5)
-        love.graphics.rectangle("line", -self.width/2 + 8, -self.height/2 + 8, self.width - 16, self.height - 16, math.max(2, radius - 4))
-
-        -- Center Emblem / Geometric Tech Pattern
-        love.graphics.setColor(0.4, 0.45, 0.6, 0.7)
-        local patternR = math.min(self.width, self.height) * 0.15
-        love.graphics.circle("line", 0, 0, patternR)
-        love.graphics.circle("line", 0, 0, patternR * 0.6)
-        love.graphics.polygon("line", 0, -patternR * 0.7, patternR * 0.6, patternR * 0.35, -patternR * 0.6, patternR * 0.35)
+        CardReveal.drawBack(self.width, self.height)
     else
         -- Draw Actual Card using CardDraw
         if self.reward.rewardCard and self.reward.rewardCard.draw then

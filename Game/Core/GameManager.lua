@@ -1032,6 +1032,9 @@ function game:discardHand()
     if self.activeCard then
         self:refundCard(self.activeCard)
     end
+    if self.gui and self.gui.hand and self.gui.hand.dropCards then
+        self.gui.hand:dropCards(self.hand)
+    end
     for _, card in ipairs(self.hand) do
         local _, discardKey = pileKeys(self:isSpellCard(card))
         self[discardKey] = self[discardKey] or {}
