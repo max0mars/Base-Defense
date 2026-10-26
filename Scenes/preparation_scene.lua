@@ -10,6 +10,7 @@ local BattleManager = require("Game.Core.BattleManager")
 local RewardPool = require("Game.Rewards.RewardPool")
 local RewardIndex = require("Game.Rewards.RewardIndex")
 local Card = require("Game.Cards.Card")
+local CardFactory = require("Game.Cards.CardFactory")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local SettingsPanel = require("Game.GUI.SettingsPanel")
@@ -310,57 +311,8 @@ function preparation_scene:rollShop()
         local rarity = choice.rarity or "common"
         local itemCost = prices[rarity] or 50
         
-        local card
-        if choice.type == "spell" then
-            local SpellCardRegistry = require("Spells.SpellCardRegistry")
-            local baseSpell = nil
-            for _, s in pairs(SpellCardRegistry) do
-                if type(s) == "table" and s.id == choice.id then
-                    baseSpell = s
-                    break
-                end
-            end
-            if baseSpell then
-                local Utils = require("Classes.Utils")
-                card = Utils.deepCopy(baseSpell)
-                card.quantity = 1
-            end
-        elseif choice.type == "instant" then
-            local InstantCardRegistry = require("Instants.InstantCardRegistry")
-            local baseInstant = nil
-            for _, inst in pairs(InstantCardRegistry) do
-                if type(inst) == "table" and inst.id == choice.id then
-                    baseInstant = inst
-                    break
-                end
-            end
-            if baseInstant then
-                local Utils = require("Classes.Utils")
-                card = Utils.deepCopy(baseInstant)
-                card.quantity = 1
-            end
-        end
-        
-        if not card then
-            local isGlobal = choice.type == "main_upgrade"
-            local cardPayload = { rarity = rarity }
-            if isGlobal then
-                cardPayload.isMainUpgrade = true
-            else
-                cardPayload.buildingClass = choice.building
-                cardPayload.config = choice
-            end
-            
-            card = Card:new({
-                id = choice.id,
-                name = choice.name,
-                description = choice.description,
-                executionType = isGlobal and ExecutionType.Targeted or ExecutionType.Placement,
-                payload = cardPayload
-            })
-            cardPayload.rewardCard = card:getCardDraw()
-        end
-        
+        local card = CardFactory.fromReward(choice, choice)
+
         table.insert(self.shopItems, {
             x = startX + (i-1) * 220,
             y = 220,

@@ -8,6 +8,7 @@ local Cursor = require("Game.GUI.Cursor")
 local TestingIndex = require("Game.Rewards.TestingRewardIndex")
 local RewardPool = require("Game.Rewards.RewardPool")
 local CardReveal = require("Graphics.Animations.CardReveal")
+local CardFactory = require("Game.Cards.CardFactory")
 
 function RewardSystem:new(game)
     -- Always use the real reward pool (testing mode included) so "Buy Upgrade"
@@ -60,7 +61,14 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
 
     
     self.poolLogic = RewardPool:new(indexToUse, self.game)
-    local choices = self.poolLogic:generateChoices(count, shopLevel)
+    local choices
+    if self.mode == "cards" then
+        -- Card draft rarity scales with the current battle level, not the shop level
+        local weights = RewardPool.getCardDraftRarityWeights(self:getBattleLevel())
+        choices = self.poolLogic:generateChoicesWithWeights(count, weights)
+    else
+        choices = self.poolLogic:generateChoices(count, shopLevel)
+    end
     
     local totalWidth = (count * self.cardWidth) + ((count - 1) * self.cardSpacing)
     local startX = (VIRTUAL_WIDTH - totalWidth) / 2
@@ -69,12 +77,32 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     for i, rewardData in ipairs(choices) do
         rewardData.game = self.game
         local rewardObj = Reward:new(rewardData)
-        local x = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
+        if self.mode == "cards" then
+            -- Show the exact card the player will receive (correct type art and cost)
+            rewardObj.deckCard = CardFactory.fromReward(rewardObj, rewardObj.rawConfig)
+            rewardObj.rewardCard = rewardObj.deckCard:getCardDraw()
+        end
+        local x =self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local y = self.startY
         
         local card = CardReveal:new(rewardObj, x, y, self.cardWidth, self.cardHeight)
         table.insert(self.rewardPool, card)
     end
+end
+
+--- Current battle level: the selected battle's level, else battles completed + 1.
+function RewardSystem:getBattleLevel()
+    local state = _G.PersistentState
+    if state and state.selectedBattle and state.selectedBattle.playerLevel then
+        return state.selectedBattle.playerLevel
+    end
+    return ((state and state.battlesCompleted) or 0) + 1
+end
+
+function RewardSystem:close()
+    self.isActive = false
+    self.currentChoices = {}
+    self.mode = nil
 end
 
 function RewardSystem:activate(poolLogicMode, numCards)
@@ -110,59 +138,7 @@ function RewardSystem:selectReward(index)
         local reward = card.reward
         --print("Selected reward: " .. reward.name)
         if self.mode == "cards" then
-            local cardObj = nil
-            local rarity = reward.rarity or "common"
-            if reward.type == "spell" then
-                local SpellCardRegistry = require("Spells.SpellCardRegistry")
-                local baseSpell = nil
-                for _, s in pairs(SpellCardRegistry) do
-                    if type(s) == "table" and s.id == reward.id then
-                        baseSpell = s
-                        break
-                    end
-                end
-                if baseSpell then
-                    local Utils = require("Classes.Utils")
-                    cardObj = Utils.deepCopy(baseSpell)
-                    cardObj.quantity = 1
-                end
-            elseif reward.type == "instant" then
-                local InstantCardRegistry = require("Instants.InstantCardRegistry")
-                local baseInstant = nil
-                for _, inst in pairs(InstantCardRegistry) do
-                    if type(inst) == "table" and inst.id == reward.id then
-                        baseInstant = inst
-                        break
-                    end
-                end
-                if baseInstant then
-                    local Utils = require("Classes.Utils")
-                    cardObj = Utils.deepCopy(baseInstant)
-                    cardObj.quantity = 1
-                end
-            end
-
-            if not cardObj then
-                local Card = require("Game.Cards.Card")
-                local ExecutionType = require("Game.Cards.ExecutionType")
-                local isGlobal = reward.type == "main_upgrade"
-                local cardPayload = { rarity = rarity }
-                if isGlobal then
-                    cardPayload.isMainUpgrade = true
-                else
-                    cardPayload.buildingClass = reward.building
-                    cardPayload.config = reward.rawConfig or reward
-                end
-
-                cardObj = Card:new({
-                    id = reward.id,
-                    name = reward.name,
-                    description = reward.description,
-                    executionType = isGlobal and ExecutionType.Targeted or ExecutionType.Placement,
-                    payload = cardPayload
-                })
-                cardPayload.rewardCard = cardObj:getCardDraw()
-            end
+            local cardObj = reward.deckCard or CardFactory.fromReward(reward, reward.rawConfig or reward)
 
             if _G.PersistentState and _G.PersistentState.deck and cardObj then
                 _G.PersistentState.deck:addCard(cardObj)
@@ -176,10 +152,8 @@ function RewardSystem:selectReward(index)
         else
             error("Invalid reward type: " .. reward.type)
         end
-    end    
-    self.isActive = false
-    self.currentChoices = {}
-    self.mode = nil
+    end
+    self:close()
 end
 
 -- function RewardSystem:keypressed(key)
@@ -220,21 +194,22 @@ function RewardSystem:draw()
         card:draw(isSelected)
     end
 
-    -- Draw skip/reroll button (only in standard mid-battle upgrade mode)
-    if self.mode ~= "cards" then
-        local mx, my = love.mouse.getPosition()
-        local isSkipHovered = mx >= self.skipBtnX and mx <= self.skipBtnX + self.skipBtnW and
-                             my >= self.skipBtnY and my <= self.skipBtnY + self.skipBtnH
-        
-        if isSkipHovered then
-            love.graphics.setColor(0.4, 0.4, 0.4, 1)
-        else
-            love.graphics.setColor(0.3, 0.3, 0.3, 1)
-        end
-        love.graphics.rectangle("fill", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
-        
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.rectangle("line", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
+    -- Draw skip button (card draft) or reroll button (standard mid-battle upgrade mode)
+    local isSkipHovered = mx >= self.skipBtnX and mx <= self.skipBtnX + self.skipBtnW and
+                         my >= self.skipBtnY and my <= self.skipBtnY + self.skipBtnH
+
+    if isSkipHovered then
+        love.graphics.setColor(0.4, 0.4, 0.4, 1)
+    else
+        love.graphics.setColor(0.3, 0.3, 0.3, 1)
+    end
+    love.graphics.rectangle("fill", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("line", self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH, 10)
+    if self.mode == "cards" then
+        love.graphics.printf("Skip", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
+    else
         if self.game.tokens >= 1 then
             love.graphics.printf("Reroll (-1 Token)", self.skipBtnX, self.skipBtnY + 12, self.skipBtnW, "center")
         else
@@ -243,14 +218,12 @@ function RewardSystem:draw()
         end
     end
 
-    -- Hand cursor over reward cards / reroll.
+    -- Hand cursor over reward cards / skip / reroll.
     for i = 1, #self.currentChoices do
         local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
         Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight)
     end
-    if self.mode ~= "cards" then
-        Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
-    end
+    Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
 end
 
 function RewardSystem:mousepressed(x, y, button)
@@ -270,11 +243,12 @@ function RewardSystem:mousepressed(x, y, button)
         end
     end
 
-    -- Check for skip button (only if not in cards reward mode)
-    if self.mode ~= "cards" and
-       x >= self.skipBtnX and x <= self.skipBtnX + self.skipBtnW and
+    -- Check for skip (card draft) / reroll button
+    if x >= self.skipBtnX and x <= self.skipBtnX + self.skipBtnW and
        y >= self.skipBtnY and y <= self.skipBtnY + self.skipBtnH then
-        if self.game.tokens >= 1 then
+        if self.mode == "cards" then
+            self:close()
+        elseif self.game.tokens >= 1 then
             self.game.tokens = self.game.tokens - 1
             self:activate()
         end
