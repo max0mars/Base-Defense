@@ -18,6 +18,40 @@ RewardPool.LuckTable = {
 -- Preferred rarity order for fallbacks
 RewardPool.RarityOrder = { "legendary", "epic", "rare", "uncommon", "common" }
 
+-- Card Draft Rarity Scale: battle level anchors -> {rarity -> weight}.
+-- Levels between anchors interpolate linearly; levels past the last anchor use it as-is.
+RewardPool.DraftRarityScale = {
+    { level = 1,  common = 85, uncommon = 15, rare = 0,  epic = 0,  legendary = 0 },
+    { level = 3,  common = 70, uncommon = 25, rare = 5,  epic = 0,  legendary = 0 },
+    { level = 6,  common = 50, uncommon = 30, rare = 15, epic = 5,  legendary = 0 },
+    { level = 10, common = 35, uncommon = 32, rare = 20, epic = 10, legendary = 3 },
+    { level = 15, common = 20, uncommon = 32, rare = 26, epic = 15, legendary = 7 },
+    { level = 20, common = 10, uncommon = 30, rare = 30, epic = 20, legendary = 10 }
+}
+
+--- Returns card draft rarity weights for the given battle level.
+-- @param battleLevel number: Current battle level (1, 2, 3...)
+-- @return table: {rarity -> integer weight}
+function RewardPool.getCardDraftRarityWeights(battleLevel)
+    local scale = RewardPool.DraftRarityScale
+    local level = math.max(scale[1].level, battleLevel or 1)
+
+    local lo, hi = scale[#scale], scale[#scale]
+    for i = 1, #scale - 1 do
+        if level < scale[i + 1].level then
+            lo, hi = scale[i], scale[i + 1]
+            break
+        end
+    end
+
+    local t = (hi.level == lo.level) and 0 or (level - lo.level) / (hi.level - lo.level)
+    local weights = {}
+    for _, rarity in ipairs(RewardPool.RarityOrder) do
+        weights[rarity] = math.floor(lo[rarity] + (hi[rarity] - lo[rarity]) * t + 0.5)
+    end
+    return weights
+end
+
 function RewardPool:new(rewardIndex, game)
     local obj = setmetatable({
         index = rewardIndex,
@@ -28,7 +62,10 @@ end
 
 function RewardPool:generateChoices(count, luckLevel)
     luckLevel = math.max(1, math.min(10, luckLevel or 1))
-    local weights = self.LuckTable[luckLevel]
+    return self:generateChoicesWithWeights(count, self.LuckTable[luckLevel])
+end
+
+function RewardPool:generateChoicesWithWeights(count, weights)
     local choices = {}
     local chosenIds = {}
 
