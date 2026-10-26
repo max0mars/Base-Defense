@@ -1,18 +1,48 @@
+local MaterialRegistry = require("Game.Cards.MaterialRegistry")
+
 local CardUpgradeConfig = {}
 
 -- Roman numerals mapping for Tiers 1 through 5
 CardUpgradeConfig.TIER_NAMES = { "I", "II", "III", "IV", "V" }
 CardUpgradeConfig.MAX_TIER = 5
-CardUpgradeConfig.BONUS_PER_TIER = 0.20 -- Flat 20% per tier above Tier I
+
+-- Flat bonus per tier above Tier I, per stat (Tier V = 1 + 4 * bonus)
+CardUpgradeConfig.TIER_BONUS = {
+    damage = 0.20,
+    fireRate = 0.10,
+    range = 0.15,
+}
+
+--- Stat multiplier for a tier (1.0 at Tier I).
+function CardUpgradeConfig.getTierMultiplier(statName, tier)
+    local bonus = CardUpgradeConfig.TIER_BONUS[statName] or 0
+    return 1.0 + ((tier or 1) - 1) * bonus
+end
+
+-- Placeholder key in cost tables for "this card's upgrade material" (see MaterialRegistry)
+CardUpgradeConfig.MATERIAL = "material"
 
 -- Default modular upgrade costs per tier transition (target tier as key)
 -- Can be overridden per-card or per-item
 CardUpgradeConfig.DEFAULT_COSTS = {
-    [2] = { gold = 50,  ["Upgrade Material"] = 1 },
-    [3] = { gold = 100, ["Upgrade Material"] = 2 },
-    [4] = { gold = 200, ["Upgrade Material"] = 3 },
-    [5] = { gold = 400, ["Upgrade Material"] = 5 },
+    [2] = { gold = 30,  material = 1 },
+    [3] = { gold = 75,  material = 1 },
+    [4] = { gold = 250, material = 4 },
+    [5] = { gold = 600, material = 7 },
 }
+
+--- Replaces the `material` placeholder in a cost table with a real material id.
+function CardUpgradeConfig.resolveCost(costTable, materialId)
+    if not costTable then return nil end
+    local resolved = {}
+    for resName, amount in pairs(costTable) do
+        if resName == CardUpgradeConfig.MATERIAL then
+            resName = materialId or MaterialRegistry.resolve(nil)
+        end
+        resolved[resName] = (resolved[resName] or 0) + amount
+    end
+    return resolved
+end
 
 -- Economy Helper to query and deduct arbitrary modular resources
 CardUpgradeConfig.Economy = {
@@ -32,19 +62,41 @@ CardUpgradeConfig.Economy = {
         return _G.PersistentState.materials[resName] or 0
     end,
 
-    canAfford = function(costTable)
-        if not costTable then return false end
+    --- Exact resources a cost would spend, or nil if unaffordable. Typed materials are
+    -- spent first; Universal Essence covers any shortfall of typed materials.
+    planSpend = function(costTable)
+        if not costTable then return nil end
+        local getResource = CardUpgradeConfig.Economy.getResource
+        local plan = {}
+        local universalNeeded = 0
         for resName, amount in pairs(costTable) do
-            if CardUpgradeConfig.Economy.getResource(resName) < amount then
-                return false
+            local have = getResource(resName)
+            local mat = MaterialRegistry.get(resName)
+            if mat and not mat.universal and have < amount then
+                if have > 0 then plan[resName] = have end
+                universalNeeded = universalNeeded + (amount - have)
+            elseif have < amount then
+                return nil
+            else
+                plan[resName] = (plan[resName] or 0) + amount
             end
         end
-        return true
+        if universalNeeded > 0 then
+            local universal = MaterialRegistry.UNIVERSAL
+            plan[universal] = (plan[universal] or 0) + universalNeeded
+            if getResource(universal) < plan[universal] then return nil end
+        end
+        return plan
+    end,
+
+    canAfford = function(costTable)
+        return CardUpgradeConfig.Economy.planSpend(costTable) ~= nil
     end,
 
     deduct = function(costTable)
-        if not CardUpgradeConfig.Economy.canAfford(costTable) then return false end
-        for resName, amount in pairs(costTable) do
+        local plan = CardUpgradeConfig.Economy.planSpend(costTable)
+        if not plan then return false end
+        for resName, amount in pairs(plan) do
             if resName == "gold" or resName == "cash" then
                 _G.PersistentState.cash = (_G.PersistentState.cash or 0) - amount
             elseif resName == "Card Removal" or resName == "cardRemovals" or resName == "trash" or resName == "Trash" then

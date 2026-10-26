@@ -208,6 +208,12 @@ function new_game_scene:mousepressed(x, y, button)
                 local RewardIndex = require("Game.Rewards.RewardIndex")
                 RewardIndex.injectCards(turretModule.getUniqueCards())
             end
+
+            -- Starting upgrade materials match the main turret's material
+            local MaterialRegistry = require("Game.Cards.MaterialRegistry")
+            local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
+            local startMaterial = MaterialRegistry.resolve(turretModule.template)
+            CardUpgradeConfig.Economy.addResource(startMaterial, MaterialRegistry.STARTING_AMOUNT)
             self.scene_manager.switch("game")
         end
     end

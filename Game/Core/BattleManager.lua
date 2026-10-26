@@ -3,8 +3,23 @@
 -- Manages post-battle reward generation based on difficulty and player level.
 -- =============================================================================
 
+local MaterialRegistry = require("Game.Cards.MaterialRegistry")
+
 local BattleManager = {}
 BattleManager.__index = BattleManager
+
+-- Chance a material reward is Universal Essence instead of a typed material
+BattleManager.UNIVERSAL_MATERIAL_CHANCE = 0.10
+
+--- Picks the material for a material reward: rarely Universal, otherwise a
+-- uniformly random typed material from the registry.
+function BattleManager.rollMaterial()
+    if math.random() < BattleManager.UNIVERSAL_MATERIAL_CHANCE then
+        return MaterialRegistry.UNIVERSAL
+    end
+    local typed = MaterialRegistry.getTyped()
+    return typed[math.random(1, #typed)].id
+end
 
 -- Reward Types supported by the system
 BattleManager.REWARD_TYPES = {
@@ -94,15 +109,22 @@ function BattleManager:generateRewards(difficultyMultiplier, playerLevel)
             matAmt = math.min(matAmt, maxAfford)
             
             if matAmt >= 1 then
+                -- Roll which material this battle offers (shown on the battle preview)
+                local materialId = BattleManager.rollMaterial()
+                if materialId == MaterialRegistry.UNIVERSAL then
+                    matAmt = 1 -- Universal Essence is rare: never awarded in pairs
+                end
+                local materialName = MaterialRegistry.getName(materialId)
                 local cost = matAmt * BattleManager.REWARD_VALUES.UPGRADE_MATERIAL
                 remainingBudget = remainingBudget - cost
                 addedTypes[BattleManager.REWARD_TYPES.UPGRADE_MATERIAL] = true
                 table.insert(rewards, {
                     type = BattleManager.REWARD_TYPES.UPGRADE_MATERIAL,
-                    name = "Upgrade Material",
+                    name = materialName,
+                    materialId = materialId,
                     amount = matAmt,
                     value = cost,
-                    description = string.format("+%d Upgrade Material", matAmt),
+                    description = string.format("+%d %s", matAmt, materialName),
                     icon = "material"
                 })
             end
@@ -160,7 +182,8 @@ function BattleManager:applyRewards(rewards, game)
             _G.PersistentState.cash = (_G.PersistentState.cash or 0) + (reward.amount or 0)
         elseif reward.type == BattleManager.REWARD_TYPES.UPGRADE_MATERIAL then
             local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
-            CardUpgradeConfig.Economy.addResource("Upgrade Material", reward.amount or 1)
+            local materialId = reward.materialId or MaterialRegistry.resolve(nil)
+            CardUpgradeConfig.Economy.addResource(materialId, reward.amount or 1)
         elseif reward.type == BattleManager.REWARD_TYPES.CARD_REMOVAL then
             local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
             CardUpgradeConfig.Economy.addCardRemovals(reward.amount or 1)
