@@ -6,106 +6,75 @@ This document lists all the structural "types" attached to game objects and card
 
 ## 1. Buildings (`Buildings/`)
 
-**All possible types in this group:**
-* `building`, `turret`, `blocker`, `passive`, `mainturret`, `mainLazer`, `energy`, `legendary`, `explosive`, `lobber`, `stun`, `shotgun`, `poison`, `slow`, `hitscan`, `economy`, `totem`, `toxic`, `shard`, `slotted`
+**Structural types:** `building`, `turret`, `passive`, `mainturret`
 
-All buildings inherit the `building` type from the base class `Building.lua`. Additionally, sub-classes and specific building definitions add other types.
+**Flavour types:**
+* Damage type (added automatically from `damageType`): `ballistic`, `energy`, `explosive`, `fire`, `poison`, `ice`
+* Firing style: `shotgun`, `lobber`
+* Status effect: `toxic` (Chem Lab), `slow`, `stun`
+* Role: `control` (anything that slows or stuns), `economy`
 
-### Base Classes
-* **`Building.lua`**: `building`
-* **`Turrets/Turret.lua`**: `turret` (and `building`)
-* **`Blockers/Blocker.lua`**: `blocker` (and `building`)
-* **`Buffs/Buff.lua`**: `passive` (and `building`)
+All buildings inherit the `building` type from `Building.lua`. Turrets and passives get their types from their entry in `TurretIndex.lua` / `PassiveIndex.lua`, which override the class defaults.
 
-### Turrets (`Buildings/Turrets/`)
-* **Airburst Turret** (`AirburstTurret.lua`): `turret`
-* **Auto Cannon** (`AutoCannon.lua`): `turret`
-* **Blaster** (`Blaster.lua`): `turret`, `energy`
-* **Chain Laser** (`ChainLaser.lua`): `turret`, `legendary`, `energy`
-* **Flux Cannon** (`FluxCannon.lua`): `turret`, `energy`
-* **Gator** (`Gator.lua`): `turret`
-* **Grenadier** (`Grenadier.lua`): `turret`, `explosive`, `lobber`
-* **Heavy Gun** (`HeavyGun.lua`): `turret`
-* **Hook Turret** (`HookTurret.lua`): `turret`, `stun`
-* **Missile Launcher** (`MissileLauncher.lua`): `turret`, `explosive`
-* **Mortar** (`Mortar.lua`): `turret`, `lobber`, `explosive`
-* **Plasma Scattershot** (`PlasmaScattershot.lua`): `turret`, `energy`, `shotgun`
-* **Poison Turret** (`PoisonTurret.lua`): `turret`, `poison`
-* **Sentry** (`Sentry.lua`): `turret`
-* **Sequence Turret** (`SequenceTurret.lua`): `turret`
-* **Shotgun Turret** (`ShotgunTurret.lua`): `turret`, `shotgun`
-* **Slush Cannon** (`SlushCannon.lua`): `turret`, `slow`
-* **Sniper** (`Sniper.lua`): `turret`, `hitscan`
+### Turrets (`Buildings/TurretIndex.lua`)
+* **Sentry**: `turret`, `ballistic`
+* **Blaster**: `turret`, `energy`
+* **Auto Cannon**: `turret`, `ballistic`
+* **Shotgun Turret**: `turret`, `ballistic`, `shotgun`
+* **Heavy Gun**: `turret`, `ballistic`
+* **Poison Turret**: `turret`, `poison`
+* **Airburst Turret**: `turret`, `ballistic`
+* **Flux Cannon**: `turret`, `energy`
+* **Grenadier**: `turret`, `explosive`, `lobber`
+* **Slush Cannon**: `turret`, `ice`, `slow`, `control`
+* **GTR-55 Gator**: `turret`, `ballistic`
+* **Missile Launcher**: `turret`, `explosive`
+* **Plasma Scattershot**: `turret`, `energy`, `shotgun`
+* **CSR-8 Sequence**: `turret`, `ballistic`
+* **The Hook**: `turret`, `ballistic`, `stun`, `control`
+* **Sniper Turret**: `turret`, `ballistic`
+* **Mortar**: `turret`, `explosive`, `lobber`
+* **PROJECT CHIMERA**: `turret`, `energy`
 
 ### Main Turrets (`Buildings/MainTurrets/`)
-All main turrets inherit from `StandardMainTurret.lua`, which automatically adds the `mainturret` type.
-* **Standard Main Turret** (`StandardMainTurret.lua`): `mainturret`, `turret`
-* **Machine Gun** (`FastMainTurret.lua`): `mainturret`, `turret`
-* **Main Lazer** (`MainLazer.lua`): `mainturret`, `turret`, `mainLazer`, `energy`
+All main turrets inherit from `StandardMainTurret.lua`, which adds the `mainturret` type.
+* **Heavy Laser** (`MainLazer.lua`): `mainturret`, `turret`, `energy`
+* **Machine Gun** (`FastMainTurret.lua`): `mainturret`, `turret`, `ballistic`
 
-### Buffs / Totems (`Buildings/Passives/`)
-* **Bank** (`Bank.lua`): `building`, `economy`, `passive`
-* **Explosive Totem** (`ExplosiveTotem.lua`): `passive`, `totem`, `explosive`
-* **Industrial Battery** (`IndustrialBattery.lua`): `building`, `passive`
-* **Poison Totem** (`PoisonTotem.lua`): `passive`, `totem`, `poison`
-* **Range Buff** (`RangeBuff.lua`): `passive`
-* **Shard Bullets** (`ShardBullets.lua`): `passive`, `totem`, `shard`
-* **Toxic Totem** (`ToxicTotem.lua`): `passive`, `totem`, `toxic`
-* **Unstable Laser** (`UnstableLaser.lua`): `building`, `passive`
-
-### Blockers (`Buildings/Blockers/`)
-* **Small Box** (`SmallBox.lua`): `blocker`
-* **Small Fence** (`SmallFence.lua`): `blocker`
-* **Slotted Blocker** (`SlottedBlocker.lua`): `blocker`, `slotted`
-* **Frost Trap / Slow Blocker** (`SlowBlocker.lua`): `blocker`, `slow`
+### Passives (`Buildings/PassiveIndex.lua`)
+* **Unstable Laser**: `passive`
+* **Ammo Cache** (`Buff.lua`): `passive`
+* **Recursive Rounds** (`ShardBullets.lua`): `passive`
+* **Bank**: `passive`, `economy`
+* **Chem Lab** (`ToxicTotem.lua`): `passive`, `toxic`
+* **Conduit**: `passive`, `economy`
+* **Frost Trap** (`FrostTrap.lua`): `passive`, `slow`, `control`
+* **Explosive Bullets** (`ExplosiveTotem.lua`): `passive`, `explosive`
 
 ---
 
 ## 2. Instants (`Instants/`)
 
-**All possible types in this group:**
-* `instant`
-
 All instant cards inherit from `Instant.lua` and have the type `instant`.
-* **Base Class** (`Instant.lua`): `instant`
-* **Overclock** (`InstantCardRegistry.lua`): `instant`
-* **Range Finder** (`InstantCardRegistry.lua`): `instant`
-* **Frenzy** (`InstantCardRegistry.lua`): `instant`
-* **Emergency Repairs** (`InstantCardRegistry.lua`): `instant`
-* **Hasty Defenses** (`InstantCardRegistry.lua`): `instant`
 
 ---
 
 ## 3. Spells (`Spells/`)
 
-**All possible types in this group:**
-* `spell`
-
 All spell cards inherit from `Spell.lua` and have the type `spell`.
-* **Base Class** (`Spell.lua`): `spell`
-* **Fireball** (`SpellCardRegistry.lua`): `spell`
-* **Stun Burst** (`SpellCardRegistry.lua`): `spell`
-* **Acid Cloud** (`SpellCardRegistry.lua`): `spell`
-* **Judgment** (`SpellCardRegistry.lua`): `spell`
 
 ---
 
-## 4. Enemies (`Enemies/`)
+## 4. Enemies (`Enemies/`, `Game/Spawning/EnemyIndex.lua`)
 
-**All possible types in this group:**
-* `living_object`, `enemy`, `basic`, `armored`, `beast`, `beastmaster`, `carrier`, `tank`, `duplicator`, `bio`, `flyer`, `guardian`, `speeder`
+All enemies inherit from `living_object.lua` (`living_object`) and `Enemy.lua` (`enemy`).
 
-All enemies inherit from `living_object.lua` (adding `living_object` type) and `Enemy.lua` (adding `enemy` type). If an enemy has no specialized type, it is marked as `basic`.
+* **Faction colours:** `red`, `yellow`, `green`, `blue`
+* **Roles:** `armour`, `sapper`, `spawner`, `support`, `duplicator`, `tank`
 
-* **Base Class** (`living_object.lua`): `living_object`
-* **Enemy Base Class** (`Enemy.lua`): `enemy` (automatically adds `basic` if no other types besides `enemy` are specified)
-* **Armored** (`Armored.lua`): `armored`, `enemy`, `living_object`
-* **Beast** (`Beast.lua`): `beast`, `enemy`, `living_object`
-* **Beast Master** (`BeastMaster.lua`): `beastmaster`, `enemy`, `living_object`
-* **Carrier** (`Carrier.lua`): `carrier`, `tank`, `enemy`, `living_object`
-* **Duplicator** (`Duplicator.lua`): `duplicator`, `bio`, `enemy`, `living_object`
-* **Flyer** (`Flyer.lua`): `flyer`, `enemy`, `living_object`
-* **Guardian** (`Guardian.lua`): `guardian`, `enemy`, `living_object`
-* **Speeder** (`Speeder.lua`): `speeder`, `enemy`, `living_object`
-* **Speeder Group** (`SpeederGroup.lua`): Spawns multiple `speeder` enemies (`speeder`, `enemy`, `living_object`)
-* **Tank** (`Tank.lua`): `tank`, `enemy`, `living_object`
+---
+
+## 5. Other
+
+* **Bullets:** `bullet`
+* **Base:** `base`

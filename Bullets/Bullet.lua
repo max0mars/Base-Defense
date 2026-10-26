@@ -23,9 +23,9 @@ function Bullet:new(config)
     local b = setmetatable(object:new(config), { __index = self }) -- Create a new object with the base properties
     b.angle = config.angle or 0 -- Angle of the bullet
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
-    b.damageTags = config.damageTags or {} -- Initialize damageTags table
+    b.damageTags = config.damageTags or { "projectile" }
     b.source = config.source -- Track bullet source for stat calculation
-    b.damageType = config.damageType or "physical"
+    b.damageType = config.damageType or "ballistic"
     b.hitEffects = config.hitEffects or {}
     b.displayLifespan = config.displayLifespan or 0.1
     b.onHitCallback = config.onHitCallback

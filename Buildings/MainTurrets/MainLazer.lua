@@ -22,7 +22,7 @@ MainLazer.template = {
     range = 500,
     barrel = 20,
     color = {0.3, 0.3, 0.3, 1},
-    types = { turret = true, mainLazer = true, energy = true },
+    types = { turret = true },
     shapePattern = {
         {0, 0}, {1, 0},
         {0, 1}, {1, 1}

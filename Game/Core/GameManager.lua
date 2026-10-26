@@ -126,7 +126,6 @@ function game:load(saveData, isTesting)
         
         -- Configuration
         self.rewardCost           = 2
-        self.blockerCost          = 3
         self.drawCost             = 1
         self.specialWaveInterval  = 5 -- Waves between "special" upgrades
         self.inputMode            = "idle"
@@ -223,7 +222,7 @@ function game:updateBuildingCounts()
                 end
             end
             if obj:isType("turret") then
-                local damageType = obj.damageType or "physical"
+                local damageType = obj.damageType or "ballistic"
                 self.buildingCounts[damageType] = (self.buildingCounts[damageType] or 0) + 1
             end
         end
@@ -726,10 +725,10 @@ function game:EnemyDied(enemy)
     end
 end
 
-function game:spawnDamageNumber(amount, x, y, damageType, effectiveness)
+function game:spawnDamageNumber(amount, x, y, damageType, effectiveness, damageTags)
     if self.showDamageNumbers and amount >= 1 then
         local displayAmount = math.floor(amount + 0.5)
-        table.insert(self.animations, DamageNumber:new(displayAmount, x, y, damageType, nil, nil, effectiveness))
+        table.insert(self.animations, DamageNumber:new(displayAmount, x, y, damageType, nil, nil, effectiveness, damageTags))
     end
 end
 
@@ -763,12 +762,6 @@ function game:placeBuilding(building, sourceReward)
     if sourceReward and sourceReward.color then
         config.color = sourceReward.color
     end
-    if sourceReward and sourceReward.turretSlots then
-        config.turretSlots = sourceReward.turretSlots
-    end
-    if sourceReward and sourceReward.isSlotted ~= nil then
-        config.isSlotted = sourceReward.isSlotted
-    end
     
     self.blueprint = building:new(config)
     self.blueprint.rewardCard = sourceReward
@@ -779,7 +772,7 @@ end
 --- inventory deck as a fresh card. The main turret (no reward card) can't be
 --- picked up. Returns true on success.
 function game:pickUpBuilding(building)
-    if not building or (building.isType and building:isType("mainLazer")) then return false end
+    if not building or (building.isType and building:isType("mainturret")) then return false end
     local reward = building.rewardCard
     if not reward or not reward.building then return false end -- nothing to re-card
 
@@ -790,8 +783,6 @@ function game:pickUpBuilding(building)
     local config = { game = self }
     if reward.shapePattern then config.shapePattern = reward.shapePattern end
     if reward.color then config.color = reward.color end
-    if reward.turretSlots then config.turretSlots = reward.turretSlots end
-    if reward.isSlotted ~= nil then config.isSlotted = reward.isSlotted end
 
     local bp = reward.building:new(config)
     bp.rewardCard = reward
@@ -1075,15 +1066,6 @@ function game:attemptPurchaseReward()
     if self.tokens >= self.rewardCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
         self.tokens = self.tokens - self.rewardCost
         self.rewardSystem:activate("normal", 3)
-        return true
-    end
-    return false
-end
-
-function game:attemptPurchaseBlocker()
-    if self.tokens >= self.blockerCost and not self.rewardSystem.isActive and self.inputMode == "idle" then
-        self.tokens = self.tokens - self.blockerCost
-        self.rewardSystem:activate("blocker", 1)
         return true
     end
     return false

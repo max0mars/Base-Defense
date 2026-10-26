@@ -1,4 +1,5 @@
 local object = require("Classes.object")
+local DamageTypes = require("Classes.DamageTypes")
 
 local living_object = setmetatable({}, object)
 living_object.__index = living_object
@@ -21,12 +22,12 @@ function living_object:new(config)
     obj.maxShield = config.maxShield or math.huge
     obj.armour = config.armour or 0
     obj.affinities = config.affinities or {
-        physical = 1,
-        poison = 1,
-        trueDamage = 1,
-        fire = 1,
-        explosive = 1,
+        ballistic = 1,
         energy = 1,
+        explosive = 1,
+        fire = 1,
+        poison = 1,
+        ice = 1,
         heal = 1
     }
     return obj
@@ -71,50 +72,10 @@ function living_object:_drawHealthBar()
     love.graphics.rectangle("line", barX, barY, width, height)
 end
 
-local damageTypes = {
-    physical = 1,
-    poison = 1,
-    trueDamage = 1,
-    fire = 1,
-    explosive = 1,
-    energy = 1
-}
 function living_object:takeDamage(amount, damageType, hitX, hitY, damageTags)
-    if damageTypes[damageType] == nil then
-        error("Developer Error: Invalid damage type: " .. tostring(damageType))
-    end
-    
-    local combinedTags = {}
-    if damageTags then
-        for _, tag in ipairs(damageTags) do
-            table.insert(combinedTags, tag)
-        end
-    end
-    
-    -- Check for multiple core damage types
-    local coreCount = 0
-    for _, tag in ipairs(combinedTags) do
-        if damageTypes[tag] then
-            coreCount = coreCount + 1
-        end
-    end
-    if coreCount > 0 then
-        error("Developer Error: damageTags cannot contain core damage types. Only the primary damageType is allowed.")
-    end
-    
-    table.insert(combinedTags, damageType)
+    DamageTypes.validate(damageType, damageTags)
 
-    local damageTaken = 0
-    local damageMult = 1   
-
-    if self.affinities then
-        for _, tag in ipairs(combinedTags) do
-            if self.affinities[tag] then
-                damageMult = damageMult * self.affinities[tag]
-            end
-        end
-    end
-
+    local damageMult = DamageTypes.affinityMultiplier(self.affinities, damageType, damageTags)
     amount = amount * damageMult
 
     -- Effectiveness vs this enemy's affinities, for damage-number feedback.
@@ -124,7 +85,7 @@ function living_object:takeDamage(amount, damageType, hitX, hitY, damageTags)
     elseif damageMult > 1 then
         effectiveness = "weak"
     end
-    self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness)
+    self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness, damageTags)
 
     local damageTaken = 0
 

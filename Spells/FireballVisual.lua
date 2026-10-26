@@ -53,7 +53,7 @@ function FireballVisual:onImpact()
                 local falloff = 1 - (distance / self.radius) * 0.5
                 local finalDamage = self.damage * falloff
                 
-                obj:takeDamage(finalDamage, "fire")
+                obj:takeDamage(finalDamage, "fire", nil, nil, { "aoe" })
             end
         end
     end

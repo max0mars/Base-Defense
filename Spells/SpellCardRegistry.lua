@@ -157,7 +157,7 @@ SpellCardRegistry.Zap = Spell.new({
                 local dx = obj.x - x
                 local dy = obj.y - y
                 if dx*dx + dy*dy <= r2 then
-                    obj:takeDamage(dmg, "energy")
+                    obj:takeDamage(dmg, "energy", nil, nil, { "aoe" })
                     if obj.effectManager then
                         obj.effectManager:applyEffect(Stun:new({ duration = 0.2 }))
                     end

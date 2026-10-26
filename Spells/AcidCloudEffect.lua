@@ -32,7 +32,7 @@ function AcidCloudEffect:onUpdate(dt, owner)
                 local dx = obj.x - self.x
                 local dy = obj.y - self.y
                 if dx*dx + dy*dy <= r2 then
-                    obj:takeDamage(dmg, "poison")
+                    obj:takeDamage(dmg, "poison", nil, nil, { "aoe", "dot" })
                 end
             end
         end

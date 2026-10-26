@@ -56,7 +56,7 @@ end
 function Poison:onUpdate(dt, target)
     self.time = self.time + dt
     if self.time >= self.timePerTick then
-        target:takeDamage(self.dps_poison * self.timePerTick, "poison")
+        target:takeDamage(self.dps_poison * self.timePerTick, "poison", nil, nil, { "dot" })
         self.time = self.time - self.timePerTick
     end
 end

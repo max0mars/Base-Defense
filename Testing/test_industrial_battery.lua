@@ -95,7 +95,7 @@ end
 
 local mockPhysicalSpell = {
     damage = 20,
-    isType = function(self, t) return t == "spell" or t == "physical" end
+    isType = function(self, t) return t == "spell" or t == "ballistic" end
 }
 mockPhysicalSpell.effectManager = EffectManager:new(mockPhysicalSpell, mockGame)
 mockPhysicalSpell.effectManager.parent = mockGame.playerEffectManager
@@ -116,7 +116,7 @@ end
 
 local mockPhysicalInstant = {
     damage = 30,
-    isType = function(self, t) return t == "instant" or t == "physical" end
+    isType = function(self, t) return t == "instant" or t == "ballistic" end
 }
 mockPhysicalInstant.effectManager = EffectManager:new(mockPhysicalInstant, mockGame)
 mockPhysicalInstant.effectManager.parent = mockGame.playerEffectManager

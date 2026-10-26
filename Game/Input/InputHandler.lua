@@ -38,7 +38,7 @@ function InputHandler:update(dt)
     -- Handle space key hold for showing all firing arcs
     local showAllArcs = love.keyboard.isDown("space")
     for _, obj in ipairs(game.objects) do
-        if (obj:isType("turret") or (obj:isType("blocker") and obj.range)) and not obj.destroyed then
+        if (obj:isType("turret") or (obj:isType("passive") and obj.range)) and not obj.destroyed then
             if showAllArcs then
                 obj.showArc = true
             else
@@ -96,10 +96,10 @@ function InputHandler:handleBuildingHover()
     
     base.buffHoverSlots = nil
     
-    -- Find the best hovered building (Prioritize Turrets/Passives over Blockers)
+    -- Find the hovered turret or passive
     local bestHover = nil
     for _, obj in ipairs(gameObjects) do
-        if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
+        if (obj:isType("turret") or obj:isType("passive")) and not obj.destroyed then
             if self:isMouseOverBuilding(obj) then
                 bestHover = obj
                 -- If we found a turret or passive, it takes absolute priority
@@ -119,7 +119,7 @@ function InputHandler:handleBuildingHover()
     if bestHover then
         bestHover.showEffects = true
         -- Handle turret-specific hover (firing arcs)
-        if bestHover:isType("turret") or (bestHover:isType("blocker") and bestHover.range) then
+        if bestHover:isType("turret") or (bestHover:isType("passive") and bestHover.range) then
             bestHover.showArc = true
         end
         
@@ -131,9 +131,9 @@ function InputHandler:handleBuildingHover()
 
     -- Cleanup arcs for all non-hovered/non-selected buildings
     for _, obj in ipairs(gameObjects) do
-        if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
+        if (obj:isType("turret") or obj:isType("passive")) and not obj.destroyed then
             if obj ~= self.hoveredBuilding and obj ~= self.selectedBuilding and not showAllArcs then
-                if obj:isType("turret") or (obj:isType("blocker") and obj.range) then
+                if obj:isType("turret") or (obj:isType("passive") and obj.range) then
                     obj.showArc = false
                     obj.showEffects = false
                 end
@@ -198,16 +198,12 @@ function InputHandler:handleBuildingSlotHover()
     if not game.blueprint then return end
     
     local hoverBattlefield = self:isMouseOverGrid(game.battlefieldGrid)
-    local isBlocker = game.blueprint:isType("blocker")
-    
-    -- Pick the grid: Blockers always use battlefield. Turrets use battlefield ONLY if hovering over it.
+
+    -- Pick the grid: Turrets use battlefield ONLY if hovering over it.
     local buildGrid = base.buildGrid -- Default
     local isBattlefield = false
 
-    if isBlocker then
-        buildGrid = game.battlefieldGrid
-        isBattlefield = true
-    elseif (game.blueprint:isType("turret") or game.blueprint:isType("passive")) and hoverBattlefield then
+    if (game.blueprint:isType("turret") or game.blueprint:isType("passive")) and hoverBattlefield then
         -- Only use battlefield if NOT hovering over the base grid (prioritize base)
         if not self:isMouseOverGrid(base.buildGrid) then
             buildGrid = game.battlefieldGrid
@@ -366,7 +362,7 @@ function InputHandler:mousepressed(x, y, button)
 
         local bestTarget = nil
         for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj:isType("mainturret") and not obj.destroyed then
+            if (obj:isType("turret") or obj:isType("passive")) and not obj:isType("mainturret") and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     bestTarget = obj
                     if obj:isType("turret") or obj:isType("passive") then
@@ -450,7 +446,7 @@ function InputHandler:mousepressed(x, y, button)
     if game.inputMode == "targeting_card" and button == 1 then
         local clickedTarget = nil
         for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
+            if (obj:isType("turret") or obj:isType("passive")) and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     clickedTarget = obj
                     if obj:isType("turret") or obj:isType("passive") then
@@ -510,14 +506,10 @@ function InputHandler:mousepressed(x, y, button)
     -- Handle building placement
     if game.inputMode == "placing" and button == 1 then
         local hoverBattlefield = self:isMouseOverGrid(game.battlefieldGrid)
-        local isBlocker = game.blueprint:isType("blocker")
-        
+
         local buildGrid = base.buildGrid
         local isBattlefield = false
-        if isBlocker then
-            buildGrid = game.battlefieldGrid
-            isBattlefield = true
-        elseif (game.blueprint:isType("turret") or game.blueprint:isType("passive")) and hoverBattlefield then
+        if (game.blueprint:isType("turret") or game.blueprint:isType("passive")) and hoverBattlefield then
             if not self:isMouseOverGrid(base.buildGrid) then
                 buildGrid = game.battlefieldGrid
                 isBattlefield = true
@@ -614,7 +606,7 @@ function InputHandler:mousepressed(x, y, button)
         -- focused); clicking empty field clears the focus. Works in any state.
         local selected = nil
         for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive") or obj:isType("blocker")) and not obj.destroyed then
+            if (obj:isType("turret") or obj:isType("passive")) and not obj.destroyed then
                 if self:isMouseOverBuilding(obj) then
                     selected = obj
                     if obj:isType("turret") or obj:isType("passive") then
@@ -670,7 +662,7 @@ function InputHandler:selectBuilding(building)
     building.selected = true
     
     -- Handle building-specific selection behavior
-    if building:isType("turret") or (building:isType("blocker") and building.range) then
+    if building:isType("turret") or (building:isType("passive") and building.range) then
         building.showArc = true
     elseif building:isType("passive") and building.getAffectedSlotsFromAnchor then
         -- Show affected slots for buff buildings
@@ -683,7 +675,7 @@ function InputHandler:clearSelection()
         self.selectedBuilding.selected = false
         
         -- Handle building-specific clearing
-        if self.selectedBuilding:isType("turret") or (self.selectedBuilding:isType("blocker") and self.selectedBuilding.range) then
+        if self.selectedBuilding:isType("turret") or (self.selectedBuilding:isType("passive") and self.selectedBuilding.range) then
             self.selectedBuilding.showArc = false
         end
         

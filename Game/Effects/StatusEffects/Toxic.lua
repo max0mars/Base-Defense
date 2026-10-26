@@ -32,7 +32,7 @@ end
 function Toxic:onUpdate(dt, target)
     self.time = self.time + dt
     if self.time >= self.timePerTick then
-        target:takeDamage(self.dps * self.timePerTick, "toxic")
+        target:takeDamage(self.dps * self.timePerTick, "poison", nil, nil, { "dot", "toxic" })
         self.time = self.time - self.timePerTick
     end
 end
@@ -70,7 +70,8 @@ function Toxic:onDeath(target)
             bulletSpeed = 350,
             pierce = 1,
             lifespan = 0.25,
-            damageType = "toxic"
+            damageType = "poison",
+            damageTags = { "projectile", "toxic" }
         }
         for k, v in pairs(shardDef) do
             if k ~= "class" then config[k] = v end

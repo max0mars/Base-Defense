@@ -24,6 +24,7 @@ function HitscanBullet:new(config)
     config.shape = config.shape or "line"
     config.displayLifespan = config.displayLifespan or 0.1
     config.lifespan = config.displayLifespan -- technical lifespan for base class
+    config.damageTags = config.damageTags or { "hitscan" }
     
     local obj = bullet:new(config)
     

@@ -1,5 +1,5 @@
 -- Testing/test_building_inheritance.lua
--- Standalone test script to verify that all buildings (turrets, main turrets, blockers, buffs) inherit from Buildings.Building and have type 'building'.
+-- Standalone test script to verify that all buildings (turrets, main turrets, buffs) inherit from Buildings.Building and have type 'building'.
 
 package.path = package.path .. ";./?.lua"
 
@@ -126,11 +126,10 @@ local buffs = {
     { path = "Buildings.Passives.Buff", name = "Base Buff" },
     { path = "Buildings.Passives.Bank", name = "Bank" },
     { path = "Buildings.Passives.ExplosiveTotem", name = "ExplosiveTotem" },
-    { path = "Buildings.Passives.PoisonTotem", name = "PoisonTotem" },
-    { path = "Buildings.Passives.RangeBuff", name = "RangeBuff" },
     { path = "Buildings.Passives.ShardBullets", name = "ShardBullets" },
     { path = "Buildings.Passives.ToxicTotem", name = "ToxicTotem" },
     { path = "Buildings.Passives.IndustrialBattery", name = "IndustrialBattery" },
+    { path = "Buildings.Passives.FrostTrap", name = "FrostTrap" },
 }
 
 for _, b in ipairs(buffs) do
@@ -141,23 +140,7 @@ for _, b in ipairs(buffs) do
     })
 end
 
--- 3. Blockers
-local blockers = {
-    { path = "Buildings.Blockers.Blocker", name = "Base Blocker" },
-    { path = "Buildings.Blockers.SlottedBlocker", name = "SlottedBlocker" },
-    { path = "Buildings.Blockers.SlowBlocker", name = "SlowBlocker" },
-    { path = "Buildings.Blockers.SmallBox", name = "SmallBox" },
-    { path = "Buildings.Blockers.SmallFence", name = "SmallFence" },
-}
-
-for _, bl in ipairs(blockers) do
-    verifyBuilding(bl.path, bl.name, {
-        types = { blocker = true },
-        shapePattern = {{0, 0}}
-    })
-end
-
--- 4. Main Turrets
+-- 3. Main Turrets
 local mainTurrets = {
     { path = "Buildings.MainTurrets.StandardMainTurret", name = "StandardMainTurret" },
     { path = "Buildings.MainTurrets.FastMainTurret", name = "FastMainTurret" },

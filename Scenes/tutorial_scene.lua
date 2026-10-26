@@ -58,9 +58,6 @@ function tutorial_scene:load()
         { id = 13, type = "start_wave", text = "Let's test your defenses!\n\nPress ENTER to start the training wave." },
         { id = 13.5, type = "combat", text = "Training Wave in progress! Defeat the training targets." },
         { id = 14, type = "dialog", text = "Wave Complete!\n\nYou receive 3 Tokens plus 10% interest on any unspent tokens at the end of each wave." },
-        { id = 15, type = "buy_box", text = "Let's buy another upgrade.\n\nClick 'Buy Upgrade'.", target = {x = 285, y = 65, angle = math.pi/2} },
-        { id = 15.5, type = "select_box", text = "Choose the 'Small Box' (first card) to buy a blocker." },
-        { id = 16, type = "place_box", text = "Place the Small Box on the battlefield (e.g. column 12, row 8).\n\nBlockers force enemies to path around them, buying you time!", target = {x = 287.5, y = 260, angle = -math.pi/2} },
         -- buy_luck step removed as luck is no longer purchasable in-game
         { id = 17.5, type = "dialog", text = "Tip: Hover over the '?' icon next to 'Buy Upgrade' to view the active card rarity probabilities." },
         { id = 18, type = "buy_cache", text = "Let's grant you 3 extra Tokens! Now buy another upgrade to buff your turrets.\n\nClick 'Buy Upgrade'.", target = {x = 285, y = 65, angle = math.pi/2} },
@@ -182,27 +179,7 @@ function tutorial_scene:load()
         if step.type == "select_sentry" or step.type == "buy_sentry" then
             choicesData = {
                 getRewardCopy("sentry"),
-                {
-                    id = "smallbox",
-                    name = "Small Box",
-                    description = "Basic blocker pathing.",
-                    type = "building",
-                    building = require("Buildings.Blockers.SmallBox"),
-                    rarity = "common"
-                },
-                getRewardCopy("shotgunTurret")
-            }
-        elseif step.type == "select_box" or step.type == "buy_box" then
-            choicesData = {
-                {
-                    id = "smallbox",
-                    name = "Small Box",
-                    description = "Basic blocker pathing.",
-                    type = "building",
-                    building = require("Buildings.Blockers.SmallBox"),
-                    rarity = "common"
-                },
-                getRewardCopy("sentry"),
+                getRewardCopy("autoCannon"),
                 getRewardCopy("shotgunTurret")
             }
         elseif step.type == "select_cache" or step.type == "buy_cache" then
@@ -217,14 +194,7 @@ function tutorial_scene:load()
                     iconCategory = "buff"
                 },
                 getRewardCopy("sentry"),
-                {
-                    id = "smallbox",
-                    name = "Small Box",
-                    description = "Basic blocker pathing.",
-                    type = "building",
-                    building = require("Buildings.Blockers.SmallBox"),
-                    rarity = "common"
-                }
+                getRewardCopy("shotgunTurret")
             }
         end
         
@@ -343,7 +313,7 @@ function tutorial_scene:isActionAllowed(action, x, y, button, key)
             end
             return true
             
-        elseif step.type == "buy_sentry" or step.type == "buy_box" or step.type == "buy_cache" then
+        elseif step.type == "buy_sentry" or step.type == "buy_cache" then
             -- Buy Upgrade button click allowed
             if x >= game.gui.buyButton.x and x <= game.gui.buyButton.x + game.gui.buyButton.w and
                y >= game.gui.buyButton.y and y <= game.gui.buyButton.y + game.gui.buyButton.h then
@@ -351,7 +321,7 @@ function tutorial_scene:isActionAllowed(action, x, y, button, key)
             end
             return false
             
-        elseif step.type == "select_sentry" or step.type == "select_box" or step.type == "select_cache" then
+        elseif step.type == "select_sentry" or step.type == "select_cache" then
             -- Card index 1 click allowed
             local i = 1
             local cardX = game.rewardSystem.startX + (i - 1) * (game.rewardSystem.cardWidth + game.rewardSystem.cardSpacing)
@@ -402,16 +372,6 @@ function tutorial_scene:isActionAllowed(action, x, y, button, key)
             
         elseif step.type == "aim_sentry" then
             return true
-            
-        elseif step.type == "place_box" then
-            -- Can place outside the base grid, inside battlefield area (y between 100 and 500)
-            local baseGrid = game.base.buildGrid
-            local onBase = x >= baseGrid.x and x <= baseGrid.x + baseGrid.width * baseGrid.cellSize and
-                           y >= baseGrid.y and y <= baseGrid.y + baseGrid.height * baseGrid.cellSize
-            if not onBase and y >= 100 and y <= 500 then
-                return true
-            end
-            return false
             
         -- buy_luck removed
         elseif step.type == "place_cache" then
@@ -521,12 +481,12 @@ function tutorial_scene:update(dt)
                 self:advanceStep()
             end
             
-        elseif step.type == "buy_sentry" or step.type == "buy_box" or step.type == "buy_cache" then
+        elseif step.type == "buy_sentry" or step.type == "buy_cache" then
             if game.rewardSystem and game.rewardSystem.isActive then
                 self:advanceStep()
             end
             
-        elseif step.type == "select_sentry" or step.type == "select_box" or step.type == "select_cache" then
+        elseif step.type == "select_sentry" or step.type == "select_cache" then
             if game.rewardSystem and not game.rewardSystem.isActive then
                 self:advanceStep()
             end
@@ -581,15 +541,6 @@ function tutorial_scene:update(dt)
                 end
             end
             if game.WaveSpawner.waveState == "idle" and enemiesAlive == 0 and game:isState("preparing") then
-                self:advanceStep()
-            end
-            
-        elseif step.type == "place_box" then
-            local count = 0
-            for _ in pairs(game.battlefieldGrid.buildings) do
-                count = count + 1
-            end
-            if game.inputMode == "idle" and count > 0 then
                 self:advanceStep()
             end
             
@@ -688,9 +639,9 @@ function tutorial_scene:draw()
         prompt = "[ Press TAB to toggle Auto-Fire ON ]"
     elseif step.type == "autofire_off" then
         prompt = "[ Press TAB to toggle Auto-Fire OFF ]"
-    elseif step.type == "buy_sentry" or step.type == "buy_box" or step.type == "buy_cache" then
+    elseif step.type == "buy_sentry" or step.type == "buy_cache" then
         prompt = "[ Click 'Buy Upgrade' ]"
-    elseif step.type == "select_sentry" or step.type == "select_box" or step.type == "select_cache" then
+    elseif step.type == "select_sentry" or step.type == "select_cache" then
         prompt = "[ Choose the first card ]"
     elseif step.type == "store_sentry" then
         prompt = "[ Click the bottom bar to store card ]"
@@ -708,8 +659,6 @@ function tutorial_scene:draw()
         prompt = "[ Press ENTER to start wave ]"
     elseif step.type == "combat" then
         prompt = "[ Defeat the training targets ]"
-    elseif step.type == "place_box" then
-        prompt = "[ Place the box on the battlefield ]"
         -- buy_luck removed
     elseif step.type == "place_cache" then
         prompt = "[ Place Ammo Cache adjacent to turret ]"

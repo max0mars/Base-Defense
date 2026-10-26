@@ -75,7 +75,7 @@ function CardDraw.new(x, y, data)
     end
     
     self.buildingType = "Turret"
-    if data.iconCategory == "buff" or data.iconCategory == "blocker" then
+    if data.iconCategory == "buff" then
         self.buildingType = "Buffer"
     elseif data.iconCategory == "turret" then
         self.buildingType = "Turret"

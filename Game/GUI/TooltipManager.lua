@@ -1,22 +1,18 @@
 local Layout = require("Game.GUI.Layout")
+local DamageTypes = require("Classes.DamageTypes")
 
 local TooltipManager = {}
 TooltipManager.__index = TooltipManager
 
+-- Core damage types.
 local DAMAGE_TYPE_NAMES = {
-    physical       = "Physical",
-    poison         = "Poison",
-    trueDamage     = "True",
-    fire           = "Fire",
+    ballistic      = "Ballistic",
     energy         = "Energy",
-}
-
-local DAMAGE_TYPE_COLORS = {
-    physical       = {1, 1, 1, 1},
-    poison         = {0.4, 0.85, 0.3, 1},
-    trueDamage     = {1, 0.4, 0.7, 1},
-    fire           = {1, 0.5, 0.2, 1},
-    energy         = {0.4, 0.7, 1, 1},
+    explosive      = "Explosive",
+    fire           = "Fire",
+    poison         = "Poison",
+    ice            = "Ice",
+    trueDamage     = "True",
 }
 
 function TooltipManager:new(game)
@@ -230,7 +226,7 @@ function TooltipManager:buildingCardFor(b)
         name, rarity, desc = best.name, best.rarity, best.description
     end
     if not desc or desc == "" then
-        if b.isType and b:isType("mainLazer") then
+        if b.id == "standard_main" then
             desc = "Aim and fire manually to defend the core."
         end
     end
@@ -245,8 +241,6 @@ function TooltipManager:buildingCardFor(b)
             local idStr = b.id and tostring(b.id) or ""
             if b.id and (idStr:find("buff") or idStr:find("Buff") or idStr:find("Cache") or idStr == "bank" or idStr:find("Coating") or idStr:find("Rounds") or idStr:find("rounds")) then
                 iconCat = "buff"
-            elseif b.id and (idStr:find("box") or idStr:find("fence") or idStr:find("Blocker")) then
-                iconCat = "blocker"
             end
         end
 
@@ -288,7 +282,7 @@ function TooltipManager:drawTurretTooltip(turret)
     local pellets  = turret.pelletCount or 1
     local range    = turret:getStat("range", 0)
     local pierce   = turret:getStat("pierce", 1)
-    local dtype    = turret:getStat("damageType", "physical")
+    local dtype    = turret:getStat("damageType", "ballistic")
     local volley   = dmg * pellets          -- effective per-volley damage
     local dps      = volley * fireRate
 
@@ -298,7 +292,7 @@ function TooltipManager:drawTurretTooltip(turret)
     els[#els + 1] = {
         kind = "text",
         text = string.format("%s  -  DPS %.0f", DAMAGE_TYPE_NAMES[dtype] or dtype, dps),
-        color = DAMAGE_TYPE_COLORS[dtype] or {1, 1, 1, 1}
+        color = DamageTypes.colors[dtype] or {1, 1, 1, 1}
     }
 
     -- Relative tier bars (compared against every turret in the pool).

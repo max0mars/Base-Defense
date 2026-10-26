@@ -77,8 +77,8 @@ function Turret:new(config)
     t.bulletW = config.bulletW
     t.bulletH = config.bulletH
     t.bulletShape = config.bulletShape
-    t.damageType = config.damageType or "physical"
-    if t.types and t.damageType then
+    t.damageType = config.damageType or "ballistic"
+    if t.types then
         t.types[t.damageType] = true
     end
     -- Effect Stats (Initialized from config, defaulting to 0)
