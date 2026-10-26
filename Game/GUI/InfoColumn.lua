@@ -7,6 +7,7 @@
 local Reward = require("Game.Rewards.Reward")
 local Layout = require("Game.GUI.Layout")
 local Cursor = require("Game.GUI.Cursor")
+local DamageStats = require("Game.Core.DamageStats")
 
 local InfoColumn = {}
 InfoColumn.__index = InfoColumn
@@ -271,6 +272,16 @@ end
 function InfoColumn:buildingExtrasLines(b)
     local lines = {}
 
+    -- Damage this battle (turrets, incl. the main turret)
+    local stats = self.game.damageStats
+    if stats and b.isType and b:isType("turret") then
+        local s = stats:get(b)
+        local gold = {1.0, 0.85, 0.35}
+        lines[#lines + 1] = { text = "Damage: " .. DamageStats.formatNumber(s.damage), col = gold }
+        lines[#lines + 1] = { text = "Kills: " .. s.kills, col = gold }
+        lines[#lines + 1] = { text = string.format("Share: %d%% of total", math.floor(s.share * 100 + 0.5)), col = gold }
+    end
+
     -- Stacked main-turret upgrades (highest rarity first), colored by rarity.
     if b.upgrades then
         local info = self.game.gui.tooltips:mainUpgradeInfo()
@@ -300,7 +311,7 @@ function InfoColumn:drawBuildingExtras(b, x, y, w, h)
     local lines = self:buildingExtrasLines(b)
     if #lines == 0 then return end
 
-    sectionHeader("MODIFIERS", x, y, w, {0.5, 0.7, 0.9})
+    sectionHeader("STATS & MODIFIERS", x, y, w, {0.5, 0.7, 0.9})
     love.graphics.push("all")
     local ty = y + 22
     for _, ln in ipairs(lines) do

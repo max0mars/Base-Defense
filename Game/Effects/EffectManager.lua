@@ -115,6 +115,8 @@ function EffectManager:applyEffect(effectTemplate, source)
         effect[k] = v
     end
     setmetatable(effect, getmetatable(effectTemplate) or effectTemplate)
+    -- Who applied it (e.g. a bullet), so damage-over-time ticks credit the right turret
+    effect.damageSource = source
 
     if effect.isIndependent then
         if effect.onApply then

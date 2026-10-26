@@ -52,7 +52,7 @@ end
 function Burn:onUpdate(dt, target)
     self.time = self.time + dt
     if self.time >= self.timePerTick then
-        target:takeDamage(self.dps_burn * self.timePerTick, "fire", nil, nil, { "dot" })
+        target:takeDamage(self.dps_burn * self.timePerTick, "fire", nil, nil, { "dot" }, self.damageSource)
         self.time = self.time - self.timePerTick
     end
 end

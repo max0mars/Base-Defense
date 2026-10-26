@@ -226,7 +226,7 @@ function Bullet:onHit(target)
     -- 3. Conditional Direct Impact Damage
     if self:getStat("canDirectHit") then
         if target then 
-            target:takeDamage(self:getStat("damage"), self.damageType, nil, nil, self.damageTags)
+            target:takeDamage(self:getStat("damage"), self.damageType, nil, nil, self.damageTags, self)
         end
     end
 

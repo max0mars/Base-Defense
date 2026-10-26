@@ -118,7 +118,7 @@ function MainLazer:updateElectricField(dt)
             local target = potentialTargets[love.math.random(1, #potentialTargets)]
             if AUDIO then AUDIO:playSFX("lightning_01") end
             self:applyHitEffects(target)
-            target:takeDamage(self:getStat("damage"), "energy", target.x, target.y)
+            target:takeDamage(self:getStat("damage"), "energy", target.x, target.y, nil, self)
             if self.game.spawnLightningBolt then self.game:spawnLightningBolt(target.x, target.y) end
             if self.game.spawnParticleExplosion then self.game:spawnParticleExplosion({0.4, 0.7, 1, 1}, 5, target.x, target.y) end
             

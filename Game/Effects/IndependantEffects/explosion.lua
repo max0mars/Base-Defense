@@ -115,7 +115,7 @@ function Explosion:applyDamage(source, target)
                 falloff = math.max(self.minDamagePercent or 0.25, falloff)
                 
                 local finalDamage = self.explosionDamage * falloff
-                obj:takeDamage(finalDamage, self.damageType or "explosive", nil, nil, { "aoe" })
+                obj:takeDamage(finalDamage, self.damageType or "explosive", nil, nil, { "aoe" }, source)
 
                 -- If this is a toxic explosion, spread the infection
                 -- if (self.damageType == "toxic" or (source and source.damageType == "toxic")) and obj.effectManager then
