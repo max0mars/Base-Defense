@@ -119,7 +119,8 @@ local BulletIndex = {
     },
     airburst = {
         class = AirburstBullet,
-        name = "Flak Shell"
+        name = "Flak Shell",
+        shape = "rectangle", w = 8, h = 8 -- Heavier than the shrapnel it bursts into
     },
     gatorRound = {
         class = Bullet,
