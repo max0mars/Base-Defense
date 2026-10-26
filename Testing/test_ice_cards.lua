@@ -279,6 +279,26 @@ mag.isReloading, mag.reloadTimer = true, mag.reloadTime
 for _ = 1, 30 do mag:update(1 / 60) end
 assert(mag.isReloading and mag.ammoCount == 0, "an empty magazine can't be interrupted")
 intruder:died()
+clearBoard()
+
+-- -----------------------------------------------------------------------------
+-- 5. Energy damage and the "energy" tag are the same thing
+-- -----------------------------------------------------------------------------
+-- Tag-based effects (Unstable Laser, Industrial Battery) and damage-type checks
+-- (Cryoelectronics) must agree on which turrets count as energy
+for _, rarity in ipairs({ "common", "uncommon", "rare", "epic", "legendary" }) do
+    for _, entry in ipairs(TurretIndex[rarity] or {}) do
+        local t = place(entry.id, 0, 0)
+        assert((t.damageType == "energy") == t:isType("energy"),
+            entry.id .. ": energy tag matches energy damage")
+        clearBoard()
+    end
+end
+for _, obj in ipairs(game.objects) do
+    if obj.isType and obj:isType("mainturret") then
+        assert((obj.damageType == "energy") == obj:isType("energy"), "main turret: energy tag matches energy damage")
+    end
+end
 
 print(string.format("\n%d failure(s)", failures))
 if failures > 0 then os.exit(1) end
