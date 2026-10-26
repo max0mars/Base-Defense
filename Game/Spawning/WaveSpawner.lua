@@ -98,50 +98,8 @@ function WaveSpawner:update(dt)
                 if #queue > 0 then
                     self.laneTimers[laneIndex] = (self.laneTimers[laneIndex] or 0) - dt
                     if self.laneTimers[laneIndex] <= 0 then
-                        local grid = self.game.battlefieldGrid
-                        -- Exclude outermost rows to prevent edge-creeping spawns
-                        local minRow = (grid.height > 2) and 2 or 1
-                        local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
-                        
-                        local totalRows = maxRow - minRow + 1
-                        local sectorSize = totalRows / 3.0
-                        
-                        local currentSector = self.activeSectors[laneIndex] or 0
-                        local sectorMinRow = minRow + math.floor(currentSector * sectorSize)
-                        local sectorMaxRow = minRow + math.floor((currentSector + 1) * sectorSize) - 1
-                        if sectorMinRow > sectorMaxRow then sectorMaxRow = sectorMinRow end
-                        if sectorMaxRow > maxRow then sectorMaxRow = maxRow end
-                        
-                        local randomRow = math.random(sectorMinRow, sectorMaxRow)
-                        local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
-                        
-                        local enemyClass = table.remove(queue, 1)
-                        local spawnConfig = {
-                            game = self.game,
-                            x = 800,
-                            y = startY
-                        }
-                        
-                        local enemyInstance = enemyClass:new(spawnConfig)
+                        self:spawnEnemy(table.remove(queue, 1), self.activeSectors[laneIndex] or 0)
 
-                        -- Apply Mutation Upgrades
-                        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
-                        EnemyRegistry:applyActiveMutations(enemyInstance)
-
-                        -- Codex & Scouting discovery: mark this enemy type as seen and discovered.
-                        local enemyIdToDiscover = enemyInstance.enemyId or enemyInstance.id or enemyInstance.name
-                        if enemyIdToDiscover then
-                            if self.game.seenEnemies then
-                                self.game.seenEnemies[enemyIdToDiscover] = true
-                                if enemyInstance.name then
-                                    self.game.seenEnemies[enemyInstance.name] = true
-                                end
-                            end
-                            EnemyRegistry:discoverEnemy(enemyIdToDiscover)
-                        end
-
-                        self.game:addObject(enemyInstance)
-                        
                         -- Set timer for the NEXT enemy in the queue
                         if #queue > 0 then
                             local nextEnemyClass = queue[1]
@@ -233,6 +191,53 @@ end
 --- The current wave's roster (or nil if none built yet).
 function WaveSpawner:getLiveRoster()
     return self.liveRoster
+end
+
+--- Spawns one enemy at the right edge of the battlefield, with active mutations
+--- applied and the enemy marked as seen / discovered.
+-- @param sector number|nil 0-2: which third of the rows to spawn in (nil = any row)
+function WaveSpawner:spawnEnemy(enemyClass, sector)
+    local grid = self.game.battlefieldGrid
+    -- Exclude outermost rows to prevent edge-creeping spawns
+    local minRow = (grid.height > 2) and 2 or 1
+    local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
+
+    local rowMin, rowMax = minRow, maxRow
+    if sector then
+        local sectorSize = (maxRow - minRow + 1) / 3.0
+        rowMin = minRow + math.floor(sector * sectorSize)
+        rowMax = minRow + math.floor((sector + 1) * sectorSize) - 1
+        if rowMin > rowMax then rowMax = rowMin end
+        if rowMax > maxRow then rowMax = maxRow end
+    end
+
+    local randomRow = math.random(rowMin, rowMax)
+    local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
+
+    local enemyInstance = enemyClass:new({
+        game = self.game,
+        x = 800,
+        y = startY
+    })
+
+    -- Apply Mutation Upgrades
+    local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+    EnemyRegistry:applyActiveMutations(enemyInstance)
+
+    -- Codex & Scouting discovery: mark this enemy type as seen and discovered.
+    local enemyIdToDiscover = enemyInstance.enemyId or enemyInstance.id or enemyInstance.name
+    if enemyIdToDiscover then
+        if self.game.seenEnemies then
+            self.game.seenEnemies[enemyIdToDiscover] = true
+            if enemyInstance.name then
+                self.game.seenEnemies[enemyInstance.name] = true
+            end
+        end
+        EnemyRegistry:discoverEnemy(enemyIdToDiscover)
+    end
+
+    self.game:addObject(enemyInstance)
+    return enemyInstance
 end
 
 function WaveSpawner:startCustomWave(waveList)
