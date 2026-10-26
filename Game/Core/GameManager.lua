@@ -28,6 +28,7 @@ local GUIManager         = require("Game.GUI.GUIManager")
 local Layout             = require("Game.GUI.Layout")
 local Cursor             = require("Game.GUI.Cursor")
 local ArcOverlay         = require("Game.GUI.ArcOverlay")
+local DamageStats        = require("Game.Core.DamageStats")
 local EnemyRegistry      = require("Game.Spawning.EnemyRegistry")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
@@ -108,6 +109,7 @@ function game:load(saveData, isTesting)
         self.shopLevel    = _G.PersistentState and _G.PersistentState.shopLevel or 1
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
+        self.damageStats  = DamageStats.new() -- Per-turret damage / kills this battle (MVP)
         
         -- Initialize Core Gameplay Systems
         self.base            = Base:new({game = self})

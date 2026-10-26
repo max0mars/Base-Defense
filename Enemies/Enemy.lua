@@ -155,7 +155,8 @@ function Enemy:update(dt)
     end
 end
 
-function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags)
+-- @param source: optional bullet/turret/effect source; credits the turret behind it in DamageStats
+function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags, source)
     if not amount or type(amount) ~= "number" or amount ~= amount or amount <= 0 then
         return 0
     end
@@ -190,22 +191,32 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags)
                 self.game:spawnArmorBreak(self.x, self.y)
             end
         end
+        self:creditDamage(source, math.min(amount, oldShield), false)
         -- Explicitly return to nullify remaining damage from this attack
         return amount
     end
 
     -- 2. Apply damage to HP if no shield
+    local hpBefore = self.hp
     if amount >= self.hp then
         self.hp = 0
     else
         self.hp = self.hp - amount
     end
+    self:creditDamage(source, math.max(0, math.min(amount, hpBefore)), hpBefore > 0 and self.hp <= 0)
 
     if self.hp <= 0 then
         self:died()
     end
 
     return amount
+end
+
+--- Records effective damage dealt by `source` in the battle's DamageStats.
+function Enemy:creditDamage(source, dealt, killed)
+    if source and self.game and self.game.damageStats then
+        self.game.damageStats:record(source, dealt, killed)
+    end
 end
 
 function Enemy:getFuturePosition(time)

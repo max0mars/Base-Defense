@@ -8,6 +8,7 @@ setmetatable(game_scene, { __index = scene })
 local game = require("Game.Core.GameManager") -- Import the game module
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local Cursor = require("Game.GUI.Cursor")
+local DamageStats = require("Game.Core.DamageStats")
 
 function game_scene:load()
     local isTesting = game.testingMode
@@ -89,6 +90,15 @@ function game_scene:update(dt)
                 self.summaryTotalCash = 0
             end
 
+            -- Top 3 turrets by damage dealt this battle (first is the MVP)
+            self.summaryTopTurrets = {}
+            if game.damageStats then
+                for i, entry in ipairs(game.damageStats:getRanking()) do
+                    if i > 3 then break end
+                    table.insert(self.summaryTopTurrets, entry)
+                end
+            end
+
             self.summaryOtherRewards = {}
             if game.awardedBattleRewards then
                 for _, r in ipairs(game.awardedBattleRewards) do
@@ -143,7 +153,10 @@ function game_scene:draw()
         -- Centered rounded container box
         local boxW = 460
         local hasOther = (self.summaryOtherRewards and #self.summaryOtherRewards > 0)
-        local boxH = hasOther and 340 or 300
+        local top = self.summaryTopTurrets or {}
+        -- MVP block: name + damage line, then one line per runner-up, then a divider
+        local mvpH = (#top > 0) and (58 + (#top - 1) * 20) or 0
+        local boxH = (hasOther and 340 or 300) + mvpH
         local boxX = math.floor((VIRTUAL_WIDTH - boxW) / 2)
         local boxY = math.floor((VIRTUAL_HEIGHT - boxH) / 2) - 10
         
@@ -164,24 +177,44 @@ function game_scene:draw()
         -- Thin divider below header
         love.graphics.setColor(0.3, 0.5, 0.7, 0.4)
         love.graphics.line(boxX + 24, boxY + 48, boxX + boxW - 24, boxY + 48)
-        
+
+        -- MVP turret (most damage dealt) and runners-up
+        if #top > 0 then
+            local fmt = DamageStats.formatNumber
+            local mvp = top[1]
+            love.graphics.setColor(1, 0.82, 0.25, 1)
+            love.graphics.printf("MVP: " .. mvp.name, boxX, boxY + 60, boxW, "center")
+            love.graphics.setColor(1, 0.9, 0.6, 1)
+            love.graphics.printf(string.format("%s dmg (%d%%)", fmt(mvp.damage), math.floor(mvp.share * 100 + 0.5)),
+                boxX, boxY + 80, boxW, "center")
+            love.graphics.setColor(0.75, 0.78, 0.85, 1)
+            for i = 2, #top do
+                love.graphics.printf(string.format("%d. %s - %s dmg", i, top[i].name, fmt(top[i].damage)),
+                    boxX, boxY + 80 + (i - 1) * 20, boxW, "center")
+            end
+            love.graphics.setColor(0.3, 0.5, 0.7, 0.4)
+            local dividerY = boxY + 48 + mvpH
+            love.graphics.line(boxX + 24, dividerY, boxX + boxW - 24, dividerY)
+        end
+        local oy = boxY + mvpH -- Everything below shifts down by the MVP block
+
         -- Battle statistics
         love.graphics.setColor(0.85, 0.85, 0.9, 1)
-        love.graphics.printf("Damage Taken: " .. self.summaryDamage, boxX, boxY + 65, boxW, "center")
-        
+        love.graphics.printf("Damage Taken: " .. self.summaryDamage, boxX, oy + 65, boxW, "center")
+
         love.graphics.setColor(0.2, 0.9, 0.35, 1)
-        love.graphics.printf("Cash: +$" .. self.summaryIncome, boxX, boxY + 95, boxW, "center")
-        love.graphics.printf("Perfect Bonus: +$" .. self.summaryPerfectBonus, boxX, boxY + 125, boxW, "center")
-        love.graphics.printf("Interest: +$" .. self.summaryInterest, boxX, boxY + 155, boxW, "center")
-        
+        love.graphics.printf("Cash: +$" .. self.summaryIncome, boxX, oy + 95, boxW, "center")
+        love.graphics.printf("Perfect Bonus: +$" .. self.summaryPerfectBonus, boxX, oy + 125, boxW, "center")
+        love.graphics.printf("Interest: +$" .. self.summaryInterest, boxX, oy + 155, boxW, "center")
+
         -- Thin divider above Total Cash
         love.graphics.setColor(0.3, 0.5, 0.7, 0.4)
-        love.graphics.line(boxX + 24, boxY + 185, boxX + boxW - 24, boxY + 185)
-        
-        love.graphics.setColor(0.3, 1.0, 0.5, 1)
-        love.graphics.printf("Total Cash: $" .. self.summaryTotalCash, boxX, boxY + 198, boxW, "center")
+        love.graphics.line(boxX + 24, oy + 185, boxX + boxW - 24, oy + 185)
 
-        local nextY = boxY + 232
+        love.graphics.setColor(0.3, 1.0, 0.5, 1)
+        love.graphics.printf("Total Cash: $" .. self.summaryTotalCash, boxX, oy + 198, boxW, "center")
+
+        local nextY = oy + 232
         if hasOther then
             love.graphics.setColor(1, 0.85, 0.3, 1)
             local otherText = "Other Rewards: " .. table.concat(self.summaryOtherRewards, ", ")
