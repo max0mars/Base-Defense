@@ -47,6 +47,28 @@ local function drawActionButton(btn, label, costText, baseCol, hovered, enabled,
     love.graphics.pop()
 end
 
+-- View-pile buttons under the currency row. While a wave runs the hand is drawn
+-- from the spell deck, so the buttons show the spell piles instead.
+local function pileButtons(game, deckX)
+    local inWave = game:isState("wave")
+    local buttonStartY = VIRTUAL_HEIGHT - 102
+    return {
+        draw = {
+            btn = { x = deckX, y = buttonStartY, w = 180, h = 34 },
+            label = inWave and "SPELL DRAW" or "VIEW DRAW",
+            pileType = inWave and "SpellDrawPile" or "DrawPile",
+            cards = (inWave and game.spellDrawPile or game.drawPile) or {},
+        },
+        discard = {
+            btn = { x = deckX, y = buttonStartY + 42, w = 180, h = 34 },
+            label = inWave and "SPELL DISCARDS" or "VIEW DISCARDS",
+            pileType = inWave and "SpellDiscardPile" or "DiscardPile",
+            cards = (inWave and game.spellDiscardPile or game.discardPile) or {},
+        },
+        startY = buttonStartY,
+    }
+end
+
 function HandUI:new(game)
     local obj = setmetatable({}, self)
     obj.game = game
@@ -86,22 +108,18 @@ function HandUI:draw()
     local mx, my = love.mouse.getPosition()
     if self.game.gui and self.game.gui:overlayActive() then mx, my = -1000, -1000 end
     
-    local drawCost = 25
-    local canAffordDraw = (self.game.mana or 0) >= drawCost
-    
-    local drawPileCount = self.game.drawPile and #self.game.drawPile or 0
-    local discardPileCount = self.game.discardPile and #self.game.discardPile or 0
-    
-    local buttonStartY = VIRTUAL_HEIGHT - 144
-    local drawCardBtn = { x = deckX, y = buttonStartY, w = 180, h = 34 }
-    local viewDrawBtn = { x = deckX, y = buttonStartY + 42, w = 180, h = 34 }
-    local viewDiscardBtn = { x = deckX, y = buttonStartY + 84, w = 180, h = 34 }
-    
+    local piles = pileButtons(self.game, deckX)
+    local drawPileCount = #piles.draw.cards
+    local discardPileCount = #piles.discard.cards
+    local buttonStartY = piles.startY
+    local viewDrawBtn = piles.draw.btn
+    local viewDiscardBtn = piles.discard.btn
+
     local inRegion = function(btn) return mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h end
     
     -- Hand is always visible
     
-    -- Draw Tokens gold coin and Mana blue orb above the "Draw Card" button
+    -- Draw Tokens gold coin and Mana blue orb above the pile buttons
     love.graphics.push("all")
     
     local centerY = buttonStartY - 20
@@ -178,16 +196,13 @@ function HandUI:draw()
     
     love.graphics.pop()
     
-    -- Draw Card Button
-    drawActionButton(drawCardBtn, "DRAW CARD", drawCost .. " Mana", {0.2, 0.6, 0.9}, inRegion(drawCardBtn), true, canAffordDraw)
-    
     -- View Drawpile Button
-    drawActionButton(viewDrawBtn, "VIEW DRAW", drawPileCount .. " Cards", {0.3, 0.4, 0.8}, inRegion(viewDrawBtn), drawPileCount > 0, true)
-    
+    drawActionButton(viewDrawBtn, piles.draw.label, drawPileCount .. " Cards", {0.3, 0.4, 0.8}, inRegion(viewDrawBtn), drawPileCount > 0, true)
+
     -- View Discards Button
-    drawActionButton(viewDiscardBtn, "VIEW DISCARDS", discardPileCount .. " Cards", {0.6, 0.4, 0.6}, inRegion(viewDiscardBtn), discardPileCount > 0, true)
-    
-    if inRegion(drawCardBtn) or inRegion(viewDrawBtn) or inRegion(viewDiscardBtn) then
+    drawActionButton(viewDiscardBtn, piles.discard.label, discardPileCount .. " Cards", {0.6, 0.4, 0.6}, inRegion(viewDiscardBtn), discardPileCount > 0, true)
+
+    if inRegion(viewDrawBtn) or inRegion(viewDiscardBtn) then
         Cursor.wantHand = true
     end
     
@@ -252,6 +267,31 @@ function HandUI:draw()
     for i, card in ipairs(self.game.hand) do
         drawCard(i, card, true)
     end
+
+    -- Hotkey badges above each spell card (1 = leftmost spell). Left-aligned so
+    -- they stay readable when cards overlap.
+    local slot = 0
+    love.graphics.push("all")
+    if self.coinFont then love.graphics.setFont(self.coinFont) end
+    for i, card in ipairs(self.game.hand) do
+        if self.game:isSpellCard(card) then
+            slot = slot + 1
+            local bx = handStartX + (i - 1) * (cardWidth + spacing) + 6
+            local by = deckY - 24
+            if self.game.activeCard == card then by = by - 20 end
+            local affordable = (self.game.mana or 0) >= card:getCost()
+            local active = self.game.activeCard == card
+            love.graphics.setColor(0.03, 0.08, 0.16, 0.95)
+            love.graphics.rectangle("fill", bx, by, 20, 20, 4, 4)
+            if active then love.graphics.setColor(1, 1, 1, 1)
+            elseif affordable then love.graphics.setColor(0.3, 0.75, 1.0, 1)
+            else love.graphics.setColor(0.45, 0.45, 0.5, 1) end
+            love.graphics.setLineWidth(active and 2 or 1)
+            love.graphics.rectangle("line", bx, by, 20, 20, 4, 4)
+            love.graphics.printf(tostring(slot), bx, by + 3, 20, "center")
+        end
+    end
+    love.graphics.pop()
 end
 
 function HandUI:mousepressed(x, y, button)
@@ -280,42 +320,21 @@ function HandUI:mousepressed(x, y, button)
         end
     end
     
-    local buttonStartY = VIRTUAL_HEIGHT - 144
-    local drawCardBtn = { x = deckX, y = buttonStartY, w = 180, h = 34 }
-    local viewDrawBtn = { x = deckX, y = buttonStartY + 42, w = 180, h = 34 }
-    local viewDiscardBtn = { x = deckX, y = buttonStartY + 84, w = 180, h = 34 }
-    
+    local piles = pileButtons(self.game, deckX)
+
     local inRegion = function(btn) return x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h end
-    
+
     -- Hand is always visible
-    
-    if inRegion(drawCardBtn) then
-        local cost = 25
-        if (self.game.mana or 0) >= cost then
-            local drawn = self.game:drawCard(1)
-            if drawn > 0 then
-                self.game.mana = self.game.mana - cost
+
+    for _, pile in ipairs({ piles.draw, piles.discard }) do
+        if inRegion(pile.btn) and #pile.cards > 0 then
+            if self.game.gui and self.game.gui.deckViewer then
+                self.game.gui.deckViewer:open(pile.pileType, pile.cards, pile.btn)
             end
-        else
-            self.game:spawnFloatingText("Not enough mana!", x, y, {0.2, 0.6, 1.0, 1})
+            return true
         end
-        return true
     end
-    
-    if inRegion(viewDrawBtn) and self.game.drawPile and #self.game.drawPile > 0 then
-        if self.game.gui and self.game.gui.deckViewer then
-            self.game.gui.deckViewer:open("DrawPile", self.game.drawPile, viewDrawBtn)
-        end
-        return true
-    end
-    
-    if inRegion(viewDiscardBtn) and self.game.discardPile and #self.game.discardPile > 0 then
-        if self.game.gui and self.game.gui.deckViewer then
-            self.game.gui.deckViewer:open("DiscardPile", self.game.discardPile, viewDiscardBtn)
-        end
-        return true
-    end
-    
+
     for i = #self.game.hand, 1, -1 do
         local card = self.game.hand[i]
         local cx = handStartX + (i - 1) * (cardWidth + spacing)
@@ -323,71 +342,93 @@ function HandUI:mousepressed(x, y, button)
         if self.game.activeCard == card then
             cy = cy - 20
         end
-        
+
         if x >= cx and x <= cx + cardWidth and y >= cy and y <= cy + cardHeight then
-            -- Clicked a card
-            if self.game.activeCard == card then
-                -- Clicked the already active card -> cancel it
-                self.game:refundCard(card)
-                if self.game.blueprint then
-                    self.game.blueprint = nil
-                end
-                return true
-            end
-            
-            -- If we already have a different active card, refund it first
-            if self.game.activeCard then
-                self.game:refundCard(self.game.activeCard)
-                if self.game.blueprint then
-                    self.game.blueprint = nil
-                end
-            end
-            
-            local cost = card:getCost()
-            local cardIsSpell = (card.executionType == "Spell" or (card.isType and card:isType("spell")) or card.isSpell)
-            local canAfford = false
-            if cardIsSpell then
-                canAfford = (self.game.mana or 0) >= cost
-            else
-                canAfford = (self.game.tokens or 0) >= cost
-            end
-            
-            if canAfford then
-                self.game.activeCard = card
-                
-                if card.executionType == ExecutionType.Global or card.executionType == "Global" or card.executionType == ExecutionType.Group or card.executionType == "Group" then
-                    self.game.inputMode = "targeting_global"
-                elseif card.executionType == ExecutionType.Spell or card.executionType == "Spell" then
-                    self.game.inputMode = "targeting_spell"
-                elseif card.executionType == ExecutionType.Placement then
-                    self.game.inputMode = "placing"
-                    if type(card.execute) == "function" then
-                        self.game.blueprint = card:execute(self.game)
-                    else
-                        local config = {}
-                        if card.payload and card.payload.config then
-                            for k, v in pairs(card.payload.config) do
-                                config[k] = v
-                            end
-                        end
-                        config.game = self.game
-                        self.game.blueprint = card.payload.buildingClass:new(config)
-                    end
-                    if self.game.blueprint then
-                        self.game.blueprint.showArc = true
-                    end
-                elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then
-                    self.game.inputMode = "targeting_card"
-                end
-            else
-                self.game:spawnFloatingText("Not enough tokens!", x, y, {0.8, 0.2, 0.2, 1})
-            end
-            
+            self:selectCard(card, x, y)
             return true
         end
     end
-    
+
     return false
+end
+
+--- Makes `card` the active card (entering its targeting/placing mode), or
+--- cancels it if it is already active. (x, y) is where to show a "can't afford" note.
+function HandUI:selectCard(card, x, y)
+    local game = self.game
+    if game.activeCard == card then
+        -- Selecting the already active card -> cancel it
+        game:refundCard(card)
+        return
+    end
+
+    -- If we already have a different active card, refund it first
+    if game.activeCard then
+        game:refundCard(game.activeCard)
+    end
+
+    local cost = card:getCost()
+    local cardIsSpell = game:isSpellCard(card)
+    local canAfford = false
+    if cardIsSpell then
+        canAfford = (game.mana or 0) >= cost
+    else
+        canAfford = (game.tokens or 0) >= cost
+    end
+
+    if not canAfford then
+        if cardIsSpell then
+            game:spawnFloatingText("Not enough mana!", x, y, {0.2, 0.6, 1.0, 1})
+        else
+            game:spawnFloatingText("Not enough tokens!", x, y, {0.8, 0.2, 0.2, 1})
+        end
+        return
+    end
+
+    game.activeCard = card
+
+    if card.executionType == ExecutionType.Global or card.executionType == "Global" or card.executionType == ExecutionType.Group or card.executionType == "Group" then
+        game.inputMode = "targeting_global"
+    elseif card.executionType == ExecutionType.Spell or card.executionType == "Spell" then
+        game.inputMode = "targeting_spell"
+    elseif card.executionType == ExecutionType.Placement then
+        game.inputMode = "placing"
+        if type(card.execute) == "function" then
+            game.blueprint = card:execute(game)
+        else
+            local config = {}
+            if card.payload and card.payload.config then
+                for k, v in pairs(card.payload.config) do
+                    config[k] = v
+                end
+            end
+            config.game = game
+            game.blueprint = card.payload.buildingClass:new(config)
+        end
+        if game.blueprint then
+            game.blueprint.showArc = true
+        end
+    elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then
+        game.inputMode = "targeting_card"
+    end
+end
+
+--- The spell cards in hand, left to right; their position is their hotkey number.
+function HandUI:spellSlots()
+    local spells = {}
+    for _, card in ipairs(self.game.hand or {}) do
+        if self.game:isSpellCard(card) then spells[#spells + 1] = card end
+    end
+    return spells
+end
+
+--- Hotkey: starts targeting the n-th spell in hand (pressing it again cancels).
+function HandUI:selectSpellSlot(n)
+    local card = self:spellSlots()[n]
+    if not card then return false end
+    local mx, my = love.mouse.getPosition()
+    self:selectCard(card, mx, my)
+    return true
 end
 
 return HandUI

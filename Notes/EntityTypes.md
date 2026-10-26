@@ -62,6 +62,16 @@ All instant cards inherit from `Instant.lua` and have the type `instant`.
 
 All spell cards inherit from `Spell.lua` and have the type `spell`.
 
+* **Spell deck:** at battle start, spells are split out of the run deck into their own
+  piles (`spellDrawPile` / `spellDiscardPile`). Sending a wave discards the build hand
+  and draws `spellHandSize` spells; finishing the wave returns them and draws the build hand.
+  Cast spells go to the spell discard and reshuffle back in (not consumed).
+* **Mana:** starts at `maxMana`, regenerates `manaRegenPerWave` after each wave (capped).
+  There is no draw-a-card-for-mana action.
+* **Hotkeys:** during a wave, number keys `1..N` select the N-th spell in hand (left to
+  right) for targeting. The cast needs a fresh left click, so a button already held
+  for turret fire never casts; after a cast, turret fire waits for the button to be released.
+
 ---
 
 ## 4. Enemies (`Enemies/`, `Game/Spawning/EnemyIndex.lua`)

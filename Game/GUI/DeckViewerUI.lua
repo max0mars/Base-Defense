@@ -63,7 +63,11 @@ function DeckViewerUI:draw()
     
     local mx, my = love.mouse.getPosition()
     
-    local title = self.pileType == "DrawPile" and "DRAW PILE" or "DISCARD PILE"
+    local PILE_TITLES = {
+        DrawPile = "DRAW PILE", DiscardPile = "DISCARD PILE",
+        SpellDrawPile = "SPELL DRAW PILE", SpellDiscardPile = "SPELL DISCARD PILE",
+    }
+    local title = PILE_TITLES[self.pileType] or "DISCARD PILE"
     local font = love.graphics.getFont()
     
     love.graphics.setColor(0.9, 0.9, 1.0, 1)

@@ -42,7 +42,7 @@ end
 
 function Conduit:onWaveComplete()
     if not self.destroyed and self.game then
-        self.game.mana = (self.game.mana or 0) + self.manaPerWave
+        self.game:addMana(self.manaPerWave)
         
         -- Spawn floating text to show the mana gain
         if self.game.spawnFloatingText then
