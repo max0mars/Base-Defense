@@ -6,7 +6,7 @@ ToxicTotem.__index = ToxicTotem
 
 local default = {
     name = "Toxic Totem",
-    types = { passive = true, totem = true, toxic = true },
+    types = { passive = true, toxic = true },
     color = {0.7, 0.2, 0.9, 1}, -- Vibrant neon purple
     affectedSlots = { 
         {-1, -1}, {-1, 1},

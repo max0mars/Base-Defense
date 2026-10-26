@@ -1,4 +1,5 @@
 local living_object = require("Classes.living_object")
+local DamageTypes = require("Classes.DamageTypes")
 local Navigators = require("Physics.Navigators")
 local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
@@ -79,17 +80,6 @@ function Enemy:new(config)
         config.types[key] = true
     end
     
-    local isSpecialized = false
-    for k in pairs(config.types) do
-        if k ~= "enemy" then
-            isSpecialized = true
-            break
-        end
-    end
-    if not isSpecialized then
-        config.types.basic = true
-    end
-    
     config.w = config.w or config.size
     config.h = config.h or config.size
     local obj = living_object:new(config)
@@ -160,7 +150,7 @@ function Enemy:update(dt)
     end
     
     if self.x < self.target then
-        self.game.base:takeDamage(self:getStat("damage"), "physical", self.x, self.y, self) -- Damage the base if the enemy reaches it
+        self.game.base:takeDamage(self:getStat("damage"), "ballistic", self.x, self.y, self) -- Damage the base if the enemy reaches it
         self:died() -- Destroy the enemy if it reaches the base
     end
 end
@@ -169,24 +159,9 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags)
     if not amount or type(amount) ~= "number" or amount ~= amount or amount <= 0 then
         return 0
     end
-    
-    local combinedTags = {}
-    if damageTags then
-        for _, tag in ipairs(damageTags) do
-            table.insert(combinedTags, tag)
-        end
-    end
-    table.insert(combinedTags, damageType)
+    DamageTypes.validate(damageType, damageTags)
 
-    local damageMult = 1
-    if self.affinities then
-        for _, tag in ipairs(combinedTags) do
-            if self.affinities[tag] then
-                damageMult = damageMult * self.affinities[tag]
-            end
-        end
-    end
-
+    local damageMult = DamageTypes.affinityMultiplier(self.affinities, damageType, damageTags)
     amount = amount * damageMult
 
     -- Effectiveness vs this enemy's affinities (damage-type matchup), for feedback.
@@ -202,7 +177,7 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags)
     amount = amount * reduction
 
     if amount > 1 then
-        self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness)
+        self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness, damageTags)
     end
 
     -- 1. Check if shield exists

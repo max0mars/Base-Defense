@@ -54,7 +54,7 @@ local function makeBank(x, y)
 end
 
 local turretStub = { isType = function(_, t) return t == "turret" end }
-local blockerStub = { isType = function(_, t) return t == "blocker" end }
+local passiveStub = { isType = function(_, t) return t == "passive" end }
 
 local function place(x, y, b) buildGrid.buildings[slotAt(x, y)] = b end
 local function clear() buildGrid.buildings = {}; game.objects = {} end
@@ -67,18 +67,18 @@ local bank = makeBank(1, 5)
 assert(bank:getTokenBonus() == 0, "Empty neighbours: no bonus")
 assert(maxTokens() == 3, "Inactive Bank does not raise the token cap")
 
-place(1, 4, blockerStub); place(1, 6, blockerStub)
+place(1, 4, passiveStub); place(1, 6, passiveStub)
 assert(bank:getTokenBonus() == 0, "Top + bottom only: still inactive")
 
-place(0, 5, blockerStub)
+place(0, 5, passiveStub)
 assert(bank:getTokenBonus() == 0, "Left neighbour does not count toward activation")
 
-place(2, 5, blockerStub)
+place(2, 5, passiveStub)
 assert(bank:getTokenBonus() == 1, "Top, bottom and right filled: +1")
 assert(maxTokens() == 4, "Active Bank raises the token cap by 1")
 
 place(1, 4, turretStub); place(1, 6, turretStub)
-assert(bank:getTokenBonus() == 1, "Mixed turret/blocker neighbours: still +1")
+assert(bank:getTokenBonus() == 1, "Mixed turret/passive neighbours: still +1")
 
 place(2, 5, turretStub)
 assert(bank:getTokenBonus() == 2, "All three required neighbours are turrets: +2")
@@ -105,8 +105,8 @@ assert(topBank:getTokenBonus() == 0, "Top-row Bank can never activate")
 clear()
 local b1 = makeBank(1, 3)
 local b2 = makeBank(1, 9)
-for _, y in ipairs({ 2, 4, 8, 10 }) do place(1, y, blockerStub) end
-place(2, 3, blockerStub); place(2, 9, turretStub)
+for _, y in ipairs({ 2, 4, 8, 10 }) do place(1, y, passiveStub) end
+place(2, 3, passiveStub); place(2, 9, turretStub)
 assert(b1:getTokenBonus() == 1 and b2:getTokenBonus() == 1, "Two covered Banks are both active")
 assert(maxTokens() == 5, "Two active Banks raise the token cap by 2")
 

@@ -798,7 +798,7 @@ local function isUpgradableCard(c)
         if cfg.upgradable ~= nil then return cfg.upgradable end
         
         local iconCat = payload.iconCategory or cfg.iconCategory or c.iconCategory
-        if iconCat == "buff" or iconCat == "blocker" or iconCat == "spell" or iconCat == "instant" then return false end
+        if iconCat == "buff" or iconCat == "spell" or iconCat == "instant" then return false end
 
         local function checkType(col, name)
             if not col then return false end
@@ -810,10 +810,10 @@ local function isUpgradableCard(c)
         end
 
         local bClass = payload.buildingClass
-        if checkType(payload.types, "passive") or checkType(payload.types, "buff") or checkType(payload.types, "blocker") or
-           checkType(cfg.types, "passive") or checkType(cfg.types, "buff") or checkType(cfg.types, "blocker") or
-           checkType(c.types, "passive") or checkType(c.types, "buff") or checkType(c.types, "blocker") or
-           (bClass and (checkType(bClass.types, "passive") or checkType(bClass.types, "buff") or checkType(bClass.types, "blocker"))) then
+        if checkType(payload.types, "passive") or checkType(payload.types, "buff") or
+           checkType(cfg.types, "passive") or checkType(cfg.types, "buff") or
+           checkType(c.types, "passive") or checkType(c.types, "buff") or
+           (bClass and (checkType(bClass.types, "passive") or checkType(bClass.types, "buff"))) then
             return false
         end
 

@@ -206,18 +206,18 @@ function Card:isTurret()
         return false
     end
 
-    -- 1. Check iconCategory from all sources: if explicitly buff/blocker/spell/instant, not a turret
+    -- 1. Check iconCategory from all sources: if explicitly buff/spell/instant, not a turret
     local iconCategory = payload.iconCategory or cfg.iconCategory or self.iconCategory
-    if iconCategory == "buff" or iconCategory == "blocker" or iconCategory == "spell" or iconCategory == "instant" then
+    if iconCategory == "buff" or iconCategory == "spell" or iconCategory == "instant" then
         return false
     end
 
-    -- 2. Check types from payload, config, self, or buildingClass: if passive/buff/blocker, not a turret
+    -- 2. Check types from payload, config, self, or buildingClass: if passive/buff, not a turret
     local bClass = payload.buildingClass
-    if checkType(payload.types, "passive") or checkType(payload.types, "buff") or checkType(payload.types, "blocker") or
-       checkType(cfg.types, "passive") or checkType(cfg.types, "buff") or checkType(cfg.types, "blocker") or
-       checkType(self.types, "passive") or checkType(self.types, "buff") or checkType(self.types, "blocker") or
-       (bClass and (checkType(bClass.types, "passive") or checkType(bClass.types, "buff") or checkType(bClass.types, "blocker"))) then
+    if checkType(payload.types, "passive") or checkType(payload.types, "buff") or
+       checkType(cfg.types, "passive") or checkType(cfg.types, "buff") or
+       checkType(self.types, "passive") or checkType(self.types, "buff") or
+       (bClass and (checkType(bClass.types, "passive") or checkType(bClass.types, "buff"))) then
         return false
     end
 
@@ -253,8 +253,8 @@ function Card:isTurret()
                 if type(category) == "table" then
                     for _, reward in ipairs(category) do
                         if reward.id == self.id then
-                            if reward.iconCategory == "buff" or reward.iconCategory == "blocker" or
-                               checkType(reward.types, "passive") or checkType(reward.types, "buff") or checkType(reward.types, "blocker") or
+                            if reward.iconCategory == "buff" or
+                               checkType(reward.types, "passive") or checkType(reward.types, "buff") or
                                (reward.affectedSlots and #reward.affectedSlots > 0 and reward.iconCategory ~= "turret") then
                                 return false
                             end

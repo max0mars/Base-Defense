@@ -21,7 +21,7 @@ function Explosion:new(config)
     instance.maxLifetime = config.maxLifetime or 0.4
     instance.lifetime = instance.maxLifetime
     instance.minDamagePercent = config.minDamagePercent or 0.25
-    instance.damageType = config.damageType or "physical"
+    instance.damageType = config.damageType or "explosive"
     instance.explosionDamage = config.explosionDamage or 0
     
     return instance
@@ -115,7 +115,7 @@ function Explosion:applyDamage(source, target)
                 falloff = math.max(self.minDamagePercent or 0.25, falloff)
                 
                 local finalDamage = self.explosionDamage * falloff
-                obj:takeDamage(finalDamage, self.damageType or "physical")
+                obj:takeDamage(finalDamage, self.damageType or "explosive", nil, nil, { "aoe" })
 
                 -- If this is a toxic explosion, spread the infection
                 -- if (self.damageType == "toxic" or (source and source.damageType == "toxic")) and obj.effectManager then

@@ -8,7 +8,6 @@ setmetatable(game_scene, { __index = scene })
 local game = require("Game.Core.GameManager") -- Import the game module
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local Cursor = require("Game.GUI.Cursor")
-local Blocker = require("Buildings.Blockers.Blocker")
 
 function game_scene:load()
     local isTesting = game.testingMode

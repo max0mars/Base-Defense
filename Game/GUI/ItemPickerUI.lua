@@ -1,4 +1,4 @@
--- ItemPickerUI.lua: Testing-mode menu listing every turret / buff / blocker /
+-- ItemPickerUI.lua: Testing-mode menu listing every turret / buff /
 -- main-lazer upgrade in the game. Click a building to drop into placement mode,
 -- or an upgrade to apply it instantly. Toggle with 'g' (testing mode only).
 
@@ -13,7 +13,6 @@ ItemPickerUI.__index = ItemPickerUI
 local CATEGORY_COLORS = {
     turret  = { 0.0, 0.85, 1.0 },
     buff    = { 0.2, 0.9, 0.4 },
-    blocker = { 0.95, 0.55, 0.15 },
     upgrade = { 1.0, 0.8, 0.2 },
 }
 
@@ -28,10 +27,6 @@ local TITLE_H   = 36
 local PAD       = 14
 
 local function labelFor(item)
-    if item.name == "BLOCKER" then
-        local shape = (item.id or "blocker"):gsub("blocker_", "")
-        return "Blocker (" .. shape .. ")"
-    end
     return item.name or item.id or "?"
 end
 
@@ -57,8 +52,6 @@ function ItemPickerUI:new(game)
     for _, rarity in ipairs(RARITIES) do
         for _, item in ipairs(NormalRewardIndex[rarity] or {}) do add(item, rarity) end
     end
-    -- Blocker index duplicates the same list across all rarities; common holds the set.
-
 
     -- Precompute panel geometry.
     obj.numRows = math.ceil(#obj.items / NUM_COLS)

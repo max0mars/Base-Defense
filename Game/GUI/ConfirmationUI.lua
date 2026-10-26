@@ -47,9 +47,6 @@ function ConfirmationUI:update(dt)
             "Do you want to destroy this building?",
             function()
                 local target = self.game.inputHandler.destructionTarget
-                if target:isType("blocker") and self.game.battlefieldGrid then
-                    self.game.battlefieldGrid:removeBuilding(target)
-                end
                 target:remove()
                 self.game.inputHandler.destructionTarget = nil
                 self.game:recalculateAllBuffs()

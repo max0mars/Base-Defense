@@ -5,7 +5,7 @@ ShardBullets.__index = ShardBullets
 
 local default = {
     name = "Shard Bullets",
-    types = { passive = true, totem = true, shard = true },
+    types = { passive = true },
     affectedSlots = {{-1, 0}, {1, 0}}, -- Only affects building directly in front
     shapePattern = {
         {0, 0}

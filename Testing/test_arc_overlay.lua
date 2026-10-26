@@ -81,7 +81,7 @@ assert(not ArcOverlay.wants(turretLike({ showArc = false })), "Hidden arcs are s
 assert(not ArcOverlay.wants(turretLike({ destroyed = true })), "Destroyed turrets are skipped")
 local main = setmetatable({ showArc = true, firingArc = { direction = 0, angle = math.pi, minRange = 0 } }, { __index = StandardMainTurret })
 assert(not ArcOverlay.wants(main), "Main turrets keep their own range circle")
-assert(not ArcOverlay.wants({ showArc = true, range = 100 }), "Blockers without firing arcs are skipped")
+assert(not ArcOverlay.wants({ showArc = true, range = 100 }), "Buildings without firing arcs are skipped")
 
 -- 4. A turret the overlay drew does not draw its grey arc again
 local t = turretLike({ x = 0, y = 0, getStat = function() return 300 end })

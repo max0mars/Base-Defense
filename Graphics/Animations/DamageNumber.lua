@@ -1,21 +1,18 @@
 -- DamageNumber.lua
 -- Floating text for damage feedback
 
+local DamageTypes = require("Classes.DamageTypes")
+
 local DamageNumber = {}
 DamageNumber.__index = DamageNumber
 
+-- Non-damage feedback colours; damage colours come from DamageTypes.
 local typeColors = {
-    physical = {1, 1, 1, 1},
-    poison = {0.15, 0.6, 0.15, 1}, -- Darkened poison so it's distinct from heal
     heal = {0.2, 1.0, 0.2, 1},     -- Bright green for healing
-    energy = {0.3, 0.6, 1, 1},
     crit = {1, 0.8, 0.2, 1},
-    burn = {1, 0.5, 0, 1},
-    fire = {1, 0.5, 0, 1},
-    toxic = {0.7, 0.2, 0.9, 1}
 }
 
-function DamageNumber:new(text, x, y, damageType, customColor, delay, effectiveness)
+function DamageNumber:new(text, x, y, damageType, customColor, delay, effectiveness, damageTags)
     local obj = setmetatable({}, self)
 
     obj.text = tostring(text)
@@ -23,7 +20,8 @@ function DamageNumber:new(text, x, y, damageType, customColor, delay, effectiven
     obj.y = y + love.math.random(-15, 15)
     obj.velY = -60
     obj.velX = love.math.random(-20, 20)
-    obj.color = customColor or typeColors[damageType or "physical"] or typeColors.physical
+    obj.color = customColor or typeColors[damageType] or DamageTypes.colorFor(damageType, damageTags)
+        or DamageTypes.colors.ballistic
     obj.lifetime = 1.0
     obj.maxLifetime = 1.0
     obj.delay = delay or 0

@@ -16,7 +16,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.7, range = 380,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 400, damageType = "physical", damage = 11,
+            bulletSpeed = 400, damageType = "ballistic", damage = 11,
             pierce = 1, lifespan = 1.25, bulletId = "sentryBullet"
         },
         {
@@ -45,7 +45,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 3.2, range = 190,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
-            bulletSpeed = 350, damageType = "physical", damage = 5,
+            bulletSpeed = 350, damageType = "ballistic", damage = 5,
             pierce = 1, lifespan = 0.8, bulletId = "cannonBullet"
         },
         {
@@ -60,7 +60,7 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.55, range = 150,
             firingArc = {direction = 0, minRange = 0, angle = math.rad(100)},
             spread = math.rad(15), pelletCount = 8,
-            bulletSpeed = 480, damageType = "physical", damage = 4,
+            bulletSpeed = 480, damageType = "ballistic", damage = 4,
             pierce = 1, lifespan = 0.8, bulletId = "shotgunPellet"
         },
         {
@@ -74,7 +74,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.15, range = 450,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/14},
-            bulletSpeed = 500, damageType = "physical", damage = 54,
+            bulletSpeed = 500, damageType = "ballistic", damage = 54,
             pierce = 1, lifespan = 1.5, bulletId = "heavyShell"
         },
     },
@@ -84,7 +84,7 @@ local RewardIndex = {
             name = "Poison Turret",
             description = "Fires toxic darts that damage over time.",
             type = "building",
-            types = {"turret", "building", "poison"},
+            types = {"turret", "building"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
@@ -106,7 +106,7 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.4, range = 300,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
             -- Slow shell that bursts at 60% of range into fast shrapnel (see AirburstBullet)
-            bulletSpeed = 180, damageType = "physical", damage = 23,
+            bulletSpeed = 180, damageType = "ballistic", damage = 23,
             -- No `spread`: Turret:fire uses it as aim jitter (±spread), so math.pi here made
             -- shells fly in random directions. The burst cone lives in AirburstBullet:airburst().
             pierce = 1, lifespan = 1.5, splitamount = 6, splitDamage = 23, splitDamage_from_damage = 1.0,
@@ -117,7 +117,7 @@ local RewardIndex = {
             name = "Flux Cannon",
             description = "Energy damage that ignores heavy armor.",
             type = "building",
-            types = {"turret", "building", "energy"},
+            types = {"turret", "building"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
@@ -131,12 +131,12 @@ local RewardIndex = {
             name = "Grenadier",
             description = "Lobs grenades that explode after a short delay.",
             type = "building",
-            types = {"turret", "building", "explosive", "lobber"},
+            types = {"turret", "building", "lobber"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.3, range = 380, firingArc = {direction = 0, minRange = 200, angle = math.pi/6},
-            fuseTime = 0.7, bulletSpeed = 250, damageType = "physical", damage = 7,
+            fuseTime = 0.7, bulletSpeed = 250, damageType = "explosive", damage = 7,
             burstCount = 3, burstDelay = 0.2, spread = math.rad(5),
             pierce = 1, lifespan = 1.5, explosionDamage = 35, explosion_from_damage = 1.0, radius = 60, bulletId = "grenade",
             hitEffects = { ExplosionEffect:new({ name = "Grenade Explosion" }) }
@@ -146,13 +146,13 @@ local RewardIndex = {
             name = "Slush Cannon",
             description = "Fires heavy clumps of slush that slow enemies on impact.",
             type = "building",
-            types = {"turret", "building", "slow"},
+            types = {"turret", "building", "slow", "control"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.25, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 350, damageType = "water", damage = 36,
+            bulletSpeed = 350, damageType = "ice", damage = 36,
             pierce = 1, lifespan = 2, bulletId = "slush",
             hitEffects = { SlowEffect:new({name = "Slush Slow", duration = 2.0, amount = 0.4}) }
         },
@@ -169,7 +169,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.55, range = 380,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 500, damageType = "physical", damage = 54,
+            bulletSpeed = 500, damageType = "ballistic", damage = 54,
             pierce = 3, lifespan = 1.5, bulletId = "gatorRound"
         },
         {
@@ -177,12 +177,12 @@ local RewardIndex = {
             name = "Missile Launcher",
             description = "Wouldn't want to get in the way of one of these.",
             type = "building",
-            types = {"turret", "building", "explosive"},
+            types = {"turret", "building"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.4, range = 340, firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 200, damageType = "physical", damage = 81,
+            bulletSpeed = 200, damageType = "explosive", damage = 81,
             pierce = 1, lifespan = 3, explosionDamage = 81, explosion_from_damage = 1.0, radius = 100, bulletId = "missile",
             hitEffects = { ExplosionEffect:new({ name = "Missile Explosion" }) }
         },
@@ -191,7 +191,7 @@ local RewardIndex = {
             name = "Plasma Scattershot",
             description = "Fires plamsa rounds at high speed but has limited ammo. Reloads slowly.",
             type = "building",
-            types = {"turret", "building", "energy", "shotgun"},
+            types = {"turret", "building", "shotgun"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
@@ -212,7 +212,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.SequenceTurret"),
             rotation = 0, fireRate = 0.4, range = 340, firingArc = {direction = 0, minRange = 0, angle = math.pi/5},
             coolDownRate = 0.5, fireRateMultiplier = 12,
-            bulletSpeed = 500, damageType = "physical", damage = 18,
+            bulletSpeed = 500, damageType = "ballistic", damage = 18,
             pierce = 1, lifespan = 1.5, bulletId = "sequenceRound"
         },
         {
@@ -220,13 +220,13 @@ local RewardIndex = {
             name = "The Hook",
             description = "Fires a heavy shot that stuns enemies in their tracks.",
             type = "building",
-            types = {"turret", "building", "stun"},
+            types = {"turret", "building", "stun", "control"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.25, range = 230,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
-            bulletSpeed = 250, damageType = "physical", damage = 72,
+            bulletSpeed = 250, damageType = "ballistic", damage = 72,
             pierce = 1, lifespan = 2, bulletId = "heavyHook",
             hitEffects = { StunEffect:new({name = "Hook Stun", duration = 1.0}) }
         },
@@ -237,12 +237,12 @@ local RewardIndex = {
             name = "Sniper Turret",
             description = "High damage, long range.",
             type = "building",
-            types = {"turret", "building", "hitscan"},
+            types = {"turret", "building"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.10, range = 550, firingArc = {direction = 0, minRange = 150, angle = math.pi/2},
-            bulletSpeed = 0, damageType = "physical", damage = 225,
+            bulletSpeed = 0, damageType = "ballistic", damage = 225,
             pierce = 1, lifespan = 0.3, maxLifespan = 0.3, bulletId = "sniperShot"
         },
         {
@@ -250,12 +250,12 @@ local RewardIndex = {
             name = "Mortar",
             description = "KABOOM!",
             type = "building",
-            types = {"turret", "building", "lobber", "explosive"},
+            types = {"turret", "building", "lobber"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.1, range = 380, firingArc = {direction = 0, minRange = 300, angle = math.pi/4},
-            bulletSpeed = 200, damageType = "physical", damage = 90,
+            bulletSpeed = 200, damageType = "explosive", damage = 90,
             pierce = 1, lifespan = 2, explosionDamage = 90, explosion_from_damage = 1.0, radius = 80, bulletId = "mortarShell",
             hitEffects = { ExplosionEffect:new({ name = "Mortar Explosion" }) }
         },
@@ -266,7 +266,7 @@ local RewardIndex = {
             name = "PROJECT CHIMERA",
             description = "No one is safe",
             type = "building",
-            types = {"turret", "building", "legendary", "energy"},
+            types = {"turret", "building"},
             iconCategory = "turret",
             cost = 3,
             building = require("Buildings.Turrets.ChainLaser"),

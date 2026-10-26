@@ -29,7 +29,7 @@ function BattlefieldGrid:new(game)
         else
             obj.noBuildZones[i] = 0
         end
-        obj.unlocked[i] = false -- Battlefield defaults to locked (use SlottedBlockers)
+        obj.unlocked[i] = false -- Battlefield defaults to locked (unlock with tokens)
     end
     
     return obj
@@ -37,7 +37,7 @@ end
 
 function BattlefieldGrid:addBuilding(building, anchorSlot)
     local slotsToOccupy = building:getSlotsFromPattern(anchorSlot)
-    -- Only structures and blockers go in the buildings lookup table
+    -- Only non-turret structures go in the buildings lookup table
     -- Turrets coexist in self.game.objects but shouldn't overwrite the platform foundation
     if not (building:isType("turret") or building:isType("passive")) then
         for _, slot in ipairs(slotsToOccupy) do
@@ -118,10 +118,9 @@ function BattlefieldGrid:drawGrid()
         local bp = self.game.blueprint
         if not bp then return end
         
-        local isBlocker = bp:isType("blocker")
         local isTurret = bp:isType("turret") or bp:isType("passive")
-        
-        if isBlocker or isTurret then
+
+        if isTurret then
             -- 1. Draw subtle background grid
             love.graphics.setColor(1, 1, 1, 0.05)
             for i = 1, self.width + 1 do
@@ -174,11 +173,11 @@ function BattlefieldGrid:drawOverlays()
         
         local isTurret = bp:isType("turret") or bp:isType("passive")
         
-        -- 3. Draw unlocked turret slots (highlight buildable areas on blockers) - OVER buildings
+        -- 3. Draw unlocked turret slots - OVER buildings
         if isTurret then
             for slot = 1, self.width * self.height do
                 local existing = self.buildings[slot]
-                local isVacantOnPlatform = not existing or existing:isType("slotted")
+                local isVacantOnPlatform = not existing
                 
                 if self.unlocked[slot] and isVacantOnPlatform then
                     love.graphics.setColor(0, 1, 1, 0.2)
@@ -227,8 +226,6 @@ function BattlefieldGrid:areSlotsAvailable(building, slotsToCheck, anchorSlot)
     for _, slot in ipairs(slotsToCheck) do
         if slot < 1 or slot > (self.width * self.height) then return false end
         
-        local existing = self.buildings[slot]
-        
         -- Turret Placement Logic
         if isPlacingTurret then
             -- 1. Must be on an unlocked slot
@@ -256,41 +253,16 @@ function BattlefieldGrid:areSlotsAvailable(building, slotsToCheck, anchorSlot)
             if px >= left and px < right and py >= top and py < bottom then
                 return false
             end
-            
         else
-            -- Blocker / Other building Placement Logic
-            if existing then return false end
-            if self.noBuildZones[slot] and self.noBuildZones[slot] > 0 then return false end
-            
-            -- In-Base Margin check
-            local i = ((slot - 1) % self.width) + 1
-            local j = math.ceil(slot / self.width)
-            local px = self.x + (i - 1) * self.cellSize
-            local py = self.y + (j - 1) * self.cellSize
-            
-            local margin = self.baseMarginCells * self.cellSize
-            local left = baseGrid.x - margin
-            local right = baseGrid.x + baseGrid.width * baseGrid.cellSize + margin
-            local top = baseGrid.y - margin
-            local bottom = baseGrid.y + baseGrid.height * baseGrid.cellSize + margin
-            
-            if px >= left and px < right and py >= top and py < bottom then
-                return false
-            end
-        end
-    end
-    
-    if not building:isFullyInsideGrid(slotsToCheck) then
-        return false
-    end
-    
-    if building:isType("blocker") then
-        local Pathfinder = require("Physics.Pathfinder")
-        if not Pathfinder.isPathPossible(self.game, slotsToCheck) then
+            -- Only turrets and passives can be built on the battlefield
             return false
         end
     end
-    
+
+    if not building:isFullyInsideGrid(slotsToCheck) then
+        return false
+    end
+
     return true
 end
 

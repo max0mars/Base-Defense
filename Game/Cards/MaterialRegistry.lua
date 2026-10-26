@@ -28,14 +28,14 @@ MaterialRegistry.list = {
         name = "Blast Powder",
         shortName = "Powder",
         color = {1, 0.55, 0.2, 1},
-        match = { types = {"explosive"} }
+        match = { types = {"explosive"}, damageTypes = {"explosive"} }
     },
     {
         id = "elemental_essence",
         name = "Elemental Essence",
         shortName = "Essence",
         color = {0.5, 1, 0.4, 1},
-        match = { damageTypes = {"poison", "water", "fire"} }
+        match = { damageTypes = {"poison", "ice", "fire"} }
     },
     {
         id = "scrap",
