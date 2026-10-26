@@ -116,19 +116,35 @@ local soldier
 for i, e in ipairs(enemies) do if e.id == "Soldier" then soldier = i end end
 local cx, cy, cw, ch = spawner:cellRect(soldier)
 spawner:mousepressed(cx + 5, cy + 5, 1)
-assert(countEnemies("Soldier") == 1, "Clicking an enemy spawns exactly that enemy")
-local s = game.objects[#game.objects]
-assert(s.x == 800 and s.y >= game.battlefieldGrid.y, "Spawned enemy enters at the right edge of the battlefield")
-spawner:spawn(enemies[soldier], spawner.BULK)
-assert(countEnemies("Soldier") == 1 + spawner.BULK, "Bulk spawn adds " .. spawner.BULK .. " more")
-assert(spawner.isActive, "Spawner stays open after spawning")
+assert(countEnemies("Soldier") == 0 and #spawner.queue == 1, "Clicking an enemy queues it instead of spawning instantly")
+spawner:enqueue(enemies[soldier], spawner.BULK)
+assert(#spawner.queue == 1 + spawner.BULK, "Bulk queue adds " .. spawner.BULK .. " more")
+assert(spawner.isActive, "Spawner stays open after queueing")
 assert(pcall(spawner.draw, spawner), "Spawner panel draws")
+spawner:update(0)
+assert(countEnemies("Soldier") == 0, "Nothing spawns while the battle is frozen (dt = 0)")
 spawner:mousepressed(1, 1, 1)
 assert(not spawner.isActive, "Clicking outside closes the spawner")
+
+spawner:update(1 / 60)
+assert(countEnemies("Soldier") == 1, "Once running, the first queued enemy spawns right away")
+local s = game.objects[#game.objects]
+assert(s.x == 800 and s.y >= game.battlefieldGrid.y, "Spawned enemy enters at the right edge of the battlefield")
+local delay = spawner.timer
+assert(delay > 0, "The next enemy waits for the queued spawn delay (" .. delay .. "s)")
+spawner:update(delay * 0.5)
+assert(countEnemies("Soldier") == 1, "...and doesn't spawn before it")
+spawner:update(delay * 0.5 + 1e-6)
+assert(countEnemies("Soldier") == 2, "...then spawns once the delay has passed")
+for _ = 1, 600 do spawner:update(1 / 60) end
+assert(countEnemies("Soldier") == 1 + spawner.BULK and #spawner.queue == 0, "The whole queue is released over time")
+
 DevMode.keypressed("f11", game)
 DevMode.keypressed("f11", game)
 assert(not spawner.isActive, "F11 toggles it closed again")
+spawner:enqueue(enemies[soldier], 3)
 DevMode.keypressed("f10", game)
+assert(#spawner.queue == 0 and countEnemies() == 0, "F10 kills every enemy and empties the dev queue")
 
 assert(pcall(DevMode.keypressed, "f6", game), "F6 draws cards without error (even from an empty deck)")
 

@@ -30,7 +30,7 @@ DevMode.BINDINGS = {
     { key = "f7",  label = "Grant random artifact",          scope = "both" },
     { key = "f8",  label = "+$" .. DevMode.CASH .. " cash",  scope = "both" },
     { key = "f9",  label = "Shop level +1",                  scope = "both" },
-    { key = "f10", label = "Kill all enemies on the field",  scope = "battle" },
+    { key = "f10", label = "Kill all enemies (and dev queue)", scope = "battle" },
     { key = "f11", label = "Spawn specific enemies",         scope = "battle" },
 }
 
@@ -128,6 +128,8 @@ actions.f9 = function()
 end
 
 actions.f10 = function(game)
+    -- Also drop anything still waiting in the dev spawner's queue
+    if game.gui and game.gui.devSpawner then game.gui.devSpawner:clearQueue() end
     local killed = 0
     for _, obj in ipairs(game.objects) do
         if not obj.destroyed and obj.isType and obj:isType("enemy") then
