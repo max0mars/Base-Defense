@@ -1,6 +1,7 @@
 -- Chill.lua - Core status of the ice synergy.
 --
--- Chill builds up in (possibly fractional) stacks and drains at a fixed rate.
+-- Chill builds up in (possibly fractional) stacks and drains at a fixed rate,
+-- pausing briefly after each application.
 -- Each stack slows the enemy, compounding with other stacks and other slows.
 -- When the stacks reach the freeze threshold they reset to 0 and the enemy is
 -- frozen (same effect as a stun), then thaws: slowed and immune to chill until
@@ -12,12 +13,13 @@
 local Chill = {
     SLOW_PER_STACK       = 0.10, -- each stack: speed x0.9 (partial stacks scale smoothly)
     DECAY_PER_SECOND     = 1 / 1.5, -- one stack every 1.5s
+    DECAY_DELAY          = 0.3, -- each application pauses decay for this long
     FREEZE_STACKS        = 5,
     BOSS_FREEZE_STACKS   = 10,
     FREEZE_DURATION      = 1.5,
     BOSS_FREEZE_DURATION = 0.75,
-    THAW_DURATION        = 3,
-    THAW_SLOW            = 0.3,
+    THAW_DURATION        = 2,
+    THAW_SLOW            = 0.5,
     BOSS_TIER            = 5,
 
     -- "hidden_" keeps these out of the generic status-dot row; Chill.draw
@@ -40,6 +42,7 @@ function ChillState:new()
         displayName = "Chill",
         isDebuff = true,
         stacks = 0,
+        decayDelay = 0, -- seconds left before decay resumes
         duration = math.huge, -- set to 0 once drained so the manager removes it
         statModifiers = { speed = { compoundMult = 1 } },
     }, ChillState)
@@ -50,6 +53,11 @@ function ChillState:refreshSlow()
 end
 
 function ChillState:onUpdate(dt, target)
+    -- Burn off the decay delay first; only the leftover time drains stacks
+    local paused = math.min(dt, self.decayDelay)
+    self.decayDelay = self.decayDelay - paused
+    dt = dt - paused
+    if dt <= 0 then return end
     self.stacks = math.max(0, self.stacks - Chill.DECAY_PER_SECOND * dt)
     if self.stacks <= 0 then
         self.duration = 0
@@ -209,6 +217,7 @@ function Chill.apply(target, amount, opts)
     end
 
     state.stacks = state.stacks + amount
+    state.decayDelay = Chill.DECAY_DELAY
     if state.stacks >= Chill.getFreezeThreshold(target) then
         return Chill.freeze(target)
     end
@@ -261,8 +270,27 @@ local function drawBody(enemy, mode)
     end
 end
 
+-- Pip row under the enemy: one pip per stack needed to freeze. `filled` is the
+-- stack count shown (the last pip partially filled); `alpha` scales the fill.
+local function drawPips(enemy, threshold, filled, alpha)
+    local pip, gap = 3, 1
+    local rowW = threshold * pip + (threshold - 1) * gap
+    local px = enemy.x - rowW / 2
+    local py = enemy.y + (enemy.h or enemy.size or 10) / 2 + 3
+    for i = 1, threshold do
+        local x = px + (i - 1) * (pip + gap)
+        local fill = math.max(0, math.min(1, filled - (i - 1)))
+        love.graphics.setColor(0.05, 0.1, 0.15, 0.8)
+        love.graphics.rectangle("fill", x, py, pip, pip)
+        if fill > 0 then
+            love.graphics.setColor(ICE_COLOR[1], ICE_COLOR[2], ICE_COLOR[3], alpha)
+            love.graphics.rectangle("fill", x, py, pip * fill, pip)
+        end
+    end
+end
+
 --- Chilled: blue tint deepening per stack + a pip row under the enemy.
---- Frozen: solid icy-white fill + pale outline. Thawing: pulsing pale outline.
+--- Frozen: solid icy-white fill + pale outline. Thawing: flashing full pip row.
 function Chill.draw(enemy)
     local em = enemy.effectManager
     if not em then return end
@@ -278,31 +306,15 @@ function Chill.draw(enemy)
         love.graphics.setLineWidth(2)
         drawBody(enemy, "line")
     elseif freeze then
+        local threshold = Chill.getFreezeThreshold(enemy)
         local pulse = (math.sin(love.timer.getTime() * 8) + 1) / 2
-        love.graphics.setColor(0.7, 0.9, 1, 0.35 + 0.5 * pulse)
-        love.graphics.setLineWidth(2)
-        drawBody(enemy, "line")
+        drawPips(enemy, threshold, threshold, 0.25 + 0.75 * pulse)
     elseif chill then
         local threshold = Chill.getFreezeThreshold(enemy)
         local ratio = math.min(1, chill.stacks / threshold)
         love.graphics.setColor(ICE_COLOR[1], ICE_COLOR[2], ICE_COLOR[3], 0.1 + 0.4 * ratio)
         drawBody(enemy, "fill")
-
-        -- Pip row: one pip per stack needed to freeze; the last is partially filled.
-        local pip, gap = 3, 1
-        local rowW = threshold * pip + (threshold - 1) * gap
-        local px = enemy.x - rowW / 2
-        local py = enemy.y + (enemy.h or enemy.size or 10) / 2 + 3
-        for i = 1, threshold do
-            local x = px + (i - 1) * (pip + gap)
-            local fill = math.max(0, math.min(1, chill.stacks - (i - 1)))
-            love.graphics.setColor(0.05, 0.1, 0.15, 0.8)
-            love.graphics.rectangle("fill", x, py, pip, pip)
-            if fill > 0 then
-                love.graphics.setColor(ICE_COLOR[1], ICE_COLOR[2], ICE_COLOR[3], 1)
-                love.graphics.rectangle("fill", x, py, pip * fill, pip)
-            end
-        end
+        drawPips(enemy, threshold, chill.stacks, 1)
     end
     love.graphics.pop()
 end

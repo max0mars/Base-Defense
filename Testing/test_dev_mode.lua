@@ -79,9 +79,28 @@ game.base:takeDamage(50, "ballistic")
 assert(DevMode.isOn("invincible") and game.base.hp == hp, "F3 makes the base invincible")
 
 DevMode.keypressed("f4", game)
-assert(game.gui.itemPicker.isActive, "F4 opens the turret / building picker")
+local picker = game.gui.itemPicker
+assert(picker.isActive, "F4 opens the item picker")
 DevMode.keypressed("f4", game)
-assert(not game.gui.itemPicker.isActive, "F4 again closes it")
+assert(not picker.isActive, "F4 again closes it")
+
+-- Picking a spell puts it straight into the hand, ready to cast
+local blizzard
+for _, entry in ipairs(picker.items) do
+    if entry.item.id == "spell_blizzard" then blizzard = entry end
+end
+assert(blizzard and blizzard.category == "spell", "Picker lists the ice spells (Blizzard)")
+local handSize = #game.hand
+picker.isActive = true
+picker:select(blizzard)
+local added = game.hand[#game.hand]
+assert(#game.hand == handSize + 1 and added.id == "spell_blizzard", "Picking a spell adds it to the hand")
+assert(added.game == game and added:getCost() > 0, "The added spell is set up for this battle")
+assert(not picker.isActive, "Picker closes after picking")
+while #game.hand < 8 do picker:select(blizzard) end
+picker:select(blizzard)
+assert(#game.hand == 8, "Picking a spell with a full hand adds nothing")
+game.hand = {}
 
 local owned = #_G.PersistentState.artifacts
 DevMode.keypressed("f7", game)

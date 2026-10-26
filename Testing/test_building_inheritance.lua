@@ -129,7 +129,6 @@ local buffs = {
     { path = "Buildings.Passives.ShardBullets", name = "ShardBullets" },
     { path = "Buildings.Passives.ToxicTotem", name = "ToxicTotem" },
     { path = "Buildings.Passives.IndustrialBattery", name = "IndustrialBattery" },
-    { path = "Buildings.Passives.FrostTrap", name = "FrostTrap" },
 }
 
 for _, b in ipairs(buffs) do

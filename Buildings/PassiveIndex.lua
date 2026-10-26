@@ -91,17 +91,6 @@ local PassiveIndex = {
             cost = 2,
             affectedSlots = {}
         },
-        {
-            id = "frostTrap",
-            name = "Frost Trap",
-            description = "Pulses while enemies are nearby, applying a stack of chill every 1.2 seconds.",
-            type = "building",
-            types = {"passive", "building", "slow", "control"},
-            building = require("Buildings.Passives.FrostTrap"),
-            iconCategory = "buff",
-            cost = 1,
-            affectedSlots = {}
-        },
     },
     epic = {
         {

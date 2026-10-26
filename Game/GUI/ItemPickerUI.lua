@@ -1,11 +1,15 @@
--- ItemPickerUI.lua: Testing-mode menu listing every turret / buff /
--- main-lazer upgrade in the game. Click a building to drop into placement mode,
--- or an upgrade to apply it instantly. Toggle with 'g' (testing mode) or F4 (developer mode).
+-- ItemPickerUI.lua: Testing-mode menu listing every turret / buff / spell /
+-- instant / main-lazer upgrade in the game. Click a building to drop into placement
+-- mode, a spell or instant to add it to your hand, or an upgrade to apply it
+-- instantly. Toggle with 'g' (testing mode) or F4 (developer mode).
 
 local NormalRewardIndex  = require("Game.Rewards.RewardIndex")
 
 local Reward             = require("Game.Rewards.Reward")
+local CardFactory        = require("Game.Cards.CardFactory")
 local DevMode            = require("Game.Dev.DevMode")
+
+local HAND_LIMIT = 8 -- matches game:drawCard
 
 local ItemPickerUI = {}
 ItemPickerUI.__index = ItemPickerUI
@@ -15,6 +19,8 @@ local CATEGORY_COLORS = {
     turret  = { 0.0, 0.85, 1.0 },
     buff    = { 0.2, 0.9, 0.4 },
     upgrade = { 1.0, 0.8, 0.2 },
+    spell   = { 0.7, 0.4, 1.0 },
+    instant = { 1.0, 0.45, 0.6 },
 }
 
 local RARITIES = { "common", "uncommon", "rare", "epic", "legendary" }
@@ -45,7 +51,7 @@ function ItemPickerUI:new(game)
         obj.items[#obj.items + 1] = {
             item = item,
             label = labelFor(item),
-            category = item.iconCategory or "turret",
+            category = item.iconCategory or (CATEGORY_COLORS[item.type] and item.type) or "turret",
             rarity = item.rarity or rarity or "common",
         }
     end
@@ -140,6 +146,13 @@ function ItemPickerUI:select(entry)
         cfg.rarity = entry.rarity or "common"
         local rewardObj = Reward:new(cfg)
         game:placeBuilding(item.building, rewardObj)
+    elseif item.type == "spell" or item.type == "instant" then
+        if #game.hand >= HAND_LIMIT then
+            DevMode.notify("Hand is full")
+        else
+            game:addCardToHand(CardFactory.fromReward(item))
+            DevMode.notify("Added " .. entry.label .. " to hand")
+        end
     elseif item.type == "main_upgrade" then
         local mainLazer = game.base and game.base.mainLazer
         if mainLazer and mainLazer.applyUpgrade then

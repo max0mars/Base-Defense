@@ -1040,20 +1040,24 @@ function game:drawCard(amount)
             end
         end
         
-        local card = table.remove(self.drawPile, 1)
-        card.game = self
-        if card.effectManager then
-            card.effectManager.game = self
-            card.effectManager.owner = card
-            if self.playerEffectManager then
-                card.effectManager.parent = self.playerEffectManager
-            end
-            card.effectManager:recalculateStats()
-        end
-        table.insert(self.hand, card)
+        self:addCardToHand(table.remove(self.drawPile, 1))
         drawn = drawn + 1
     end
     return drawn
+end
+
+--- Puts a card in the hand, hooking its effects up to this battle.
+function game:addCardToHand(card)
+    card.game = self
+    if card.effectManager then
+        card.effectManager.game = self
+        card.effectManager.owner = card
+        if self.playerEffectManager then
+            card.effectManager.parent = self.playerEffectManager
+        end
+        card.effectManager:recalculateStats()
+    end
+    table.insert(self.hand, card)
 end
 
 function game:consumeCard(card)

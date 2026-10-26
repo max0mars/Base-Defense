@@ -171,15 +171,15 @@ SpellCardRegistry.Zap = Spell.new({
 -- Ice synergy spells (chill / freeze, see Chill.lua)
 -- -----------------------------------------------------------------------------
 
--- Blizzard: Acid Cloud-style lingering area that chills (capped at 2 stacks)
+-- Blizzard: Acid Cloud-style lingering area that slows and chills
 SpellCardRegistry.Blizzard = Spell.new({
     id = "spell_blizzard",
     name = "Blizzard",
-    description = "Creates a blizzard that deals ice damage over time and chills enemies inside, up to 2 stacks.",
+    description = "Creates a blizzard that deals ice damage over time and slows and chills enemies inside.",
     cost = 30,
     rarity = "Uncommon",
-    radius = 50,
-    dps = 10,
+    radius = 75,
+    dps = 5,
     customExecute = function(self, x, y, game)
         local AcidCloudVisual = require("Graphics.Animations.AcidCloudVisual")
         local r = self:getStat("radius")
@@ -192,8 +192,8 @@ SpellCardRegistry.Blizzard = Spell.new({
                 y = y,
                 radius = r,
                 dps = self:getStat("dps"),
-                chillPerSecond = 2,
-                chillCap = 2,
+                chillPerSecond = 0.5,
+                slow = 0.2,
                 duration = 5.0,
                 game = game
             }))

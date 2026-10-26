@@ -1,14 +1,17 @@
 -- BlizzardEffect.lua - Area left behind by the Blizzard spell (lives on the
 -- global enemyEffectManager, like AcidCloudEffect). Enemies inside take ice
--- damage over time and gain chill at `chillPerSecond`, but the blizzard never
--- pushes an enemy above `chillCap` stacks, so on its own it can't freeze.
+-- damage over time, gain chill at `chillPerSecond` (never above `chillCap`
+-- stacks, if set) and are slowed by `slow` on top of the chill.
 
 local Chill = require("Game.Effects.StatusEffects.Chill")
+local Slow = require("Game.Effects.StatusEffects.Slow")
 
 local BlizzardEffect = {}
 BlizzardEffect.__index = BlizzardEffect
 
 local TICK = 0.2
+-- Refreshed every tick while inside; lingers briefly after the enemy leaves
+local SLOW_DURATION = 0.3
 
 function BlizzardEffect:new(config)
     local instance = setmetatable({}, BlizzardEffect)
@@ -19,7 +22,8 @@ function BlizzardEffect:new(config)
     instance.radius = config.radius or 50
     instance.dps = config.dps or 10
     instance.chillPerSecond = config.chillPerSecond or 2
-    instance.chillCap = config.chillCap or 2
+    instance.chillCap = config.chillCap -- nil = no cap
+    instance.slow = config.slow or 0
     instance.game = config.game
     instance.tickTimer = 0
     return instance
@@ -42,6 +46,14 @@ function BlizzardEffect:onUpdate(dt, owner)
                 obj:takeDamage(self.dps * elapsed, "ice", nil, nil, { "aoe", "dot" })
                 if not obj.destroyed then
                     Chill.apply(obj, self.chillPerSecond * elapsed, { cap = self.chillCap })
+                    if self.slow > 0 then
+                        obj.effectManager:applyEffect(Slow:new({
+                            name = "blizzard_slow",
+                            duration = SLOW_DURATION,
+                            amount = self.slow,
+                            maxStacks = 1,
+                        }))
+                    end
                 end
             end
         end

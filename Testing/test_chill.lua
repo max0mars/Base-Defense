@@ -53,7 +53,7 @@ do
     assert(quarter:getStat("speed") < baseSpeed and quarter:getStat("speed") > half:getStat("speed"),
         "a quarter stack slows, but less than half a stack")
     -- Decay also eases the slow continuously, not one whole stack at a time.
-    tick(half, 0.3)
+    tick(half, Chill.DECAY_DELAY + 0.3)
     local eased = half:getStat("speed")
     assert(eased > baseSpeed * 0.9 ^ 0.5 and eased < baseSpeed, "slow eases off smoothly as chill decays")
 end
@@ -65,17 +65,29 @@ e.effectManager:applyEffect(SlowEffect:new({ name = "test_slow", duration = 10, 
 assert(near(e:getStat("speed"), baseSpeed * 0.9 ^ 2 * 0.5), "chill should combine with other slows")
 print("[PASS] Chill combines with other slows")
 
--- 3. Decays at 1 stack per 1.5 seconds and is removed at 0
+-- 3. Decays at 1 stack per 1.5 seconds (after the decay delay) and is removed at 0
 assert(near(Chill.DECAY_PER_SECOND, 1 / 1.5), "chill decays one stack every 1.5s")
 e = newBasic()
 Chill.apply(e, 2)
-tick(e, 1.5)
+tick(e, Chill.DECAY_DELAY + 1.5)
 assert(math.abs(Chill.getStacks(e) - 1) < 0.02, "expected ~1 stack after 1.5s, got " .. Chill.getStacks(e))
 tick(e, 1.6)
 assert(Chill.getStacks(e) == 0, "chill should be fully drained")
 assert(e.effectManager:getEffect(Chill.CHILL_NAME) == nil, "drained chill state should be removed")
 assert(near(e:getStat("speed"), baseSpeed), "speed should be restored after chill drains")
 print("[PASS] Chill decays at a fixed rate and clears")
+
+-- 3b. Each application pauses decay for DECAY_DELAY seconds
+e = newBasic()
+Chill.apply(e, 2)
+tick(e, Chill.DECAY_DELAY - 0.05)
+assert(near(Chill.getStacks(e), 2), "chill should not decay during the decay delay")
+Chill.apply(e, 1) -- re-applying restarts the delay
+tick(e, Chill.DECAY_DELAY - 0.05)
+assert(near(Chill.getStacks(e), 3), "re-applying chill should restart the decay delay")
+tick(e, 0.35)
+assert(Chill.getStacks(e) < 3, "chill should decay once the delay runs out")
+print("[PASS] Applying chill pauses decay")
 
 -- 4. Partial stacks accumulate and freeze at 5; stacks reset to 0
 e = newBasic()
@@ -88,17 +100,19 @@ assert(Chill.getStacks(e) == 0, "stacks should reset to 0 on freeze")
 assert(e:getStat("stunned", 0) > 0, "frozen should act as a stun")
 print("[PASS] Partial stacks freeze at threshold and reset")
 
--- 5. Immune to chill while frozen and thawing; thaw slows by 30%
+-- 5. Immune to chill while frozen and thawing; thaw slows by 50% for 2s
 Chill.apply(e, 3)
 assert(Chill.getStacks(e) == 0, "chill should not apply while frozen")
 tick(e, 1.55)
 assert(Chill.isThawing(e), "should be thawing after 1.5s")
 assert(e:getStat("stunned", 0) == 0, "thawing enemy should no longer be stunned")
-assert(near(e:getStat("speed"), baseSpeed * 0.7), "thawing should slow by 30%")
+assert(near(e:getStat("speed"), baseSpeed * 0.5), "thawing should slow by 50%")
 Chill.apply(e, 3)
 assert(Chill.getStacks(e) == 0, "chill should not apply while thawing")
-tick(e, 3)
-assert(not Chill.isThawing(e) and not Chill.isFrozen(e), "thaw should end after 3s")
+tick(e, 1.85)
+assert(Chill.isThawing(e), "thaw should still be running just before 2s")
+tick(e, 0.15)
+assert(not Chill.isThawing(e) and not Chill.isFrozen(e), "thaw should end after 2s")
 assert(near(e:getStat("speed"), baseSpeed), "speed restored after thaw")
 Chill.apply(e, 1)
 assert(near(Chill.getStacks(e), 1), "chill applies again after thawing")
@@ -151,7 +165,7 @@ local cannon = find("epic", "frostCannon")
 assert(cannon, "Frost Cannon should be an epic turret")
 assert(cannon.cost == 1 and cannon.pelletCount == 6 and cannon.damage == 12, "Cannon: 1 token, 6 x 12 dmg")
 assert(cannon.range == 420 and cannon.fireRate == 0.8, "Cannon: 420 range, 0.8/s")
-assert(near(cannon.firingArc.angle, math.rad(45) * 0.75), "Cannon: arc 25% narrower than 45 degrees")
+assert(near(cannon.firingArc.angle, math.rad(45 * 0.75 - 5)), "Cannon: arc 28.75 degrees")
 assert(cannon.hitEffects[1].amount == 0.5 and cannon.hitEffects[1].hitChance == 1, "Cannon: half a chill stack per pellet")
 -- Slowest pellet (speed x0.9) still reaches max range
 assert(cannon.bulletSpeed * 0.9 * cannon.lifespan >= cannon.range, "Cannon pellets must reach max range")
@@ -303,16 +317,17 @@ assert(Chill.getStacks(inArc) == 0, "ring should not have reached the enemy yet"
 stepMono(0.5)
 assert(Chill.getStacks(inArc) > 1.5, "ring should chill the enemy when it arrives")
 assert(Chill.getStacks(outOfArc) == 0, "enemies outside the arc are never chilled")
--- A stationary enemy settles into a 2 -> 0 sawtooth and never freezes.
+-- The decay delay leaves +0.2 chill per wave on a stationary enemy, so it builds
+-- up slowly rather than freezing quickly.
 local peak = 0
 for _ = 1, 10 do
     stepMono(1)
     peak = math.max(peak, Chill.getStacks(inArc))
-    assert(not Chill.isImmune(inArc), "a lone monolith should never freeze a stationary enemy")
+    assert(not Chill.isImmune(inArc), "a lone monolith should not freeze a stationary enemy within 12s")
 end
-assert(peak <= 2.05, string.format("chill should not build up past one wave (peak %.2f)", peak))
+assert(peak > 2 and peak < 3, string.format("chill should build up slowly past one wave (peak %.2f)", peak))
 assert(inArc.hp == inArc.maxHp, "monolith deals no damage")
-print(string.format("[PASS] Glacial Monolith (peak chill %.2f, never freezes alone)", peak))
+print(string.format("[PASS] Glacial Monolith (peak chill %.2f, builds up slowly)", peak))
 
 -- Rings aim at the enemy but stay fully inside the arc.
 do
@@ -355,58 +370,7 @@ do
 end
 print("[PASS] Glacial Monolith rings aim within the arc")
 
--- 12. Frost Trap: same card, pulses 1 chill every 1.2s only while enemies are in range
 local PassiveIndex = require("Buildings.PassiveIndex")
-local trapEntry
-for _, rarity in ipairs({ "common", "uncommon", "rare", "epic", "legendary" }) do
-    for _, entry in ipairs(PassiveIndex[rarity] or {}) do
-        if entry.id == "frostTrap" then trapEntry = entry end
-    end
-end
-assert(trapEntry and trapEntry.cost == 1, "Frost Trap keeps its card and cost")
-
-local trapGame = { objects = {}, seenEnemies = {}, base = { x = 0, w = 100 }, pulses = 0 }
-function trapGame:addObject(obj) table.insert(self.objects, obj); obj.game = self end
-function trapGame:EnemyDied() end
-function trapGame:spawnDamageNumber() end
-function trapGame:spawnExpandingCircle() self.pulses = self.pulses + 1 end
-local trap = trapEntry.building:new({ game = trapGame })
-assert(trap.range == 200, "Frost Trap keeps its 200 radius")
-trap.slot = 1
-trap.getCenterPosition = function() return 0, 100 end
-
-local tt = 0
-local near1 = Enemy:new({ game = trapGame, x = 150, y = 100, name = "Basic", maxHp = 100000 })
-local function stepTrap(seconds)
-    local stop = tt + seconds
-    while tt < stop do
-        for _, o in ipairs(trapGame.objects) do o.effectManager:update(dt) end
-        trap:update(dt)
-        tt = tt + dt
-    end
-end
-stepTrap(2)
-assert(trapGame.pulses == 0, "no pulses while nothing is in range")
-trapGame:addObject(near1)
-stepTrap(dt)
-assert(trapGame.pulses == 1 and near(Chill.getStacks(near1), 1), "pulses immediately when an enemy enters range")
-stepTrap(1.1)
-assert(trapGame.pulses == 1, "waits 1.2s between pulses")
-stepTrap(0.15)
-assert(trapGame.pulses == 2, "pulses again after 1.2s")
--- Left as-is when decay slowed to 1 stack / 1.5s: 1 chill per 1.2s now slowly
--- builds, so a lone trap freezes a stationary enemy eventually.
-assert(not Chill.isImmune(near1) and Chill.getStacks(near1) < 2, "two pulses don't freeze")
-
--- As a passive it is never registered as a battlefield obstacle (no path blocking).
-local BattlefieldGrid = require("Game.Core.BattlefieldGrid")
-local fakeGrid = { buildings = {}, game = trapGame, recalculatePaths = function() end,
-    updateReservations = function() error("trap must not reserve slots") end }
-local placed = trapEntry.building:new({ game = trapGame })
-placed.buildGrid = { width = 10, height = 10, cellSize = 40, x = 0, y = 100 }
-BattlefieldGrid.addBuilding(fakeGrid, placed, 5)
-assert(next(fakeGrid.buildings) == nil, "Frost Trap must not occupy battlefield obstacle slots")
-print("[PASS] Frost Trap reworked (pulses on demand, never blocks)")
 
 -- 13. Cold Tactics: rare, cost 1, 5 slots (not the left column), +10%/stack, frozen = max
 local ctEntry
@@ -616,23 +580,38 @@ local function runFor(g, seconds)
     end
 end
 
--- Blizzard: 2 chill/s, never above 2 stacks, deals ice damage over time
+-- Blizzard: 0.5 chill/s with no cap, a 20% slow on top, 5 ice DPS
 do
     local g = spellGame()
     local inside, outside = enemyAt(g, 0, 100), enemyAt(g, 300, 100)
+    local walker = Enemy:new({ game = g, x = 10, y = 100, name = "Grunt" }) -- real base speed
+    g:addObject(walker)
+    local walkerSpeed = walker:getStat("speed")
     SpellCardRegistry.Blizzard:execute(0, 100, g)
     runFor(g, 0.5)
-    -- Two 0.2s ticks so far: 0.8 chill applied, minus ~0.25 decay
-    assert(Chill.getStacks(inside) > 0.45 and Chill.getStacks(inside) <= 1.01, "Blizzard chills at ~2/s (minus decay)")
-    runFor(g, 3)
-    assert(Chill.getStacks(inside) <= 2 + 1e-6 and Chill.getStacks(inside) > 1.7, "Blizzard holds chill at the 2-stack cap")
-    assert(not Chill.isImmune(inside), "Blizzard alone never freezes")
-    assert(inside.hp < inside.maxHp, "Blizzard deals damage over time")
-    assert(Chill.getStacks(outside) == 0, "Blizzard only affects enemies inside")
-    -- The cap doesn't strip chill from other sources
-    Chill.apply(inside, 2)
-    runFor(g, 0.2)
-    assert(Chill.getStacks(inside) > 3, "Blizzard doesn't reduce chill above its cap")
+    -- Two 0.2s ticks so far: 0.2 chill applied (ticks outpace the decay delay, so no decay)
+    assert(Chill.getStacks(inside) > 0.15 and Chill.getStacks(inside) <= 0.26, "Blizzard chills at ~0.5/s")
+    local stacks = Chill.getStacks(walker)
+    assert(near(walker:getStat("speed"), walkerSpeed * 0.9 ^ stacks * 0.8),
+        "Blizzard slows by 20% on top of its chill")
+    assert(Chill.getStacks(outside) == 0 and outside.effectManager:getEffect("blizzard_slow") == nil,
+        "Blizzard only affects enemies inside")
+    runFor(g, 4.5)
+    -- ~2.5 stacks over the full 5s: not enough to freeze on its own
+    assert(Chill.getStacks(inside) > 2.3 and not Chill.isImmune(inside), "Blizzard alone doesn't freeze in one cast")
+    local lost = inside.maxHp - inside.hp
+    assert(lost > 23 and lost < 27, string.format("Blizzard deals ~5 DPS (lost %.1f over 5s)", lost))
+    runFor(g, 0.5)
+    assert(walker.effectManager:getEffect("blizzard_slow") == nil, "the slow wears off once the blizzard ends")
+end
+-- No cap: Blizzard tops a heavily chilled enemy up to a freeze
+do
+    local g = spellGame()
+    local en = enemyAt(g, 0, 100)
+    Chill.apply(en, 4.85)
+    SpellCardRegistry.Blizzard:execute(0, 100, g)
+    runFor(g, 0.7)
+    assert(Chill.isFrozen(en), "Blizzard's chill has no cap")
 end
 assert(SpellCardRegistry.Blizzard.rarity == "Uncommon", "Blizzard is uncommon")
 print("[PASS] Blizzard")

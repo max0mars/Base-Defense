@@ -28,7 +28,6 @@ Rare
 - Missile Launcher [Buildings.Turrets.MissileLauncher]: Wouldn't want to get in the way of one of these.
 - Plasma Scattershot [Buildings.Turrets.PlasmaScattershot]: Fires plamsa rounds at high speed but has limited ammo. Reloads slowly.
 - CSR-8 Sequence [Buildings.Turrets.SequenceTurret]: Shoots faster the longer it stays locked onto a target.
-- Frost Trap [Buildings.Passives.FrostTrap]: Pulses while enemies are nearby, applying a stack of chill every 1.2 seconds.
 - The Hook [Buildings.Turrets.HookTurret]: Fires a heavy shot that stuns enemies in their tracks.
 
 Epic
