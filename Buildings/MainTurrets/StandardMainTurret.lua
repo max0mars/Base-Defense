@@ -9,6 +9,9 @@ local RewardIndex = require("Game.Rewards.RewardIndex")
 local StandardMainTurret = setmetatable({}, { __index = Turret })
 StandardMainTurret.__index = StandardMainTurret
 
+-- Main turrets draw their own circular range; keep them out of the ArcOverlay
+StandardMainTurret.ownArcDisplay = true
+
 function StandardMainTurret:new(config)
     config = config or {}
     config.types = config.types or {}
