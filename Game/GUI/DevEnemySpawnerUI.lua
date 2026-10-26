@@ -1,16 +1,19 @@
 -- DevEnemySpawnerUI.lua: Developer-mode panel listing every enemy in the game.
--- Click one to spawn it at the right edge of the battlefield right away
--- (shift+click spawns several). Stays open so you can build a mix; the battle
--- is frozen while it's open. Toggle with F11, or click outside to close.
+-- Click one to queue it (shift+click queues several). Stays open so you can build
+-- a mix; the battle is frozen while it's open. Once closed (F11 or click outside),
+-- the queue is released one enemy at a time, spaced further apart than a real
+-- wave (DELAY_MULT), so large groups don't spawn on top of each other.
 
 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
+local SpawningUtils = require("Game.Spawning.SpawningUtils")
 local DevMode       = require("Game.Dev.DevMode")
 local Cursor        = require("Game.GUI.Cursor")
 
 local DevEnemySpawnerUI = {}
 DevEnemySpawnerUI.__index = DevEnemySpawnerUI
 
-DevEnemySpawnerUI.BULK = 5 -- Enemies spawned per shift+click
+DevEnemySpawnerUI.BULK = 5 -- Enemies queued per shift+click
+DevEnemySpawnerUI.DELAY_MULT = 2 -- Queued enemies are spaced this many times further apart than in a wave
 
 -- Layout constants.
 local NUM_COLS = 3
@@ -22,13 +25,15 @@ local PAD      = 14
 
 function DevEnemySpawnerUI:new(game)
     local obj = setmetatable({ game = game, isActive = false }, self)
-    obj.spawned = {} -- Count per enemy id, shown on each cell
+    obj.queued = {}  -- Count per enemy id queued since the panel opened, shown on each cell
+    obj.queue = {}   -- Registry entries waiting to spawn, in order
+    obj.timer = 0    -- Time until the next queued enemy spawns
     return obj
 end
 
 function DevEnemySpawnerUI:open()
     self.isActive = true
-    self.spawned = {}
+    self.queued = {}
 end
 
 function DevEnemySpawnerUI:close()
@@ -62,16 +67,37 @@ function DevEnemySpawnerUI:cellRect(i)
     return px + PAD + col * (CELL_W + GAP), py + TITLE_H + row * (CELL_H + GAP), CELL_W, CELL_H
 end
 
---- Spawns `count` of `enemy` (a registry entry) on the battlefield.
-function DevEnemySpawnerUI:spawn(enemy, count)
+--- Queues `count` of `enemy` (a registry entry) to spawn.
+function DevEnemySpawnerUI:enqueue(enemy, count)
     for _ = 1, count do
-        self.game.WaveSpawner:spawnEnemy(enemy.class)
+        table.insert(self.queue, enemy)
     end
-    self.spawned[enemy.id] = (self.spawned[enemy.id] or 0) + count
-    DevMode.notify("Spawned " .. count .. "x " .. enemy.id)
+    self.queued[enemy.id] = (self.queued[enemy.id] or 0) + count
+    DevMode.notify("Queued " .. count .. "x " .. enemy.id .. " (" .. #self.queue .. " waiting)")
 end
 
-function DevEnemySpawnerUI:update(dt) end
+function DevEnemySpawnerUI:clearQueue()
+    self.queue = {}
+    self.timer = 0
+end
+
+--- Releases queued enemies one at a time, spaced like a wave. Receives dt = 0
+--- while the battle is frozen (including while this panel is open).
+function DevEnemySpawnerUI:update(dt)
+    if dt <= 0 or #self.queue == 0 then return end
+    self.timer = self.timer - dt
+    while self.timer <= 0 and #self.queue > 0 do
+        local enemy = table.remove(self.queue, 1)
+        self.game.WaveSpawner:spawnEnemy(enemy.class)
+        local nextEnemy = self.queue[1]
+        if nextEnemy then
+            local globalDiff = _G.PersistentState and _G.PersistentState.globalDifficulty or 1
+            self.timer = self.timer + SpawningUtils.getScaledDelay(nextEnemy.baseSpawnDelay or 1.0, globalDiff) * self.DELAY_MULT
+        else
+            self.timer = 0
+        end
+    end
+end
 
 function DevEnemySpawnerUI:draw()
     if not self.isActive then return end
@@ -91,7 +117,7 @@ function DevEnemySpawnerUI:draw()
     love.graphics.setColor(1, 0.55, 0.3, 1)
     love.graphics.printf("SPAWN ENEMIES", px, py + 8, pw, "center")
     love.graphics.setColor(0.65, 0.6, 0.6, 1)
-    love.graphics.printf("click: spawn 1   ·   shift+click: spawn " .. self.BULK .. "   ·   F11 or click outside to close",
+    love.graphics.printf("click: queue 1   ·   shift+click: queue " .. self.BULK .. "   ·   close (F11 / click outside) to send",
         px, py + 24, pw, "center")
 
     for i, enemy in ipairs(self:getEnemies()) do
@@ -114,8 +140,8 @@ function DevEnemySpawnerUI:draw()
         love.graphics.print(enemy.id, x + 22, textY)
         love.graphics.setColor(0.6, 0.6, 0.65, 1)
         local right = "T" .. (enemy.tier or 0)
-        if self.spawned[enemy.id] then
-            right = "x" .. self.spawned[enemy.id] .. "   " .. right
+        if self.queued[enemy.id] then
+            right = "x" .. self.queued[enemy.id] .. "   " .. right
         end
         love.graphics.printf(right, x, textY, w - 8, "right")
     end
@@ -137,7 +163,7 @@ function DevEnemySpawnerUI:mousepressed(x, y, button)
         local cx, cy, cw, ch = self:cellRect(i)
         if x >= cx and x <= cx + cw and y >= cy and y <= cy + ch then
             local bulk = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
-            self:spawn(enemy, bulk and self.BULK or 1)
+            self:enqueue(enemy, bulk and self.BULK or 1)
             break
         end
     end
