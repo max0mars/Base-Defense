@@ -364,7 +364,10 @@ Chill.apply(e, 2)
 assert(Chill.isFrozen(e) and near(Chill.getDamageMultiplier(e, perStack), 1.5), "frozen counts as 5 stacks (x1.5)")
 local frozenBoss = Tank:new({ game = mockGame, x = 100, y = 100, name = "Tank" })
 Chill.apply(frozenBoss, 10)
-assert(near(Chill.getDamageMultiplier(frozenBoss, perStack), 2.0), "frozen boss counts as 10 stacks (x2)")
+assert(near(Chill.getDamageMultiplier(frozenBoss, perStack), 1.5), "frozen boss is capped at +50%")
+local chilledBoss = Tank:new({ game = mockGame, x = 100, y = 100, name = "Tank" })
+Chill.apply(chilledBoss, 8)
+assert(near(Chill.getDamageMultiplier(chilledBoss, perStack), 1.5), "a boss above 5 stacks is also capped at +50%")
 -- Bonuses from several sources add together (Ballista + Cold Tactics).
 local both = { ballista.damageVsChill, { perStack = 0.1 } }
 assert(near(Chill.getDamageMultiplier(e, both), 1 + 1.0 + 0.5), "Ballista and Cold Tactics bonuses add")
@@ -566,6 +569,7 @@ do
     runFor(g, 0.2)
     assert(Chill.getStacks(inside) > 3, "Blizzard doesn't reduce chill above its cap")
 end
+assert(SpellCardRegistry.Blizzard.rarity == "Uncommon", "Blizzard is uncommon")
 print("[PASS] Blizzard")
 
 -- Flash Freeze: freezes any chilled enemy in the area; thawing enemies stay immune

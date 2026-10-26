@@ -141,8 +141,9 @@ end
 
 --- Extra damage fraction against a target from one chill-damage bonus.
 -- Two kinds of bonus:
---   { perStack = x }             x per chill stack; frozen counts as max stacks
---                                (the freeze threshold).
+--   { perStack = x }             x per chill stack; frozen counts as max stacks.
+--                                Counts at most FREEZE_STACKS, so bosses (which
+--                                need more stacks) cap at the same bonus.
 --   { chilledMax = x, frozen = y } scales 0..x with progress toward freezing (so
 --                                bosses, which need more stacks, scale the same
 --                                way); frozen targets always get y.
@@ -150,7 +151,8 @@ function Chill.getDamageBonus(target, bonus)
     local threshold = Chill.getFreezeThreshold(target)
     local frozen = Chill.isFrozen(target)
     if bonus.perStack then
-        local stacks = frozen and threshold or math.min(Chill.getStacks(target), threshold)
+        local maxStacks = Chill.FREEZE_STACKS
+        local stacks = frozen and maxStacks or math.min(Chill.getStacks(target), maxStacks)
         return bonus.perStack * stacks
     end
     if frozen then
