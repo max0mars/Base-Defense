@@ -144,10 +144,10 @@ function Card:getCardDraw()
 
         local tier = self.tier or 1
         local isUpgradable = self:isUpgradable()
-        local tierBonusRatio = isUpgradable and ((tier - 1) * CardUpgradeConfig.BONUS_PER_TIER) or 0
-        local tierDmgBonus = dmgBars * tierBonusRatio
-        local tierRngBonus = rngBars * tierBonusRatio
-        local tierFrBonus = frBars * tierBonusRatio
+        local displayTier = isUpgradable and tier or 1
+        local tierDmgBonus = dmgBars * (CardUpgradeConfig.getTierMultiplier("damage", displayTier) - 1)
+        local tierRngBonus = rngBars * (CardUpgradeConfig.getTierMultiplier("range", displayTier) - 1)
+        local tierFrBonus = frBars * (CardUpgradeConfig.getTierMultiplier("fireRate", displayTier) - 1)
 
         local data = {
             name = self.name,
@@ -275,15 +275,34 @@ function Card:getTier()
     return self.tier or 1
 end
 
+--- Upgrade material id for this card's turret (see MaterialRegistry).
+function Card:getUpgradeMaterial()
+    local MaterialRegistry = require("Game.Cards.MaterialRegistry")
+    local payload = self.payload or {}
+    local source = payload.config
+    if not (source and (source.types or source.damageType or source.upgradeMaterial)) and self.id then
+        -- Payload lacks type info: fall back to the reward index entry for this card
+        local success, rewardIndex = pcall(require, "Game.Rewards.RewardIndex")
+        if success and rewardIndex then
+            for _, category in pairs(rewardIndex) do
+                if type(category) == "table" then
+                    for _, reward in ipairs(category) do
+                        if reward.id == self.id then source = reward break end
+                    end
+                end
+            end
+        end
+    end
+    return MaterialRegistry.resolve(source)
+end
+
 function Card:getNextUpgradeCost()
     if not self:isUpgradable() then return nil end
     local currentTier = self.tier or 1
     if currentTier >= CardUpgradeConfig.MAX_TIER then return nil end
     local nextTier = currentTier + 1
-    if self.upgradeCosts and self.upgradeCosts[nextTier] then
-        return self.upgradeCosts[nextTier]
-    end
-    return CardUpgradeConfig.DEFAULT_COSTS[nextTier]
+    local cost = (self.upgradeCosts and self.upgradeCosts[nextTier]) or CardUpgradeConfig.DEFAULT_COSTS[nextTier]
+    return CardUpgradeConfig.resolveCost(cost, self:getUpgradeMaterial())
 end
 
 function Card:canUpgrade()
@@ -455,20 +474,22 @@ function Card:execute(game)
                 end
             end
 
-            -- Apply tier scaling (flat 20% per tier above Tier I)
+            -- Apply tier scaling (flat per-stat bonus per tier above Tier I, see TIER_BONUS)
             -- This sets the turret's BASE values so in-battle buffs (e.g. +50% damage)
             -- multiply the upgraded base value (e.g. Tier 2: 120% * 1.5).
             if self:isUpgradable() and self.tier and self.tier > 1 then
-                local multiplier = 1.0 + (self.tier - 1) * CardUpgradeConfig.BONUS_PER_TIER
-                if config.damage then config.damage = config.damage * multiplier end
+                local dmgMult = CardUpgradeConfig.getTierMultiplier("damage", self.tier)
+                local rangeMult = CardUpgradeConfig.getTierMultiplier("range", self.tier)
+                local rateMult = CardUpgradeConfig.getTierMultiplier("fireRate", self.tier)
+                if config.damage then config.damage = config.damage * dmgMult end
                 if config.range then
-                    config.range = config.range * multiplier
+                    config.range = config.range * rangeMult
                     -- Hidden: stretch bullet lifespan with range so shots still reach max range
-                    config.lifespan = (config.lifespan or 1) * multiplier
+                    config.lifespan = (config.lifespan or 1) * rangeMult
                 end
-                if config.fireRate then config.fireRate = config.fireRate * multiplier end
-                if config.splitDamage then config.splitDamage = config.splitDamage * multiplier end
-                if config.explosionDamage then config.explosionDamage = config.explosionDamage * multiplier end
+                if config.fireRate then config.fireRate = config.fireRate * rateMult end
+                if config.splitDamage then config.splitDamage = config.splitDamage * dmgMult end
+                if config.explosionDamage then config.explosionDamage = config.explosionDamage * dmgMult end
             end
             config.tier = self.tier or 1
             

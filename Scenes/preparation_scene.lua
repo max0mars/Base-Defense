@@ -11,6 +11,7 @@ local RewardPool = require("Game.Rewards.RewardPool")
 local RewardIndex = require("Game.Rewards.RewardIndex")
 local Card = require("Game.Cards.Card")
 local CardFactory = require("Game.Cards.CardFactory")
+local MaterialRegistry = require("Game.Cards.MaterialRegistry")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local SettingsPanel = require("Game.GUI.SettingsPanel")
@@ -59,7 +60,7 @@ function preparation_scene:load(isPostBattle)
     self.arrowCursor = love.mouse.getSystemCursor("arrow")
     
     _G.PersistentState = _G.PersistentState or {}
-    _G.PersistentState.materials = _G.PersistentState.materials or { ["Upgrade Material"] = 5, ["Card Removal"] = 2 }
+    _G.PersistentState.materials = _G.PersistentState.materials or { ["Card Removal"] = 2 }
     if _G.PersistentState.cardRemovals == nil then
         _G.PersistentState.cardRemovals = (_G.PersistentState.materials and _G.PersistentState.materials["Card Removal"]) or 2
     end
@@ -854,10 +855,8 @@ local function getCardNextUpgradeCost(c)
     local currentTier = getCardTier(c)
     if currentTier >= CardUpgradeConfig.MAX_TIER then return nil end
     local nextTier = currentTier + 1
-    if c.upgradeCosts and c.upgradeCosts[nextTier] then
-        return c.upgradeCosts[nextTier]
-    end
-    return CardUpgradeConfig.DEFAULT_COSTS[nextTier]
+    local cost = (c.upgradeCosts and c.upgradeCosts[nextTier]) or CardUpgradeConfig.DEFAULT_COSTS[nextTier]
+    return CardUpgradeConfig.resolveCost(cost, nil)
 end
 
 local function canUpgradeCard(c)
@@ -961,11 +960,19 @@ function preparation_scene:drawUpgradeWindow()
     love.graphics.printf("UPGRADE CARDS", 100, 55, VIRTUAL_WIDTH - 200, "center")
     
     local cash = CardUpgradeConfig.Economy.getResource("cash") or CardUpgradeConfig.Economy.getResource("gold")
-    local mats = CardUpgradeConfig.Economy.getResource("Upgrade Material")
     love.graphics.setColor(1, 0.85, 0.2, 1)
     love.graphics.printf("Cash: $" .. cash, 120, 55, 200, "left")
-    love.graphics.setColor(0.3, 0.85, 1, 1)
-    love.graphics.printf("Upgrade Material: " .. mats, VIRTUAL_WIDTH - 320, 55, 200, "right")
+    -- Material balances, right-aligned in one row (every material in the registry)
+    local matX = VIRTUAL_WIDTH - 120
+    for i = #MaterialRegistry.list, 1, -1 do
+        local mat = MaterialRegistry.list[i]
+        local text = MaterialRegistry.getShortName(mat.id) .. ": " .. CardUpgradeConfig.Economy.getResource(mat.id)
+        local w = love.graphics.getFont():getWidth(text)
+        matX = matX - w
+        love.graphics.setColor(mat.color)
+        love.graphics.print(text, matX, 55)
+        matX = matX - 16
+    end
 
     self.upgradeButtons = {}
 
@@ -1048,7 +1055,7 @@ function preparation_scene:drawUpgradeWindow()
                 local nextTier = currentTier + 1
                 local nextTierRoman = CardUpgradeConfig.TIER_NAMES[nextTier] or tostring(nextTier)
                 
-                -- Display exact modular costs (Gold and Upgrade Material or specific items)
+                -- Display exact modular costs (Gold and the card's material or specific items)
                 local costParts = {}
                 if cost then
                     if cost.gold or cost.cash then
@@ -1056,11 +1063,17 @@ function preparation_scene:drawUpgradeWindow()
                     end
                     for resName, amount in pairs(cost) do
                         if resName ~= "gold" and resName ~= "cash" then
-                            table.insert(costParts, amount .. " " .. resName)
+                            table.insert(costParts, amount .. " " .. MaterialRegistry.getName(resName))
                         end
                     end
                 end
                 local costStr = #costParts > 0 and table.concat(costParts, ", ") or "Free"
+                -- Note when Universal Essence will cover a material shortfall
+                local plan = canAfford and CardUpgradeConfig.Economy.planSpend(cost)
+                local universalUsed = plan and plan[MaterialRegistry.UNIVERSAL]
+                if universalUsed and not (cost and cost[MaterialRegistry.UNIVERSAL]) then
+                    costStr = costStr .. " (" .. universalUsed .. " Universal)"
+                end
                 
                 local isBtnHover = mx >= cx and mx <= cx + cardW and my >= btnY and my <= btnY + btnH
                 if isBtnHover then Cursor.wantHand = true end
@@ -1143,15 +1156,20 @@ function preparation_scene:draw()
     love.graphics.setColor(0.8, 0.2, 0.8, 1)
     love.graphics.printf("Shop Level: " .. shopLevel, 20, 70, 200, "left")
     
-    local upgradeMats = (_G.PersistentState and _G.PersistentState.materials and _G.PersistentState.materials["Upgrade Material"]) or 0
-    love.graphics.setColor(0.3, 0.85, 1, 1)
-    love.graphics.printf("Materials: " .. upgradeMats, 20, 115, 200, "left")
-    
     local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
     local removals = CardUpgradeConfig.Economy.getCardRemovals()
-    self:drawTrashIcon(150, 122, 18, {0.9, 0.35, 0.35, 1})
+    self:drawTrashIcon(25, 122, 18, {0.9, 0.35, 0.35, 1})
     love.graphics.setColor(0.9, 0.45, 0.45, 1)
-    love.graphics.printf("Removals: " .. removals, 165, 115, 150, "left")
+    love.graphics.printf("Removals: " .. removals, 40, 115, 150, "left")
+
+    -- Upgrade materials (every material in the registry), under the Scouting Report button
+    local matY = 75
+    for _, mat in ipairs(MaterialRegistry.list) do
+        love.graphics.setColor(mat.color)
+        love.graphics.printf(mat.name .. ": " .. CardUpgradeConfig.Economy.getResource(mat.id),
+            VIRTUAL_WIDTH - 200, matY, 180, "left")
+        matY = matY + 20
+    end
     
     -- Draw XP circles
     if shopLevel < 10 then

@@ -27,6 +27,7 @@ local EffectManager      = require("Game.Effects.EffectManager")
 local GUIManager         = require("Game.GUI.GUIManager")
 local Layout             = require("Game.GUI.Layout")
 local Cursor             = require("Game.GUI.Cursor")
+local ArcOverlay         = require("Game.GUI.ArcOverlay")
 local EnemyRegistry      = require("Game.Spawning.EnemyRegistry")
 local enemy              = require("Enemies.Enemy") -- Note: Check if needed here or just in Spawner
 local ParticleExplosion = require("Graphics.Animations.ParticleExplosion")
@@ -335,6 +336,14 @@ function game:draw()
         self.WaveSpawner:draw()
     end
 
+    -- 1b. Firing arcs, coloured by overlap count (under entities)
+    local arcs = {}
+    for _, obj in ipairs(self.objects) do
+        obj.arcDrawnByOverlay = ArcOverlay.wants(obj) or nil
+        if obj.arcDrawnByOverlay then table.insert(arcs, obj) end
+    end
+    ArcOverlay.draw(arcs, self.ground.x, self.ground.y, self.ground.w, self.ground.h)
+
     -- 2. Entities
     for _, obj in ipairs(self.objects) do
         if not obj.destroyed and obj.draw then
@@ -600,8 +609,8 @@ end
 function game:getMaxTokens()
     local max = self.maxTokens or 3
     for _, obj in ipairs(self.objects) do
-        if obj.name == "Bank" and not obj.destroyed then
-            max = max + 1
+        if obj.name == "Bank" and not obj.destroyed and obj.getTokenBonus then
+            max = max + obj:getTokenBonus()
         end
     end
     return max

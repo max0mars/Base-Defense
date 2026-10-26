@@ -423,25 +423,30 @@ function Turret:draw(drawx, drawy)
 end
 
 function Turret:drawFiringArc(drawx, drawy, alpha)
-    drawx = drawx or self.x
-    drawy = drawy or self.y
+    -- The game's ArcOverlay already drew this arc (colour-coded by overlap count)
+    if self.arcDrawnByOverlay then return end
+
     alpha = alpha or 0.3
     love.graphics.setColor(0.5, 0.5, 0.5, alpha) -- Grey with transparency
-    
+    self:drawFiringArcShape(drawx, drawy)
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color
+end
+
+--- Fills the firing arc's shape in the current colour (also used as a stencil mask).
+function Turret:drawFiringArcShape(drawx, drawy)
+    if not drawx or not drawy then
+        drawx, drawy = self.x, self.y
+        if self.getCenterPosition then
+            drawx, drawy = self:getCenterPosition()
+        end
+    end
+
     -- Calculate arc bounds using firing arc direction
     local startAngle = self.firingArc.direction - self.firingArc.angle / 2
     local endAngle = self.firingArc.direction + self.firingArc.angle / 2
-    
-    -- Draw the firing arc as a sector
-    if self.firingArc.minRange > 0 then
-        -- Draw arc with inner and outer radius
-        self:drawArcSector(drawx, drawy, self.firingArc.minRange, self:getStat("range"), startAngle, endAngle)
-    else
-        -- Draw simple arc from center
-        self:drawArcSector(drawx, drawy, 0, self:getStat("range"), startAngle, endAngle)
-    end
-    
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color
+
+    -- Draw the firing arc as a sector (with an inner radius if it has a minimum range)
+    self:drawArcSector(drawx, drawy, self.firingArc.minRange or 0, self:getStat("range"), startAngle, endAngle)
 end
 
 function Turret:drawArcSector(x, y, innerRadius, outerRadius, startAngle, endAngle)

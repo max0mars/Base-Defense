@@ -34,8 +34,8 @@ _G.VIRTUAL_WIDTH = 1280
 _G.VIRTUAL_HEIGHT = 720
 _G.Cursor = { wantHand = false }
 _G.PersistentState = {
-    cash = 1000,
-    materials = { ["Upgrade Material"] = 20 },
+    cash = 2000, -- Tier I -> V costs 955 gold, leave room for the custom-cost card test
+    materials = { scrap = 20 },
     deck = nil
 }
 
@@ -78,22 +78,23 @@ assert(cd1.firerateBarsBonus == 0, "Tier 1 firerateBarsBonus should be 0")
 
 -- 3. Test modular cost querying
 local nextCost = card:getNextUpgradeCost()
-assert(nextCost.gold == 50 or nextCost.cash == 50, "Tier 2 upgrade cost should require 50 gold")
-assert(nextCost["Upgrade Material"] == 1, "Tier 2 upgrade cost should require 1 Upgrade Material")
+assert(nextCost.gold == 30 or nextCost.cash == 30, "Tier 2 upgrade cost should require 30 gold")
+assert(nextCost.scrap == 1, "Tier 2 upgrade cost should require 1 Scrap (Sentry is a normal gun)")
+assert(nextCost.material == nil, "Material placeholder should be resolved to a real material")
 
 -- 4. Test sequential upgrading and economy deduction
 local canUp, _, cost = card:canUpgrade()
 assert(canUp == true, "Card should be upgradeable with sufficient funds")
 
 local initialCash = _G.PersistentState.cash
-local initialMats = _G.PersistentState.materials["Upgrade Material"]
+local initialMats = _G.PersistentState.materials.scrap
 
 local success, newTier = card:upgrade()
 assert(success == true, "Upgrade to Tier 2 should succeed")
 assert(newTier == 2, "New tier should be 2")
 assert(card:getTier() == 2, "card:getTier() should return 2")
-assert(_G.PersistentState.cash == initialCash - 50, "50 gold should be deducted")
-assert(_G.PersistentState.materials["Upgrade Material"] == initialMats - 1, "1 Upgrade Material should be deducted")
+assert(_G.PersistentState.cash == initialCash - 30, "30 gold should be deducted")
+assert(_G.PersistentState.materials.scrap == initialMats - 1, "1 Scrap should be deducted")
 
 -- 5. Test Tier 2 stat scaling: flat 20% stat increase
 local cd2 = card:getCardDraw()
@@ -164,8 +165,10 @@ local turretInstance = card:execute(dummyGame)
 assert(turretInstance ~= nil, "Turret should be instantiated")
 -- Base damage was 10. Tier 5 (+80%) should be 18!
 assert(math.abs(turretInstance.damage - 18) < 0.001, "Turret damage should scale by +80% (10 -> 18), got " .. tostring(turretInstance.damage))
--- Base range was 400. Tier 5 (+80%) should be 720!
-assert(math.abs(turretInstance.range - 720) < 0.001, "Turret range should scale by +80% (400 -> 720), got " .. tostring(turretInstance.range))
+-- Base range was 400. Tier 5 (+15% range per tier = +60%) should be 640!
+assert(math.abs(turretInstance.range - 640) < 0.001, "Turret range should scale by +60% (400 -> 640), got " .. tostring(turretInstance.range))
+-- Base fireRate was 1.0. Tier 5 (+10% fire rate per tier = +40%) should be 1.4!
+assert(math.abs(turretInstance.fireRate - 1.4) < 0.001, "Turret fireRate should scale by +40% (1.0 -> 1.4), got " .. tostring(turretInstance.fireRate))
 
 -- 10. Test preparation_scene Upgrade Window UI logic
 local prepScene = require("Scenes.preparation_scene")
@@ -325,7 +328,7 @@ local buffTurretCard = Card:new({
 
 -- Upgrade to Tier 2 (+20% base stat increase)
 CardUpgradeConfig.Economy.addResource("gold", 500)
-CardUpgradeConfig.Economy.addResource("Upgrade Material", 10)
+for _, mat in ipairs(require("Game.Cards.MaterialRegistry").getTyped()) do CardUpgradeConfig.Economy.addResource(mat.id, 10) end
 local canUpBuffTurret = buffTurretCard:canUpgrade()
 assert(canUpBuffTurret == true, "Buff turret card should be upgradable")
 buffTurretCard:upgrade()
@@ -361,8 +364,8 @@ assert(math.abs(buffedDamage - 18) < 0.001,
     "Tier 2 turret buffed with +50% damage must equal 120% * 1.5 = 18 (NOT 17 additive), got " .. tostring(buffedDamage))
 
 -- Also verify fireRate base value and compounding:
--- Base fireRate was 1.0, Tier 2 is 1.20
-assert(math.abs(turretT2.fireRate - 1.20) < 0.001, "Turret base fireRate should be 1.20")
+-- Base fireRate was 1.0, Tier 2 is 1.10 (+10% fire rate per tier)
+assert(math.abs(turretT2.fireRate - 1.10) < 0.001, "Turret base fireRate should be 1.10")
 turretT2.effectManager:applyEffect({
     name = "FireRateOverclock",
     statModifiers = {
@@ -370,10 +373,10 @@ turretT2.effectManager:applyEffect({
     }
 })
 turretT2.effectManager:recalculateStats()
--- 1.20 * 1.25 = 1.50
+-- 1.10 * 1.25 = 1.375
 local buffedFireRate = turretT2:getStat("fireRate")
-assert(math.abs(buffedFireRate - 1.50) < 0.001,
-    "Tier 2 turret fireRate with +25% buff must equal 1.20 * 1.25 = 1.50, got " .. tostring(buffedFireRate))
+assert(math.abs(buffedFireRate - 1.375) < 0.001,
+    "Tier 2 turret fireRate with +25% buff must equal 1.10 * 1.25 = 1.375, got " .. tostring(buffedFireRate))
 
 -- 15. Test upgrading a single card from duplicates: duplicates should NOT all be upgraded
 local dupDeck = PlayerDeck:new()
@@ -409,7 +412,7 @@ assert(dupDeck.cards[1].tier == 1, "Blaster stack should initially be Tier 1")
 
 -- Upgrade ONE copy from the stack of 3
 CardUpgradeConfig.Economy.addResource("gold", 1000)
-CardUpgradeConfig.Economy.addResource("Upgrade Material", 10)
+for _, mat in ipairs(require("Game.Cards.MaterialRegistry").getTyped()) do CardUpgradeConfig.Economy.addResource(mat.id, 10) end
 local upSuccess, upTier = dupDeck.cards[1]:upgrade(dupDeck)
 assert(upSuccess == true, "Upgrade should succeed")
 assert(upTier == 2, "Upgraded card should be Tier 2")

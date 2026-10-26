@@ -37,13 +37,13 @@ local PassiveIndex = {
         {
             id = "bank",
             name = "Bank",
-            description = "Generates 1 Token per wave if adjacent slots are occupied.",
+            description = "+1 Token per wave when the slots above, below and right are filled. +2 if they are all turrets.",
             type = "building",
             types = {"passive", "building", "economy"},
             building = require("Buildings.Passives.Bank"),
             iconCategory = "buff",
             cost = 2,
-            affectedSlots = {{1,0},{-1,0},{0,1},{0,-1}}
+            affectedSlots = {{1,0},{0,1},{0,-1}}
         },
     },
     rare = {
