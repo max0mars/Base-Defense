@@ -8,6 +8,7 @@ local IncomeFeedbackManager = require("Game.GUI.IncomeFeedbackManager")
 local EnemySpawnUI = require("Game.GUI.EnemySpawnUI")
 local WavePreviewUI = require("Game.GUI.WavePreviewUI")
 local ItemPickerUI = require("Game.GUI.ItemPickerUI")
+local DevEnemySpawnerUI = require("Game.GUI.DevEnemySpawnerUI")
 local InfoColumn = require("Game.GUI.InfoColumn")
 local Codex = require("Game.GUI.Codex")
 local Cursor = require("Game.GUI.Cursor")
@@ -148,6 +149,7 @@ function GUIManager:new(game)
         enemySpawner = EnemySpawnUI:new(game),
         wavePreview = WavePreviewUI:new(game),
         itemPicker = ItemPickerUI:new(game),
+        devSpawner = DevEnemySpawnerUI:new(game),
         infoColumn = InfoColumn:new(game),
         codex = Codex:new(game),
         deckViewer = DeckViewerUI:new(game),
@@ -166,6 +168,7 @@ function GUIManager:isConsumingInput(x, y)
     if game:isState("upgrade_mutation") then return true end
     if self.enemySpawner and self.enemySpawner.isActive then return true end
     if self.itemPicker and self.itemPicker.isActive then return true end
+    if self.devSpawner and self.devSpawner.isActive then return true end
     if self.deckViewer and self.deckViewer.isActive then return true end
 
     -- Top HUD area blocks click/hover completely
@@ -211,6 +214,7 @@ function GUIManager:draw()
     self.mutation:draw()     -- Draw mutation screen
     if self.enemySpawner then self.enemySpawner:draw() end
     if self.itemPicker then self.itemPicker:draw() end
+    if self.devSpawner then self.devSpawner:draw() end
     self.tooltips:draw()     -- Draw tips above everything
     if self.codex then self.codex:draw() end -- Codex overlays everything
     if self.deckViewer then self.deckViewer:draw() end
@@ -226,6 +230,7 @@ function GUIManager:overlayActive()
         or (self.codex and self.codex.isActive)
         or (self.enemySpawner and self.enemySpawner.isActive)
         or (self.itemPicker and self.itemPicker.isActive)
+        or (self.devSpawner and self.devSpawner.isActive)
         or (self.confirmation and self.confirmation.active)
         or (self.deckViewer and self.deckViewer.isActive)
         or (self.game.battleComplete)
@@ -541,6 +546,10 @@ function GUIManager:mousepressed(x, y, button)
     end
 
     if self.itemPicker and self.itemPicker.isActive and self.itemPicker:mousepressed(x, y, button) then
+        return true
+    end
+
+    if self.devSpawner and self.devSpawner:mousepressed(x, y, button) then
         return true
     end
 

@@ -18,6 +18,7 @@ local SettingsPanel = require("Game.GUI.SettingsPanel")
 local CardDraw = require("Game.Cards.CardDraw")
 local ArtifactManager = require("Game.Artifacts.ArtifactManager")
 local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
+local DevMode = require("Game.Dev.DevMode")
 
 function preparation_scene:drawTrashIcon(cx, cy, size, col)
     local w = size or 22
@@ -1252,6 +1253,8 @@ function preparation_scene:draw()
         ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my)
     end
 
+    DevMode.draw(false)
+
     love.mouse.setCursor(Cursor.wantHand and self.handCursor or self.arrowCursor)
 end
 
@@ -1779,11 +1782,7 @@ function preparation_scene:mousereleased(x, y, button)
 end
 
 function preparation_scene:keypressed(key)
-    -- Dev hotkey until artifacts can be earned in a run: grant a random one
-    if key == "f8" then
-        ArtifactManager.grantRandom()
-        return
-    end
+    if DevMode.keypressed(key, nil) then return end
 
     if key == "escape" or key == "p" then
         if self.artifactViewer.isActive then

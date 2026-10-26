@@ -1,6 +1,7 @@
 local Base = {
 }
 local living_object = require("Classes.living_object") -- Import the living_object module
+local DevMode = require("Game.Dev.DevMode")
 setmetatable(Base, { __index = living_object }) -- Inherit from the object class
 
 local default = {
@@ -58,7 +59,7 @@ function Base:update(dt)
 end
 
 function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTags)
-    if self.game.testingMode and self.game.baseInvincible then
+    if (self.game.testingMode and self.game.baseInvincible) or DevMode.isOn("invincible") then
         return 0
     end
 

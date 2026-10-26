@@ -7,6 +7,7 @@ local Cursor = require("Game.GUI.Cursor")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
+local DevMode = require("Game.Dev.DevMode")
 
 
 -- Starting deck creation has been moved to individual Main Turret classes.
@@ -15,6 +16,40 @@ setmetatable(menu_scene, { __index = scene })
 
 -- Vertical offset to center the main-menu title banner on the 720 canvas.
 local MENU_OFFSET_Y = 80
+
+--- Fresh persistent state for a new run.
+local function newRunState()
+    return {
+        baseHP = 200,
+        cash = 0,
+        deck = nil, -- Will be set in new_game_scene
+        shopLevel = 1,
+        shopXP = 0,
+        globalDifficulty = 1,
+        battlesCompleted = 0,
+        damageTracker = {},
+        activeMutations = {},
+        discoveredEnemies = { ["Grunt"] = true, ["Basic"] = true },
+        startingTokens = 3,
+        startingHandSize = 4,
+        waveCompleteDrawSize = 4,
+        incomeTokens = 3,
+        startBattleExtraSlotsUnlocked = 0,
+        upgradeCostTokens = 20,
+        upgradeCostHand = 20,
+        upgradeCostIncome = 20,
+        materials = { ["Card Removal"] = 2 }, -- Upgrade materials are granted in new_game_scene
+        cardRemovals = 2
+    }
+end
+
+--- Starts a new run (optionally in developer mode) at main turret selection.
+function menu_scene:startRun(devMode)
+    _G.PersistentState = newRunState()
+    if devMode then DevMode.enable() end
+    game.testingMode = false
+    self.scene_manager.switch("new_game")
+end
 
 function menu_scene:load()
     love.mouse.setVisible(true)
@@ -121,28 +156,7 @@ function menu_scene:mousepressed(x, y, button)
         for _, btn in ipairs(self.mainButtons) do
             if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
                 if btn.action == "play" then
-                    _G.PersistentState = { 
-                        baseHP = 200, 
-                        cash = 0, 
-                        deck = nil, -- Will be set in new_game_scene
-                        globalDifficulty = 1,
-                        battlesCompleted = 0,
-                        damageTracker = {},
-                        activeMutations = {},
-                        discoveredEnemies = { ["Grunt"] = true, ["Basic"] = true },
-                        startingTokens = 3,
-                        startingHandSize = 4,
-                        waveCompleteDrawSize = 4,
-                        incomeTokens = 3,
-                        startBattleExtraSlotsUnlocked = 0,
-                        upgradeCostTokens = 20,
-                        upgradeCostHand = 20,
-                        upgradeCostIncome = 20,
-                        materials = { ["Card Removal"] = 2 }, -- Upgrade materials are granted in new_game_scene
-                        cardRemovals = 2
-                    }
-                    game.testingMode = false
-                    self.scene_manager.switch("new_game")
+                    self:startRun(false)
                 elseif btn.action == "tutorial" then
                     self.scene_manager.switch("tutorial")
                 elseif btn.action == "settings" then
@@ -163,30 +177,9 @@ function menu_scene:keypressed(key)
     end
 
     if key == "return" then
-        _G.PersistentState = { 
-            baseHP = 200, 
-            cash = 0, 
-            deck = nil, -- Will be set in new_game_scene
-            shopLevel = 1,
-            shopXP = 0,
-            globalDifficulty = 1,
-            battlesCompleted = 0,
-            damageTracker = {},
-            activeMutations = {},
-            discoveredEnemies = { ["Grunt"] = true, ["Basic"] = true },
-            startingTokens = 3,
-            startingHandSize = 4,
-            waveCompleteDrawSize = 4,
-            incomeTokens = 3,
-            startBattleExtraSlotsUnlocked = 0,
-            upgradeCostTokens = 20,
-            upgradeCostHand = 20,
-            upgradeCostIncome = 20,
-            materials = { ["Card Removal"] = 2 }, -- Upgrade materials are granted in new_game_scene
-            cardRemovals = 2
-        }
-        game.testingMode = false
-        self.scene_manager.switch("new_game")
+        self:startRun(false)
+    elseif key == "f1" then
+        self:startRun(true)
     elseif key == "t" then
         game.testingMode = true
         self.scene_manager.switch("game")
