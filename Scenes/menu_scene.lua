@@ -79,7 +79,10 @@ end
 function menu_scene:buildMainButtons(hasSave)
     local cx = (VIRTUAL_WIDTH - 240) / 2
     local buttons = {
-        { label = "PLAY GAME", action = "play",
+        -- Shown greyed out without a save, so players know runs can be continued
+        { label = "CONTINUE", action = "continue", disabled = not hasSave,
+          color = {0.45, 0.32, 0.08, 1}, hoverColor = {0.62, 0.45, 0.12, 1}, borderColor = {0.95, 0.75, 0.3, 1} },
+        { label = "NEW GAME", action = "play",
           color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1} },
         { label = "TUTORIAL", action = "tutorial",
           color = {0.3, 0.2, 0.55, 1}, hoverColor = {0.48, 0.32, 0.8, 1}, borderColor = {0.7, 0.5, 1, 1} },
@@ -88,12 +91,7 @@ function menu_scene:buildMainButtons(hasSave)
         { label = "QUIT GAME", action = "quit", gap = 25,
           color = {0.3, 0.18, 0.2, 1}, hoverColor = {0.5, 0.28, 0.3, 1}, borderColor = {0.9, 0.5, 0.5, 1} },
     }
-    if hasSave then
-        buttons[1].label = "NEW GAME"
-        table.insert(buttons, 1, { label = "CONTINUE", action = "continue",
-            color = {0.45, 0.32, 0.08, 1}, hoverColor = {0.62, 0.45, 0.12, 1}, borderColor = {0.95, 0.75, 0.3, 1} })
-    end
-    local y = hasSave and 260 or 290
+    local y = 260
     for _, btn in ipairs(buttons) do
         y = y + (btn.gap or 0)
         btn.x, btn.y, btn.w, btn.h, btn.type = cx, y, 240, 45, "main"
@@ -137,17 +135,17 @@ end
 
 function menu_scene:drawMainButtons(mx, my, buttons)
     for _, btn in ipairs(buttons or self.mainButtons) do
-        local isHovered = mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
+        local isHovered = not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
         if isHovered then Cursor.wantHand = true end
-        love.graphics.setColor(isHovered and btn.hoverColor or btn.color)
+        love.graphics.setColor(btn.disabled and {0.16, 0.16, 0.18, 1} or (isHovered and btn.hoverColor or btn.color))
         love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 6, 6)
-        love.graphics.setColor(btn.borderColor)
+        love.graphics.setColor(btn.disabled and {0.32, 0.32, 0.36, 1} or btn.borderColor)
         love.graphics.setLineWidth(isHovered and 2 or 1)
         love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 6, 6)
         love.graphics.setLineWidth(1)
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.printf(btn.label, btn.x + 1, btn.y + btn.h / 2 - 6, btn.w, "center")
-        love.graphics.setColor(1, 1, 1)
+        love.graphics.setColor(btn.disabled and {0.45, 0.45, 0.5, 1} or {1, 1, 1})
         love.graphics.printf(btn.label, btn.x, btn.y + btn.h / 2 - 7, btn.w, "center")
     end
 end
@@ -232,7 +230,7 @@ function menu_scene:mousepressed(x, y, button)
 
     if button == 1 then
         for _, btn in ipairs(self.mainButtons) do
-            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+            if not btn.disabled and x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
                 if btn.action == "continue" then
                     self:continueRun()
                 elseif btn.action == "play" then
