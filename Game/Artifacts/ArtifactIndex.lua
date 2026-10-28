@@ -163,8 +163,8 @@ ArtifactIndex.list = {
         name = "Brittle Ice",
         icon = "crystal",
         color = {0.55, 0.85, 1, 1},
-        description = "Frozen enemies take 30% more damage.",
-        BONUS = 0.3,
+        description = "Frozen enemies take double damage.",
+        BONUS = 1.0,
         modifyEnemyDamage = function(self, game, amount, enemy)
             if Chill.isFrozen(enemy) then
                 return amount * (1 + self.BONUS)

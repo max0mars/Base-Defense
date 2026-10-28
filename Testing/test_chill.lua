@@ -480,7 +480,7 @@ assert(_G.PersistentState.cash == 115 and marketGame.iceMarketIncome == 15, "eac
 _G.PersistentState = savedState
 print("[PASS] Ice Market")
 
--- 15. Artifacts: Brittle Ice (+30% vs frozen) and Heart of the Tundra (15% max HP on thaw)
+-- 15. Artifacts: Brittle Ice (+100% vs frozen) and Heart of the Tundra (15% max HP on thaw)
 local ArtifactManager = require("Game.Artifacts.ArtifactManager")
 local function artifactGame(ids)
     local g = { objects = {}, seenEnemies = {}, base = { x = 0, w = 100 } }
@@ -498,13 +498,13 @@ victim:takeDamage(100, "ballistic")
 assert(near(victim.hp, 900), "Brittle Ice: no bonus against unfrozen enemies")
 Chill.apply(victim, 5)
 victim:takeDamage(100, "ballistic")
-assert(near(victim.hp, 770), "Brittle Ice: frozen enemies take 30% more")
+assert(near(victim.hp, 700), "Brittle Ice: frozen enemies take double damage")
 local brittleBoss = Tank:new({ game = brittleGame, x = 100, y = 100, name = "Tank" })
 brittleGame:addObject(brittleBoss)
 Chill.apply(brittleBoss, 10)
 local bossHp = brittleBoss.hp
 brittleBoss:takeDamage(100, "ballistic")
-assert(near(bossHp - brittleBoss.hp, 130), "Brittle Ice: bosses get the same +30%")
+assert(near(bossHp - brittleBoss.hp, 200), "Brittle Ice: bosses get the same +100%")
 print("[PASS] Brittle Ice")
 
 local function thawTest(maker, freezeAt, maxHp)

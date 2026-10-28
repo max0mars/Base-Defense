@@ -29,7 +29,7 @@ local EnemyIndex = {
         speed = 90,
         color = {1, 1, 0, 1}, -- Yellow
         shape = "rectangle",
-        size = 15,
+        size = 17, -- ~15% bigger than it was (15), easier to hit
         types = { enemy = true, yellow = true },
         baseSpawnDelay = 0.5,
         description = "Very fast but fragile. Races ahead of the pack to slip past your defenses before they can react.",
@@ -111,7 +111,7 @@ local EnemyIndex = {
         speed = 110,
         color = {1, 0.8, 0, 1}, -- Orange-Yellow
         shape = "rectangle",
-        size = 12,
+        size = 14, -- ~15% bigger than it was (12), easier to hit
         types = { enemy = true, yellow = true, sapper = true },
         baseSpawnDelay = 0.4,
         description = "Fragile and very fast. Harmless in a fight, but it hits your base extremely hard if it reaches it.",
@@ -277,6 +277,23 @@ local EnemyIndex = {
         types = { enemy = true, yellow = true, phantom = true },
         baseSpawnDelay = 0.8,
         description = "A fast, elusive arrow that blinks away when hit, vanishing for a moment and reappearing further up or down the field. It can't be targeted while it's gone, and needs a short rest before it can blink again.",
+    },
+    {
+        id = "Vanguard",
+        type = "Vanguard",
+        class = require("Enemies.Vanguard"),
+        tier = 3,
+        spawnCost = 60,
+        spawnWeight = 0.4,
+        maxHp = 400,
+        damage = 25,
+        speed = 15,
+        color = {0.85, 0.12, 0.2, 1}, -- Crimson
+        shape = "rectangle",
+        size = 26,
+        types = { enemy = true, red = true, vanguard = true },
+        baseSpawnDelay = 1.5,
+        description = "A slow, heavily built warrior behind a huge frontal shield that blocks most of the damage coming at its front. Explosions and damage over time get around it, and so do shots into its back. Stunning or freezing it drops the shield.",
     },
     {
         id = "Tank",

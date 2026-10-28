@@ -12,6 +12,7 @@ local EnemyIndex = require("Game.Spawning.EnemyIndex")
 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
 local Chill = require("Game.Effects.StatusEffects.Chill")
 local Zombie = require("Enemies.Zombie")
+local Stun = require("Game.Effects.StatusEffects.Stun")
 local Layout = require("Game.GUI.Layout")
 
 local EnemyDemo = {}
@@ -679,6 +680,39 @@ scripts.Phantom = {
         p:updateBlink(dt)
         if wasVanishing and p.blinkTime then demo:ring(p.x + p.w * 0.5, fromY, p.w * 0.6, p.color, 0.2) end
         if wasGone and not p.blinkTime then demo:ring(p.x, p.y, p.w, p.color, 0.25) end
+    end,
+}
+
+-- Vanguard: the turret's shots into its shield barely scratch it, but the
+-- explosions go around it; then it's stunned, the shield drops, and the same
+-- shots hit for full damage until it recovers
+scripts.Vanguard = {
+    setup = function(demo)
+        demo:spawnStar()
+        demo.state = {}
+        demo:addTurret({
+            interval = 0.4,
+            pick = function(d) return d.star.x < d.W - 10 and d.star or nil end,
+            onHit = function(d, target)
+                local blocked = target:isShielded()
+                if blocked then target.blockFlash = 0 end
+                d:damage(target, blocked and 20 * (1 - target.FRONT_REDUCTION) or 20)
+            end,
+        })
+    end,
+    update = function(demo, dt)
+        local v = demo.star
+        v:updateShield(dt)
+        if v.x > demo.W - 10 then return end
+        if every(demo.state, "boom", 1.6, dt, 0.9) then
+            demo:ring(v.x, v.y, 26, { 1, 0.6, 0.2 }, 0.35)
+            demo:damage(v, 20, { 1, 0.6, 0.2 })
+        end
+        if not demo.state.stunned and v.x < demo.W * 0.55 then
+            demo.state.stunned = true
+            v.effectManager:applyEffect(Stun:new({ duration = 1.6 }))
+            demo:text("STUNNED", v.x, v.y - v.h, { 1, 0.9, 0.3 })
+        end
     end,
 }
 
