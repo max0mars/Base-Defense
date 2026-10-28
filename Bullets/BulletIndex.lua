@@ -26,6 +26,11 @@ local BulletIndex = {
         name = "Shotgun Pellet",
         w = 3, h = 3
     },
+    heavyPellet = {
+        class = Bullet,
+        name = "Heavy Pellet",
+        w = 4, h = 4
+    },
     heavyShell = {
         class = Bullet,
         name = "Heavy Shell",

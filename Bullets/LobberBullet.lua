@@ -97,11 +97,6 @@ function LobberBullet:onCollision(obj)
 end
 
 function LobberBullet:draw()
-    local shadowWidth = 12
-    local shadowHeight = 6
-    love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.ellipse("fill", self.x, self.y, shadowWidth/2, shadowHeight/2)
-    
     love.graphics.setColor(self.color or {1, 1, 1, 1})
     local drawX = self.x
     local drawY = self.y - self.z

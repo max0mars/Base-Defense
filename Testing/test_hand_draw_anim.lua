@@ -161,5 +161,16 @@ assert(next(mh.flyAnims) == nil, "the flight finishes")
 mh:mousepressed(mh.cardX[m1] + 10, VIRTUAL_HEIGHT - 210 - 20 + 10, 1)
 assert(mg.activeCard == m1, "a landed card can be selected")
 
+-- 8. A hand drawn after the hand's update in a frame (e.g. the build hand at the
+--    end of a wave) isn't shown face-up for that frame before animating in
+mstep(1)
+local fresh1, fresh2 = drawnCard("f1"), drawnCard("f2")
+mg.hand = { fresh1, fresh2 }
+drawnAt = {}
+mh:draw()
+assert(drawnAt[fresh1] == nil and drawnAt[fresh2] == nil, "freshly drawn cards aren't drawn at their slots before animating")
+mh:update(0)
+assert(mh.drawAnims[fresh1] and mh.drawAnims[fresh2], "they come in with the draw animation")
+
 print(string.format("\n%d failure(s)", failures))
 if failures > 0 then os.exit(1) end

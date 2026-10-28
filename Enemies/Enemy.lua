@@ -492,8 +492,13 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags, source)
     return amount
 end
 
---- Records effective damage dealt by `source` in the battle's DamageStats.
+--- Records effective damage dealt by `source` in the battle's DamageStats,
+--- and adds it (from any source, spells included) to the run's total.
 function Enemy:creditDamage(source, dealt, killed)
+    local ps = _G.PersistentState
+    if ps and dealt and dealt > 0 then
+        ps.totalDamageDealt = (ps.totalDamageDealt or 0) + dealt
+    end
     if source and self.game and self.game.damageStats then
         self.game.damageStats:record(source, dealt, killed)
     end

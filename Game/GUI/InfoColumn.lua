@@ -10,6 +10,7 @@ local Cursor = require("Game.GUI.Cursor")
 local Neon = require("Game.GUI.Neon")
 local DamageStats = require("Game.Core.DamageStats")
 local CardDraw = require("Game.Cards.CardDraw")
+local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
 
 local InfoColumn = {}
 InfoColumn.__index = InfoColumn
@@ -249,7 +250,14 @@ function InfoColumn:drawHoverStats()
     local col = CardDraw.RARITY_COLORS[b.rarity] or b.color or {0.5, 0.7, 0.9}
     love.graphics.push("all")
     Neon.rect(x, y, w, h, col, { bg = 0.95, tint = 0.06, width = 1.5 })
-    sectionHeader(b.name or "STATS & MODIFIERS", x + 10, y + 6, w - 20, col)
+    local title = b.name or "STATS & MODIFIERS"
+    sectionHeader(title, x + 10, y + 6, w - 20, col)
+    -- Turrets show their card's upgrade tier (I-V) just after the name (main turrets have none)
+    if b:isType("turret") and not b:isType("mainturret") then
+        local numeral = CardUpgradeConfig.TIER_NAMES[b.tier or 1] or "I"
+        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.print(numeral, x + 10 + love.graphics.getFont():getWidth(title) + 8, y + 6)
+    end
     local ty = y + 30
     for _, ln in ipairs(lines) do
         love.graphics.setColor(ln.col[1], ln.col[2], ln.col[3], 1)

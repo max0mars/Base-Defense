@@ -44,6 +44,8 @@ end
 function Quotes.draw(scene, visit, area)
     if not scene.quoteFont then scene.quoteFont = love.graphics.newFont(26) end
     local quote = Quotes.get(visit)
+    love.graphics.setColor(1, 0.85, 0.4, 1)
+    love.graphics.printf("A MOMENT OF CALM", area.x, area.y, area.w, "center")
     local oldFont = love.graphics.getFont()
     love.graphics.setFont(scene.quoteFont)
     local w = math.min(area.w, 800)

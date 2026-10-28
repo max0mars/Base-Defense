@@ -46,7 +46,7 @@ end
 -- 1. Every current turret maps to the agreed material
 local expected = {
     sentry = "scrap", autoCannon = "scrap", shotgunTurret = "scrap", heavygun = "scrap",
-    airburst = "scrap", gator = "scrap", sequenceTurret = "scrap", hookTurret = "scrap", sniper = "scrap",
+    airburst = "scrap", gator = "scrap", sequenceTurret = "scrap", hookTurret = "scrap", sniper = "scrap", heavyShotgun = "scrap",
     blaster = "energy_cells", fluxCannon = "energy_cells", plasmaScattershot = "energy_cells", chainLaser = "energy_cells",
     grenadier = "blast_powder", missileLauncher = "blast_powder", mortar = "blast_powder",
     poisonTurret = "elemental_essence", slushCannon = "elemental_essence", iceShard = "elemental_essence",

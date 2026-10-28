@@ -88,6 +88,18 @@ local missile, shotgun = findTurret("missileLauncher"), findTurret("shotgunTurre
 assert(missile.damage == 50 and missile.explosionDamage == 50 and missile.radius == 40, "missile launcher: 50 damage, 40 blast radius")
 assert(shotgun.damage == 6, "shotgun: 6 damage per pellet")
 
+-- Heavy Shotgun: uncommon, 2 tokens, a long-range tight-spread shotgun
+local heavy = findTurret("heavyShotgun")
+assert(heavy and heavy.cost == 2 and heavy.pelletCount == 7 and heavy.damage == 16 and heavy.pierce == 2,
+    "heavy shotgun: 2 tokens, 7 x 16 dmg pellets that pierce once")
+local isUncommon = false
+for _, e in ipairs(TurretIndex.uncommon) do isUncommon = isUncommon or e.id == "heavyShotgun" end
+assert(isUncommon, "heavy shotgun is uncommon")
+assert(heavy.range > shotgun.range * 2 and heavy.spread < shotgun.spread / 2, "heavy shotgun: over twice the range, under half the spread")
+assert(heavy.bulletSpeed * 0.9 * heavy.lifespan >= heavy.range, "heavy shotgun pellets reach max range")
+local heavyHits = heavy.pelletCount * (20 / heavy.range) / heavy.spread
+assert(heavyHits >= 3 and heavyHits <= 4, string.format("heavy shotgun: %.2f pellets on a 20px enemy at max range", heavyHits))
+
 -- 2. Cryo Beam waits before locking onto a new target
 local beam = place("cryoBeam", 1, 2)
 beam.firingArc.direction = 0
@@ -188,6 +200,25 @@ local window = boxes[1]
 assert(window and window.x == 718 and window.y == 318, "the stats window sits just beside the mouse")
 assert(hovered.rarity == "common", "a placed turret stores its rarity (the window is coloured by it)")
 assert(game.mainLazer.rarity == "main_weapon", "the main turret uses the main-weapon colour")
+local function windowTexts(building)
+    local out = {}
+    game.inputHandler.hoveredBuilding = building
+    local realPrint = love.graphics.print
+    love.graphics.printf = function(text) out[tostring(text)] = true end
+    love.graphics.print = function(text) out[tostring(text)] = true end
+    game.gui.infoColumn:drawHoverStats()
+    love.graphics.printf, love.graphics.print = realPrintf, realPrint
+    return out
+end
+assert(windowTexts(hovered)["I"], "a turret's window shows its tier numeral beside the name")
+hovered.tier = 3
+assert(windowTexts(hovered)["III"], "an upgraded turret shows its higher tier")
+hovered.tier = 1
+local mainTexts = windowTexts(game.mainLazer)
+local mainTier = false
+for t in pairs(mainTexts) do if t == "I" then mainTier = true end end
+assert(not mainTier, "the main turret has no tier")
+game.inputHandler.hoveredBuilding = hovered
 do
     local function entryFor(index, id)
         for _, list in pairs(index) do for _, e in ipairs(list) do if e.id == id then return e end end end

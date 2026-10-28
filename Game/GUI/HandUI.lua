@@ -378,6 +378,8 @@ function HandUI:draw()
     local function drawCard(i, card, isTopPass)
         local cx = self.cardX[card] or handStartX + (i - 1) * (cardWidth + spacing)
         local cy = deckY
+        -- Drawn since the last update: its draw animation starts next update
+        if not self.inHand[card] then return end
         local anim = self.drawAnims[card]
         if anim then
             if not isTopPass then self:drawIncoming(card, anim, cx, cy, cardWidth, cardHeight) end

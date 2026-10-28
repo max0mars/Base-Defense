@@ -88,9 +88,9 @@ ArtifactIndex.list = {
         name = "Buckshot Choke",
         icon = "spread",
         color = {1, 0.85, 0.3, 1},
-        description = "Shotgun turrets fire 2 extra pellets.",
+        description = "Shotgun turrets fire 5 extra pellets.",
         effects = {
-            { targetTypes = { shotgun = true }, statModifiers = { pelletCount = { add = 2 } } },
+            { targetTypes = { shotgun = true }, statModifiers = { pelletCount = { add = 5 } } },
         },
     },
     {

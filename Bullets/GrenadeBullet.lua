@@ -39,12 +39,6 @@ function GrenadeBullet:onCollision(obj)
 end
 
 function GrenadeBullet:draw()
-    -- Visual Indicator: Shadow at base coordinates
-    local shadowWidth = 12
-    local shadowHeight = 6
-    love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.ellipse("fill", self.x, self.y, shadowWidth/2, shadowHeight/2)
-    
     -- Render Bullet at (x, y - z)
     local c = self.color or {1, 1, 1, 1}
     if self.landed and math.sin(self.currentFuse * 15) > 0 then

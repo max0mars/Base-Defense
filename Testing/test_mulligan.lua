@@ -104,13 +104,15 @@ game:load(nil, true)
 
 -- Verify initial state
 assert(game:isState("mulligan"), "Initial state should be 'mulligan'")
-assert(game.mulliganSkipsUsed == 0, "Initial skips used count should be 0")
+assert(next(game.mulliganLockedSlots) == nil, "No slot has been rerolled yet")
 
 -- Mock hand and draw pile
 local c1 = { id = "card1", getCardDraw = function() return { draw = function() end } end }
 local c2 = { id = "card2", getCardDraw = function() return { draw = function() end } end }
 local c3 = { id = "card3", getCardDraw = function() return { draw = function() end } end }
 local replacementCard = { id = "replacement", getCardDraw = function() return { draw = function() end } end }
+local replacement2 = { id = "replacement2", getCardDraw = function() return { draw = function() end } end }
+local replacement3 = { id = "replacement3", getCardDraw = function() return { draw = function() end } end }
 
 game.hand = { c1, c2, c3 }
 game.drawPile = { replacementCard }
@@ -128,7 +130,7 @@ math.random = function(i) return i end
 game:rerollCard(2)
 math.random = originalRandom
 
-assert(game.mulliganSkipsUsed == 1, "Skips used count incremented to 1")
+assert(game.mulliganLockedSlots[2], "Slot 2 is used up")
 assert(game.hand[2].id == "replacement", "Card at index 2 was successfully replaced")
 assert(game.hand[1].id == "card1", "Card at index 1 remains untouched")
 assert(game.hand[3].id == "card3", "Card at index 3 remains untouched")
@@ -138,16 +140,23 @@ assert(game.drawPile[1].id == "card2", "Old card was returned to the draw pile")
 game:handleMulliganClick(layout.skipBtn.x + 10, layout.skipBtn.y + 10, 1)
 assert(game:isState("startup"), "Clicking skip button transitions game to 'startup' state")
 
--- Test skip bounds: set skips used to 2 and click a card reroll button
+-- Each card can be rerolled once: no overall limit, but a slot can't go twice
 game:setState("mulligan")
-game.mulliganSkipsUsed = 2
-local currentCardId = game.hand[1].id
+game.drawPile = { replacement2 }
+local arrow2 = layout.cards[2]
+game:handleMulliganClick(arrow2.arrowX, arrow2.arrowY, 1)
+assert(game.hand[2].id == "replacement", "A rerolled slot can't be rerolled again")
 
-local cardArrow = layout.cards[1]
-game:handleMulliganClick(cardArrow.arrowX, cardArrow.arrowY, 1)
-
-assert(game.hand[1].id == currentCardId, "Card reroll should be ignored when skips used is at maximum (2)")
-assert(game.mulliganSkipsUsed == 2, "Skips used count remains at 2")
+for i = 1, 3, 2 do
+    game.drawPile = { i == 1 and replacement2 or replacement3 }
+    local arrow = layout.cards[i]
+    game:handleMulliganClick(arrow.arrowX, arrow.arrowY, 1)
+end
+assert(game.hand[1].id == "replacement2" and game.hand[3].id == "replacement3", "Every card in the hand can be rerolled once")
+local before = game.hand[1].id
+game.drawPile = { c1 }
+game:handleMulliganClick(layout.cards[1].arrowX, layout.cards[1].arrowY, 1)
+assert(game.hand[1].id == before, "...but only once")
 
 print("--- Mulligan Tests Completed with " .. failures .. " failures ---")
 os.exit(failures == 0 and 0 or 1)

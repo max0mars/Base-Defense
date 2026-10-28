@@ -1,0 +1,126 @@
+-- Testing/test_game_over.lua
+-- The game over screen: run totals (damage dealt, kills) and base hits grouped by level.
+
+
+package.path = package.path .. ";./?.lua"
+
+-- Mock love2d (every love.* function is a no-op; GameManager pulls in the whole game)
+local noop = function() end
+local fontStub = { getWidth = function() return 10 end, getHeight = function() return 10 end, getWrap = function() return 10, { "" } end }
+_G.love = setmetatable({
+    math = setmetatable({ random = math.random, colorFromBytes = function(...) return ... end }, { __index = function() return noop end }),
+    timer = { getTime = function() return 0 end },
+    mouse = setmetatable({ getPosition = function() return 0, 0 end }, { __index = function() return noop end }),
+    keyboard = { isDown = function() return false end },
+    graphics = setmetatable({
+        getFont = function() return fontStub end,
+        newFont = function() return fontStub end,
+        newCanvas = function() return {} end,
+        getWidth = function() return 1280 end,
+        getHeight = function() return 720 end,
+    }, { __index = function() return noop end }),
+}, { __index = function() return setmetatable({}, { __index = function() return noop end }) end })
+_G.VIRTUAL_WIDTH = 1280
+_G.VIRTUAL_HEIGHT = 720
+_G.SetGameScissor = noop
+_G.paused = 0
+math.atan2 = math.atan2 or math.atan
+
+local failures = 0
+local function assert(condition, message)
+    if not condition then
+        print("[FAIL] " .. message)
+        failures = failures + 1
+    else
+        print("[PASS] " .. message)
+    end
+end
+
+local game = require("Game.Core.GameManager")
+local menu = require("Scenes.menu_scene")
+local Enemy = require("Enemies.Enemy")
+local game_over_scene = require("Scenes.game_over_scene")
+
+menu.scene_manager = { switch = noop }
+menu:keypressed("return")
+_G.PersistentState.selectedMainTurret = "MainLazer"
+_G.PersistentState.discoveredEnemies = { Grunt = true }
+_G.PersistentState.artifacts = {}
+game:load(nil, false)
+game:setState("wave")
+local ps = _G.PersistentState
+
+-- 1. A new run starts its totals at zero
+assert(ps.totalDamageDealt == 0 and ps.totalKills == 0, "a new run starts with no damage dealt or kills")
+
+-- 2. Damage dealt (any source, spells included, no overkill) and kills add up
+local function enemy(hp)
+    local e = Enemy:new({ game = game, x = 300, y = 300, name = "Grunt", maxHp = hp })
+    game:addObject(e)
+    return e
+end
+local a = enemy(100)
+a:takeDamage(30, "ballistic")
+assert(ps.totalDamageDealt == 30, "damage without a turret behind it (e.g. a spell) counts")
+a:takeDamage(500, "ballistic")
+assert(ps.totalDamageDealt == 100 and ps.totalKills == 1, "overkill doesn't count; the kill does")
+local b = enemy(50)
+b:takeDamage(50, "fire")
+assert(ps.totalDamageDealt == 150 and ps.totalKills == 2, "totals carry across enemies")
+
+-- An enemy reaching the base isn't a kill
+local c = enemy(50)
+c.reachedBase = true
+game:EnemyDied(c)
+assert(ps.totalKills == 2, "an enemy that reached the base isn't a kill")
+
+-- 3. Base hits are grouped by level, biggest hitters first, wrapping long levels
+local history = {
+    { level = 2, name = "Grunt", damage = 10 },
+    { level = 1, name = "Grunt", damage = 5 },
+    { level = 2, name = "Tank", damage = 40 },
+}
+for i = 1, 12 do table.insert(history, { level = 3, name = "E" .. i, damage = i }) end
+local rows = game_over_scene.buildRows(history)
+assert(#rows == 4, "levels 1, 2 and two rows for level 3's 12 enemies")
+assert(rows[1].level == 1 and rows[2].level == 2 and rows[3].level == 3, "rows are in level order")
+assert(rows[2].enemies[1].name == "Tank" and rows[2].levelDamage == 50, "a level lists its biggest hitter first, with its total")
+assert(rows[3].first and not rows[4].first and #rows[3].enemies == 11 and #rows[4].enemies == 1,
+    "a level with more enemies than fit wraps onto a continued row")
+
+-- 4. The screen loads and draws with the run's numbers
+game_over_scene.scene_manager = { switch = noop, scenes = { menu = menu } }
+ps.battlesCompleted = 4
+game.base:takeDamage(20, "ballistic", 0, 0, { name = "Grunt" })
+game_over_scene:load()
+assert(game_over_scene.level == 5 and game_over_scene.totalDamage == 150 and game_over_scene.totalKills == 2,
+    "the screen shows the level reached and the run totals")
+assert(#game_over_scene.rows >= 1 and game_over_scene.rows[#game_over_scene.rows].level == 5, "the base hit is listed under its level")
+local ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "the screen draws: " .. tostring(err))
+
+-- 5. The run's artifacts are shown, and View Deck opens the run's deck
+local ArtifactIndex = require("Game.Artifacts.ArtifactIndex")
+ps.artifacts = { ArtifactIndex.list and ArtifactIndex.list[1] and ArtifactIndex.list[1].id or "buckshot_choke" }
+ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "the screen draws with artifacts: " .. tostring(err))
+
+ps.deck = require("Buildings.MainTurrets.MainLazer").getStartingDeck()
+local copies = 0
+for _, c in ipairs(ps.deck:getCards()) do copies = copies + (c.quantity or 1) end
+assert(#game_over_scene.getDeckCards() == copies and copies > 0, "the deck view lists every copy of every card")
+local layout = game_over_scene:getLayout()
+game_over_scene:mousepressed(layout.viewDeck.x + 5, layout.viewDeck.y + 5, 1)
+assert(game_over_scene.deckViewer.isActive and #game_over_scene.deckViewer.cards == copies, "View Deck opens the deck")
+ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "the screen draws with the deck open: " .. tostring(err))
+local switched = false
+game_over_scene.scene_manager.scenes.menu = { startRun = function() switched = true end }
+game_over_scene:mousepressed(layout.retry.x + 5, layout.retry.y + 5, 1)
+assert(not switched and not game_over_scene.deckViewer.isActive, "a click with the deck open only closes it")
+game_over_scene:mousepressed(layout.viewDeck.x + 5, layout.viewDeck.y + 5, 1)
+game_over_scene:keypressed("escape")
+assert(not game_over_scene.deckViewer.isActive, "Escape closes the deck view")
+
+print("--- Game Over Tests Completed with " .. failures .. " failures ---")
+os.exit(failures == 0 and 0 or 1)

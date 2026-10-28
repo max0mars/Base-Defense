@@ -30,7 +30,9 @@ local function newRunState()
         upgradePurchases = {}, -- major upgrade id -> times bought
         globalDifficulty = 1,
         battlesCompleted = 0,
-        damageTracker = {},
+        damageTracker = {}, -- level -> enemy name -> damage it did to the base
+        totalDamageDealt = 0, -- damage dealt to enemies this run
+        totalKills = 0,
         activeMutations = {},
         discoveredEnemies = { ["Grunt"] = true, ["Basic"] = true },
         startingTokens = 3,

@@ -47,6 +47,8 @@ function building:new(config)
     local b = setmetatable(obj:new(config), {__index = self})
     -- Placed buildings keep their rarity (configs from older saves may lack it)
     b.rarity = config.rarity or building.rarityFor(config.id)
+    -- The upgrade tier of the card it was placed from (1 = I)
+    b.tier = config.tier or 1
     -- shapePattern is now required - defines building shape as {x,y} coordinate offsets
     if not config.shapePattern then
         config.shapePattern = {{0,0}}

@@ -75,6 +75,11 @@ local VisualIndex = {
         baseShape = "square", barrelShape = "single",
         sfx = "missile_01"
     },
+    heavyShotgun = {
+        barrel = 14, color = {0.85, 0.3, 0.05, 1},
+        baseShape = "square", barrelShape = "long",
+        sfx = "gunshot_02"
+    },
     plasmaScattershot = {
         barrel = 10, color = {0.2, 0.6, 1, 1},
         baseShape = "square", barrelShape = "flared",

@@ -66,6 +66,7 @@ function DeckViewerUI:draw()
     local PILE_TITLES = {
         DrawPile = "DRAW PILE", DiscardPile = "DISCARD PILE",
         SpellDrawPile = "SPELL DRAW PILE", SpellDiscardPile = "SPELL DISCARD PILE",
+        ["Starting Deck"] = "STARTING DECK", Deck = "DECK",
     }
     local title = PILE_TITLES[self.pileType] or "DISCARD PILE"
     local font = love.graphics.getFont()

@@ -104,7 +104,7 @@ local RewardIndex = {
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
-            cost = 2,
+            cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.4, range = 300,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
@@ -175,6 +175,23 @@ local RewardIndex = {
             pierce = 1, lifespan = 2, bulletId = "slush",
             hitEffects = { Chill.onHit({ amount = 2 }) }
         },
+        {
+            id = "heavyShotgun",
+            name = "Heavy Shotgun",
+            description = "Long range, tight spread shotgun. Its heavy pellets pierce an extra enemy.",
+            type = "building",
+            types = {"turret", "building", "shotgun"},
+            iconCategory = "turret",
+            cost = 2,
+            building = require("Buildings.Turrets.Turret"),
+            rotation = 0, fireRate = 0.5, range = 340,
+            firingArc = {direction = 0, minRange = 0, angle = math.rad(40)},
+            -- 7 degree cone: ~3.4 of 7 pellets land on a 20px enemy at max range.
+            spread = math.rad(7), pelletCount = 7,
+            -- Pellet speed varies +-10%, so 650 x 0.6s still reaches 340 at the slowest.
+            bulletSpeed = 650, damageType = "ballistic", damage = 16,
+            pierce = 2, lifespan = 0.6, bulletId = "heavyPellet"
+        },
     },
     rare = {
         {
@@ -243,16 +260,16 @@ local RewardIndex = {
         {
             id = "plasmaScattershot",
             name = "Plasma Scattershot",
-            description = "Fires plasma rounds at high speed but has limited ammo. Reloads slowly.",
+            description = "Fires plasma rounds at high speed from a 6-round magazine. Loads one round every 2 seconds.",
             type = "building",
             types = {"turret", "building", "shotgun"},
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 1.6, range = 150, firingArc = {direction = 0, minRange = 0, angle = math.rad(80)},
-            spread = math.rad(16.5), pelletCount = 10,
-            ammoMax = 15, reloadTime = 4,
-            bulletSpeed = 600, damageType = "energy", damage = 11,
+            spread = math.rad(16.5), pelletCount = 8,
+            ammoMax = 6, reloadTime = 2, -- one round every 2s
+            bulletSpeed = 600, damageType = "energy", damage = 10,
             pierce = 1, lifespan = 0.5, bulletId = "plasmaBolt"
         },
         {

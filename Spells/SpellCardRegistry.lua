@@ -18,56 +18,57 @@ SpellCardRegistry.Fireball = Spell.new({
     end
 })
 
--- Stun Burst
+-- Stun Gas: a short-lived cloud that stuns every enemy in it, including any
+-- that walk in before it clears
 SpellCardRegistry.StunBurst = Spell.new({
     id = "spell_stunburst",
-    name = "Stun Burst",
-    description = "Stuns enemies in a small area.",
+    name = "Stun Gas",
+    description = "Releases a cloud of stunning gas that stuns enemies in it, and any that walk in before it clears.",
     cost = 15,
     rarity = "Uncommon",
     radius = 40,
     customExecute = function(self, x, y, game)
         -- Visual
-        local StunBurstVisual = require("Graphics.Animations.StunBurstVisual")
+        local GasCloudVisual = require("Graphics.Animations.GasCloudVisual")
         local r = self:getStat("radius")
-        table.insert(game.animations, StunBurstVisual:new(x, y, r, 1.5))
+        table.insert(game.animations, GasCloudVisual:new(x, y, r, 1.5, { color = {0.98, 0.92, 0.45}, growTime = 0.2 }))
         
         -- Sound
         if AUDIO then
             AUDIO:playSFX("lightning_01")
         end
         
-        -- Stun status effect
-        local Stun = require("Game.Effects.StatusEffects.Stun")
-        local r2 = r * r
-        for _, obj in ipairs(game.objects) do
-            if obj:isType("enemy") and not obj.destroyed then
-                local dx = obj.x - x
-                local dy = obj.y - y
-                if dx*dx + dy*dy <= r2 then
-                    if obj.effectManager then
-                        obj.effectManager:applyEffect(Stun:new({ duration = 2.0 }))
-                    end
-                end
-            end
+        -- The cloud stuns the enemies caught in it now, and any that walk in later
+        local StunGasEffect = require("Spells.StunGasEffect")
+        local cloud = StunGasEffect:new({
+            x = x,
+            y = y,
+            radius = r,
+            stunDuration = 2.0,
+            duration = 1.5,
+            game = game
+        })
+        cloud:stunEnemiesInside()
+        if game.enemyEffectManager then
+            game.enemyEffectManager:applyEffect(cloud)
         end
     end
 })
 
--- Acid Cloud
+-- Acid Cloud: a lingering cloud of poison gas
 SpellCardRegistry.AcidCloud = Spell.new({
     id = "spell_acidcloud",
     name = "Acid Cloud",
-    description = "Deals poison damage in an area.",
+    description = "Leaves a lingering cloud of poison gas that deals poison damage to enemies inside.",
     cost = 30,
     rarity = "Rare",
     radius = 50,
-    dps = 10,
+    dps = 20,
     customExecute = function(self, x, y, game)
         -- Visual
-        local AcidCloudVisual = require("Graphics.Animations.AcidCloudVisual")
+        local GasCloudVisual = require("Graphics.Animations.GasCloudVisual")
         local r = self:getStat("radius")
-        table.insert(game.animations, AcidCloudVisual:new(x, y, r, 5.0))
+        table.insert(game.animations, GasCloudVisual:new(x, y, r, 5.0, { color = {0.45, 0.8, 0.3}, growTime = 0.6, wisps = true }))
         
         -- Register custom duration effect on the global enemyEffectManager
         if game.enemyEffectManager then

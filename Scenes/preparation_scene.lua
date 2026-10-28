@@ -29,11 +29,12 @@ local SCREENS = {
     alchemist = require("Game.Prep.Alchemist"),
     upgrades = require("Game.Prep.MajorUpgrades"),
 }
-local SCREEN_TITLES = {
+-- How the status bar names the preparation phase after the next battle
+local EVENT_NAMES = {
     quote = "A MOMENT OF CALM",
-    merchant = "THE MERCHANT IS IN TOWN",
-    alchemist = "THE ALCHEMIST IS IN TOWN",
-    upgrades = "MAJOR UPGRADES AVAILABLE",
+    merchant = "THE TRAVELING MERCHANT",
+    alchemist = "THE ALCHEMIST",
+    upgrades = "MAJOR UPGRADES",
 }
 
 -- Layout: status along the top, the shared menu bar along the bottom, and the
@@ -869,10 +870,14 @@ function preparation_scene:draw()
     love.graphics.setColor(0.25, 0.25, 0.3, 1)
     love.graphics.line(0, TOP_H, VIRTUAL_WIDTH, TOP_H)
 
+    -- What's coming: the next battle, then the preparation phase after it
+    -- (this visit's own screen shows its title in the content area)
+    local battlesCompleted = ps.battlesCompleted or 0
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("PREPARATION PHASE", 0, 20, VIRTUAL_WIDTH, "center")
+    love.graphics.printf("LEVEL " .. (battlesCompleted + 1), 0, 20, VIRTUAL_WIDTH, "center")
     love.graphics.setColor(0.7, 0.75, 0.85, 1)
-    love.graphics.printf(SCREEN_TITLES[self.visit.screen] or "", 0, 44, VIRTUAL_WIDTH, "center")
+    love.graphics.printf("NEXT: " .. (EVENT_NAMES[PrepLoop.screenAfter(battlesCompleted + 1)] or ""),
+        0, 44, VIRTUAL_WIDTH, "center")
     love.graphics.setColor(0.55, 0.6, 0.7, 1)
     love.graphics.printf("Scouting Lv " .. Scouting.getLevel() .. "   |   Merchant Lv " .. Merchant.getLevel(),
         0, 74, VIRTUAL_WIDTH, "center")

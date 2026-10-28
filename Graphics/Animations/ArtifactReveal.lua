@@ -167,12 +167,16 @@ function ArtifactReveal:drawFace()
 
     ArtifactViewerUI.drawIcon(def, 0, -h / 2 + 105, 50)
 
+    -- A long name wraps onto a second line; the description starts below it
     love.graphics.setFont(titleFont)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(def.name or "", -w / 2 + 12, -h / 2 + 170, w - 24, "center")
+    local titleY = -h / 2 + 170
+    love.graphics.printf(def.name or "", -w / 2 + 12, titleY, w - 24, "center")
+    local _, titleLines = titleFont:getWrap(def.name or "", w - 24)
+    local titleH = math.max(1, #titleLines) * titleFont:getHeight()
     love.graphics.setFont(smallFont)
     love.graphics.setColor(0.85, 0.85, 0.9, 1)
-    love.graphics.printf(def.description or "", -w / 2 + 18, -h / 2 + 210, w - 36, "center")
+    love.graphics.printf(def.description or "", -w / 2 + 18, titleY + titleH + 12, w - 36, "center")
     love.graphics.setFont(oldFont)
 end
 

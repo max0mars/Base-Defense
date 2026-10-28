@@ -4,9 +4,6 @@ local bullet = require("Bullets.Bullet")
 Turret = setmetatable({}, { __index = building })
 Turret.__index = Turret
 
--- Magazine turrets top up after this long with nothing to shoot
-Turret.IDLE_RELOAD_DELAY = 2
-
 function Turret:new(config)
     if not config then
         error("Developer Error: Turret:new called with nil config.")
@@ -55,11 +52,13 @@ function Turret:new(config)
     
     t.pelletCount = config.pelletCount or 1
     t.ammoMax = config.ammoMax
+    -- Magazine turrets load one round every `reloadTime` seconds whenever the
+    -- magazine isn't full, and can fire as long as a round is loaded
     if t.ammoMax then
         t.ammoCount = t.ammoMax
         t.reloadTime = config.reloadTime or 2
-        t.isReloading = false
-        t.reloadTimer = 0
+        t.isReloading = false -- true while a round is loading (magazine not full)
+        t.reloadTimer = 0     -- time left until the loading round is in
     end
     
     -- Re-structure firingArc for internal use
@@ -259,9 +258,13 @@ function Turret:fire(args)
     
     if self.ammoMax then
         self.ammoCount = self.ammoCount - 1
-        if self.ammoCount <= 0 then
+        -- Start loading a round, unless one is already loading (firing doesn't
+        -- reset its progress)
+        if not self.isReloading then
             self.isReloading = true
             self.reloadTimer = self.reloadTime
+        end
+        if self.ammoCount <= 0 then
             self.burstsRemaining = 0 -- Cancel active bursts if out of ammo
         end
     end
@@ -283,19 +286,21 @@ function Turret:update(dt)
     if self.isReloading then
         self.reloadTimer = self.reloadTimer - dt
         if self.reloadTimer <= 0 then
-            self.isReloading = false
-            self.ammoCount = self.ammoMax
+            self.ammoCount = math.min(self.ammoMax, self.ammoCount + 1)
+            if self.ammoCount < self.ammoMax then
+                self.reloadTimer = self.reloadTimer + self.reloadTime
+            else
+                self.isReloading = false
+                self.reloadTimer = 0
+            end
         end
-        -- Keep tracking so the first shot after reloading isn't spent re-aiming
+    end
+    -- Empty: nothing to fire until the next round is in. Keep tracking so the
+    -- first shot isn't spent re-aiming.
+    if self.ammoMax and self.ammoCount <= 0 then
         self:getTargetArc()
         if self.target then self:lookAt(self.target.x, self.target.y, dt) end
-        -- A top-up reload (ammo left) is cancelled as soon as there's something
-        -- to shoot; an empty magazine has to finish reloading
-        if self.isReloading and self.target and self.ammoCount > 0 then
-            self.isReloading = false
-        else
-            return
-        end
+        return
     end
 
     if (self.burstsRemaining or 0) > 0 then
@@ -321,17 +326,6 @@ function Turret:update(dt)
 
     self.cooldown = self.cooldown - dt
     self:getTargetArc()
-    -- Nothing to shoot for a while: top up a partly used magazine instead of
-    -- carrying it into the next fight (brief gaps between targets don't count)
-    if self.ammoMax then
-        self.idleTime = self.target and 0 or (self.idleTime or 0) + dt
-        if self.idleTime >= Turret.IDLE_RELOAD_DELAY and self.ammoCount < self.ammoMax then
-            self.isReloading = true
-            self.reloadTimer = self.reloadTime
-            self.idleTime = 0
-            return
-        end
-    end
     if self.target then
         local x, y = self.target.x, self.target.y
         self:lookAt(x, y, dt) -- Aim at the target's lead position
@@ -462,20 +456,23 @@ function Turret:draw(drawx, drawy)
 
     love.graphics.pop()
 
-    -- 4. Magazine: ammo left, or reload progress while reloading (placed turrets
-    -- only). Kept inside the base so it never spills onto neighbouring cells.
+    -- 4. Magazine: rounds loaded, then the round being loaded filling in orange
+    -- (placed turrets only). Kept inside the base so it never spills onto
+    -- neighbouring cells.
     if self.ammoMax and not drawx then
         local w, h = 12, 2
         local bx, by = cx - w / 2, cy + 5
-        local fill = self.isReloading and (1 - self.reloadTimer / self.reloadTime) or (self.ammoCount / self.ammoMax)
+        local roundW = w / self.ammoMax
+        local loadedW = roundW * math.max(0, math.min(self.ammoMax, self.ammoCount))
         love.graphics.setColor(0.05, 0.05, 0.08, 0.8)
         love.graphics.rectangle("fill", bx, by, w, h)
+        love.graphics.setColor(r, g, b, 0.9)
+        love.graphics.rectangle("fill", bx, by, loadedW, h)
         if self.isReloading then
+            local progress = 1 - self.reloadTimer / self.reloadTime
             love.graphics.setColor(1, 0.6, 0.2, 0.9)
-        else
-            love.graphics.setColor(r, g, b, 0.9)
+            love.graphics.rectangle("fill", bx + loadedW, by, roundW * math.max(0, math.min(1, progress)), h)
         end
-        love.graphics.rectangle("fill", bx, by, w * math.max(0, math.min(1, fill)), h)
     end
 
     love.graphics.setLineWidth(1)

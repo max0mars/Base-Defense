@@ -126,8 +126,7 @@ function game:load(saveData, isTesting)
         self.corpses      = {}        -- Recent deaths a Reanimator can raise (recordCorpse)
         self.score        = 0
         self.xp           = 0
-        self.mulliganSkipsUsed = 0
-        self.mulliganLockedSlots = {}
+        self.mulliganLockedSlots = {} -- Hand slots already rerolled (each gets one reroll)
         
         self.testingMode  = isTesting or false
         if self.testingMode then
@@ -554,7 +553,7 @@ function game:draw()
         local titleFont = love.graphics.getFont()
         love.graphics.printf("STARTING HAND", 0, layout.cards[1].y - 70, Layout.W, "center")
         love.graphics.setColor(0.7, 0.8, 0.9, 0.8)
-        love.graphics.printf("Reroll up to 2 cards to optimize your starting hand.", 0, layout.cards[1].y - 40, Layout.W, "center")
+        love.graphics.printf("Reroll starting hand", 0, layout.cards[1].y - 40, Layout.W, "center")
         
         -- 3. Draw starting cards & their circular arrow buttons
         for i, card in ipairs(self.hand) do
@@ -563,7 +562,7 @@ function game:draw()
             local isCardHovered = mx >= c.x and mx <= c.x + layout.cardW and my >= c.y and my <= c.y + layout.cardH
             cardDrawObj:draw(c.x, c.y, layout.cardW, layout.cardH, isCardHovered)
             
-            if (self.mulliganSkipsUsed or 0) < 2 and not (self.mulliganLockedSlots and self.mulliganLockedSlots[i]) then
+            if not (self.mulliganLockedSlots and self.mulliganLockedSlots[i]) then
                 local dist2 = (mx - c.arrowX)^2 + (my - c.arrowY)^2
                 local hoverArrow = dist2 <= c.arrowR^2
                 if hoverArrow then
@@ -600,11 +599,7 @@ function game:draw()
         
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.printf("START BATTLE", sb.x, sb.y + sb.h/2 - titleFont:getHeight()/2, sb.w, "center")
-        
-        -- 5. Draw Skips used count
-        love.graphics.setColor(1, 1, 1, 1)
-        local countText = "Skips Used: " .. (self.mulliganSkipsUsed or 0) .. " / 2"
-        love.graphics.printf(countText, 0, sb.y - 30, Layout.W, "center")
+
     else
         self.gui:draw()
         if self.rewardSystem and self.rewardSystem.isActive then
@@ -821,8 +816,14 @@ function game:EnemyDied(enemy)
     if not enemy.isZombie and self.WaveSpawner and self.WaveSpawner.notifyEnemyKilled then
         self.WaveSpawner:notifyEnemyKilled(enemy)
     end
-    if self.artifacts and not enemy.reachedBase then
-        self.artifacts:trigger("onEnemyKilled", enemy, enemy.killingBlow)
+    if not enemy.reachedBase then
+        -- The run's kill count (shown on the game over screen)
+        if _G.PersistentState then
+            _G.PersistentState.totalKills = (_G.PersistentState.totalKills or 0) + 1
+        end
+        if self.artifacts then
+            self.artifacts:trigger("onEnemyKilled", enemy, enemy.killingBlow)
+        end
     end
 end
 
@@ -1000,9 +1001,6 @@ function game:handleMulliganClick(x, y, button)
         return
     end
     
-    -- If skips used is 2, don't allow rerolls
-    if (self.mulliganSkipsUsed or 0) >= 2 then return end
-    
     -- Check card reroll buttons
     for i, c in ipairs(layout.cards) do
         if not (self.mulliganLockedSlots and self.mulliganLockedSlots[i]) then
@@ -1044,7 +1042,6 @@ function game:rerollCard(cardIndex)
     end
     table.insert(self.hand, cardIndex, newCard)
     
-    self.mulliganSkipsUsed = (self.mulliganSkipsUsed or 0) + 1
     if not self.mulliganLockedSlots then self.mulliganLockedSlots = {} end
     self.mulliganLockedSlots[cardIndex] = true
     if AUDIO then

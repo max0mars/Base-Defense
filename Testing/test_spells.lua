@@ -125,11 +125,36 @@ local mockStunGame = {
 local stunburst = SpellCardRegistry.StunBurst
 stunburst:execute(0, 0, mockStunGame)
 
-assert(#mockStunGame.animations == 1, "StunBurstVisual added to animations")
+assert(#mockStunGame.animations == 1, "Stun gas cloud added to animations")
 local stEnemy = mockStunGame.objects[1]
 assert(stEnemy.effectManager.appliedEffect ~= nil, "Stun effect applied to close enemy")
 assert(stEnemy.effectManager.appliedEffect.name == "stun", "Stun effect is named stun")
 assert(stEnemy.effectManager.appliedEffect.duration == 2.0, "Stun effect duration is 2.0 seconds")
+
+-- The cloud lingers: an enemy that walks in is stunned, but each enemy only once
+local function mockEnemy(x, y)
+    return {
+        x = x, y = y, destroyed = false,
+        isType = function(self, t) return t == "enemy" end,
+        effectManager = { stuns = 0, applyEffect = function(self) self.stuns = self.stuns + 1 end },
+    }
+end
+local inside, walker = mockEnemy(5, 5), mockEnemy(200, 0)
+local gasGame = {
+    objects = { inside, walker },
+    animations = {},
+    enemyEffectManager = { effects = {}, applyEffect = function(self, e) table.insert(self.effects, e) end },
+}
+stunburst:execute(0, 0, gasGame)
+local gas = gasGame.enemyEffectManager.effects[1]
+assert(gas and gas.name == "stun_gas" and gas.duration == 1.5, "Stun gas leaves a 1.5s cloud")
+assert(inside.effectManager.stuns == 1 and walker.effectManager.stuns == 0, "Only enemies inside are stunned at first")
+gas:onUpdate(0.1)
+walker.x = 10
+gas:onUpdate(0.1)
+assert(walker.effectManager.stuns == 1, "An enemy walking into the cloud is stunned")
+gas:onUpdate(0.1)
+assert(inside.effectManager.stuns == 1 and walker.effectManager.stuns == 1, "Each enemy is stunned only once per cloud")
 
 -- 6. Test Acid Cloud execution
 local mockAcidGame = {
@@ -164,7 +189,7 @@ local mockAcidGame = {
 local acidcloud = SpellCardRegistry.AcidCloud
 acidcloud:execute(0, 0, mockAcidGame)
 
-assert(#mockAcidGame.animations == 1, "AcidCloudVisual added to animations")
+assert(#mockAcidGame.animations == 1, "Acid gas cloud added to animations")
 assert(#mockAcidGame.enemyEffectManager.activeEffects == 1, "AcidCloudEffect applied to global enemyEffectManager")
 
 local acidEffect = mockAcidGame.enemyEffectManager.activeEffects[1]

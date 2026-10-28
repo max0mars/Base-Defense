@@ -122,7 +122,7 @@ clearBoard()
 -- -----------------------------------------------------------------------------
 local cryo = InstantCardRegistry.Cryoelectronics
 local blaster = place("blaster", 0, 0)         -- 0.63/s, 1 pellet
-local scatter = place("plasmaScattershot", 2, 0) -- 1.6/s, 10 pellets
+local scatter = place("plasmaScattershot", 2, 0) -- 1.6/s, 8 pellets
 local flux = place("fluxCannon", 0, 2)         -- 0.33/s, untagged but deals energy damage
 local nonEnergy = place("sentry", 2, 2)
 assert(cryo:isValidTarget(blaster) and cryo:isValidTarget(scatter) and cryo:isValidTarget(flux),
@@ -143,8 +143,8 @@ local function perShot(t) return hitEffectOf(t):getAmount({ source = t }) * (t:g
 local function perSecond(t) return perShot(t) * t:getStat("fireRate") end
 -- 1.2 x sqrt(fire rate) per second
 assert(near(perSecond(blaster), 1.2 * math.sqrt(blaster.fireRate)), string.format("Blaster chills %.2f/s", perSecond(blaster)))
--- Pellets count as extra fire rate: 10 pellets = sqrt(10) shots
-assert(near(perSecond(scatter), 1.2 * math.sqrt(1.6 * math.sqrt(10))),
+-- Pellets count as extra fire rate: 8 pellets = sqrt(8) shots
+assert(near(perSecond(scatter), 1.2 * math.sqrt(1.6 * math.sqrt(8))),
     string.format("Plasma Scattershot chills %.2f/s (pellets count toward fire rate)", perSecond(scatter)))
 assert(perSecond(scatter) > perSecond(blaster) and perSecond(blaster) > perSecond(flux),
     "faster turrets chill more per second")
@@ -247,37 +247,51 @@ game.artifacts:refresh()
 assert(near(gun:getStat("fireRate"), baseRate), "refreshing without the artifact clears its per-turret bonus")
 
 -- -----------------------------------------------------------------------------
--- 4. Magazine turrets top up a partly used magazine when nothing is in range
+-- 4. Magazine turrets load one round at a time whenever they aren't full, and
+--    fire as soon as a round is loaded
 -- -----------------------------------------------------------------------------
 local mag = place("plasmaScattershot", 3, 10)
-mag.ammoCount = 3
-for _ = 1, math.floor(Turret.IDLE_RELOAD_DELAY * 60) - 5 do mag:update(1 / 60) end
-assert(not mag.isReloading, "a brief gap without a target doesn't trigger a reload")
-for _ = 1, 10 do mag:update(1 / 60) end
-assert(mag.isReloading, "a partly used magazine reloads after a while with no target")
-for _ = 1, math.ceil(mag.reloadTime * 60) + 1 do mag:update(1 / 60) end
-assert(not mag.isReloading and mag.ammoCount == mag.ammoMax, "...and comes back full")
-mag:update(1 / 60)
-assert(not mag.isReloading, "a full magazine doesn't reload")
+assert(mag.ammoMax == 6 and mag.reloadTime == 2, "Plasma Scattershot: 6 rounds, one loaded every 2s")
+local function run(seconds) for _ = 1, math.floor(seconds * 60 + 0.5) do mag:update(1 / 60) end end
 
--- A target arriving mid top-up cancels the reload and the turret fires
+-- No target: a part-used magazine loads one round per reloadTime until full
+mag.ammoCount = 3
+mag.isReloading, mag.reloadTimer = true, mag.reloadTime
+run(mag.reloadTime - 0.1)
+assert(mag.ammoCount == 3, "a round isn't in before reloadTime")
+run(0.2)
+assert(mag.ammoCount == 4 and mag.isReloading, "one round loads, and the next starts loading")
+run(mag.reloadTime * 2)
+assert(mag.ammoCount == 6 and not mag.isReloading, "it keeps loading until full, then stops")
+run(1)
+assert(mag.ammoCount == 6 and not mag.isReloading, "a full magazine doesn't reload")
+
+-- Firing starts loading a round, and doesn't reset one already loading
 local mx, my = mag:getCenterPosition()
 local function enemyInFront()
     local e = Enemy:new({ game = game, x = mx + 80, y = my, name = "Grunt", maxHp = 1e6 })
     game:addObject(e)
     return e
 end
-mag.ammoCount = 5
-mag.isReloading, mag.reloadTimer = true, mag.reloadTime
 local intruder = enemyInFront()
 mag.rotation = 0
-for _ = 1, 30 do mag:update(1 / 60) end
-assert(not mag.isReloading and mag.ammoCount < 5, "a target cancels a top-up reload and the turret fires")
--- An empty magazine still finishes reloading first
+mag:update(1 / 60)
+assert(mag.ammoCount == 5 and mag.isReloading and math.abs(mag.reloadTimer - mag.reloadTime) < 0.05,
+    "the first shot starts a round loading")
+local timerBefore = mag.reloadTimer
+mag.cooldown = 0
+mag:update(1 / 60)
+assert(mag.ammoCount == 4 and mag.reloadTimer < timerBefore, "another shot doesn't restart the loading round")
+
+-- Empty: it can't fire until a round is in, then fires straight away
 mag.ammoCount = 0
-mag.isReloading, mag.reloadTimer = true, mag.reloadTime
-for _ = 1, 30 do mag:update(1 / 60) end
-assert(mag.isReloading and mag.ammoCount == 0, "an empty magazine can't be interrupted")
+mag.isReloading, mag.reloadTimer = true, 0.5
+mag.cooldown = 0
+run(0.4)
+assert(mag.ammoCount == 0, "an empty magazine can't fire")
+run(0.15)
+assert(mag.ammoCount == 0 and mag.isReloading and math.abs(mag.reloadTimer - mag.reloadTime) < 0.1,
+    "as soon as one round is in it's fired, and the next starts loading")
 intruder:died()
 clearBoard()
 
