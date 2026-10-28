@@ -73,8 +73,15 @@ end
 -- Update Portal Master by another 1.5 seconds (reaches 3.0s, should teleport target forward)
 -- Note: default movement direction for enemies is left towards target (0), so it should move to x = 200 - 80 = 120
 portalMasterInstance:update(1.5)
-print("After 3.0s - target X:", targetEnemy.x)
-if targetEnemy.x == 120 then
+-- The target shrinks into the portal first, then reappears at the exit
+if targetEnemy.x == 200 and targetEnemy:isHalted() then
+    print("[PASS] Target is held in place while it enters the portal.")
+else
+    print("[FAIL] Target should wait for the portal animation.")
+end
+targetEnemy:updateMotionFx(targetEnemy.PORTAL_TIME * 2)
+print("After the portal - target X:", targetEnemy.x)
+if targetEnemy.x == 120 and not targetEnemy:isHalted() then
     print("[PASS] Target was teleported forward correctly.")
 else
     print("[FAIL] Target teleport position is incorrect.")

@@ -227,7 +227,13 @@ function InputHandler:update(dt)
         end
     end
     
-    if not (game.gui and game.gui:overlayActive()) then
+    -- A modal overlay (card draft, mutation pick, ...) covers the board: nothing
+    -- underneath it reacts to the mouse
+    local overlayActive = game.gui and game.gui:overlayActive()
+    if overlayActive then
+        if self.hoveredBuilding then self.hoveredBuilding.showEffects = false end
+        self.hoveredBuilding = nil
+    else
         self:handleBuildingHover()
     end
     
@@ -254,7 +260,7 @@ function InputHandler:update(dt)
         base.invalidSlots = nil
         base.affectedSlots = nil
         base.selectedSlot = nil
-    else
+    elseif not overlayActive then
         -- Only handle building slot hover when placing
         if game.inputMode == "placing" then
             self:handleBuildingSlotHover()

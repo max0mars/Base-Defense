@@ -69,10 +69,8 @@ function Captain:clearNearbyDebuffs()
             
             if chosen.effectManager:clearDebuffs() then
                 clearedCount = clearedCount + 1
-                -- Spawn a nice visual effect on cleared enemy
-                if self.game.spawnExpandingCircle then
-                    self.game:spawnExpandingCircle(chosen.x, chosen.y, 0, chosen.w * 1.5, {0.2, 0.6, 1.0}, 0.5)
-                end
+                -- The cleansed enemy shines (glare sweep + sparkles)
+                if chosen.startGlint then chosen:startGlint() end
             end
         end
         

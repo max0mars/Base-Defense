@@ -90,7 +90,7 @@ function Beast:draw()
     local size = self:getStat("size")
     
     -- Empty state (Dim fill)
-    love.graphics.setColor(r, g, b, 0.2)
+    love.graphics.setColor(r, g, b, Enemy.EMPTY_ALPHA)
     love.graphics.rectangle("fill", drawX - size/2, drawY - size/2, size, size)
     
     -- Health fill
@@ -100,29 +100,22 @@ function Beast:draw()
     local scissorY = (drawY - size/2) + size * (1 - fillRatio)
     local scissorH = size * fillRatio
     
-    SetGameScissor(math.floor(drawX - size/2), math.floor(scissorY), math.ceil(size), math.ceil(scissorH))
-    love.graphics.setColor(r, g, b, 0.8)
+    SetGameScissor(drawX - size/2, scissorY, size, scissorH)
+    love.graphics.setColor(r, g, b, Enemy.HP_ALPHA)
     love.graphics.rectangle("fill", drawX - size/2, drawY - size/2, size, size)
     
     -- Bright horizontal line at health cap
     if fillRatio > 0 and fillRatio < 1 then
-        SetGameScissor(math.floor(drawX - size/2), math.floor(scissorY), math.ceil(size), 2)
+        SetGameScissor(drawX - size/2, scissorY, size, 2)
         love.graphics.setColor(r, g, b, 1)
         love.graphics.rectangle("fill", drawX - size/2, drawY - size/2, size, size)
     end
     SetGameScissor()
     
-    -- Glowing borders
-    for i = 3, 1, -1 do
-        love.graphics.setColor(r, g, b, 0.1 * (4-i))
-        love.graphics.setLineWidth(i * 2)
+    -- Neon border
+    self:drawNeonOutline({ r, g, b }, 2.5, function()
         love.graphics.rectangle("line", drawX - size/2, drawY - size/2, size, size)
-    end
-    
-    -- Main border
-    love.graphics.setColor(r, g, b, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", drawX - size/2, drawY - size/2, size, size)
+    end)
     
     -- Enraged indicator (red eyes)
     -- if self.enraged then

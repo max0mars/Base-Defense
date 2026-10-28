@@ -1,17 +1,20 @@
 -- SettingsPanel.lua: reusable centered settings panel (display mode + resolution
--- + audio), framed in a dark-glass panel. Used by the main menu (BACK button)
+-- + neon glow + audio), framed in a neon panel. Every change is saved to disk. Used by the main menu (BACK button)
 -- and the in-game pause menu (RESUME / EXIT). Display/audio interactions are
 -- handled internally; bottom-button clicks are returned to the caller as an
 -- action string so each scene can route them (e.g. "back", "resume", "exit").
 
 local AudioSlidersUI = require("Game.GUI.AudioSlidersUI")
 local Cursor = require("Game.GUI.Cursor")
+local Neon = require("Game.GUI.Neon")
+local Glow = require("Graphics.Glow")
+local Settings = require("Game.Core.Settings")
 
 local SettingsPanel = {}
 SettingsPanel.__index = SettingsPanel
 
 -- Actions handled internally (not returned to the caller).
-local INTERNAL = { fullscreen_mode = true, windowed = true, resolution = true }
+local INTERNAL = { fullscreen_mode = true, windowed = true, resolution = true, glow = true }
 
 -- opts.title       : panel title (default "SETTINGS")
 -- opts.bottomButtons: array of { label, action, color, hoverColor, borderColor }
@@ -19,7 +22,7 @@ function SettingsPanel:new(opts)
     opts = opts or {}
     local obj = setmetatable({}, SettingsPanel)
 
-    local pw, ph = 440, 512
+    local pw, ph = 440, 552
     local p = { x = math.floor((VIRTUAL_WIDTH - pw) / 2), y = math.floor((VIRTUAL_HEIGHT - ph) / 2), w = pw, h = ph }
     obj.panel = p
     obj.title = opts.title or "SETTINGS"
@@ -59,9 +62,13 @@ function SettingsPanel:new(opts)
             color = setCol, hoverColor = setHov, borderColor = setBord })
     end
 
+    -- Neon glow on / off (full width under the resolutions).
+    table.insert(obj.buttons, { x = col1X, y = p.y + 272, w = col2X + colW - col1X, h = 28, label = "NEON GLOW",
+        action = "glow", color = setCol, hoverColor = setHov, borderColor = Neon.MAGENTA })
+
     -- Bottom action buttons (1 centered, or 2 side by side).
     local bottom = opts.bottomButtons or {}
-    local by, bh = p.y + 444, 38
+    local by, bh = p.y + 484, 38
     if #bottom == 1 then
         local b = bottom[1]
         table.insert(obj.buttons, { x = bx, y = by, w = bw, h = bh, label = b.label, action = b.action, type = "main",
@@ -77,7 +84,7 @@ function SettingsPanel:new(opts)
         end
     end
 
-    obj.sliders = AudioSlidersUI:new({ x = mid - 120, y = p.y + 322, w = 240 })
+    obj.sliders = AudioSlidersUI:new({ x = mid - 120, y = p.y + 362, w = 240 })
     return obj
 end
 
@@ -97,40 +104,29 @@ local function drawButton(btn, mx, my)
         isActive = not flags.fullscreen
     elseif btn.action == "fullscreen_mode" then
         isActive = flags.fullscreen
+    elseif btn.action == "glow" then
+        isActive = Glow.enabled
     end
 
-    local bgCol, borderCol = btn.color, btn.borderColor
+    -- Unset options keep a dim blue frame; the active one lights up green
+    local border = btn.borderColor
     if isTooBig then
-        bgCol, borderCol = {0.4, 0.15, 0.15, 1}, {0.8, 0.3, 0.3, 1}
-    elseif isActive then
-        bgCol, borderCol = {0.1, 0.35, 0.2, 1}, {0.3, 1.0, 0.55, 1}
-    elseif isHovered then
-        bgCol = btn.hoverColor
+        border = Neon.RED
+    elseif isActive and btn.action ~= "glow" then
+        border = Neon.GREEN
+    elseif btn.type ~= "main" and btn.action ~= "glow" then
+        border = { 0.3, 0.55, 0.85 }
     end
-
-    love.graphics.setColor(bgCol)
-    love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 6, 6)
-    love.graphics.setColor(borderCol)
-    love.graphics.setLineWidth((isHovered or isActive) and 2 or 1)
-    love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 6, 6)
-    love.graphics.setLineWidth(1)
-
-    love.graphics.setColor(1, 1, 1)
     local label = btn.label
     if isTooBig then label = label .. " (!)" end
-    if btn.type == "main" then
-        love.graphics.setColor(0, 0, 0, 0.5)
-        love.graphics.printf(label, btn.x + 1, btn.y + btn.h / 2 - 6, btn.w, "center")
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(label, btn.x, btn.y + btn.h / 2 - 7, btn.w, "center")
-    else
-        love.graphics.printf(label, btn.x, btn.y + btn.h / 2 - 6, btn.w, "center")
-    end
+    if btn.action == "glow" then label = label .. (Glow.enabled and ": ON" or ": OFF") end
+    Neon.button({ x = btn.x, y = btn.y, w = btn.w, h = btn.h, label = label, borderColor = border },
+        { hovered = isHovered, active = isActive })
 end
 
 function SettingsPanel:divider(y)
     local p = self.panel
-    love.graphics.setColor(0.3, 0.4, 0.5, 0.4)
+    love.graphics.setColor(0.0, 0.6, 0.85, 0.35)
     love.graphics.setLineWidth(1)
     love.graphics.line(p.x + 26, y, p.x + p.w - 26, y)
 end
@@ -140,20 +136,10 @@ function SettingsPanel:draw()
     local mx, my = love.mouse.getPosition()
 
     -- Panel body + border.
-    love.graphics.setColor(0.04, 0.06, 0.09, 0.96)
-    love.graphics.rectangle("fill", p.x, p.y, p.w, p.h, 10, 10)
-    love.graphics.setColor(0.2, 0.55, 0.8, 0.7)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", p.x, p.y, p.w, p.h, 10, 10)
-    love.graphics.setLineWidth(1)
+    Neon.panel(p.x, p.y, p.w, p.h, Neon.CYAN)
 
     -- Title.
-    love.graphics.push()
-    love.graphics.translate(p.x + p.w / 2, p.y + 20)
-    love.graphics.scale(1.6, 1.6)
-    love.graphics.setColor(0.3, 0.7, 1, 1)
-    love.graphics.printf(self.title, -140, 0, 280, "center")
-    love.graphics.pop()
+    Neon.title(self.title, p.x + p.w / 2 - 224, p.y + 20, 448, "center", Neon.hot(Neon.CYAN, 0.3), 1.6)
 
     self:divider(p.y + 50)
     love.graphics.setColor(0.5, 0.6, 0.7, 0.9)
@@ -162,11 +148,11 @@ function SettingsPanel:draw()
     love.graphics.setColor(0.45, 0.5, 0.58, 0.8)
     love.graphics.printf("Resolution", p.x, p.y + 122, p.w, "center")
 
-    self:divider(p.y + 276)
+    self:divider(p.y + 316)
     love.graphics.setColor(0.5, 0.6, 0.7, 0.9)
-    love.graphics.printf("AUDIO", p.x, p.y + 288, p.w, "center")
+    love.graphics.printf("AUDIO", p.x, p.y + 328, p.w, "center")
 
-    self:divider(p.y + 422)
+    self:divider(p.y + 462)
 
     for _, btn in ipairs(self.buttons) do
         drawButton(btn, mx, my)
@@ -193,9 +179,12 @@ function SettingsPanel:mousepressed(x, y, button)
                 if love.window.getFullscreen() then scalify:switchFullscreen() end
             elseif btn.action == "resolution" then
                 scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, btn.data.width, btn.data.height, {resizable = true, highdpi = true})
+            elseif btn.action == "glow" then
+                Glow.enabled = not Glow.enabled
             else
                 return btn.action -- bottom button: let the caller handle it
             end
+            Settings.capture(AUDIO)
             return nil
         end
     end
@@ -203,7 +192,10 @@ function SettingsPanel:mousepressed(x, y, button)
 end
 
 function SettingsPanel:mousereleased(x, y, button)
-    if self.sliders then self.sliders:mousereleased(x, y, button) end
+    if not self.sliders then return end
+    local wasDragging = self.sliders.dragging
+    self.sliders:mousereleased(x, y, button)
+    if wasDragging then Settings.capture(AUDIO) end -- a volume drag just ended
 end
 
 return SettingsPanel

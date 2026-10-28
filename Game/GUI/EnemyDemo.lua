@@ -97,8 +97,9 @@ function EnemyDemo:addWall()
     self.wall = { x = WALL_X, flash = 0 }
 end
 
-function EnemyDemo:ring(x, y, radius, color, duration)
-    table.insert(self.rings, { x = x, y = y, r = radius, color = color, t = 0, dur = duration or 0.6 })
+-- delay: seconds before the ring appears (for staggered rings)
+function EnemyDemo:ring(x, y, radius, color, duration, delay)
+    table.insert(self.rings, { x = x, y = y, r = radius, color = color, t = -(delay or 0), dur = duration or 0.6 })
 end
 
 function EnemyDemo:text(str, x, y, color)
@@ -109,9 +110,10 @@ end
 function EnemyDemo:damage(e, amount, color)
     if not e or e.demoDead then return end
     local shieldHit = math.min(e.shield or 0, amount)
+    if shieldHit > 0 then e.shieldHit = 0 end -- shield brackets pulse
     e.shield = (e.shield or 0) - shieldHit
     e.hp = e.hp - (amount - shieldHit)
-    self:text(math.floor(amount + 0.5), e.x, e.y - e.h / 2, shieldHit > 0 and { 0.75, 0.75, 0.8 } or color)
+    self:text(math.floor(amount + 0.5), e.x, e.y - e.h / 2, shieldHit > 0 and { 0.5, 0.75, 1 } or color)
     if e.hp <= 0 then
         e.hp = 0
         e.demoDead = true
@@ -158,8 +160,9 @@ function EnemyDemo:update(dt)
     for _, e in ipairs(self.actors) do
         if not e.demoDead then
             if e.effectManager then e.effectManager:update(dt) end
+            if e.updateMotionFx then e:updateMotionFx(dt) end
             local speed = e:getStat("speed") * (e.demoSpeedMult or 1)
-            if (e:getStat("stunned", 0) or 0) > 0 then speed = 0 end
+            if (e:getStat("stunned", 0) or 0) > 0 or (e.isHalted and e:isHalted()) then speed = 0 end
             e.x = e.x - speed * dt
         end
     end
@@ -246,8 +249,8 @@ function EnemyDemo:draw()
     end
 
     for _, ring in ipairs(self.rings) do
-        local p = ring.t / ring.dur
-        love.graphics.setColor(ring.color[1], ring.color[2], ring.color[3], 0.7 * (1 - p))
+        local p = math.max(0, ring.t) / ring.dur
+        love.graphics.setColor(ring.color[1], ring.color[2], ring.color[3], ring.t < 0 and 0 or 0.7 * (1 - p))
         love.graphics.setLineWidth(1.5)
         love.graphics.circle("line", ring.x, ring.y, ring.r * (0.3 + 0.7 * p))
     end
@@ -255,7 +258,7 @@ function EnemyDemo:draw()
     if self.script.drawUnder then self.script.drawUnder(self) end
     for _, e in ipairs(self.actors) do
         if not e.demoDead then
-            e:draw()
+            if e.drawAnimated then e:drawAnimated() else e:draw() end
             if e.drawStatusEffects then e:drawStatusEffects() end
         end
     end
@@ -401,7 +404,7 @@ scripts.Sapper = {
     isDone = function(demo) return demo.star.demoDead and #demo.rings == 0 and demo.wall.flash <= 0 end,
 }
 
--- Broodmother: hatches Critters side by side in front of it as it walks
+-- Broodmother: stops, and pulses as each Critter hatches side by side in front of it
 scripts.Broodmother = {
     setup = function(demo)
         demo:spawnStar()
@@ -411,9 +414,20 @@ scripts.Broodmother = {
         local bm = demo.star
         if bm.x > demo.W then return end
         if every(demo.state, "hatch", bm:getStat("spawnFrequency") or 6, dt, 1) then
-            local count = bm:getStat("spawnAmount") or 3
-            for i = 1, count do
-                local lane = (i - (count + 1) / 2) * 14
+            demo.state.count = bm:getStat("spawnAmount") or 3
+            demo.state.slot = 0
+            bm.spawnQueue = demo.state.count -- holds it still (Spawner:isHalted)
+            demo.state.stagger = 0
+        end
+        if (bm.spawnQueue or 0) > 0 then
+            demo.state.stagger = demo.state.stagger - dt
+            if demo.state.stagger <= 0 then
+                demo.state.stagger = bm.staggerDelay or 0.2
+                demo.state.slot = demo.state.slot + 1
+                bm.spawnQueue = bm.spawnQueue - 1
+                bm:startPulse()
+                local count = demo.state.count
+                local lane = (demo.state.slot - (count + 1) / 2) * 14
                 local c = demo:spawn(bm:getStat("spawnReference") or "Critter", bm.x - bm.w / 2 - 8, bm.y + lane)
                 if c then demo:ring(c.x, c.y, 8, { 0.3, 1, 0.3 }, 0.3) end
             end
@@ -447,11 +461,13 @@ scripts.Guardian = {
     update = function(demo, dt)
         local g = demo.star
         if g.demoDead or g.x > demo.W then return end
-        if every(demo.state, "shield", 5, dt, 1) then
-            demo:ring(g.x, g.y, g.auraRadius or 75, { 0.75, 0.75, 0.8 }, 0.8)
+        if every(demo.state, "shield", g.shieldCooldown, dt, 1) then
+            for i = 0, g.SHIELD_RINGS - 1 do
+                demo:ring(g.x, g.y, g.shieldRadius, g.SHIELD_COLOR, 0.7, i * g.SHIELD_RING_GAP)
+            end
             for _, gr in ipairs(demo.grunts) do
                 if not gr.demoDead then
-                    gr.shield = g.shieldAmount or 50
+                    gr.shield = g.shieldAmount
                     gr.maxShield = math.max(gr.maxShield or 0, gr.shield)
                 end
             end
@@ -482,7 +498,7 @@ scripts.Captain = {
             for _, gr in ipairs(demo.grunts) do
                 if not gr.demoDead and gr.effectManager:clearDebuffs() then
                     cleared = true
-                    demo:ring(gr.x, gr.y, gr.w * 1.5, { 0.2, 0.6, 1 }, 0.5)
+                    gr:startGlint()
                 end
             end
             if cleared then demo:ring(c.x, c.y, c.range or 120, { 0.1, 0.4, 0.9 }, 0.6) end
@@ -507,9 +523,10 @@ scripts.PortalMaster = {
             demo:ring(p.x, p.y, 30, { 0.7, 0.3, 1 }, 0.6)
             for _, gr in ipairs(demo.grunts) do
                 if not gr.demoDead then
+                    local toX = gr.x - (p.teleportDistance or 25)
                     demo:ring(gr.x, gr.y, 10, { 0.7, 0.3, 1 }, 0.4)
-                    gr.x = gr.x - (p.teleportDistance or 25)
-                    demo:ring(gr.x, gr.y, 10, { 0.85, 0.5, 1 }, 0.5)
+                    demo:ring(toX, gr.y, 10, { 0.85, 0.5, 1 }, 0.5)
+                    gr:startPortal(toX, gr.y)
                 end
             end
         end
@@ -567,12 +584,16 @@ scripts.Slime = {
     onDeath = function(demo, e)
         local generation = e.generation or 0
         if generation >= 2 then return end
-        for _, dy in ipairs({ -10, 10 }) do
+        demo:ring(e.x, e.y, e.w * 1.4, e.color, 0.25)
+        local size = math.max(8, e.w * 0.75)
+        local spread = (size + (e.SPLIT_GAP or 4)) / 2
+        for _, dir in ipairs({ -1, 1 }) do
             local maxHp = math.max(1, math.floor(e:getStat("maxHp") / 2))
-            demo:spawn("Slime", e.x + 4, e.y + dy, {
+            local child = demo:spawn("Slime", e.x, e.y, {
                 generation = generation + 1, maxHp = maxHp, hp = maxHp,
-                speed = e:getStat("speed"), size = math.max(8, e.w * 0.75),
+                speed = e:getStat("speed"), size = size,
             })
+            if child then child:startSpread(e.x, e.y + dir * spread) end
         end
     end,
     isDone = function(demo) return #demo:alive() == 0 and #demo.texts == 0 end,

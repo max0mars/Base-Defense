@@ -79,15 +79,21 @@ function Spawner:update(dt)
         self.batchX, self.batchY = self.x, self.y
     end
 
-    -- Staggered Spawning Logic
+    -- Staggered Spawning Logic: it stops and pulses as each one hatches
     if self.spawnQueue and self.spawnQueue > 0 then
         self.staggerTimer = self.staggerTimer + dt
         if self.staggerTimer >= self.staggerDelay then
             self.staggerTimer = 0
             self.spawnQueue = self.spawnQueue - 1
+            self:startPulse()
             self:spawnOneReinforcement()
         end
     end
+end
+
+--- Holds still while a batch is hatching, until the last pulse ends.
+function Spawner:isHalted()
+    return Enemy.isHalted(self) or (self.spawnQueue or 0) > 0 or self.pulse ~= nil
 end
 
 --- Sideways offset of this spawn's lane: slots are centred on the spawner and
@@ -181,7 +187,7 @@ function Spawner:draw()
     local hexPoints = getHexPoints(drawX, drawY, hexRadius)
     
     -- 1. Draw "Empty" Base State (Dim fill)
-    love.graphics.setColor(r, g, b, 0.15)
+    love.graphics.setColor(r, g, b, Enemy.EMPTY_ALPHA)
     love.graphics.polygon("fill", hexPoints)
     
     -- 2. Calculate Scissor Box for Health Fill (Draining effect)
@@ -201,14 +207,14 @@ function Spawner:draw()
     local scissorH = actualH * fillRatio
     
     -- 3. Draw "Health" Fill (Bright fill restricted by scissor)
-    SetGameScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), math.ceil(scissorH))
-    love.graphics.setColor(r, g, b, 0.7)
+    SetGameScissor(self.x - size, scissorY, size * 2, scissorH)
+    love.graphics.setColor(r, g, b, Enemy.HP_ALPHA)
     love.graphics.polygon("fill", hexPoints)
     
     -- Add a bright horizontal line at the health level "cap"
     -- We do this by setting a very thin scissor and redrawing the shape fill
     if fillRatio > 0 and fillRatio < 1 then
-        SetGameScissor(math.floor(self.x - size), math.floor(scissorY), math.ceil(size * 2), 2)
+        SetGameScissor(self.x - size, scissorY, size * 2, 2)
         love.graphics.setColor(r, g, b, 1)
         love.graphics.polygon("fill", hexPoints)
         SetGameScissor()
@@ -216,30 +222,11 @@ function Spawner:draw()
     
     SetGameScissor()
     
-    -- Layer 3: Shield Fill (Scissor bottom-up)
-    if self.maxShield > 0 and self.shield > 0 then
-        local shieldRatio = self.shield / self.maxShield
-        local sScissorY = minY + actualH * (1 - shieldRatio)
-        local sScissorH = actualH * shieldRatio
-        
-        SetGameScissor(math.floor(self.x - size), math.floor(sScissorY), math.ceil(size * 2), math.ceil(sScissorH))
-        love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
-        love.graphics.polygon("fill", hexPoints)
-        SetGameScissor()
-    end
-    
-    -- 4. Glow Layers (Outside scissor)
-    for i = 5, 1, -1 do
-        local alpha = 0.05 * (1 - i/6)
-        love.graphics.setColor(r, g, b, alpha)
-        love.graphics.setLineWidth(i * 3)
-        love.graphics.polygon("line", hexPoints)
-    end
-    
-    -- 5. Main Neon Border
-    love.graphics.setColor(r, g, b, 1)
-    love.graphics.setLineWidth(3)
-    love.graphics.polygon("line", hexPoints)
+-- 4. Glow Layers (Outside scissor)
+    self:drawNeonOutline({ r, g, b }, 3, function() love.graphics.polygon("line", hexPoints) end)
 end
+
+-- Drawn as a hexagon, so it floats like other non-square enemies
+function Spawner:isGrounded() return false end
 
 return Spawner

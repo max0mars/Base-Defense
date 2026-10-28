@@ -1,7 +1,8 @@
 local ExpandingCircle = {}
 ExpandingCircle.__index = ExpandingCircle
 
-function ExpandingCircle:new(x, y, startRadius, endRadius, color, duration)
+-- delay: seconds before the ring appears (for staggered rings)
+function ExpandingCircle:new(x, y, startRadius, endRadius, color, duration, delay)
     local obj = setmetatable({}, self)
     
     obj.x = x
@@ -11,12 +12,17 @@ function ExpandingCircle:new(x, y, startRadius, endRadius, color, duration)
     obj.color = color or {0.6, 0.6, 0.6} -- Default grey
     obj.maxLifetime = duration or 0.6
     obj.lifetime = obj.maxLifetime
+    obj.delay = delay or 0
     obj.destroyed = false
     
     return obj
 end
 
 function ExpandingCircle:update(dt)
+    if self.delay > 0 then
+        self.delay = self.delay - dt
+        return
+    end
     self.lifetime = self.lifetime - dt
     if self.lifetime <= 0 then
         self.destroyed = true
@@ -24,6 +30,7 @@ function ExpandingCircle:update(dt)
 end
 
 function ExpandingCircle:draw()
+    if self.delay > 0 then return end
     local progress = 1 - (self.lifetime / self.maxLifetime)
     local alpha = self.lifetime / self.maxLifetime
     local r, g, b = unpack(self.color)

@@ -7,6 +7,28 @@ local default = {
     types = { building = true },
 }
 
+-- Building id -> rarity, built from the turret and passive indexes on first use
+local rarityById
+
+--- Rarity of the building with this id ("common" ... "legendary"), or nil if it
+--- isn't in the turret or passive index.
+function building.rarityFor(id)
+    if not id then return nil end
+    if not rarityById then
+        rarityById = {}
+        for _, name in ipairs({ "Buildings.TurretIndex", "Buildings.PassiveIndex" }) do
+            for rarity, list in pairs(require(name)) do
+                if type(list) == "table" then
+                    for _, entry in ipairs(list) do
+                        if entry.id then rarityById[entry.id] = rarity end
+                    end
+                end
+            end
+        end
+    end
+    return rarityById[id]
+end
+
 function building:new(config)
     if(not config.types) then
         error("Types are required for all buildings")
@@ -23,6 +45,8 @@ function building:new(config)
         config.types[key] = true
     end
     local b = setmetatable(obj:new(config), {__index = self})
+    -- Placed buildings keep their rarity (configs from older saves may lack it)
+    b.rarity = config.rarity or building.rarityFor(config.id)
     -- shapePattern is now required - defines building shape as {x,y} coordinate offsets
     if not config.shapePattern then
         config.shapePattern = {{0,0}}

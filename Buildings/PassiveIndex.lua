@@ -108,4 +108,11 @@ local PassiveIndex = {
     legendary = {}
 }
 
+-- Each entry knows its rarity (the tier it's listed under); placed buildings keep it
+for rarity, tierList in pairs(PassiveIndex) do
+    for _, passiveConfig in ipairs(tierList) do
+        passiveConfig.rarity = rarity
+    end
+end
+
 return PassiveIndex

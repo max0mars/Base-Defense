@@ -371,6 +371,13 @@ local RewardIndex = {
     }
 }
 
+-- Each entry knows its rarity (the tier it's listed under); placed buildings keep it
+for rarity, tierList in pairs(RewardIndex) do
+    for _, turretConfig in ipairs(tierList) do
+        turretConfig.rarity = rarity
+    end
+end
+
 -- Deep Merge Visuals
 local success, Visuals = pcall(require, "Buildings.TurretVisualIndex")
 if success and type(Visuals) == "table" then

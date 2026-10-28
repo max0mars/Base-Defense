@@ -1,6 +1,10 @@
 VIRTUAL_WIDTH = 1280
 VIRTUAL_HEIGHT = 720
 
+-- First, so its print/printf wrappers (text stays out of the glow) are in place
+local Glow = require("Graphics.Glow")
+local Settings = require("Game.Core.Settings")
+
 scalify = require("Libraries.scalify")
 local Layout = require("Game.GUI.Layout")
 
@@ -48,13 +52,20 @@ function SetGameScissor(x, y, w, h)
         return
     end
 
+    local rx, ry, rw, rh = x, y, w, h
     if scalify and not scalify._canvas then
-        local rx, ry = scalify:toReal(x, y)
-        local rw = w * scalify._SCALE.x
-        local rh = h * scalify._SCALE.y
-        love.graphics.setScissor(math.floor(rx), math.floor(ry), math.floor(rw), math.ceil(rh))
+        rx, ry = scalify:toReal(x, y)
+        rw, rh = w * scalify._SCALE.x, h * scalify._SCALE.y
+    end
+    if Layout and Layout.worldActive then
+        -- World clips (enemy HP fills) follow smoothly moving shapes: round each
+        -- edge to the nearest pixel so the clip never drifts more than half a
+        -- pixel from the shape it cuts
+        local x1, y1 = math.floor(rx + 0.5), math.floor(ry + 0.5)
+        local x2, y2 = math.floor(rx + rw + 0.5), math.floor(ry + rh + 0.5)
+        love.graphics.setScissor(x1, y1, math.max(0, x2 - x1), math.max(0, y2 - y1))
     else
-        love.graphics.setScissor(math.floor(x), math.floor(y), math.floor(w), math.ceil(h))
+        love.graphics.setScissor(math.floor(rx), math.floor(ry), math.floor(rw), math.ceil(rh))
     end
 end
 
@@ -76,13 +87,17 @@ local AudioManager = require("Audio.AudioManager")
 function love.load()
     love.graphics.setDefaultFilter("linear", "linear")
     love.window.setTitle("Base Defense")
-    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, 2560, 1440, { resizable = true, vsync = true, highdpi = true, canvas = false})
+    Settings.load()
+    local windowW, windowH = Settings.windowSize(2560, 1440)
+    scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, windowW, windowH, { resizable = true, vsync = true, highdpi = true, canvas = false})
+    Settings.applyDisplay(scalify)
     scalify:setBorderColor(0.03, 0.04, 0.06)
     math.randomseed( os.time() )
     love.graphics.setBlendMode("alpha", "alphamultiply")
     
     -- Initialize global Audio Subsystem
     AUDIO = AudioManager:new()
+    Settings.applyAudio(AUDIO)
     AUDIO:playMusic()
     
     scene_manager:load() -- Load the initial scene
@@ -114,10 +129,12 @@ function love.update(dt)
 end
 
 function love.draw()
+    Glow.begin()
     scalify:start()
     love.graphics.clear(0.03, 0.04, 0.06) -- Clear the screen with a dark color
     scene_manager:draw() -- Draw the current scene
     scalify:finish()
+    Glow.finish()
 end
 
 function love.keypressed(key)

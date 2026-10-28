@@ -1,3 +1,5 @@
+local Neon = require("Game.GUI.Neon")
+
 local CardDraw = {}
 CardDraw.__index = CardDraw
 
@@ -164,17 +166,13 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
     love.graphics.translate(targetX, targetY)
     love.graphics.scale(scaleX, scaleY)
 
-    -- 1. Card Base (Dark contrast background)
-    love.graphics.setColor(0.08, 0.08, 0.08, 1)
-    love.graphics.rectangle("fill", 0, 0, CardDraw.WIDTH, CardDraw.HEIGHT, CardDraw.RADIUS)
+    -- 1-2. Near-black base with a faint rarity tint, framed by a neon rarity tube
+    Neon.rect(0, 0, CardDraw.WIDTH, CardDraw.HEIGHT, color, { radius = CardDraw.RADIUS, width = isHovered and 4 or 3,
+        bg = 1, tint = isHovered and 0.1 or 0.05 })
 
-    -- 2. Outer Neon Border
-    love.graphics.setLineWidth(3)
-    love.graphics.setColor(color)
-    love.graphics.rectangle("line", 0, 0, CardDraw.WIDTH, CardDraw.HEIGHT, CardDraw.RADIUS)
-
-    -- 3. Name Banner (Top)
-    love.graphics.setLineWidth(2)
+    -- 3. Name Banner (Top). Inner boxes are dimmer so only the frame glows.
+    love.graphics.setColor(color[1], color[2], color[3], 0.55)
+    love.graphics.setLineWidth(1.5)
     love.graphics.rectangle("line", 15, 15, CardDraw.WIDTH - 30, 40, 5)
 
     -- 4. Art/Image Box (Middle)
@@ -364,21 +362,20 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
         end
         love.graphics.polygon("fill", vertices)
     else
-        love.graphics.setColor(0.08, 0.08, 0.08, 1)
+        love.graphics.setColor(Neon.BG[1], Neon.BG[2], Neon.BG[3], 1)
         love.graphics.circle("fill", 15, 35, 25)
     end
     
     -- Outer/inner neon ring/hexagon detailing
-    love.graphics.setColor(color)
     if isSpellCard then
-        love.graphics.setLineWidth(3)
         local vertices = {}
         for i = 1, 6 do
             local angle = (i - 1) * (math.pi / 3) - math.pi / 6
             table.insert(vertices, 15 + math.cos(angle) * 25)
             table.insert(vertices, 35 + math.sin(angle) * 25)
         end
-        love.graphics.polygon("line", vertices)
+        Neon.polygon(vertices, color, 3)
+        love.graphics.setColor(color)
         
         love.graphics.setLineWidth(1)
         local vertices_inner = {}
@@ -389,8 +386,8 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
         end
         love.graphics.polygon("line", vertices_inner)
     else
-        love.graphics.setLineWidth(3)
-        love.graphics.circle("line", 15, 35, 25)
+        Neon.circle(15, 35, 25, color, 3)
+        love.graphics.setColor(color[1], color[2], color[3], 0.55)
         love.graphics.setLineWidth(1)
         love.graphics.circle("line", 15, 35, 18)
     end
@@ -438,5 +435,8 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
         love.graphics.printf(dt.t, targetX + dt.x * scaleX, targetY + dt.y * scaleY, dt.w * scaleX, dt.a, 0)
     end
 end
+
+-- Shared so other UI (e.g. the building hover window) matches the cards
+CardDraw.RARITY_COLORS = rarityColors
 
 return CardDraw

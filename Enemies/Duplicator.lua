@@ -2,6 +2,8 @@ local Enemy = require("Enemies.Enemy")
 local Duplicator = setmetatable({}, {__index = Enemy})
 Duplicator.__index = Duplicator
 
+Duplicator.SPLIT_GAP = 4 -- px left between split-off children once they've spread
+
 local default = {
     name = "Duplicator",
     reward = 10, -- Base reward, splits will also give rewards
@@ -130,11 +132,21 @@ function Duplicator:died()
                 end
             end
             
+            -- Pop: a quick burst where it split
+            if self.game.spawnExpandingCircle then
+                self.game:spawnExpandingCircle(self.x, self.y, self.w * 0.4, self.w * 1.4, self.color, 0.25)
+            end
+
+            -- Children start on the split point and spread evenly apart, far
+            -- enough to leave a few pixels between neighbours
+            local spreadDist = (childSize + Duplicator.SPLIT_GAP) / (2 * math.sin(math.pi / numClones))
+            local baseAngle = math.random() * math.pi * 2
             for i = 1, numClones do
                 local spawnConfig = {
                     game = self.game,
-                    x = self.x + math.random(-5, 5),
-                    y = self.y + math.random(-20, 20),
+                    name = self.name, -- same enemy type (colour, shape) as the parent
+                    x = self.x,
+                    y = self.y,
                     generation = childGeneration,
                     maxHp = childMaxHp,
                     hp = childMaxHp,
@@ -155,6 +167,9 @@ function Duplicator:died()
                 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
                 EnemyRegistry:applyActiveMutations(childInstance)
                 
+                local angle = baseAngle + (i - 1) * math.pi * 2 / numClones
+                childInstance:startSpread(self.x + math.cos(angle) * spreadDist, self.y + math.sin(angle) * spreadDist)
+
                 -- Finally add child to the game
                 self.game:addObject(childInstance)
             end

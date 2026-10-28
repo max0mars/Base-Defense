@@ -220,6 +220,10 @@ function new_game_scene:mousepressed(x, y, button)
     end
 end
 
+function new_game_scene:mousereleased(x, y, button)
+    if self.isSettingsOpen then self.settings:mousereleased(x, y, button) end
+end
+
 function new_game_scene:keypressed(key)
     if self.isSettingsOpen then
         if key == "escape" then self.isSettingsOpen = false end

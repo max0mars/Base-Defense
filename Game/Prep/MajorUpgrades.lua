@@ -4,6 +4,7 @@
 -- time it's bought; some stop after `maxBuys`.
 
 local Scouting = require("Game.Prep.Scouting")
+local Neon = require("Game.GUI.Neon")
 
 local MajorUpgrades = {}
 
@@ -50,8 +51,8 @@ MajorUpgrades.list = {
     {
         id = "mana_regen", name = "MANA REGEN", basePrice = 80, priceStep = 40, maxBuys = 4,
         desc = "Regain 10 more mana after each wave.",
-        value = function(ps) return (ps.manaRegenPerWave or 25) .. " per wave" end,
-        apply = function(ps) ps.manaRegenPerWave = (ps.manaRegenPerWave or 25) + 10 end,
+        value = function(ps) return (ps.manaRegenPerWave or 15) .. " per wave" end,
+        apply = function(ps) ps.manaRegenPerWave = (ps.manaRegenPerWave or 15) + 10 end,
     },
 }
 
@@ -125,11 +126,7 @@ function MajorUpgrades.draw(scene, visit, area, mx, my)
     local ps = _G.PersistentState
     for i, up in ipairs(MajorUpgrades.list) do
         local t = tileRect(area, i)
-        love.graphics.setColor(0.06, 0.08, 0.12, 0.92)
-        love.graphics.rectangle("fill", t.x, t.y, t.w, t.h, 10)
-        love.graphics.setColor(0.3, 0.6, 0.85, 1)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", t.x, t.y, t.w, t.h, 10)
+        Neon.panel(t.x, t.y, t.w, t.h, { 0.3, 0.6, 0.85 })
         love.graphics.setLineWidth(1)
 
         love.graphics.setColor(1, 1, 1, 1)

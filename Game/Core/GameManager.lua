@@ -136,7 +136,7 @@ function game:load(saveData, isTesting)
         end
         self.maxTokens    = _G.PersistentState and _G.PersistentState.startingTokens or 3
         self.maxMana      = _G.PersistentState and _G.PersistentState.maxMana or 100
-        self.manaRegenPerWave = _G.PersistentState and _G.PersistentState.manaRegenPerWave or 25 -- Mana refilled after every wave (capped at maxMana)
+        self.manaRegenPerWave = _G.PersistentState and _G.PersistentState.manaRegenPerWave or 15 -- Mana refilled after every wave (capped at maxMana)
         self.mana         = self.maxMana
         EnemyRegistry:reset(self)
         self.wave         = 0
@@ -292,10 +292,8 @@ end
 -- Game Loop: Update
 -- -----------------------------------------------------------------------------
 
-function game:update(dt)
-    self.pulseTimer = self.pulseTimer + dt
-    if self:isState("gameover") then return end
-    -- Update Animations with cleanup
+--- Advances visual animations (explosions, particles, damage numbers, rings).
+function game:updateAnimations(dt)
     for i = #self.animations, 1, -1 do
         local anim = self.animations[i]
         anim:update(dt)
@@ -303,6 +301,12 @@ function game:update(dt)
             table.remove(self.animations, i)
         end
     end
+end
+
+function game:update(dt)
+    self.pulseTimer = self.pulseTimer + dt
+    if self:isState("gameover") then return end
+    self:updateAnimations(dt)
 
     -- Global Loss Condition
     if self.base.hp <= 0 then
@@ -422,10 +426,10 @@ function game:draw()
     end
     ArcOverlay.draw(arcs, self.ground.x, self.ground.y, self.ground.w, self.ground.h)
 
-    -- 2. Entities
+    -- 2. Entities (enemies with their trails, hover and ability animations)
     for _, obj in ipairs(self.objects) do
         if not obj.destroyed and obj.draw then
-            obj:draw()
+            if obj.drawAnimated then obj:drawAnimated() else obj:draw() end
             -- Collect objects that need UI overlays (drawn in next pass)
             if obj.drawHealthBar or obj.drawReloadBar or obj.effectManager then
                 table.insert(healthyboys, obj)
@@ -798,8 +802,8 @@ function game:spawnLightningBolt(tx, ty, config)
     table.insert(self.animations, LightningBolt:new(tx, ty, config))
 end
 
-function game:spawnExpandingCircle(x, y, startRadius, endRadius, color, duration)
-    table.insert(self.animations, ExpandingCircle:new(x, y, startRadius, endRadius, color, duration))
+function game:spawnExpandingCircle(x, y, startRadius, endRadius, color, duration, delay)
+    table.insert(self.animations, ExpandingCircle:new(x, y, startRadius, endRadius, color, duration, delay))
 end
 
 function game:spawnArmorBreak(x, y)
@@ -1299,8 +1303,8 @@ function game:winBattle()
         local activeBattle = _G.PersistentState.selectedBattle
         local rewards = activeBattle and activeBattle.rewards
         
-        -- Find gold reward amount for UI summary screen
-        local goldReward = 100
+        -- Find gold reward amount for UI summary screen ($0 when the battle gave no cash)
+        local goldReward = 0
         if rewards and #rewards > 0 then
             for _, r in ipairs(rewards) do
                 if r.type == BattleManager.REWARD_TYPES.GOLD then

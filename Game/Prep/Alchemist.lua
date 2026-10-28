@@ -3,6 +3,7 @@
 -- and sells a few typed materials at the day's market price.
 
 local MaterialRegistry = require("Game.Cards.MaterialRegistry")
+local Neon = require("Game.GUI.Neon")
 local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
 local Cursor = require("Game.GUI.Cursor")
 
@@ -105,12 +106,8 @@ local function offerButton(panel, i)
 end
 
 local function drawPanel(p, title, color)
-    love.graphics.setColor(0.06, 0.07, 0.1, 0.9)
-    love.graphics.rectangle("fill", p.x, p.y, p.w, p.h, 10)
+    Neon.panel(p.x, p.y, p.w, p.h, color)
     love.graphics.setColor(color)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", p.x, p.y, p.w, p.h, 10)
-    love.graphics.setLineWidth(1)
     love.graphics.printf(title, p.x, p.y + 16, p.w, "center")
 end
 

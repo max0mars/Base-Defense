@@ -164,6 +164,9 @@ function game_scene:update(dt)
     
     if game.rewardSystem and game.rewardSystem.isActive then
         game.rewardSystem:update(dt)
+        -- The battle stays frozen behind the reward pick, but its animations
+        -- (explosions, particles, damage numbers) play out instead of hanging
+        if paused ~= 1 and effectiveDt == 0 then game:updateAnimations(dt * game.time_mul) end
     end
     
     game:update(effectiveDt)

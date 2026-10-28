@@ -7,7 +7,9 @@
 local Reward = require("Game.Rewards.Reward")
 local Layout = require("Game.GUI.Layout")
 local Cursor = require("Game.GUI.Cursor")
+local Neon = require("Game.GUI.Neon")
 local DamageStats = require("Game.Core.DamageStats")
+local CardDraw = require("Game.Cards.CardDraw")
 
 local InfoColumn = {}
 InfoColumn.__index = InfoColumn
@@ -45,17 +47,14 @@ local function sectionHeader(text, x, y, w, col)
     love.graphics.push("all")
     love.graphics.setColor(col[1], col[2], col[3], 0.85)
     love.graphics.print(text, x, y)
-    love.graphics.setColor(col[1], col[2], col[3], 0.3)
-    love.graphics.setLineWidth(1)
-    love.graphics.line(x, y + 16, x + w, y + 16)
     love.graphics.pop()
+    Neon.line(x, y + 16, x + w, y + 16, col, 1.5, 0.7)
 end
 
 local function enemyGlyph(cx, cy, r, g, b)
-    love.graphics.setColor(r, g, b, 1)
+    love.graphics.setColor(r, g, b, 0.3)
     love.graphics.rectangle("fill", cx - 6, cy - 6, 12, 12, 2)
-    love.graphics.setColor(1, 1, 1, 0.25)
-    love.graphics.rectangle("line", cx - 6, cy - 6, 12, 12, 2)
+    Neon.rect(cx - 6, cy - 6, 12, 12, { r, g, b }, { radius = 2, width = 2 })
 end
 
 -- Reward-style card frame. Draws an optional glyph in the band and an optional
@@ -66,17 +65,15 @@ local function cardFrame(x, y, w, h, col, glyphFn, name, sub)
     local bandH = math.max(20, math.min(32, math.floor(h * 0.34)))
     local lineH = love.graphics.getFont():getHeight() + 3
     love.graphics.push("all")
-    love.graphics.setColor(0.07, 0.08, 0.11, 1)
+    love.graphics.setColor(Neon.BG[1], Neon.BG[2], Neon.BG[3], 1)
     love.graphics.rectangle("fill", x, y, w, h, 4)
-    love.graphics.setColor(r, g, b, 0.13)
+    love.graphics.setColor(r, g, b, 0.1)
     love.graphics.rectangle("fill", x + 2, y + 2, w - 4, bandH)
-    love.graphics.setColor(r, g, b, 0.5)
+    love.graphics.setColor(r, g, b, 0.4)
     love.graphics.setLineWidth(1)
     love.graphics.line(x, y + bandH, x + w, y + bandH)
     if glyphFn then glyphFn(x + w / 2, y + bandH / 2 + 1, r, g, b) end
-    love.graphics.setColor(r, g, b, 1)
-    love.graphics.setLineWidth(1.5)
-    love.graphics.rectangle("line", x, y, w, h, 4)
+    Neon.rect(x, y, w, h, col, { radius = 4, width = 2 })
 
     local contentY = y + bandH + 5
     if name then
@@ -177,7 +174,10 @@ end
 
 -- Hovered building/enemy wins (transient); otherwise the selected (pinned)
 -- building persists.
--- The building's stacked main-turret upgrades + active buffs as a list of
+local STATS_W = 230
+local STATS_ROW_H = 15
+
+-- The building's stats (turrets), description (passives), stacked main-turret upgrades + active buffs as a list of
 -- {text, col} rows (empty if none). Shared by measuring and drawing.
 function InfoColumn:buildingExtrasLines(b)
     local lines = {}
@@ -190,6 +190,14 @@ function InfoColumn:buildingExtrasLines(b)
         lines[#lines + 1] = { text = "Damage: " .. DamageStats.formatNumber(s.damage), col = gold }
         lines[#lines + 1] = { text = "Kills: " .. s.kills, col = gold }
         lines[#lines + 1] = { text = string.format("Share: %d%% of total", math.floor(s.share * 100 + 0.5)), col = gold }
+    end
+
+    -- Passives: what they do, wrapped to the window (they have no damage stats)
+    if b.isType and b:isType("passive") and b.description then
+        local _, wrapped = love.graphics.getFont():getWrap(b.description, STATS_W - 20)
+        for _, text in ipairs(wrapped) do
+            lines[#lines + 1] = { text = text, col = {0.85, 0.88, 0.95} }
+        end
     end
 
     -- Stacked main-turret upgrades (highest rarity first), colored by rarity.
@@ -215,8 +223,8 @@ function InfoColumn:buildingExtrasLines(b)
     return lines
 end
 
-local STATS_W = 230
-local STATS_ROW_H = 15
+
+
 
 --- The hovered building's stats & modifiers (see buildingExtrasLines) in a
 --- window that follows the mouse. Drawn over the HUD by GUIManager.
@@ -237,14 +245,11 @@ function InfoColumn:drawHoverStats()
     local y = my + 18
     if y + h > VIRTUAL_HEIGHT then y = my - 18 - h end
 
-    local col = b.color or {0.5, 0.7, 0.9}
+    -- Framed and titled in the building's rarity colour, like its card
+    local col = CardDraw.RARITY_COLORS[b.rarity] or b.color or {0.5, 0.7, 0.9}
     love.graphics.push("all")
-    love.graphics.setColor(0.05, 0.07, 0.1, 0.95)
-    love.graphics.rectangle("fill", x, y, w, h, 6)
-    love.graphics.setColor(col[1], col[2], col[3], 0.8)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x, y, w, h, 6)
-    sectionHeader(b.name or "STATS & MODIFIERS", x + 10, y + 6, w - 20, {0.5, 0.7, 0.9})
+    Neon.rect(x, y, w, h, col, { bg = 0.95, tint = 0.06, width = 1.5 })
+    sectionHeader(b.name or "STATS & MODIFIERS", x + 10, y + 6, w - 20, col)
     local ty = y + 30
     for _, ln in ipairs(lines) do
         love.graphics.setColor(ln.col[1], ln.col[2], ln.col[3], 1)

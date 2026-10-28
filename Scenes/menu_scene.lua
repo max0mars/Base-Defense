@@ -9,6 +9,7 @@ local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local DevMode = require("Game.Dev.DevMode")
 local SaveGame = require("Game.Core.SaveGame")
+local Neon = require("Game.GUI.Neon")
 
 
 -- Starting deck creation has been moved to individual Main Turret classes.
@@ -38,7 +39,7 @@ local function newRunState()
         incomeTokens = 3,
         startBattleExtraSlotsUnlocked = 0,
         maxMana = 100,
-        manaRegenPerWave = 25,
+        manaRegenPerWave = 15,
         upgradeCostTokens = 20,
         upgradeCostHand = 20,
         upgradeCostIncome = 20,
@@ -137,16 +138,7 @@ function menu_scene:drawMainButtons(mx, my, buttons)
     for _, btn in ipairs(buttons or self.mainButtons) do
         local isHovered = not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
         if isHovered then Cursor.wantHand = true end
-        love.graphics.setColor(btn.disabled and {0.16, 0.16, 0.18, 1} or (isHovered and btn.hoverColor or btn.color))
-        love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 6, 6)
-        love.graphics.setColor(btn.disabled and {0.32, 0.32, 0.36, 1} or btn.borderColor)
-        love.graphics.setLineWidth(isHovered and 2 or 1)
-        love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 6, 6)
-        love.graphics.setLineWidth(1)
-        love.graphics.setColor(0, 0, 0, 0.5)
-        love.graphics.printf(btn.label, btn.x + 1, btn.y + btn.h / 2 - 6, btn.w, "center")
-        love.graphics.setColor(btn.disabled and {0.45, 0.45, 0.5, 1} or {1, 1, 1})
-        love.graphics.printf(btn.label, btn.x, btn.y + btn.h / 2 - 7, btn.w, "center")
+        Neon.button(btn, { hovered = isHovered, disabled = btn.disabled })
     end
 end
 
@@ -154,7 +146,7 @@ function menu_scene:draw()
     Cursor.reset() -- hover flag re-set by buttons / settings panel below
 
     -- Subtle tactical grid background (both pages).
-    love.graphics.setColor(0.15, 0.15, 0.18, 0.35)
+    love.graphics.setColor(0.1, 0.2, 0.35, 0.3)
     for gx = 0, VIRTUAL_WIDTH, 40 do love.graphics.line(gx, 0, gx, VIRTUAL_HEIGHT) end
     for gy = 0, VIRTUAL_HEIGHT, 40 do love.graphics.line(0, gy, VIRTUAL_WIDTH, gy) end
 
@@ -163,30 +155,18 @@ function menu_scene:draw()
     if self.page == "settings" then
         self.settings:draw()
     else
-        -- Glowing title banner + BASE DEFENSE.
-        love.graphics.setColor(0.12, 0.25, 0.4, 0.15)
+        -- Neon title banner + glowing BASE DEFENSE.
+        love.graphics.setColor(0.0, 0.5, 0.8, 0.07)
         love.graphics.rectangle("fill", 0, 65 + MENU_OFFSET_Y, VIRTUAL_WIDTH, 65)
-        love.graphics.setColor(0.2, 0.45, 0.7, 0.5)
-        love.graphics.line(0, 65 + MENU_OFFSET_Y, VIRTUAL_WIDTH, 65 + MENU_OFFSET_Y)
-        love.graphics.line(0, 130 + MENU_OFFSET_Y, VIRTUAL_WIDTH, 130 + MENU_OFFSET_Y)
-
-        love.graphics.push()
-        love.graphics.translate(0, MENU_OFFSET_Y)
-        love.graphics.scale(2.5, 2.5)
-        love.graphics.setColor(0, 0, 0, 0.75)
-        love.graphics.printf("BASE DEFENSE", 1, 31, VIRTUAL_WIDTH / 2.5, "center")
-        love.graphics.setColor(0.3, 0.7, 1, 1)
-        love.graphics.printf("BASE DEFENSE", 0, 30, VIRTUAL_WIDTH / 2.5, "center")
-        love.graphics.pop()
+        Neon.line(0, 65 + MENU_OFFSET_Y, VIRTUAL_WIDTH, 65 + MENU_OFFSET_Y, Neon.CYAN, 2)
+        Neon.line(0, 130 + MENU_OFFSET_Y, VIRTUAL_WIDTH, 130 + MENU_OFFSET_Y, Neon.MAGENTA, 2)
+        Neon.title("BASE DEFENSE", 0, 75 + MENU_OFFSET_Y, VIRTUAL_WIDTH, "center", Neon.hot(Neon.CYAN, 0.35), 2.5)
 
         love.graphics.setColor(0.55, 0.6, 0.7, 1)
         love.graphics.printf("Protect the Core. Upgrade your Arsenal.", 0, 148 + MENU_OFFSET_Y, VIRTUAL_WIDTH, "center")
 
         if self.confirmingNewRun then
-            love.graphics.setColor(0.06, 0.07, 0.1, 0.95)
-            love.graphics.rectangle("fill", VIRTUAL_WIDTH / 2 - 220, 290, 440, 175, 10)
-            love.graphics.setColor(0.95, 0.45, 0.45, 1)
-            love.graphics.rectangle("line", VIRTUAL_WIDTH / 2 - 220, 290, 440, 175, 10)
+            Neon.panel(VIRTUAL_WIDTH / 2 - 220, 290, 440, 175, Neon.RED)
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.printf("Start a new run?\nYour saved run will be lost.", VIRTUAL_WIDTH / 2 - 200, 320, 400, "center")
             self:drawMainButtons(mx, my, self.confirmButtons)

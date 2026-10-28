@@ -5,6 +5,7 @@ local ExecutionType = require("Game.Cards.ExecutionType")
 local Cursor = require("Game.GUI.Cursor")
 local CardReveal = require("Graphics.Animations.CardReveal")
 local Layout = require("Game.GUI.Layout")
+local Neon = require("Game.GUI.Neon")
 
 local CARD_W, CARD_H = 150, 210
 
@@ -54,30 +55,16 @@ end
 -- A filled "card" action button: function-colored fill + left accent bar, a
 -- left-aligned label and a right-aligned cost (green/red by affordability).
 local function drawActionButton(btn, label, costText, baseCol, hovered, enabled, affordable)
-    local r, g, b = baseCol[1], baseCol[2], baseCol[3]
     love.graphics.push("all")
 
-    -- Body fill.
-    local fillA = enabled and (hovered and 0.24 or 0.13) or 0.06
-    love.graphics.setColor(r, g, b, fillA)
-    love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 5, 5)
-
-    -- Left accent bar.
-    love.graphics.setColor(r, g, b, enabled and 1.0 or 0.4)
-    love.graphics.rectangle("fill", btn.x, btn.y + 3, 3, btn.h - 6, 2, 2)
-
-    -- Hover glow.
-    if hovered and enabled then
-        for i = 1, 2 do
-            love.graphics.setColor(r, g, b, 0.07 * (1 - i / 3))
-            love.graphics.setLineWidth(2 + i * 3)
-            love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 5, 5)
-        end
+    -- Neon frame (dim when disabled) + left accent tube.
+    if enabled then
+        Neon.rect(btn.x, btn.y, btn.w, btn.h, baseCol, { radius = 5, bg = 0.8, tint = hovered and 0.22 or 0.08,
+            width = hovered and 2.5 or 1.5, alpha = hovered and 1 or 0.8 })
+        Neon.line(btn.x + 3, btn.y + 5, btn.x + 3, btn.y + btn.h - 5, baseCol, 2)
+    else
+        Neon.rect(btn.x, btn.y, btn.w, btn.h, Neon.DIM, { radius = 5, bg = 0.8, width = 1, alpha = 0.6 })
     end
-    -- Border.
-    love.graphics.setColor(r, g, b, enabled and (hovered and 0.95 or 0.5) or 0.25)
-    love.graphics.setLineWidth(hovered and 2 or 1)
-    love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 5, 5)
 
     -- Label (left) + cost (right).
     local ty = btn.y + btn.h / 2 - 6
@@ -117,6 +104,11 @@ local function pileButtons(game, deckX)
         },
         startY = buttonStartY,
     }
+end
+
+--- Top edge of the tokens / mana row (with its glow) in the left column.
+function HandUI.resourceRowTop(game)
+    return pileButtons(game, Layout.leftColumn.x + 12).startY - 20 - 14 - 4
 end
 
 function HandUI:new(game)
@@ -311,19 +303,16 @@ function HandUI:draw()
     
     -- 1. Tokens Gold Coin (left side)
     local coinX = deckX + radius + 4
-    -- Coin outer neon glow
-    love.graphics.setColor(1.0, 0.7, 0.1, 0.2 + 0.1 * math.sin(self.game.pulseTimer * 4))
-    love.graphics.circle("fill", coinX, centerY, radius + 4)
-    -- Coin gold body
-    love.graphics.setColor(0.9, 0.7, 0.15, 1)
+    -- Coin: dark disc with a neon gold ring and a fainter inner rim
+    love.graphics.setColor(0.08, 0.05, 0.0, 1)
     love.graphics.circle("fill", coinX, centerY, radius)
-    -- Inner golden rim
-    love.graphics.setColor(1.0, 0.88, 0.35, 1)
-    love.graphics.setLineWidth(1.5)
-    love.graphics.circle("line", coinX, centerY, radius - 3.5)
+    Neon.circle(coinX, centerY, radius, Neon.AMBER, 2.5, 0.85 + 0.15 * math.sin(self.game.pulseTimer * 4))
+    love.graphics.setColor(1.0, 0.75, 0.25, 0.45)
+    love.graphics.setLineWidth(1)
+    love.graphics.circle("line", coinX, centerY, radius - 4)
     -- Coin 'T' label (Tokens)
     if self.coinFont then love.graphics.setFont(self.coinFont) end
-    love.graphics.setColor(0.5, 0.3, 0.02, 1)
+    love.graphics.setColor(1.0, 0.8, 0.3, 1)
     love.graphics.printf("T", coinX - 10, centerY - 6, 20, "center")
     
     -- Tokens value text
@@ -351,18 +340,14 @@ function HandUI:draw()
     
     -- 2. Mana Blueish Orb (right side)
     local orbX = deckX + 98 + radius + 4
-    -- Orb outer neon glow
-    love.graphics.setColor(0.1, 0.6, 1.0, 0.2 + 0.1 * math.sin(self.game.pulseTimer * 4))
-    love.graphics.circle("fill", orbX, centerY, radius + 4)
-    -- Orb body (deep blue/cyan gradient effect)
-    love.graphics.setColor(0.1, 0.45, 0.9, 1.0)
+    -- Orb: dark disc, neon blue ring and a glowing core
+    love.graphics.setColor(0.0, 0.04, 0.1, 1)
     love.graphics.circle("fill", orbX, centerY, radius)
-    -- Inner magical glow circle
-    love.graphics.setColor(0.2, 0.75, 1.0, 0.7)
-    love.graphics.circle("fill", orbX - 3.5, centerY - 3.5, radius - 6)
-    -- Highlight glossy white spot
-    love.graphics.setColor(1.0, 1.0, 1.0, 0.9)
-    love.graphics.circle("fill", orbX - 4.5, centerY - 4.5, 2.5)
+    Neon.circle(orbX, centerY, radius, { 0.15, 0.6, 1.0 }, 2.5, 0.85 + 0.15 * math.sin(self.game.pulseTimer * 4))
+    love.graphics.setColor(0.2, 0.75, 1.0, 0.85)
+    love.graphics.circle("fill", orbX, centerY, radius - 8)
+    love.graphics.setColor(0.85, 0.97, 1.0, 1)
+    love.graphics.circle("fill", orbX, centerY, 2)
     
     -- Mana value text (displays game.mana or a default value of 100)
     if self.valueFont then love.graphics.setFont(self.valueFont) end
@@ -490,13 +475,9 @@ function HandUI:draw()
             if self.game.activeCard == card then by = by - 20 end
             local affordable = (self.game.mana or 0) >= card:getCost()
             local active = self.game.activeCard == card
-            love.graphics.setColor(0.03, 0.08, 0.16, 0.95)
-            love.graphics.rectangle("fill", bx, by, 20, 20, 4, 4)
-            if active then love.graphics.setColor(1, 1, 1, 1)
-            elseif affordable then love.graphics.setColor(0.3, 0.75, 1.0, 1)
-            else love.graphics.setColor(0.45, 0.45, 0.5, 1) end
-            love.graphics.setLineWidth(active and 2 or 1)
-            love.graphics.rectangle("line", bx, by, 20, 20, 4, 4)
+            local badge = active and { 1, 1, 1 } or (affordable and { 0.3, 0.75, 1.0 } or Neon.DIM)
+            Neon.rect(bx, by, 20, 20, badge, { radius = 4, bg = 0.95, width = active and 2 or 1.5 })
+            love.graphics.setColor(badge[1], badge[2], badge[3], 1)
             love.graphics.printf(tostring(slot), bx, by + 3, 20, "center")
         end
     end

@@ -137,7 +137,7 @@ print("Game max tokens: (Expected 4) - MaxTokens:", anotherGame.maxTokens)
 
 check(anotherGame.tokens == 4 and anotherGame.maxTokens == 4, "GameManager starts with the upgraded tokens")
 check(anotherGame.maxMana == 125 and anotherGame.mana == 125, "GameManager starts with the upgraded max mana")
-check(anotherGame.manaRegenPerWave == 35, "GameManager uses the upgraded mana regen")
+check(anotherGame.manaRegenPerWave == 25, "GameManager uses the upgraded mana regen")
 
 -- Buy +4 starting slots
 _G.PersistentState.cash = 100

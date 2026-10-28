@@ -191,6 +191,8 @@ for i = 1, TOTAL_REWARD_RUNS do
     end
     
     if hasGold then goldCount = goldCount + 1 end
+    assert(not hasGold or cash > 0, "A $0 cash reward is never listed")
+    assert(#rewards > 0, "Every battle has at least one reward")
     
     -- Every reward comes out of the budget: the total matches it (within 1 for cash
     -- rounding), unless the rewards cost more than the budget, in which case cash is 0
@@ -204,7 +206,8 @@ for i = 1, TOTAL_REWARD_RUNS do
 end
 
 -- Assertions
-assert(goldCount == TOTAL_REWARD_RUNS, "Gold was not present in 100% of drops! " .. goldCount .. "/" .. TOTAL_REWARD_RUNS)
+-- Cash is left out only when the other rewards used up the whole budget (checked above)
+assert(goldCount > TOTAL_REWARD_RUNS * 0.5, "Cash is in most reward lists: " .. goldCount .. "/" .. TOTAL_REWARD_RUNS)
 assert(cardDrawCount > 0, "Card Draft was never generated")
 
 -- Verification: Higher difficulty and higher level yields strictly higher reward budget
@@ -217,7 +220,7 @@ for _, r in ipairs(highRewards) do highTotalVal = highTotalVal + (r.value or (r.
 assert(highTotalVal > lowTotalVal * 3, string.format("High difficulty/level should give vastly higher value: low=%d, high=%d", lowTotalVal, highTotalVal))
 
 print(string.format("[PASS] Test 4: Value-budget reward generation verified!"))
-print(string.format("  - Gold guaranteed 100%%: %d / %d", goldCount, TOTAL_REWARD_RUNS))
+print(string.format("  - Cash listed (whenever budget is left): %d / %d", goldCount, TOTAL_REWARD_RUNS))
 print(string.format("  - Low tier (Lvl 1, 1.0x mult) Total Value: %d", lowTotalVal))
 print(string.format("  - High tier (Lvl 10, 2.0x mult) Total Value: %d (%.1fx scaling)", highTotalVal, highTotalVal / lowTotalVal))
 

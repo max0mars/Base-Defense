@@ -66,7 +66,7 @@ All spell cards inherit from `Spell.lua` and have the type `spell`.
   piles (`spellDrawPile` / `spellDiscardPile`). Sending a wave discards the build hand
   and draws `spellHandSize` spells; finishing the wave returns them and draws the build hand.
   Cast spells go to the spell discard and reshuffle back in (not consumed).
-* **Mana:** starts at `maxMana`, regenerates `manaRegenPerWave` after each wave (capped).
+* **Mana:** starts at `maxMana`, regenerates `manaRegenPerWave` (default 15) after each wave (capped).
   There is no draw-a-card-for-mana action.
 * **Hotkeys:** during a wave, number keys `1..N` select the N-th spell in hand (left to
   right) for targeting. The cast needs a fresh left click, so a button already held

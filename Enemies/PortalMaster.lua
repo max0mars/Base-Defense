@@ -48,7 +48,8 @@ function PortalMaster:teleportAllies()
     local candidates = {}
     
     for _, obj in ipairs(self.game.objects) do
-        if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed then
+        if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed
+           and not (obj.isHalted and obj:isHalted()) then
             local dx = obj.x - self.x
             local dy = obj.y - self.y
             if dx*dx + dy*dy <= radiusSq then
@@ -69,13 +70,10 @@ function PortalMaster:teleportAllies()
             if speed and speed > 0 then
                 local oldX, oldY = chosen.x, chosen.y
                 local newX, newY = chosen:getFuturePosition(self.teleportDistance / speed)
-                
-                chosen.x, chosen.y = newX, newY
-                
-                if chosen.recalculatePath then
-                    chosen:recalculatePath()
-                end
-                
+
+                -- Shrinks into the portal, then grows back out at the exit
+                chosen:startPortal(newX, newY)
+
                 teleportedCount = teleportedCount + 1
                 
                 if self.game.spawnExpandingCircle then

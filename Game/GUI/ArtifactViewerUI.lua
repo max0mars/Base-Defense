@@ -165,6 +165,24 @@ function ArtifactViewerUI.drawRow(x, y, size, gap, mx, my)
     return hovered
 end
 
+--- Owned artifacts in rows of up to `maxW` wide, stacked upward so the last row
+--- ends at `bottomY`. Returns the hovered artifact definition, or nil.
+function ArtifactViewerUI.drawBlock(x, bottomY, maxW, size, gap, mx, my)
+    local owned = ArtifactManager.getOwnedDefinitions()
+    if #owned == 0 then return nil end
+    local perRow = math.max(1, math.floor((maxW + gap) / (size + gap)))
+    local rows = math.ceil(#owned / perRow)
+    local top = bottomY - rows * size - (rows - 1) * gap
+    local hovered
+    for i, def in ipairs(owned) do
+        local ix = x + ((i - 1) % perRow) * (size + gap)
+        local iy = top + math.floor((i - 1) / perRow) * (size + gap)
+        ArtifactViewerUI.drawIcon(def, ix + size / 2, iy + size / 2, size / 2)
+        if inRect(mx, my, { x = ix, y = iy, w = size, h = size }) then hovered = def end
+    end
+    return hovered
+end
+
 --- Small floating card with an artifact's name and effect, near (mx, my):
 --- above the cursor, or below it when `below` is set.
 function ArtifactViewerUI.drawTooltip(def, mx, my, below)

@@ -9,6 +9,7 @@ local TestingIndex = require("Game.Rewards.TestingRewardIndex")
 local RewardPool = require("Game.Rewards.RewardPool")
 local CardReveal = require("Graphics.Animations.CardReveal")
 local CardFactory = require("Game.Cards.CardFactory")
+local Neon = require("Game.GUI.Neon")
 
 function RewardSystem:new(game)
     -- Always use the real reward pool (testing mode included) so "Buy Upgrade"
@@ -171,7 +172,7 @@ function RewardSystem:draw()
     -- Draw title
     love.graphics.setColor(1, 1, 1, 1)
     if self.mode == "cards" then
-        love.graphics.printf("Card Draft", 0, 160, VIRTUAL_WIDTH, "center")
+        Neon.title("Choose One", 0, 140, VIRTUAL_WIDTH, "center", Neon.hot(Neon.CYAN, 0.35), 2.5)
     else
         love.graphics.printf("Choose Your Reward", 0, 160, VIRTUAL_WIDTH, "center")
     end

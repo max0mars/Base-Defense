@@ -155,12 +155,14 @@ function BattleManager:generateRewards(difficultyMultiplier, playerLevel)
     end
 
     -- 3. Remainder Budget -> Cash (1 Cash = 1 Value Budget)
-    -- The cash reward is always listed; it's 0 if the other rewards used up the budget.
+    -- Left out when the other rewards used up the budget ($0 isn't a reward).
     -- Rounded to the nearest 1.
     local cashAmount = math.max(0, math.floor((remainingBudget / BattleManager.REWARD_VALUES.GOLD) + 0.5))
 
     local isSoloCash = (#rewards == 0)
     local cashDesc = string.format("+$%d Cash", cashAmount)
+
+    if cashAmount <= 0 then return rewards end
 
     -- Insert Cash as the first reward
     table.insert(rewards, 1, {

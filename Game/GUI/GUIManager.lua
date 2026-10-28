@@ -2,7 +2,7 @@ local HandUI = require("Game.GUI.HandUI")
 local Layout = require("Game.GUI.Layout")
 local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
 
--- Battle artifact bar icons (fit inside the battlefield's top row)
+-- Battle artifact icons (left column, above the tokens and mana)
 local ARTIFACT_ICON, ARTIFACT_GAP = 24, 6
 local TooltipManager = require("Game.GUI.TooltipManager")
 local ConfirmationUI = require("Game.GUI.ConfirmationUI")
@@ -17,29 +17,17 @@ local InfoColumn = require("Game.GUI.InfoColumn")
 local EnemyEntry = require("Game.GUI.EnemyEntry")
 local Cursor = require("Game.GUI.Cursor")
 local DeckViewerUI = require("Game.GUI.DeckViewerUI")
+local Neon = require("Game.GUI.Neon")
 
 -- =============================================================================
 -- Local Helpers for Tron/Neon UI Aesthetics
 -- =============================================================================
 
+-- Neon-tube frame; the glow pass adds the halo, pulse breathes its brightness.
 local function drawGlowRect(x, y, w, h, r, g, b, thickness, rx, ry, pulse)
-    rx = rx or 4
-    ry = ry or 4
     pulse = pulse or 0
-    love.graphics.push("all")
-    -- Outer glow lines
-    for i = 3, 1, -1 do
-        local alpha = (0.06 * (1 - i/4)) * (0.6 + pulse * 0.4)
-        local glowWidth = thickness + i * 4 + pulse * 6
-        love.graphics.setLineWidth(glowWidth)
-        love.graphics.setColor(r, g, b, alpha)
-        love.graphics.rectangle("line", x, y, w, h, rx, ry)
-    end
-    -- Solid core line
-    love.graphics.setColor(r, g, b, 0.85 + pulse * 0.15)
-    love.graphics.setLineWidth(thickness)
-    love.graphics.rectangle("line", x, y, w, h, rx, ry)
-    love.graphics.pop()
+    Neon.rect(x, y, w, h, { r, g, b }, { radius = rx or 4, width = thickness + 1, alpha = 0.85 + pulse * 0.15,
+        bg = 0.6, tint = 0.04 })
 end
 
 -- Borderless toggle indicator: a status LED followed by a label. No box/frame.
@@ -86,30 +74,16 @@ end
 -- A filled "card" action button: function-colored fill + left accent bar, a
 -- left-aligned label and a right-aligned cost (green/red by affordability).
 local function drawActionButton(btn, label, costText, baseCol, hovered, enabled, affordable)
-    local r, g, b = baseCol[1], baseCol[2], baseCol[3]
     love.graphics.push("all")
 
-    -- Body fill.
-    local fillA = enabled and (hovered and 0.24 or 0.13) or 0.06
-    love.graphics.setColor(r, g, b, fillA)
-    love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 5, 5)
-
-    -- Left accent bar.
-    love.graphics.setColor(r, g, b, enabled and 1.0 or 0.4)
-    love.graphics.rectangle("fill", btn.x, btn.y + 3, 3, btn.h - 6, 2, 2)
-
-    -- Hover glow.
-    if hovered and enabled then
-        for i = 1, 2 do
-            love.graphics.setColor(r, g, b, 0.07 * (1 - i / 3))
-            love.graphics.setLineWidth(2 + i * 3)
-            love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 5, 5)
-        end
+    -- Neon frame (dim when disabled) + left accent tube.
+    if enabled then
+        Neon.rect(btn.x, btn.y, btn.w, btn.h, baseCol, { radius = 5, bg = 0.8, tint = hovered and 0.22 or 0.08,
+            width = hovered and 2.5 or 1.5, alpha = hovered and 1 or 0.8 })
+        Neon.line(btn.x + 3, btn.y + 5, btn.x + 3, btn.y + btn.h - 5, baseCol, 2)
+    else
+        Neon.rect(btn.x, btn.y, btn.w, btn.h, Neon.DIM, { radius = 5, bg = 0.8, width = 1, alpha = 0.6 })
     end
-    -- Border.
-    love.graphics.setColor(r, g, b, enabled and (hovered and 0.95 or 0.5) or 0.25)
-    love.graphics.setLineWidth(hovered and 2 or 1)
-    love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 5, 5)
 
     -- Label (left) + cost (right).
     local ty = btn.y + btn.h / 2 - 6
@@ -214,10 +188,12 @@ function GUIManager:draw()
     -- bottom-right hover card).
     if self.infoColumn then self.infoColumn:draw() end
 
-    -- Owned artifacts along the top of the battlefield (enemies never use the top row)
+    -- Owned artifacts in the left column, just above the tokens and mana (they
+    -- used to sit on the battlefield, where they could cover base slots)
     local mx, my = love.mouse.getPosition()
-    local hoveredArtifact = ArtifactViewerUI.drawRow(Layout.field.x + 8, Layout.field.y + 3,
-        ARTIFACT_ICON, ARTIFACT_GAP, mx, my)
+    local col = Layout.leftColumn
+    local hoveredArtifact = ArtifactViewerUI.drawBlock(col.x + 12, HandUI.resourceRowTop(self.game) - 8,
+        col.w - 24, ARTIFACT_ICON, ARTIFACT_GAP, mx, my)
     if self:overlayActive() then hoveredArtifact = nil end
 
     -- UI elements on top of masks
@@ -228,7 +204,7 @@ function GUIManager:draw()
     if self.devSpawner then self.devSpawner:draw() end
     self.tooltips:draw()     -- Draw tips above everything
     if self.infoColumn then self.infoColumn:drawHoverStats() end
-    if hoveredArtifact then ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my, true) end
+    if hoveredArtifact then ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my) end
     if self.enemyEntry then self.enemyEntry:draw() end -- overlays everything
     if self.deckViewer then self.deckViewer:draw() end
 end
@@ -447,11 +423,7 @@ function GUIManager:drawHUD()
         local bx = f.x + (f.w - boxW) / 2
         local by = f.y + 10
         love.graphics.push("all")
-        love.graphics.setColor(0.04, 0.06, 0.09, 0.85)
-        love.graphics.rectangle("fill", bx, by, boxW, boxH, 6, 6)
-        love.graphics.setColor(1.0, 0.75, 0.2, 0.5 + pulse * 0.5)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", bx, by, boxW, boxH, 6, 6)
+        Neon.rect(bx, by, boxW, boxH, Neon.AMBER, { bg = 0.85, tint = 0.05, alpha = 0.6 + pulse * 0.4 })
         love.graphics.setColor(1.0, 0.8, 0.3, 0.9)
         love.graphics.printf(text, bx, by + boxH / 2 - font:getHeight() / 2, boxW, "center")
         love.graphics.pop()
@@ -461,18 +433,12 @@ function GUIManager:drawHUD()
         local bx = f.x + (f.w - boxW) / 2
         local by = f.y + (f.h - boxH) / 2
         love.graphics.push("all")
-        -- Panel.
-        love.graphics.setColor(0.04, 0.06, 0.09, 0.85)
-        love.graphics.rectangle("fill", bx, by, boxW, boxH, 8, 8)
-        -- Pulsing neon border.
-        love.graphics.setColor(0, 0.85, 1.0, 0.5 + pulse * 0.5)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", bx, by, boxW, boxH, 8, 8)
-        love.graphics.setLineWidth(1)
-        -- Label.
+        -- Panel with a pulsing neon border.
+        Neon.rect(bx, by, boxW, boxH, Neon.CYAN, { radius = 8, bg = 0.85, tint = 0.05, alpha = 0.6 + pulse * 0.4 })
+        -- Glowing label.
         local font = love.graphics.getFont()
-        love.graphics.setColor(0, 0.85, 1.0, 0.7 + pulse * 0.3)
-        love.graphics.printf("PRESS ENTER TO START WAVE", bx, by + boxH / 2 - font:getHeight() / 2, boxW, "center")
+        Neon.title("PRESS ENTER TO START WAVE", bx, by + boxH / 2 - font:getHeight() / 2, boxW, "center",
+            { 0.3 + pulse * 0.3, 0.85 + pulse * 0.15, 1.0 })
         love.graphics.pop()
     end
 end
@@ -481,22 +447,14 @@ function GUIManager:drawBorders()
     local game = self.game
     local pulse = (math.sin(game.pulseTimer * (game.oscillationSpeed or 1)) + 1) / 2
     local r, g, b = 0.0, 0.85, 1.0 -- Cyber-cyan glow instead of Red
-    local thickness = 4
+    local thickness = 3
     local width, height = VIRTUAL_WIDTH, VIRTUAL_HEIGHT
 
     -- Bottom Border Line (top edge of the tray) — only under the battlefield,
     -- since the left column now extends full-height past it.
     local trayTop = Layout.tray.y
     local fx1 = Layout.field.x
-    for i = 3, 1, -1 do
-        local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
-        love.graphics.setLineWidth(thickness + i * 4 + pulse * 8)
-        love.graphics.setColor(r, g, b, alpha)
-        love.graphics.line(fx1, trayTop, width, trayTop)
-    end
-    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
-    love.graphics.setLineWidth(thickness)
-    love.graphics.line(fx1, trayTop, width, trayTop)
+    Neon.line(fx1, trayTop, width, trayTop, { r, g, b }, thickness, 0.8 + pulse * 0.2)
 
     -- Vertical frame line: just the left-column separator (full height). The
     -- battlefield runs flush to the right screen edge, so no right border line.
@@ -504,15 +462,7 @@ function GUIManager:drawBorders()
         { x = fx1, y1 = Layout.topBar.h, y2 = Layout.H },     -- column / field separator
     }
     for _, ln in ipairs(vlines) do
-        for i = 3, 1, -1 do
-            local alpha = (0.15 * (1 - i/4)) * (0.5 + pulse * 0.5)
-            love.graphics.setLineWidth(thickness + i * 4 + pulse * 8)
-            love.graphics.setColor(r, g, b, alpha)
-            love.graphics.line(ln.x, ln.y1, ln.x, ln.y2)
-        end
-        love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
-        love.graphics.setLineWidth(thickness)
-        love.graphics.line(ln.x, ln.y1, ln.x, ln.y2)
+        Neon.line(ln.x, ln.y1, ln.x, ln.y2, { r, g, b }, thickness, 0.8 + pulse * 0.2)
     end
 
     -- Dark-grey frame around the entire game canvas (all four edges visible).

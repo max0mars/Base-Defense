@@ -2,6 +2,15 @@ local Enemy = require("Enemies.Enemy")
 local Guardian = setmetatable({}, {__index = Enemy})
 Guardian.__index = Guardian
 
+Guardian.SHIELD_RINGS = 3 -- rings sent out when it shields its allies
+Guardian.SHIELD_RING_GAP = 0.15 -- seconds between them
+Guardian.SHIELD_COOLDOWN = 12 -- seconds between shield grants
+Guardian.FIRST_SHIELD_DELAY = 1.5 -- seconds after spawning before the first grant, so
+                                  -- the allies it spawned with are still in range
+Guardian.SHIELD_AMOUNT = 100 -- shield given to each ally
+Guardian.SHIELD_RADIUS = 90 -- reach of the shield grant (the aura mutation keeps auraRadius)
+Guardian.MAX_SHIELD_TARGETS = 5 -- allies shielded per grant: unshielded first, then closest
+
 local Stats = {
     name = "Guardian",
     reward = 50,
@@ -30,8 +39,13 @@ function Guardian:new(config)
     else
         obj.hasAura = false
     end
-    obj.shieldAmount = config.shieldAmount or 50
-    obj.shieldTimer = 0
+    obj.shieldAmount = config.shieldAmount or Guardian.SHIELD_AMOUNT
+    obj.shieldRadius = config.shieldRadius or Guardian.SHIELD_RADIUS
+    obj.shieldCooldown = config.shieldCooldown or Guardian.SHIELD_COOLDOWN
+    obj.maxShieldTargets = config.maxShieldTargets or Guardian.MAX_SHIELD_TARGETS
+    obj.firstShieldDelay = config.firstShieldDelay or Guardian.FIRST_SHIELD_DELAY
+    -- Start most of the way through the cooldown: the first grant comes early
+    obj.shieldTimer = math.max(0, obj.shieldCooldown - obj.firstShieldDelay)
     obj.auraMult = config.auraMult or -0.25
     
     return obj
@@ -77,31 +91,56 @@ function Guardian:update(dt)
     -- 2. Shield Logic (Innate)
     if self.grantsShield then
         self.shieldTimer = self.shieldTimer + dt
-        if self.shieldTimer >= 5.0 then
+        if self.shieldTimer >= self.shieldCooldown then
             self.shieldTimer = 0
             self:grantShieldsToNearby()
-            -- Add animation
-            self.game:spawnExpandingCircle(self.x, self.y, 0, self.auraRadius, {0.6, 0.6, 0.6}, 0.8)
+            -- Shield pulse: a few blue rings rolling out one after another
+            for i = 0, Guardian.SHIELD_RINGS - 1 do
+                self.game:spawnExpandingCircle(self.x, self.y, self.w * 0.5, self.shieldRadius, Enemy.SHIELD_COLOR, 0.7,
+                    i * Guardian.SHIELD_RING_GAP)
+            end
         end
     end
 end
 
+--- Tops up the shields of up to maxShieldTargets allies in range that are below
+--- shieldAmount: allies with no shield first, then the closest. With no allies
+--- in range at all, it shields itself. Returns the enemies shielded.
 function Guardian:grantShieldsToNearby()
-    local radiusSq = self.auraRadius * self.auraRadius
+    local radiusSq = self.shieldRadius * self.shieldRadius
+    local candidates = {}
+    local alliesInRange = 0
     for _, obj in ipairs(self.game.objects) do
         if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed then
             local dx = obj.x - self.x
             local dy = obj.y - self.y
-            if dx*dx + dy*dy <= radiusSq then
-                if obj.shield < self.shieldAmount then    
-                    obj.shield = self.shieldAmount
-                    if obj.maxShield and obj.maxShield < self.shieldAmount then
-                        obj.maxShield = self.shieldAmount
-                    end
+            local distSq = dx*dx + dy*dy
+            if distSq <= radiusSq then
+                alliesInRange = alliesInRange + 1
+                if (obj.shield or 0) < self.shieldAmount then
+                    table.insert(candidates, { enemy = obj, distSq = distSq, unshielded = (obj.shield or 0) <= 0 })
                 end
             end
         end
     end
+    if alliesInRange == 0 and (self.shield or 0) < self.shieldAmount then
+        table.insert(candidates, { enemy = self, distSq = 0, unshielded = true })
+    end
+    table.sort(candidates, function(a, b)
+        if a.unshielded ~= b.unshielded then return a.unshielded end
+        return a.distSq < b.distSq
+    end)
+
+    local shielded = {}
+    for i = 1, math.min(self.maxShieldTargets, #candidates) do
+        local obj = candidates[i].enemy
+        obj.shield = self.shieldAmount
+        if not obj.maxShield or obj.maxShield < self.shieldAmount then
+            obj.maxShield = self.shieldAmount
+        end
+        table.insert(shielded, obj)
+    end
+    return shielded
 end
 
 function Guardian:drawShape(mode, x, y, w, h)
@@ -118,7 +157,7 @@ function Guardian:draw()
     local drawY = self.y - self.h/2
     
     -- Layer 1: Empty Base (Dim)
-    love.graphics.setColor(r, g, b, 0.2)
+    love.graphics.setColor(r, g, b, Enemy.EMPTY_ALPHA)
     self:drawShape("fill", drawX, drawY, self.w, self.h)
     
     -- Layer 2: HP Fill (Scissor bottom-up)
@@ -127,14 +166,14 @@ function Guardian:draw()
     local scissorY = drawY + self.h * (1 - fillRatio)
     local scissorH = self.h * fillRatio
     
-    SetGameScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), math.ceil(scissorH))
-    love.graphics.setColor(r, g, b, 0.7)
+    SetGameScissor(drawX, scissorY, self.w, scissorH)
+    love.graphics.setColor(r, g, b, Enemy.HP_ALPHA)
     self:drawShape("fill", drawX, drawY, self.w, self.h)
     
     -- Add bright cap line
     -- We do this by setting a very thin scissor and redrawing the shape fill
     if fillRatio > 0 and fillRatio < 1 then
-        SetGameScissor(math.floor(drawX), math.floor(scissorY), math.floor(self.w), 2)
+        SetGameScissor(drawX, scissorY, self.w, 2)
         love.graphics.setColor(r, g, b, 1)
         self:drawShape("fill", drawX, drawY, self.w, self.h)
         SetGameScissor()
@@ -142,28 +181,8 @@ function Guardian:draw()
     
     SetGameScissor()
     
-    -- Layer 3: Shield Fill (Scissor bottom-up)
-    if self.maxShield > 0 and self.shield > 0 then
-        local shieldRatio = self.shield / self.maxShield
-        local sScissorY = drawY + self.h * (1 - shieldRatio)
-        local sScissorH = self.h * shieldRatio
-        
-        SetGameScissor(math.floor(drawX), math.floor(sScissorY), math.floor(self.w), math.ceil(sScissorH))
-        love.graphics.setColor(0.6, 0.6, 0.6, 1) -- Flat Grey
-        self:drawShape("fill", drawX, drawY, self.w, self.h)
-        SetGameScissor()
-    end
-    
-    -- Layer 4: Neon Border & Glow
-    for i = 4, 1, -1 do
-        local alpha = 0.05 * (1 - i/5)
-        love.graphics.setColor(r, g, b, alpha)
-        love.graphics.setLineWidth(i * 3)
-        self:drawShape("line", drawX, drawY, self.w, self.h)
-    end
-    love.graphics.setColor(r, g, b, 1)
-    love.graphics.setLineWidth(2)
-    self:drawShape("line", drawX, drawY, self.w, self.h)
+    -- Layer 3: Neon Border & Glow (shields are drawn as brackets by drawAnimated)
+    self:drawNeonOutline({ r, g, b }, 2.5, function() self:drawShape("line", drawX, drawY, self.w, self.h) end)
     
     -- Aura Range Visual (Faint circle) - Only if upgrade active
     if self.hasAura then
@@ -174,5 +193,8 @@ function Guardian:draw()
         love.graphics.circle("line", self.x, self.y, self.auraRadius)
     end
 end
+
+-- Drawn as a cross, so it floats like other non-square enemies
+function Guardian:isGrounded() return false end
 
 return Guardian

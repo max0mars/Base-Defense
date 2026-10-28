@@ -1,4 +1,6 @@
 local Layout = require("Game.GUI.Layout")
+local Neon = require("Game.GUI.Neon")
+local Settings = require("Game.Core.Settings")
 
 local ConfirmationUI = {}
 ConfirmationUI.__index = ConfirmationUI
@@ -99,11 +101,8 @@ function ConfirmationUI:draw()
     end
     
     -- Draw box
-    love.graphics.setColor(0.1, 0.1, 0.1, 0.95)
-    love.graphics.rectangle("fill", cx, cy, self.boxW, self.boxH, 8)
+    Neon.panel(cx, cy, self.boxW, self.boxH, Neon.CYAN, { radius = 8 })
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", cx, cy, self.boxW, self.boxH, 8)
     
     if not self.target and self.sliders then
         self.sliders:setPosition(cx + math.floor((self.boxW - self.sliders.w) / 2), cy + 30)
@@ -122,21 +121,17 @@ function ConfirmationUI:draw()
     local btnY = math.floor(cy + self.boxH - btnH - 15)
     self.confirmRect = {x = confirmX, y = btnY, w = btnW, h = btnH}
     
-    love.graphics.setColor(0.2, 0.6, 0.2, 1)
-    love.graphics.rectangle("fill", confirmX, btnY, btnW, btnH, 4)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("line", confirmX, btnY, btnW, btnH, 4)
-    love.graphics.printf(self.btn1Text or "YES", confirmX, btnY + 8, btnW, "center")
+    local mx, my = love.mouse.getPosition()
+    local function hovered(r) return mx >= r.x and mx <= r.x + r.w and my >= r.y and my <= r.y + r.h end
+    Neon.button({ x = confirmX, y = btnY, w = btnW, h = btnH, label = self.btn1Text or "YES", borderColor = Neon.GREEN },
+        { hovered = hovered(self.confirmRect) })
     
     -- Cancel Button (Right)
     local cancelX = math.floor(cx + self.boxW / 2 + spacing / 2)
     self.cancelRect = {x = cancelX, y = btnY, w = btnW, h = btnH}
     
-    love.graphics.setColor(0.6, 0.2, 0.2, 1)
-    love.graphics.rectangle("fill", cancelX, btnY, btnW, btnH, 4)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("line", cancelX, btnY, btnW, btnH, 4)
-    love.graphics.printf(self.btn2Text or "NO", cancelX, btnY + 8, btnW, "center")
+    Neon.button({ x = cancelX, y = btnY, w = btnW, h = btnH, label = self.btn2Text or "NO", borderColor = Neon.RED },
+        { hovered = hovered(self.cancelRect) })
     
     love.graphics.setLineWidth(1)
 end
@@ -155,6 +150,7 @@ function ConfirmationUI:mousepressed(x, y, button)
        y >= self.confirmRect.y and y <= self.confirmRect.y + self.confirmRect.h then
         local callback = self.onConfirm
         self.active = false
+        if not self.target and self.sliders then Settings.capture(AUDIO) end
         if callback then callback() end
         return true
     end
@@ -164,6 +160,7 @@ function ConfirmationUI:mousepressed(x, y, button)
        y >= self.cancelRect.y and y <= self.cancelRect.y + self.cancelRect.h then
         local callback = self.onBtn2
         self.active = false
+        if not self.target and self.sliders then Settings.capture(AUDIO) end
         if callback then callback() end
         return true
     end

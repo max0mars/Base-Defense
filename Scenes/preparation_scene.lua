@@ -4,6 +4,7 @@ local scene = require("Scenes.scene")
 setmetatable(preparation_scene, { __index = scene })
 
 local Cursor = require("Game.GUI.Cursor")
+local Neon = require("Game.GUI.Neon")
 local BattleDirector = require("Game.Spawning.BattleDirector")
 local LevelManager = require("Game.Core.LevelManager")
 local BattleManager = require("Game.Core.BattleManager")
@@ -237,20 +238,7 @@ end
 function preparation_scene:drawButton(btn, mx, my)
     local isHovered = mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
     if isHovered then Cursor.wantHand = true end
-    
-    love.graphics.setColor(isHovered and btn.hoverColor or btn.color)
-    love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 6, 6)
-    
-    love.graphics.setColor(btn.borderColor)
-    love.graphics.setLineWidth(isHovered and 2 or 1)
-    love.graphics.rectangle("line", btn.x, btn.y, btn.w, btn.h, 6, 6)
-    
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.printf(btn.label, btn.x + 1, btn.y + btn.h / 2 - 6, btn.w, "center")
-    
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf(btn.label, btn.x, btn.y + btn.h / 2 - 7, btn.w, "center")
+    Neon.button(btn, { hovered = isHovered })
 end
 
 
@@ -259,11 +247,8 @@ function preparation_scene:drawDeck()
     local removals = CardUpgradeConfig.Economy.getCardRemovals()
     local mx, my = love.mouse.getPosition()
 
-    love.graphics.setColor(0, 0, 0, 0.92)
-    love.graphics.rectangle("fill", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("line", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
-    
+    Neon.panel(100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, Neon.CYAN)
+
     -- Header: Total cards count
     if _G.PersistentState.deck then
         local rawCards = _G.PersistentState.deck:getCards()
@@ -295,23 +280,17 @@ function preparation_scene:drawDeck()
         love.graphics.printf("REMOVAL MODE: Click a card to destroy it", 100, 60, VIRTUAL_WIDTH - 200, "center")
 
         -- Active Cancel button
-        love.graphics.setColor(isTrashBtnHover and {0.9, 0.25, 0.25, 1} or {0.8, 0.18, 0.18, 1})
-        love.graphics.rectangle("fill", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
-        love.graphics.setColor(1, 0.5, 0.5, 1)
-        love.graphics.rectangle("line", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
-        self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1, 1, 1})
+        Neon.rect(self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, Neon.RED,
+            { bg = 0.9, tint = isTrashBtnHover and 0.35 or 0.22, width = 2.5 })
+self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1, 1, 1})
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.printf("CANCEL", self.deckTrashBtn.x + 36, self.deckTrashBtn.y + 10, self.deckTrashBtn.w - 40, "center")
     else
         local canTrash = removals > 0
-        local btnBg = canTrash and (isTrashBtnHover and {0.35, 0.15, 0.18, 1} or {0.24, 0.11, 0.14, 0.95})
-                                or {0.18, 0.18, 0.2, 0.7}
-        local btnBorder = canTrash and (isTrashBtnHover and {0.95, 0.4, 0.4, 1} or {0.75, 0.28, 0.28, 1})
-                                   or {0.4, 0.4, 0.45, 0.8}
-        love.graphics.setColor(btnBg)
-        love.graphics.rectangle("fill", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
-        love.graphics.setColor(btnBorder)
-        love.graphics.rectangle("line", self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h, 6)
+        Neon.rect(self.deckTrashBtn.x, self.deckTrashBtn.y, self.deckTrashBtn.w, self.deckTrashBtn.h,
+            canTrash and Neon.RED or Neon.DIM,
+            { bg = 0.9, tint = (canTrash and isTrashBtnHover) and 0.22 or 0.08, width = isTrashBtnHover and 2.5 or 1.5,
+              alpha = canTrash and 1 or 0.7 })
 
         local iconColor = canTrash and (isTrashBtnHover and {1, 0.4, 0.4, 1} or {0.9, 0.35, 0.35, 1})
                                    or {0.5, 0.5, 0.5, 1}
@@ -435,13 +414,8 @@ function preparation_scene:drawDestroyConfirmation(mx, my)
     love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
     
     -- Modal panel
-    love.graphics.setColor(0.12, 0.12, 0.16, 0.98)
-    love.graphics.rectangle("fill", dx, dy, dw, dh, 10)
-    love.graphics.setColor(0.85, 0.25, 0.25, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", dx, dy, dw, dh, 10)
-    love.graphics.setLineWidth(1)
-    
+    Neon.panel(dx, dy, dw, dh, Neon.RED)
+
     -- Trash icon next to title
     self:drawTrashIcon(dx + 35, dy + 32, 26, {0.95, 0.3, 0.3, 1})
     
@@ -473,22 +447,14 @@ function preparation_scene:drawDestroyConfirmation(mx, my)
     -- Draw Confirm Button
     local isConfirmHover = mx >= self.confirmDestroyBtn.x and mx <= self.confirmDestroyBtn.x + self.confirmDestroyBtn.w and my >= self.confirmDestroyBtn.y and my <= self.confirmDestroyBtn.y + self.confirmDestroyBtn.h
     if isConfirmHover then Cursor.wantHand = true end
-    love.graphics.setColor(isConfirmHover and {0.9, 0.22, 0.22, 1} or {0.75, 0.18, 0.18, 1})
-    love.graphics.rectangle("fill", self.confirmDestroyBtn.x, self.confirmDestroyBtn.y, self.confirmDestroyBtn.w, self.confirmDestroyBtn.h, 6)
-    love.graphics.setColor(1, 0.4, 0.4, 1)
-    love.graphics.rectangle("line", self.confirmDestroyBtn.x, self.confirmDestroyBtn.y, self.confirmDestroyBtn.w, self.confirmDestroyBtn.h, 6)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("DESTROY", self.confirmDestroyBtn.x, self.confirmDestroyBtn.y + 12, self.confirmDestroyBtn.w, "center")
-    
+    self.confirmDestroyBtn.borderColor = Neon.RED
+    Neon.button(self.confirmDestroyBtn, { hovered = isConfirmHover })
+
     -- Draw Cancel Button
     local isCancelHover = mx >= self.cancelDestroyBtn.x and mx <= self.cancelDestroyBtn.x + self.cancelDestroyBtn.w and my >= self.cancelDestroyBtn.y and my <= self.cancelDestroyBtn.y + self.cancelDestroyBtn.h
     if isCancelHover then Cursor.wantHand = true end
-    love.graphics.setColor(isCancelHover and {0.4, 0.4, 0.46, 1} or {0.28, 0.28, 0.34, 1})
-    love.graphics.rectangle("fill", self.cancelDestroyBtn.x, self.cancelDestroyBtn.y, self.cancelDestroyBtn.w, self.cancelDestroyBtn.h, 6)
-    love.graphics.setColor(0.6, 0.6, 0.7, 1)
-    love.graphics.rectangle("line", self.cancelDestroyBtn.x, self.cancelDestroyBtn.y, self.cancelDestroyBtn.w, self.cancelDestroyBtn.h, 6)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("CANCEL", self.cancelDestroyBtn.x, self.cancelDestroyBtn.y + 12, self.cancelDestroyBtn.w, "center")
+    self.cancelDestroyBtn.borderColor = { 0.55, 0.6, 0.85 }
+    Neon.button(self.cancelDestroyBtn, { hovered = isCancelHover })
 end
 
 function preparation_scene:executeCardRemoval(card)
@@ -707,11 +673,8 @@ function preparation_scene:drawUpgradeWindow()
     local mx, my = love.mouse.getPosition()
 
     -- 1. Modal backdrop & border matching View Deck window
-    love.graphics.setColor(0, 0, 0, 0.92)
-    love.graphics.rectangle("fill", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
-    love.graphics.setColor(0.3, 0.85, 0.6, 1)
-    love.graphics.rectangle("line", 100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, 10)
-    
+    Neon.panel(100, 45, VIRTUAL_WIDTH - 200, VIRTUAL_HEIGHT - 90, Neon.GREEN)
+
     -- 2. Header: Title and Resource Balances
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf("UPGRADE CARDS", 100, 55, VIRTUAL_WIDTH - 200, "center")
@@ -1133,12 +1096,8 @@ function preparation_scene:drawLevelSelectWindow()
             local btnHover = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
             if btnHover then Cursor.wantHand = true end
 
-            love.graphics.setColor(btnHover and {0.2, 0.7, 0.35, 1} or {0.12, 0.5, 0.25, 1})
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 8)
-            love.graphics.setColor(0.4, 1, 0.6, 1)
-            love.graphics.rectangle("line", btnX, btnY, btnW, btnH, 8)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf("ENGAGE THIS BATTLE", btnX, btnY + 12, btnW, "center")
+            Neon.button({ x = btnX, y = btnY, w = btnW, h = btnH, label = "ENGAGE THIS BATTLE", borderColor = Neon.GREEN },
+                { hovered = btnHover })
 
             table.insert(self.levelChoiceButtons, {
                 x = btnX, y = btnY, w = btnW, h = btnH,
@@ -1156,13 +1115,9 @@ function preparation_scene:drawLevelSelectWindow()
     local closeHover = mx >= closeBtnX and mx <= closeBtnX + closeBtnW and my >= closeBtnY and my <= closeBtnY + closeBtnH
     if closeHover then Cursor.wantHand = true end
     
-    love.graphics.setColor(closeHover and {0.3, 0.3, 0.38, 1} or {0.2, 0.2, 0.28, 1})
-    love.graphics.rectangle("fill", closeBtnX, closeBtnY, closeBtnW, closeBtnH, 8)
-    love.graphics.setColor(0.6, 0.6, 0.8, 1)
-    love.graphics.rectangle("line", closeBtnX, closeBtnY, closeBtnW, closeBtnH, 8)
-    love.graphics.setColor(1, 1, 1, 1)
     local closeText = isLaunchMode and "CANCEL / BACK TO PREPARATION" or "CLOSE SCOUTING REPORT"
-    love.graphics.printf(closeText, closeBtnX, closeBtnY + 11, closeBtnW, "center")
+    Neon.button({ x = closeBtnX, y = closeBtnY, w = closeBtnW, h = closeBtnH, label = closeText,
+        borderColor = { 0.55, 0.6, 0.85 } }, { hovered = closeHover })
     self.closeLevelSelectBtn = { x = closeBtnX, y = closeBtnY, w = closeBtnW, h = closeBtnH }
 end
 

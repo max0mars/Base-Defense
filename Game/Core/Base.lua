@@ -328,6 +328,7 @@ function Base:initMainLazer(turretClass)
     local centerSlot = (centerRow - 1) * gridWidth + centerCol
     
     self.mainLazer = turretClass:new({game = self.game})
+    self.mainLazer.rarity = "main_weapon"
     
     for dr = -1, 2 do
         for dc = -1, 2 do

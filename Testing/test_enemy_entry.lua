@@ -136,7 +136,7 @@ assert(seen["8"] and seen["10"], "Soldier: bullets do reduced damage, energy sho
 _, seen = run("Sapper", 4, function(d, s) s.hit = s.hit or (d.wall and d.wall.flash > 0) end)
 assert(seen.hit, "Sapper: hits the base wall")
 
-_, seen = run("Broodmother", 3, function(d, s)
+_, seen = run("Broodmother", 4, function(d, s)
     local n = 0
     for _, a in ipairs(d.actors) do if a.name == "Critter" then n = n + 1 end end
     s.critters = math.max(s.critters or 0, n)

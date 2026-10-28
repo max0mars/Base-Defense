@@ -157,16 +157,21 @@ t:draw()
 love.graphics.print = realPrint
 assert(drawnAt and drawnAt < 640, "the text is drawn centred on its point")
 
--- 5. Artifacts are listed along the top of the battlefield; hovering shows the tooltip
+-- 5. Artifacts are listed in the left column, just above the tokens and mana
+-- (off the battlefield, so they never cover base slots); hovering shows the tooltip
 local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
+local HandUI = require("Game.GUI.HandUI")
 local tooltipFor
 local realTooltip = ArtifactViewerUI.drawTooltip
 ArtifactViewerUI.drawTooltip = function(def, mx, my, below) tooltipFor = { def = def, below = below } end
-love.mouse.getPosition = function() return Layout.field.x + 8 + 12, Layout.field.y + 3 + 12 end
+local iconBottom = HandUI.resourceRowTop(game) - 8
+local iconX, iconY = Layout.leftColumn.x + 12, iconBottom - 24
+love.mouse.getPosition = function() return iconX + 12, iconY + 12 end
 game.gui:draw()
 ArtifactViewerUI.drawTooltip = realTooltip
-assert(tooltipFor and tooltipFor.def.id == "heart_of_the_tundra" and tooltipFor.below, "hovering the first artifact icon shows its tooltip below it")
-assert(Layout.field.y + 3 + 24 <= Layout.field.y + 25 * Layout.scale, "the icons fit inside the battlefield's top row")
+assert(tooltipFor and tooltipFor.def.id == "heart_of_the_tundra" and not tooltipFor.below, "hovering the artifact icon shows its tooltip above it")
+assert(iconX + 24 <= Layout.leftColumn.x + Layout.leftColumn.w, "the icons sit in the left column, off the battlefield")
+assert(iconY >= 104 + 264, "and below the incoming-wave cards")
 
 -- 6. Hovering a building shows its stats & modifiers in a window at the mouse
 local hovered = place("sentry", 0, 3)
@@ -181,6 +186,36 @@ game.gui.infoColumn:drawHoverStats()
 love.graphics.printf, love.graphics.rectangle = realPrintf, realRect
 local window = boxes[1]
 assert(window and window.x == 718 and window.y == 318, "the stats window sits just beside the mouse")
+assert(hovered.rarity == "common", "a placed turret stores its rarity (the window is coloured by it)")
+assert(game.mainLazer.rarity == "main_weapon", "the main turret uses the main-weapon colour")
+do
+    local function entryFor(index, id)
+        for _, list in pairs(index) do for _, e in ipairs(list) do if e.id == id then return e end end end
+    end
+    local function build(entry, dropRarity)
+        local cfg = {}
+        for k, v in pairs(entry) do cfg[k] = v end
+        if dropRarity then cfg.rarity = nil end
+        cfg.game = game
+        return entry.building:new(cfg)
+    end
+    local gator = entryFor(require("Buildings.TurretIndex"), "gator")
+    local cache = entryFor(require("Buildings.PassiveIndex"), "ammoCache")
+    assert(build(gator).rarity == "rare", "a rare turret stores its rarity")
+    assert(build(cache).rarity == "uncommon", "passives store their rarity too")
+    assert(build(gator, true).rarity == "rare", "a building from a config without rarity (older save) still gets it")
+
+    -- Passives (no damage stats) still get the window, describing what they do
+    local passive = build(cache)
+    local stubWrap = fontStub.getWrap
+    fontStub.getWrap = function(_, text) return 10, { text } end -- the stub wraps to "" otherwise
+    local passiveLines = game.gui.infoColumn:buildingExtrasLines(passive)
+    fontStub.getWrap = stubWrap
+    local joined = {}
+    for _, ln in ipairs(passiveLines) do joined[#joined + 1] = ln.text end
+    joined = table.concat(joined, " ")
+    assert(#passiveLines > 0 and joined:find("damage", 1, true), "a hovered passive's window lists its description")
+end
 local killsAt
 for _, t in ipairs(texts) do if t.text == "Kills: 1" then killsAt = t end end
 assert(killsAt and killsAt.x > window.x and killsAt.y > window.y, "it lists the hovered turret's stats")
