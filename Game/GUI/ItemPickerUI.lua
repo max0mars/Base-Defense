@@ -1,11 +1,10 @@
 -- ItemPickerUI.lua: Testing-mode menu listing every turret / buff / spell /
--- instant / main-lazer upgrade in the game. Click a building to drop into placement
--- mode, a spell or instant to add it to your hand, or an upgrade to apply it
--- instantly. Toggle with 'g' (testing mode) or F4 (developer mode).
+-- instant / main-lazer upgrade in the game, sorted by type (then rarity, then
+-- name). Clicking one adds it to your hand as a card. Toggle with 'g' (testing
+-- mode) or F4 (developer mode).
 
 local NormalRewardIndex  = require("Game.Rewards.RewardIndex")
 
-local Reward             = require("Game.Rewards.Reward")
 local CardFactory        = require("Game.Cards.CardFactory")
 local DevMode            = require("Game.Dev.DevMode")
 
@@ -24,12 +23,16 @@ local CATEGORY_COLORS = {
 
 local RARITIES = { "common", "uncommon", "rare", "epic", "legendary" }
 
+-- Listing order: by type, then rarity, then name
+local CATEGORY_ORDER = { turret = 1, buff = 2, spell = 3, instant = 4, upgrade = 5 }
+local RARITY_ORDER = { common = 1, uncommon = 2, rare = 3, epic = 4, legendary = 5 }
+
 -- Layout constants.
 local NUM_COLS  = 3
 local CELL_W    = 228
 local CELL_H    = 24
 local GAP       = 5
-local TITLE_H   = 36
+local TITLE_H   = 44
 local PAD       = 14
 
 local function labelFor(item)
@@ -58,6 +61,13 @@ function ItemPickerUI:new(game)
     for _, rarity in ipairs(RARITIES) do
         for _, item in ipairs(NormalRewardIndex[rarity] or {}) do add(item, rarity) end
     end
+    table.sort(obj.items, function(a, b)
+        local ca, cb = CATEGORY_ORDER[a.category] or 99, CATEGORY_ORDER[b.category] or 99
+        if ca ~= cb then return ca < cb end
+        local ra, rb = RARITY_ORDER[a.rarity] or 99, RARITY_ORDER[b.rarity] or 99
+        if ra ~= rb then return ra < rb end
+        return a.label < b.label
+    end)
 
     -- Precompute panel geometry.
     obj.numRows = math.ceil(#obj.items / NUM_COLS)
@@ -101,7 +111,7 @@ function ItemPickerUI:draw()
     love.graphics.setColor(0.0, 0.85, 1.0, 0.9)
     love.graphics.printf("ITEM PICKER", self.panelX, self.panelY + 8, self.panelW, "center")
     love.graphics.setColor(0.6, 0.6, 0.65, 1)
-    love.graphics.printf("click an item   ·   'g' / F4 to close", self.panelX, self.panelY + 22, self.panelW, "center")
+    love.graphics.printf("click an item to add it to your hand   ·   'g' / F4 to close", self.panelX, self.panelY + 22, self.panelW, "center")
 
     -- Cells.
     local font = love.graphics.getFont()
@@ -132,34 +142,26 @@ function ItemPickerUI:draw()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+--- Adds the picked item to the hand as a card (buildings, spells, instants and
+--- main-turret upgrades alike), the same card a draft or shop would give. The
+--- picker stays open until closed with 'g' / F4.
 function ItemPickerUI:select(entry)
     local game = self.game
     local item = entry.item
 
-    if item.type == "building" then
-        -- Wrap the index entry in a real Reward so the placed building carries a
-        -- drawable card (matching reward-placed buildings on hover).
-        local cfg = {}
-        for k, v in pairs(item) do cfg[k] = v end
-        cfg.game = game
-        cfg.rarity = entry.rarity or "common"
-        local rewardObj = Reward:new(cfg)
-        game:placeBuilding(item.building, rewardObj)
-    elseif item.type == "spell" or item.type == "instant" then
-        if #game.hand >= (game.MAX_HAND_SIZE or 10) then
-            DevMode.notify("Hand is full")
-        else
-            game:addCardToHand(CardFactory.fromReward(item))
-            DevMode.notify("Added " .. entry.label .. " to hand")
+    if #game.hand >= (game.MAX_HAND_SIZE or 10) then
+        DevMode.notify("Hand is full")
+    else
+        local reward = item
+        if not item.rarity then
+            reward = {}
+            for k, v in pairs(item) do reward[k] = v end
+            reward.rarity = entry.rarity
         end
-    elseif item.type == "main_upgrade" then
-        local mainLazer = game.base and game.base.mainLazer
-        if mainLazer and mainLazer.applyUpgrade then
-            mainLazer:applyUpgrade(item)
-        end
+        game:addCardToHand(CardFactory.fromReward(reward))
+        DevMode.notify("Added " .. entry.label .. " to hand")
     end
-
-    self.isActive = false
+    -- Stays open so several cards can be picked; 'g' / F4 closes it
 end
 
 function ItemPickerUI:mousepressed(x, y, button)

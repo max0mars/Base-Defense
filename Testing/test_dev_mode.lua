@@ -96,11 +96,41 @@ picker:select(blizzard)
 local added = game.hand[#game.hand]
 assert(#game.hand == handSize + 1 and added.id == "spell_blizzard", "Picking a spell adds it to the hand")
 assert(added.game == game and added:getCost() > 0, "The added spell is set up for this battle")
-assert(not picker.isActive, "Picker closes after picking")
+assert(picker.isActive, "The picker stays open after picking, for more picks")
 while #game.hand < 10 do picker:select(blizzard) end
 picker:select(blizzard)
 assert(#game.hand == 10, "Picking a spell with a full hand (10) adds nothing")
 game.hand = {}
+
+-- Buildings (and every other kind) also go to the hand instead of being placed
+local gator, outpost
+for _, entry in ipairs(picker.items) do
+    if entry.item.id == "gator" then gator = entry end
+    if entry.item.id == "outpost" then outpost = entry end
+end
+game.inputMode = "idle"
+picker.isActive = true
+picker:select(gator)
+local turretCard = game.hand[#game.hand]
+assert(#game.hand == 1 and turretCard.id == "gator" and turretCard.payload.buildingClass ~= nil,
+    "Picking a turret adds its card to the hand")
+assert(game.inputMode == "idle" and not game.blueprint, "and doesn't start placing it")
+assert(turretCard.payload.rarity == "rare", "The turret card keeps its rarity")
+picker:select(outpost)
+assert(#game.hand == 2 and game.hand[2].id == "outpost", "Passives go to the hand too")
+game.hand = {}
+
+-- Listed by type (turrets, passives, spells, instants, upgrades), then rarity, then name
+local order = { turret = 1, buff = 2, spell = 3, instant = 4, upgrade = 5 }
+local rank = { common = 1, uncommon = 2, rare = 3, epic = 4, legendary = 5 }
+local sorted = true
+for i = 2, #picker.items do
+    local a, b = picker.items[i - 1], picker.items[i]
+    local ca, cb = order[a.category] or 99, order[b.category] or 99
+    if ca > cb or (ca == cb and (rank[a.rarity] or 99) > (rank[b.rarity] or 99)) then sorted = false end
+end
+assert(sorted, "The picker is sorted by type, then rarity")
+assert(picker.items[1].category == "turret", "Turrets come first")
 
 local owned = #_G.PersistentState.artifacts
 DevMode.keypressed("f7", game)
