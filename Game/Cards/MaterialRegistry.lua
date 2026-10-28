@@ -32,8 +32,8 @@ MaterialRegistry.list = {
     },
     {
         id = "elemental_essence",
-        name = "Elemental Essence",
-        shortName = "Essence",
+        name = "Elemental Dust",
+        shortName = "Dust",
         color = {0.5, 1, 0.4, 1},
         match = { damageTypes = {"poison", "ice", "fire"} }
     },

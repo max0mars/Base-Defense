@@ -1,20 +1,6 @@
 local RewardPool = {}
 RewardPool.__index = RewardPool
 
--- Static Luck Table: Luck (1-10) -> {rarity -> weight}
-RewardPool.LuckTable = {
-    [1]  = { common = 90, uncommon = 10, rare = 0,  epic = 0,  legendary = 0 },
-    [2]  = { common = 80, uncommon = 20, rare = 0,  epic = 0,  legendary = 0 },
-    [3]  = { common = 70, uncommon = 25, rare = 5,  epic = 0,  legendary = 0 },
-    [4]  = { common = 55, uncommon = 30, rare = 13, epic = 2,  legendary = 0 },
-    [5]  = { common = 50, uncommon = 30, rare = 15,  epic = 4,  legendary = 1 },
-    [6]  = { common = 40, uncommon = 35, rare = 15, epic = 7,  legendary = 3 },
-    [7]  = { common = 30, uncommon = 35, rare = 20, epic = 10, legendary = 5 },
-    [8]  = { common = 20, uncommon = 35, rare = 25, epic = 15, legendary = 5 },
-    [9]  = { common = 10, uncommon = 35, rare = 30, epic = 20, legendary = 5 },
-    [10] = { common = 5, uncommon = 30, rare = 35, epic = 20, legendary = 10 }
-}
-
 -- Preferred rarity order for fallbacks
 RewardPool.RarityOrder = { "legendary", "epic", "rare", "uncommon", "common" }
 
@@ -77,11 +63,6 @@ function RewardPool:new(rewardIndex, game)
         game = game
     }, self)
     return obj
-end
-
-function RewardPool:generateChoices(count, luckLevel)
-    luckLevel = math.max(1, math.min(10, luckLevel or 1))
-    return self:generateChoicesWithWeights(count, self.LuckTable[luckLevel])
 end
 
 function RewardPool:generateChoicesWithWeights(count, weights)
@@ -178,36 +159,6 @@ function RewardPool:getRandomRewardFromTier(rarity, excludedIds)
     end
     
     return nil
-end
-
-function RewardPool:getLuckProbabilities(luckLevel)
-    luckLevel = math.max(1, math.min(10, math.floor(luckLevel or 1)))
-    local weights = self.LuckTable[luckLevel]
-    local totalWeight = 0
-    for _, w in pairs(weights) do totalWeight = totalWeight + w end
-    
-    local probs = {}
-    local rarityColors = {
-        common = {1, 1, 1},
-        uncommon = {0.2, 0.8, 0.2},
-        rare = {0.2, 0.4, 1},
-        epic = {0.7, 0.2, 1},
-        legendary = {1, 0.7, 0}
-    }
-    
-    -- Iterate in display order (Reverse probability order usually looks nice)
-    for i = #self.RarityOrder, 1, -1 do
-        local rarity = self.RarityOrder[i]
-        local w = weights[rarity]
-        if w > 0 then
-            table.insert(probs, {
-                rarity = rarity:sub(1,1):upper() .. rarity:sub(2),
-                percent = (w / totalWeight) * 100,
-                color = rarityColors[rarity]
-            })
-        end
-    end
-    return probs
 end
 
 return RewardPool

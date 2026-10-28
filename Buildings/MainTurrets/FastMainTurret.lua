@@ -30,7 +30,7 @@ FastMainTurret.template = {
     bulletName = "Standard Bullet",
     bulletColor = {1, 0.8, 0.2},
     bulletSpeed = 700,
-    damage = 4.6,
+    damage = 4,
     pierce = 1,
     spread = math.rad(5),
     lifespan = 1.5,
@@ -53,6 +53,20 @@ function FastMainTurret:new(config)
     setmetatable(t, { __index = self })
     
     return t
+end
+
+function FastMainTurret:applyUpgrade(reward)
+    if not reward or not reward.id then return end
+    self.upgrades[reward.id] = true
+
+    -- Counterpart to the Heavy Laser's Low Power Ops
+    if reward.id == "heavy_rounds" and self.effectManager then
+        self.effectManager:applyEffect({
+            name = "Heavy Rounds",
+            statModifiers = { damage = { mult = 0.5 }, fireRate = { mult = -0.2 } }
+        })
+    end
+    print("Main Turret Upgrade Applied: " .. reward.name)
 end
 
 function FastMainTurret:draw()
@@ -130,6 +144,20 @@ end
 
 function FastMainTurret.getUniqueCards()
     return {
+        rare = {
+            {
+                id = "heavy_rounds",
+                name = "Heavy Rounds",
+                description = "Your machine gun shoots slower but hits much harder.",
+                type = "main_upgrade",
+                iconCategory = "upgrade",
+                cost = 2,
+                isEligible = function(game)
+                    local mt = game.base and game.base.mainLazer
+                    return mt and mt.id == "fast_main" and not mt.upgrades["heavy_rounds"]
+                end
+            }
+        },
         uncommon = {
             -- {
             --     id = "stabilizing_shots",

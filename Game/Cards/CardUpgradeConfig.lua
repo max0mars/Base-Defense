@@ -26,7 +26,7 @@ CardUpgradeConfig.MATERIAL = "material"
 -- Can be overridden per-card or per-item
 CardUpgradeConfig.DEFAULT_COSTS = {
     [2] = { gold = 30,  material = 1 },
-    [3] = { gold = 75,  material = 1 },
+    [3] = { gold = 75,  material = 2 },
     [4] = { gold = 250, material = 4 },
     [5] = { gold = 600, material = 7 },
 }

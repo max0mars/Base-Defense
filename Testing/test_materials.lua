@@ -70,7 +70,7 @@ assert(MaterialRegistry.resolve({ types = {"turret"}, upgradeMaterial = "blast_p
     "Explicit upgradeMaterial overrides type matching")
 assert(MaterialRegistry.resolve({ types = { turret = true, energy = true } }) == "energy_cells",
     "Set-style types ({energy = true}) are matched")
-assert(MaterialRegistry.resolve({ damageType = "fire" }) == "elemental_essence", "Fire damage maps to Elemental Essence")
+assert(MaterialRegistry.resolve({ damageType = "fire" }) == "elemental_essence", "Fire damage maps to Elemental Dust")
 assert(MaterialRegistry.resolve(nil) == "scrap", "Unknown turrets fall back to Scrap")
 
 table.insert(MaterialRegistry.list, 1, { id = "test_cryo", name = "Cryo Cores", match = { types = {"cryo"} } })
@@ -91,7 +91,7 @@ local function cardFor(id, tier)
     return Card:new({ id = id, name = e.name, executionType = ExecutionType.Placement, tier = tier or 1,
         payload = { buildingClass = e.building, config = e } })
 end
-local costs = { { 30, 1 }, { 75, 1 }, { 250, 4 }, { 600, 7 } }
+local costs = { { 30, 1 }, { 75, 2 }, { 250, 4 }, { 600, 7 } }
 for i, c in ipairs(costs) do
     local cost = cardFor("blaster", i):getNextUpgradeCost()
     assert(cost.gold == c[1] and cost.energy_cells == c[2] and cost.material == nil,

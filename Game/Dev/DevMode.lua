@@ -29,7 +29,7 @@ DevMode.BINDINGS = {
     { key = "f6",  label = "Draw " .. DevMode.DRAW .. " cards", scope = "battle" },
     { key = "f7",  label = "Grant random artifact",          scope = "both" },
     { key = "f8",  label = "+$" .. DevMode.CASH .. " cash",  scope = "both" },
-    { key = "f9",  label = "Shop level +1",                  scope = "both" },
+    { key = "f9",  label = "Merchant level +1",              scope = "both" },
     { key = "f10", label = "Kill all enemies (and dev queue)", scope = "battle" },
     { key = "f11", label = "Spawn specific enemies",         scope = "battle" },
 }
@@ -121,10 +121,10 @@ actions.f8 = function()
 end
 
 actions.f9 = function()
+    local Merchant = require("Game.Prep.Merchant")
     local ps = _G.PersistentState
-    ps.shopLevel = math.min(10, (ps.shopLevel or 1) + 1)
-    ps.shopXP = 0
-    DevMode.notify("Shop level " .. ps.shopLevel)
+    ps.shopLevel = math.min(Merchant.MAX_LEVEL, Merchant.getLevel() + 1)
+    DevMode.notify("Merchant level " .. ps.shopLevel)
 end
 
 actions.f10 = function(game)

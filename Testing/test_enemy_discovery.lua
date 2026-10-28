@@ -11,8 +11,6 @@ _G.love = {
 }
 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
 local WaveSpawner = require("Game.Spawning.WaveSpawner")
-local LevelManager = require("Game.Core.LevelManager")
-local BattleManager = require("Game.Core.BattleManager")
 
 print("--- STARTING ENEMY DISCOVERY VERIFICATION ---")
 
@@ -82,46 +80,6 @@ spawner:update(1.0)
 assert(_G.PersistentState.discoveredEnemies["Scout"] == true, "Scout must now be discovered in _G.PersistentState")
 assert(EnemyRegistry.discoveredEnemiesMap["Scout"] == true, "Scout must be in EnemyRegistry.discoveredEnemiesMap")
 
--- Verify preparation scene choice formatting logic for cached major battle and level choice
-local bm = BattleManager:new()
-local lm = LevelManager:new(bm)
-
--- Generate major battle choices for level 5
-local majorChoices = lm:generateChoices(5)
-assert(#majorChoices == 1, "Milestone choice count is 1")
-local majorChoice = majorChoices[1]
-
--- Check that any discovered enemy in the major choice enemies list correctly resolves
-for _, enemy in ipairs(majorChoice.enemies or {}) do
-    local rawId = enemy.id or (enemy.displayName ~= "???" and enemy.displayName)
-    local canonicalId = EnemyRegistry:canonicalEnemyId(rawId) or rawId
-    local isDiscovered = _G.PersistentState.discoveredEnemies[canonicalId] or EnemyRegistry.discoveredEnemiesMap[canonicalId]
-    if canonicalId == "Grunt" or canonicalId == "Drone" or canonicalId == "Slime" or canonicalId == "Scout" then
-        assert(isDiscovered == true, "Enemy " .. canonicalId .. " must be detected as discovered")
-    end
-end
-
--- If a major choice was generated BEFORE discovery:
-local undiscoveredChoice = {
-    enemies = {
-        { id = "Drone", displayName = "???", isDiscovered = false },
-        { id = "Tank", displayName = "???", isDiscovered = false }
-    }
-}
-
--- Check UI dynamic resolution (same logic as preparation_scene.lua):
-for _, enemy in ipairs(undiscoveredChoice.enemies) do
-    local rawId = enemy.id or (enemy.displayName ~= "???" and enemy.displayName)
-    local canonicalId = EnemyRegistry:canonicalEnemyId(rawId) or rawId
-    local isDiscovered = false
-    if canonicalId then
-        isDiscovered = _G.PersistentState.discoveredEnemies[canonicalId] or EnemyRegistry.discoveredEnemiesMap[canonicalId]
-    end
-    if enemy.id == "Drone" then
-        assert(isDiscovered == true, "Pre-cached Drone with displayName='???' must dynamically resolve to discovered!")
-    elseif enemy.id == "Tank" then
-        assert(not isDiscovered, "Tank is not yet encountered, so must remain undiscovered")
-    end
-end
+-- (Scouting reports no longer use discovery: see test_prep_loop.lua)
 
 print("ALL ENEMY DISCOVERY VERIFICATION CHECKS PASSED!")

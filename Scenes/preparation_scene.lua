@@ -7,10 +7,7 @@ local Cursor = require("Game.GUI.Cursor")
 local BattleDirector = require("Game.Spawning.BattleDirector")
 local LevelManager = require("Game.Core.LevelManager")
 local BattleManager = require("Game.Core.BattleManager")
-local RewardPool = require("Game.Rewards.RewardPool")
-local RewardIndex = require("Game.Rewards.RewardIndex")
 local Card = require("Game.Cards.Card")
-local CardFactory = require("Game.Cards.CardFactory")
 local MaterialRegistry = require("Game.Cards.MaterialRegistry")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
@@ -19,6 +16,30 @@ local CardDraw = require("Game.Cards.CardDraw")
 local ArtifactManager = require("Game.Artifacts.ArtifactManager")
 local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
 local DevMode = require("Game.Dev.DevMode")
+local PrepLoop = require("Game.Prep.PrepLoop")
+local Scouting = require("Game.Prep.Scouting")
+local Merchant = require("Game.Prep.Merchant")
+
+-- The middle of the screen changes with the battle just finished (see PrepLoop)
+local SCREENS = {
+    quote = require("Game.Prep.Quotes"),
+    merchant = Merchant,
+    alchemist = require("Game.Prep.Alchemist"),
+    upgrades = require("Game.Prep.MajorUpgrades"),
+}
+local SCREEN_TITLES = {
+    quote = "A MOMENT OF CALM",
+    merchant = "THE MERCHANT IS IN TOWN",
+    alchemist = "THE ALCHEMIST IS IN TOWN",
+    upgrades = "MAJOR UPGRADES AVAILABLE",
+}
+
+-- Layout: status along the top, the shared menu bar along the bottom, and the
+-- artifact strip (with its label above it) just over the menu bar
+local TOP_H = 110
+local BAR_H = 70
+local STRIP_LABEL_H = 18
+local function stripY() return VIRTUAL_HEIGHT - BAR_H - 40 end
 
 function preparation_scene:drawTrashIcon(cx, cy, size, col)
     local w = size or 22
@@ -73,73 +94,12 @@ function preparation_scene:load(isPostBattle)
         _G.PersistentState.battlesCompleted = (_G.PersistentState.battlesCompleted or 0) + 1
         _G.PersistentState.globalDifficulty = (_G.PersistentState.globalDifficulty or 1) + 1
         
-        -- Give 1 XP after each battle, except the first one (where it starts at level 1 with 0 XP)
-        if _G.PersistentState.battlesCompleted > 1 then
-            self:addShopXP(1)
-        end
-        
         if _G.PersistentState.battlesCompleted % 3 == 0 then
             local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
             EnemyRegistry:triggerRandomMutation()
         end
-        
-        if _G.PersistentState.battlesCompleted > 0 and _G.PersistentState.battlesCompleted % 5 == 0 then
-            self.showUpgradeChoice = true
-            local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
-            CardUpgradeConfig.Economy.addCardRemovals(1)
-        end
-    end
-    
-    if self.showUpgradeChoice then
-        local cardW = 220
-        local cardH = 340
-        local spacing = 40
-        local startX = (VIRTUAL_WIDTH - (3 * cardW + 2 * spacing)) / 2
-        local startY = (VIRTUAL_HEIGHT - cardH) / 2
-        
-        self.upgradeChoices = {
-            {
-                id = "card_draw",
-                x = startX,
-                y = startY,
-                w = cardW,
-                h = cardH,
-                title = "+1 CARD DRAW",
-                desc = "Draw +1 card at the\nstart of battle and\nbetween waves.",
-                color = {0.15, 0.35, 0.6, 1},
-                hoverColor = {0.2, 0.45, 0.75, 1},
-                borderColor = {0.3, 0.7, 1, 1}
-            },
-            {
-                id = "tokens",
-                x = startX + cardW + spacing,
-                y = startY,
-                w = cardW,
-                h = cardH,
-                title = "+1 TOKEN / TURN",
-                desc = "Start waves and\nbattles with +1\nmaximum Token.",
-                color = {0.15, 0.5, 0.3, 1},
-                hoverColor = {0.2, 0.65, 0.4, 1},
-                borderColor = {0.3, 0.9, 0.5, 1}
-            },
-            {
-                id = "slots",
-                x = startX + 2 * (cardW + spacing),
-                y = startY,
-                w = cardW,
-                h = cardH,
-                title = "+4 START SLOTS",
-                desc = "Unlock 4 additional\nadjacent turret slots\nat the start of each\nbattle.",
-                color = {0.45, 0.15, 0.5, 1},
-                hoverColor = {0.6, 0.2, 0.7, 1},
-                borderColor = {0.8, 0.3, 0.9, 1}
-            }
-        }
     end
 
-    local cx = (VIRTUAL_WIDTH - 240) / 2
-    local cy = VIRTUAL_HEIGHT - 60
-    
     self.settings = SettingsPanel:new({
         title = "PAUSED",
         bottomButtons = {
@@ -150,42 +110,33 @@ function preparation_scene:load(isPostBattle)
         },
     })
     
-    self.startButton = {
-        x = cx, y = cy, w = 240, h = 45, label = "START NEXT BATTLE",
-        color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1}
-    }
-    
+    -- Shared menu bar
+    local barY = VIRTUAL_HEIGHT - BAR_H + 12
     self.deckButton = {
-        x = 20, y = VIRTUAL_HEIGHT - 60, w = 140, h = 45, label = "VIEW DECK",
+        x = 20, y = barY, w = 140, h = 45, label = "VIEW DECK",
         color = {0.3, 0.3, 0.4, 1}, hoverColor = {0.4, 0.4, 0.5, 1}, borderColor = {0.6, 0.6, 0.8, 1}
     }
-    
+
     self.upgradeCardsButton = {
-        x = 175, y = VIRTUAL_HEIGHT - 60, w = 170, h = 45, label = "UPGRADE CARDS",
+        x = 175, y = barY, w = 170, h = 45, label = "UPGRADE CARDS",
         color = {0.15, 0.4, 0.3, 1}, hoverColor = {0.2, 0.55, 0.4, 1}, borderColor = {0.3, 0.85, 0.6, 1}
     }
-    
+
     self.artifactsButton = {
-        x = 360, y = VIRTUAL_HEIGHT - 60, w = 150, h = 45, label = "ARTIFACTS",
+        x = 360, y = barY, w = 150, h = 45, label = "ARTIFACTS",
         color = {0.3, 0.2, 0.45, 1}, hoverColor = {0.42, 0.28, 0.62, 1}, borderColor = {0.75, 0.55, 1, 1}
     }
     self.artifactViewer = ArtifactViewerUI:new()
 
     self.previewBattlesButton = {
-        x = VIRTUAL_WIDTH - 200, y = 20, w = 180, h = 42, label = "SCOUTING REPORT",
+        x = 525, y = barY, w = 180, h = 45, label = "SCOUTING REPORT",
         color = {0.15, 0.35, 0.55, 1}, hoverColor = {0.2, 0.48, 0.75, 1}, borderColor = {0.4, 0.75, 1, 1}
     }
-    
-    self.rerollButton = {
-        x = 20, y = 140, w = 160, h = 40, label = "Reroll Shop (20$)",
-        color = {0.4, 0.3, 0.1, 1}, hoverColor = {0.6, 0.45, 0.15, 1}, borderColor = {0.8, 0.6, 0.2, 1}
-    }
 
-    self.buyXPButton = {
-        x = 200, y = 140, w = 160, h = 40, label = "Buy XP (30$)",
-        color = {0.5, 0.1, 0.5, 1}, hoverColor = {0.7, 0.2, 0.7, 1}, borderColor = {0.9, 0.3, 0.9, 1}
+    self.startButton = {
+        x = VIRTUAL_WIDTH - 260, y = barY, w = 240, h = 45, label = "START NEXT BATTLE",
+        color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1}
     }
-
 
     self.viewingDeck = false
     self.viewingUpgrades = false
@@ -198,7 +149,14 @@ function preparation_scene:load(isPostBattle)
     self.levelManager = LevelManager:new()
     self.battleManager = BattleManager:new()
     self:precalculateWaves()
-    self:rollShop()
+    self.visit = PrepLoop.getVisit()
+end
+
+--- Where the current screen (merchant, alchemist...) draws: between the status
+--- bar and the artifact strip's label above the menu bar.
+function preparation_scene:contentArea()
+    local top = TOP_H + 10
+    return { x = 20, y = top, w = VIRTUAL_WIDTH - 40, h = stripY() - STRIP_LABEL_H - 8 - top }
 end
 
 function preparation_scene:precalculateWaves()
@@ -258,83 +216,6 @@ function preparation_scene:applyLevelChoice(choice)
     }
 end
 
--- Each shop level needs XP_PER_SHOP_LEVEL more XP than the last (level N needs 2N)
-preparation_scene.XP_PER_SHOP_LEVEL = 2
-
-function preparation_scene:getRequiredXP(level)
-    return self.XP_PER_SHOP_LEVEL * level
-end
-
--- XP dots keep 18px spacing and 6px radius until they would overflow the stat column,
--- then tighten (and shrink, keeping a 2px gap) to fit.
-preparation_scene.XP_DOT_COLUMN_WIDTH = 200
-
-function preparation_scene:getXPDotLayout(reqXP)
-    local startX, spacing, radius = 20, 18, 6
-    if reqXP > 1 then
-        spacing = math.min(spacing, (self.XP_DOT_COLUMN_WIDTH - radius) / (reqXP - 1))
-        radius = math.min(radius, (spacing - 2) / 2)
-    end
-    return startX, spacing, radius
-end
-
-function preparation_scene:addShopXP(amount)
-    if not _G.PersistentState.shopLevel then _G.PersistentState.shopLevel = 1 end
-    if not _G.PersistentState.shopXP then _G.PersistentState.shopXP = 0 end
-    
-    if _G.PersistentState.shopLevel >= 10 then return end
-    
-    _G.PersistentState.shopXP = _G.PersistentState.shopXP + amount
-    local req = self:getRequiredXP(_G.PersistentState.shopLevel)
-    
-    while _G.PersistentState.shopXP >= req do
-        _G.PersistentState.shopXP = _G.PersistentState.shopXP - req
-        _G.PersistentState.shopLevel = math.min(10, _G.PersistentState.shopLevel + 1)
-        
-        if _G.PersistentState.shopLevel >= 10 then
-            _G.PersistentState.shopXP = 0
-            break
-        end
-        req = self:getRequiredXP(_G.PersistentState.shopLevel)
-    end
-end
-
-function preparation_scene:rollShop()
-    local shopLevel = _G.PersistentState.shopLevel or 1
-    
-    -- Mock game for eligibility
-    local dummyGame = {
-        base = {
-            mainLazer = { id = "standard_main", upgrades = {} }
-        }
-    }
-    
-    local poolLogic = RewardPool:new(RewardIndex, dummyGame)
-    local choices = poolLogic:generateChoices(3, shopLevel)
-    
-    self.shopItems = {}
-    
-    local prices = { common = 20, uncommon = 30, rare = 40, epic = 50, legendary = 75 }
-    local startX = (VIRTUAL_WIDTH - (3 * 220)) / 2 + 10
-    
-    for i, choice in ipairs(choices) do
-        local rarity = choice.rarity or "common"
-        local itemCost = prices[rarity] or 50
-        
-        local card = CardFactory.fromReward(choice, choice)
-
-        table.insert(self.shopItems, {
-            x = startX + (i-1) * 220,
-            y = 220,
-            w = 200,
-            h = 280,
-            card = card,
-            cost = itemCost,
-            purchased = false
-        })
-    end
-end
-
 function preparation_scene:update(dt)
     if paused == 1 and self.settings then
         self.settings:update(dt)
@@ -361,150 +242,6 @@ function preparation_scene:drawButton(btn, mx, my)
     love.graphics.printf(btn.label, btn.x, btn.y + btn.h / 2 - 7, btn.w, "center")
 end
 
-
-function preparation_scene:drawShop(mx, my)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("SHOP", 0, 100, VIRTUAL_WIDTH, "center")
-    
-    for _, item in ipairs(self.shopItems) do
-        if not item.purchased then
-            local isHovered = mx >= item.x and mx <= item.x + item.w and my >= item.y and my <= item.y + item.h
-            if isHovered then Cursor.wantHand = true end
-            
-            local cardDraw = nil
-            if type(item.card.getCardDraw) == "function" then
-                cardDraw = item.card:getCardDraw()
-            elseif item.card.payload and item.card.payload.rewardCard then
-                cardDraw = item.card.payload.rewardCard
-            end
-            
-            if cardDraw then
-                cardDraw:draw(item.x, item.y, item.w, item.h, isHovered)
-            end
-            
-            local afford = (_G.PersistentState.cash or 0) >= item.cost
-            love.graphics.setColor(afford and {0.2, 0.8, 0.2, 1} or {0.8, 0.2, 0.2, 1})
-            love.graphics.printf("$" .. item.cost, item.x, item.y + item.h + 10, item.w, "center")
-        end
-    end
-end
-
-function preparation_scene:drawForecast()
-    local fw = 230
-    local fh = 260
-    local fx = VIRTUAL_WIDTH - fw - 20
-    local fy = 20
-    
-    love.graphics.setColor(0, 0, 0, 0.75)
-    love.graphics.rectangle("fill", fx, fy, fw, fh, 8)
-    
-    local mult = (self.selectedChoice and self.selectedChoice.difficultyMultiplier) or 1.0
-    local isSafe = (mult < 1.20)
-    local isMilestone = (self.selectedChoice and self.selectedChoice.isMilestone)
-    local multColor = isSafe and {0.2, 0.9, 0.4, 1} or ((mult < 1.6) and {1, 0.8, 0.2, 1} or {1, 0.35, 0.35, 1})
-    local threatTierName = isSafe and "Low Threat" or ((mult < 1.6) and "Medium Threat" or "High Threat")
-    if isMilestone then
-        threatTierName = "MAJOR BATTLE"
-        multColor = {1, 0.2, 0.2, 1}
-    end
-    love.graphics.setColor(multColor)
-    love.graphics.rectangle("line", fx, fy, fw, fh, 8)
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("BATTLE FORECAST", fx, fy + 8, fw, "center")
-    
-    if isMilestone then
-        if not self.threatBadgeFont then
-            self.threatBadgeFont = love.graphics.newFont(22)
-        end
-        local oldFont = love.graphics.getFont()
-        love.graphics.setFont(self.threatBadgeFont)
-        love.graphics.setColor(1, 0.2, 0.2, 1)
-        love.graphics.printf(threatTierName, fx, fy + 24, fw, "center")
-        love.graphics.setFont(oldFont)
-    else
-        love.graphics.setColor(multColor)
-        love.graphics.printf(threatTierName, fx, fy + 26, fw, "center")
-    end
-    
-    -- Enemy preview header
-    love.graphics.setColor(0.7, 0.85, 1, 1)
-    love.graphics.printf("Incoming Enemies:", fx + 10, fy + 48, fw - 20, "left")
-    
-    local yOff = fy + 66
-    if self.selectedChoice and self.selectedChoice.enemies then
-        local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
-        for idx, enemy in ipairs(self.selectedChoice.enemies) do
-            if idx <= 4 then
-                local rawId = enemy.id or (enemy.displayName ~= "???" and enemy.displayName)
-                local canonicalId = EnemyRegistry:canonicalEnemyId(rawId) or rawId
-                local isDiscovered = false
-                if canonicalId then
-                    if _G.PersistentState and _G.PersistentState.discoveredEnemies then
-                        isDiscovered = _G.PersistentState.discoveredEnemies[canonicalId] or (rawId and _G.PersistentState.discoveredEnemies[rawId])
-                    end
-                    if not isDiscovered and EnemyRegistry.discoveredEnemiesMap then
-                        isDiscovered = EnemyRegistry.discoveredEnemiesMap[canonicalId] or (rawId and EnemyRegistry.discoveredEnemiesMap[rawId])
-                    end
-                end
-                if not isDiscovered and enemy.displayName and enemy.displayName ~= "???" then
-                    isDiscovered = true
-                end
-
-                if not isDiscovered then
-                    love.graphics.setColor(0.65, 0.65, 0.65, 1)
-                    love.graphics.printf("• ??? (Unknown)", fx + 15, yOff, fw - 30, "left")
-                else
-                    love.graphics.setColor(1, 0.4, 0.4, 1)
-                    local displayName = canonicalId or rawId or enemy.displayName
-                    love.graphics.printf("• " .. displayName, fx + 15, yOff, fw - 30, "left")
-                end
-                yOff = yOff + 18
-            end
-        end
-    end
-    
-    -- Rewards preview header
-    yOff = math.max(yOff + 4, fy + 144)
-    love.graphics.setColor(1, 0.85, 0.3, 1)
-    love.graphics.printf("Expected Rewards:", fx + 10, yOff, fw - 20, "left")
-    yOff = yOff + 18
-    
-    if self.selectedChoice and self.selectedChoice.rewards then
-        for idx, reward in ipairs(self.selectedChoice.rewards) do
-            if idx <= 3 then
-                love.graphics.setColor(0.3, 1, 0.5, 1)
-                love.graphics.printf("• " .. (reward.description or reward.name), fx + 15, yOff, fw - 30, "left")
-                yOff = yOff + 16
-            end
-        end
-    end
-    
-    -- Select / Change Level button (Disabled / hidden on milestone battles where player has no choice)
-    local isMilestone = self.selectedChoice and self.selectedChoice.isMilestone
-    if not isMilestone then
-        local mx, my = love.mouse.getPosition()
-        local btnW = fw - 20
-        local btnH = 28
-        local btnX = fx + 10
-        local btnY = fy + fh - 35
-        local isHover = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
-        if isHover then Cursor.wantHand = true end
-        
-        love.graphics.setColor(isHover and {0.25, 0.5, 0.8, 1} or {0.15, 0.35, 0.6, 1})
-        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 5)
-        love.graphics.setColor(0.4, 0.75, 1, 1)
-        love.graphics.rectangle("line", btnX, btnY, btnW, btnH, 5)
-        
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("PREVIEW NEXT BATTLES", btnX, btnY + 7, btnW, "center")
-        self.chooseBattleBtn = { x = btnX, y = btnY, w = btnW, h = btnH }
-    else
-        self.chooseBattleBtn = nil
-        love.graphics.setColor(0.8, 0.3, 0.3, 0.9)
-        love.graphics.printf("MANDATORY ENCOUNTER", fx + 10, fy + fh - 28, fw - 20, "center")
-    end
-end
 
 function preparation_scene:drawDeck()
     local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
@@ -1148,66 +885,55 @@ function preparation_scene:draw()
     love.graphics.setColor(0.1, 0.1, 0.12, 1)
     love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
     
+    local ps = _G.PersistentState or {}
+    local hp = ps.baseHP or 200
+    local cash = ps.cash or 0
+
+    -- Status bar
+    love.graphics.setColor(0.06, 0.06, 0.08, 1)
+    love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, TOP_H)
+    love.graphics.setColor(0.25, 0.25, 0.3, 1)
+    love.graphics.line(0, TOP_H, VIRTUAL_WIDTH, TOP_H)
+
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf("PREPARATION PHASE", 0, 20, VIRTUAL_WIDTH, "center")
-    
-    local hp = _G.PersistentState and _G.PersistentState.baseHP or 200
-    local cash = _G.PersistentState and _G.PersistentState.cash or 0
-    local shopLevel = _G.PersistentState and _G.PersistentState.shopLevel or 1
-    local shopXP = _G.PersistentState and _G.PersistentState.shopXP or 0
-    
+    love.graphics.setColor(0.7, 0.75, 0.85, 1)
+    love.graphics.printf(SCREEN_TITLES[self.visit.screen] or "", 0, 44, VIRTUAL_WIDTH, "center")
+    love.graphics.setColor(0.55, 0.6, 0.7, 1)
+    love.graphics.printf("Scouting Lv " .. Scouting.getLevel() .. "   |   Merchant Lv " .. Merchant.getLevel(),
+        0, 74, VIRTUAL_WIDTH, "center")
+
     love.graphics.setColor(0.8, 0.2, 0.2, 1)
     love.graphics.printf("Base HP: " .. hp .. " / 200", 20, 20, 200, "left")
-    
+
     love.graphics.setColor(0.2, 0.8, 0.2, 1)
     love.graphics.printf("Cash: $" .. cash, 20, 45, 200, "left")
-    
-    love.graphics.setColor(0.8, 0.2, 0.8, 1)
-    love.graphics.printf("Shop Level: " .. shopLevel, 20, 70, 200, "left")
-    
+
     local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
     local removals = CardUpgradeConfig.Economy.getCardRemovals()
-    self:drawTrashIcon(25, 122, 18, {0.9, 0.35, 0.35, 1})
+    self:drawTrashIcon(25, 77, 18, {0.9, 0.35, 0.35, 1})
     love.graphics.setColor(0.9, 0.45, 0.45, 1)
-    love.graphics.printf("Removals: " .. removals, 40, 115, 150, "left")
+    love.graphics.printf("Removals: " .. removals, 40, 70, 150, "left")
 
-    -- Upgrade materials (every material in the registry), under the Scouting Report button
-    local matY = 75
+    -- Upgrade materials (every material in the registry)
+    local matY = 8
     for _, mat in ipairs(MaterialRegistry.list) do
         love.graphics.setColor(mat.color)
         love.graphics.printf(mat.name .. ": " .. CardUpgradeConfig.Economy.getResource(mat.id),
             VIRTUAL_WIDTH - 200, matY, 180, "left")
         matY = matY + 20
     end
-    
-    -- Draw XP circles
-    if shopLevel < 10 then
-        local reqXP = self:getRequiredXP(shopLevel)
-        local startX, spacing, radius = self:getXPDotLayout(reqXP)
-        local cy = 95
-        
-        for i = 1, reqXP do
-            local drawX = startX + (i - 1) * spacing
-            if i <= shopXP then
-                love.graphics.setColor(0.8, 0.2, 0.8, 1)
-                love.graphics.circle("fill", drawX, cy, radius)
-            else
-                love.graphics.setColor(0.8, 0.2, 0.8, 1)
-                love.graphics.circle("line", drawX, cy, radius)
-                love.graphics.setColor(0.2, 0.05, 0.2, 1)
-                love.graphics.circle("fill", drawX, cy, radius - 1)
-            end
-        end
-    else
-        love.graphics.setColor(0.8, 0.2, 0.8, 1)
-        love.graphics.printf("MAX LEVEL", 20, 90, 200, "left")
-    end
-    
-    self:drawShop(mx, my)
-    
-    self:drawButton(self.rerollButton, mx, my)
-    self:drawButton(self.buyXPButton, mx, my)
-    
+
+    -- This visit's screen
+    local screen = SCREENS[self.visit.screen]
+    if screen then screen.draw(self, self.visit, self:contentArea(), mx, my) end
+
+    -- Shared menu bar
+    love.graphics.setColor(0.06, 0.06, 0.08, 1)
+    love.graphics.rectangle("fill", 0, VIRTUAL_HEIGHT - BAR_H, VIRTUAL_WIDTH, BAR_H)
+    love.graphics.setColor(0.25, 0.25, 0.3, 1)
+    love.graphics.line(0, VIRTUAL_HEIGHT - BAR_H, VIRTUAL_WIDTH, VIRTUAL_HEIGHT - BAR_H)
+
     self:drawButton(self.startButton, mx, my)
     self:drawButton(self.deckButton, mx, my)
     self:drawButton(self.upgradeCardsButton, mx, my)
@@ -1216,7 +942,7 @@ function preparation_scene:draw()
     self:drawButton(self.previewBattlesButton, mx, my)
 
     -- Owned artifacts at a glance (hover for details, click to open the full list)
-    self.artifactStripRect = self.artifactViewer:getStripRect(20, VIRTUAL_HEIGHT - 110)
+    self.artifactStripRect = self.artifactViewer:getStripRect(20, stripY())
     local hoveredArtifact = self.artifactViewer:drawStrip(self.artifactStripRect.x, self.artifactStripRect.y, mx, my)
     
     if self.viewingDeck then
@@ -1242,13 +968,8 @@ function preparation_scene:draw()
         Cursor.wantHand = true
     end
 
-    if self.showUpgradeChoice then
-        self:drawUpgradeChoice(mx, my)
-        Cursor.wantHand = true
-    end
-
     local modalOpen = self.viewingDeck or self.viewingUpgrades or self.viewingLevelSelect
-        or self.showUpgradeChoice or self.artifactViewer.isActive
+        or self.artifactViewer.isActive
     if hoveredArtifact and not modalOpen then
         ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my)
     end
@@ -1295,13 +1016,27 @@ function preparation_scene:drawLevelSelectWindow()
     end
     
     local cardW = 340
-    local cardH = 380
     local spacing = 40
     local isSingleCard = (#(displayedChoices or {}) == 1)
     local totalW = isSingleCard and cardW or ((#(displayedChoices or {}) * cardW) + ((#(displayedChoices or {}) - 1) * spacing))
     local startX = (VIRTUAL_WIDTH - totalW) / 2
     local startY = 125
-    
+
+    -- Cards grow to fit their longest enemy and reward lists (all cards the same
+    -- size, with the rewards lined up); rows tighten if that won't fit on screen
+    local maxEnemies, maxRewards = 0, 0
+    for _, choice in ipairs(displayedChoices or {}) do
+        maxEnemies = math.max(maxEnemies, #(choice.enemies or {}))
+        maxRewards = math.max(maxRewards, #(choice.rewards or {}))
+    end
+    local ENEMIES_TOP, REWARDS_HEADER_H, BUTTON_H = 115, 42, 65
+    local fixedH = ENEMIES_TOP + REWARDS_HEADER_H + BUTTON_H
+    local maxCardH = VIRTUAL_HEIGHT - 75 - startY
+    local rows = math.max(1, maxEnemies + maxRewards)
+    local row = math.min(22, (maxCardH - fixedH) / rows)
+    local cardH = math.max(380, math.min(maxCardH, fixedH + rows * row))
+    local rewardsTop = ENEMIES_TOP + maxEnemies * row + 12
+
     self.levelChoiceButtons = {}
     
     for i, choice in ipairs(displayedChoices or {}) do
@@ -1314,7 +1049,9 @@ function preparation_scene:drawLevelSelectWindow()
         -- Multiplier color
         local mult = choice.difficultyMultiplier or 1.0
         local isSafe = choice.isSafe
+        local ELITE_PURPLE = {0.75, 0.35, 1, 1}
         local accentColor = choice.isMilestone and {1, 0.2, 0.2, 1}
+            or (choice.isElite and ELITE_PURPLE)
             or (isSafe and {0.2, 0.9, 0.4, 1} or ((mult < 1.6) and {1, 0.8, 0.2, 1} or {1, 0.35, 0.35, 1}))
         
         -- Card background
@@ -1326,16 +1063,15 @@ function preparation_scene:drawLevelSelectWindow()
         love.graphics.setLineWidth(isHovered and 3 or 2)
         love.graphics.rectangle("line", cx, cy, cardW, cardH, 12)
         
-        -- Threat / Major Battle Badge
-        if choice.isMilestone then
+        -- Threat / Major Battle / Elite Badge
+        if choice.isMilestone or choice.isElite then
             if not self.majorBattleFont then
                 self.majorBattleFont = love.graphics.newFont(26)
             end
             local oldFont = love.graphics.getFont()
             love.graphics.setFont(self.majorBattleFont)
-            -- Solid vibrant red text
-            love.graphics.setColor(1, 0.2, 0.2, 1)
-            love.graphics.printf("MAJOR BATTLE", cx, cy + 20, cardW, "center")
+            love.graphics.setColor(accentColor)
+            love.graphics.printf(choice.isElite and "ELITE THREAT" or "MAJOR BATTLE", cx, cy + 20, cardW, "center")
             love.graphics.setFont(oldFont)
         else
             love.graphics.setColor(accentColor)
@@ -1352,34 +1088,19 @@ function preparation_scene:drawLevelSelectWindow()
         local ey = cy + 115
         local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
         for _, enemy in ipairs(choice.enemies or {}) do
-            local rawId = enemy.id or (enemy.displayName ~= "???" and enemy.displayName)
-            local canonicalId = EnemyRegistry:canonicalEnemyId(rawId) or rawId
-            local isDiscovered = false
-            if canonicalId then
-                if _G.PersistentState and _G.PersistentState.discoveredEnemies then
-                    isDiscovered = _G.PersistentState.discoveredEnemies[canonicalId] or (rawId and _G.PersistentState.discoveredEnemies[rawId])
-                end
-                if not isDiscovered and EnemyRegistry.discoveredEnemiesMap then
-                    isDiscovered = EnemyRegistry.discoveredEnemiesMap[canonicalId] or (rawId and EnemyRegistry.discoveredEnemiesMap[rawId])
-                end
-            end
-            if not isDiscovered and enemy.displayName and enemy.displayName ~= "???" then
-                isDiscovered = true
-            end
-
-            if not isDiscovered then
+            -- Checked live: the scouting level can rise after the forecast was made
+            if not Scouting.canSee(enemy.id) then
                 love.graphics.setColor(0.6, 0.6, 0.6, 1)
-                love.graphics.printf("• ??? (Undiscovered)", cx + 25, ey, cardW - 50, "left")
+                love.graphics.printf("• ??? (Scouting too low)", cx + 25, ey, cardW - 50, "left")
             else
                 love.graphics.setColor(1, 0.45, 0.45, 1)
-                local displayName = canonicalId or rawId or enemy.displayName
-                love.graphics.printf("• " .. displayName, cx + 25, ey, cardW - 50, "left")
+                love.graphics.printf("• " .. (EnemyRegistry:canonicalEnemyId(enemy.id) or enemy.id), cx + 25, ey, cardW - 50, "left")
             end
-            ey = ey + 22
+            ey = ey + row
         end
         
         -- Rewards Section
-        local ry = cy + 240
+        local ry = cy + rewardsTop
         love.graphics.setColor(1, 0.85, 0.3, 1)
         love.graphics.printf("Guaranteed Rewards:", cx + 20, ry, cardW - 40, "left")
         love.graphics.setColor(0.7, 0.6, 0.2, 0.5)
@@ -1389,7 +1110,7 @@ function preparation_scene:drawLevelSelectWindow()
         for _, reward in ipairs(choice.rewards or {}) do
             love.graphics.setColor(0.35, 1, 0.6, 1)
             love.graphics.printf("• " .. (reward.description or reward.name), cx + 25, ry, cardW - 50, "left")
-            ry = ry + 22
+            ry = ry + row
         end
         
         if isLaunchMode then
@@ -1434,45 +1155,6 @@ function preparation_scene:drawLevelSelectWindow()
     self.closeLevelSelectBtn = { x = closeBtnX, y = closeBtnY, w = closeBtnW, h = closeBtnH }
 end
 
-function preparation_scene:drawUpgradeChoice(mx, my)
-    -- Dark overlay
-    love.graphics.setColor(0.02, 0.02, 0.05, 0.92)
-    love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
-    
-    -- Title
-    love.graphics.setColor(1, 0.8, 0.2, 1)
-    love.graphics.printf("MILESTONE BATTLE COMPLETE!", 0, 80, VIRTUAL_WIDTH, "center")
-    love.graphics.setColor(0.9, 0.9, 0.9, 1)
-    love.graphics.printf("Choose a major permanent upgrade to your arsenal:", 0, 115, VIRTUAL_WIDTH, "center")
-    
-    for _, choice in ipairs(self.upgradeChoices) do
-        local isHovered = mx >= choice.x and mx <= choice.x + choice.w and my >= choice.y and my <= choice.y + choice.h
-        if isHovered then Cursor.wantHand = true end
-        
-        -- Panel fill
-        love.graphics.setColor(isHovered and choice.hoverColor or choice.color)
-        love.graphics.rectangle("fill", choice.x, choice.y, choice.w, choice.h, 12, 12)
-        
-        -- Panel border
-        love.graphics.setColor(choice.borderColor)
-        love.graphics.setLineWidth(isHovered and 3 or 1.5)
-        love.graphics.rectangle("line", choice.x, choice.y, choice.w, choice.h, 12, 12)
-        love.graphics.setLineWidth(1)
-        
-        -- Title text
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(choice.title, choice.x + 10, choice.y + 40, choice.w - 20, "center")
-        
-        -- Separator line
-        love.graphics.setColor(choice.borderColor[1], choice.borderColor[2], choice.borderColor[3], 0.5)
-        love.graphics.line(choice.x + 20, choice.y + 80, choice.x + choice.w - 20, choice.y + 80)
-        
-        -- Description text
-        love.graphics.setColor(0.95, 0.95, 0.95, 1)
-        love.graphics.printf(choice.desc, choice.x + 20, choice.y + 130, choice.w - 40, "center")
-    end
-end
-
 function preparation_scene:mousepressed(x, y, button)
     if paused == 1 and self.settings then
         local action = self.settings:mousepressed(x, y, button)
@@ -1481,27 +1163,6 @@ function preparation_scene:mousepressed(x, y, button)
         elseif action == "exit" then
             paused = 0
             self.scene_manager.switch("menu")
-        end
-        return
-    end
-    
-    if self.showUpgradeChoice then
-        if button == 1 then
-            for _, choice in ipairs(self.upgradeChoices) do
-                if x >= choice.x and x <= choice.x + choice.w and y >= choice.y and y <= choice.y + choice.h then
-                    if choice.id == "card_draw" then
-                        _G.PersistentState.startingHandSize = (_G.PersistentState.startingHandSize or 4) + 1
-                        _G.PersistentState.waveCompleteDrawSize = (_G.PersistentState.waveCompleteDrawSize or 4) + 1
-                    elseif choice.id == "tokens" then
-                        _G.PersistentState.startingTokens = (_G.PersistentState.startingTokens or 3) + 1
-                        _G.PersistentState.incomeTokens = (_G.PersistentState.incomeTokens or 3) + 1
-                    elseif choice.id == "slots" then
-                        _G.PersistentState.startBattleExtraSlotsUnlocked = (_G.PersistentState.startBattleExtraSlotsUnlocked or 0) + 1
-                    end
-                    self.showUpgradeChoice = false
-                    break
-                end
-            end
         end
         return
     end
@@ -1742,37 +1403,8 @@ function preparation_scene:mousepressed(x, y, button)
         return
     end
     
-    btn = self.rerollButton
-    if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-        if (_G.PersistentState.cash or 0) >= 20 then
-            _G.PersistentState.cash = _G.PersistentState.cash - 20
-            self:rollShop()
-        end
-        return
-    end
-    
-
-    btn = self.buyXPButton
-    if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-        if (_G.PersistentState.cash or 0) >= 30 and (_G.PersistentState.shopLevel or 1) < 10 then
-            _G.PersistentState.cash = _G.PersistentState.cash - 30
-            self:addShopXP(1)
-        end
-        return
-    end
-    
-    for _, item in ipairs(self.shopItems) do
-        if not item.purchased and x >= item.x and x <= item.x + item.w and y >= item.y and y <= item.y + item.h then
-            if (_G.PersistentState.cash or 0) >= item.cost then
-                _G.PersistentState.cash = _G.PersistentState.cash - item.cost
-                item.purchased = true
-                
-                local qty = 1
-                item.card.quantity = qty
-                _G.PersistentState.deck:addCard(item.card)
-            end
-        end
-    end
+    local screen = SCREENS[self.visit.screen]
+    if screen then screen.mousepressed(self, self.visit, self:contentArea(), x, y) end
 end
 
 function preparation_scene:mousereleased(x, y, button)

@@ -35,13 +35,6 @@ local ArtifactIndex = require("Game.Artifacts.ArtifactIndex")
 local ArtifactManager = {}
 ArtifactManager.__index = ArtifactManager
 
-ArtifactManager.RARITY_COLORS = {
-    common    = {0.75, 0.75, 0.8, 1},
-    uncommon  = {0.3, 0.85, 0.45, 1},
-    rare      = {0.35, 0.6, 1, 1},
-    legendary = {1, 0.65, 0.15, 1},
-}
-
 -- -----------------------------------------------------------------------------
 -- Persistent ownership
 -- -----------------------------------------------------------------------------

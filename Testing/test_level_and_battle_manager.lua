@@ -92,9 +92,14 @@ for i = 1, ITERATIONS do
     local m1, m2, m3 = c[1].difficultyMultiplier, c[2].difficultyMultiplier, c[3].difficultyMultiplier
     local minM = math.min(m1, m2, m3)
     
-    assert(m1 >= 1.0 and m1 <= 2.0, "Multiplier 1 out of bounds")
-    assert(m2 >= 1.0 and m2 <= 2.0, "Multiplier 2 out of bounds")
-    assert(m3 >= 1.0 and m3 <= 2.0, "Multiplier 3 out of bounds")
+    for n, choice in ipairs(c) do
+        local m = choice.difficultyMultiplier
+        if choice.isElite then
+            assert(m == LevelManager.ELITE_DIFFICULTY, "Elite multiplier must be 2.5")
+        else
+            assert(m >= 1.0 and m <= 2.0, "Multiplier " .. n .. " out of bounds")
+        end
+    end
     
     if minM < 1.20 then
         safeCount = safeCount + 1
@@ -107,37 +112,37 @@ assert(safeCount == ITERATIONS, "Soft-lock constraint failed! Safe count was " .
 print(string.format("[PASS] Test 2: Multiplier guarantee verified: 100%% of %d runs had at least one choice < 1.20.", ITERATIONS))
 
 -- -----------------------------------------------------------------------------
--- TEST 3: Enemy Discovery Obfuscation ('???')
+-- TEST 3: Scouting hides enemies at or above the scouting level ('???')
 -- -----------------------------------------------------------------------------
-_G.PersistentState.discoveredEnemies = { ["Grunt"] = true } -- Grunt is discovered, Scout/Tank are not
+local Scouting = require("Game.Prep.Scouting")
+_G.PersistentState.discoveredEnemies = { ["Grunt"] = true, ["Soldier"] = true }
+_G.PersistentState.scoutingLevel = 1 -- reveals tier 0 only
 
-local gruntName = lm:getEnemyDisplayName("Grunt")
-local scoutName = lm:getEnemyDisplayName("Scout")
-local tankName = lm:getEnemyDisplayName("Tank")
+assert(lm:getEnemyDisplayName("Grunt") == "Grunt", "Tier 0 enemy is revealed at scouting level 1")
+assert(lm:getEnemyDisplayName("Scout") == "Scout", "Tier 0 enemies are revealed even if never met")
+assert(lm:getEnemyDisplayName("Soldier") == "???", "Tier 1 enemy stays hidden at scouting level 1, even if met")
+assert(lm:getEnemyDisplayName("Tank") == "Tank", "Bosses are always revealed")
 
-assert(gruntName == "Grunt", "Discovered enemy should show name: " .. tostring(gruntName))
-assert(scoutName == "???", "Undiscovered enemy should show '???': " .. tostring(scoutName))
-assert(tankName == "???", "Undiscovered enemy should show '???': " .. tostring(tankName))
-
--- Verify that generating choices for a higher level battle with new enemies keeps undiscovered enemies as '???'
-_G.PersistentState.discoveredEnemies = { ["Grunt"] = true }
+-- Forecasts follow the same rule
 local sampleChoices = lm:generateChoices(3)
-local foundUndiscoveredInForecast = false
+local foundHiddenInForecast = false
 for _, choice in ipairs(sampleChoices) do
     for _, enemy in ipairs(choice.enemies or {}) do
-        if enemy.id ~= "Grunt" then
-            assert(enemy.displayName == "???", "Undiscovered enemy in forecast must be '???', got: " .. tostring(enemy.displayName))
-            assert(enemy.isDiscovered == false, "enemy.isDiscovered must be false")
-            foundUndiscoveredInForecast = true
+        local tier = Scouting.tierOf(enemy.id)
+        if tier >= 1 and tier < Scouting.BOSS_TIER then
+            assert(enemy.displayName == "???" and enemy.isScouted == false, "Tier " .. tier .. " enemy in forecast must be '???', got: " .. tostring(enemy.displayName))
+            foundHiddenInForecast = true
         else
-            assert(enemy.displayName == "Grunt", "Discovered enemy in forecast must be 'Grunt'")
-            assert(enemy.isDiscovered == true, "enemy.isDiscovered must be true")
+            assert(enemy.displayName == enemy.id and enemy.isScouted == true, "Revealed enemy in forecast must show its name: " .. tostring(enemy.id))
         end
     end
 end
-assert(foundUndiscoveredInForecast, "Expected at least one undiscovered enemy in level 3 forecast")
-assert(_G.PersistentState.discoveredEnemies["Grunt"] == true, "Grunt must still be discovered")
-assert(_G.PersistentState.discoveredEnemies["Soldier"] == nil, "Soldier must not be prematurely discovered during choice generation")
+assert(foundHiddenInForecast, "Expected at least one hidden enemy in the level 3 forecast")
+assert(_G.PersistentState.discoveredEnemies["Medic"] == nil, "Generating choices must not discover enemies")
+
+_G.PersistentState.scoutingLevel = 3
+assert(lm:getEnemyDisplayName("Captain") == "Captain", "Scouting level 3 reveals tier 2")
+_G.PersistentState.scoutingLevel = 1
 
 print("[PASS] Test 3: Enemy discovery forecast correctly obfuscates undiscovered enemies to '???'.")
 
@@ -166,16 +171,20 @@ for i = 1, TOTAL_REWARD_RUNS do
     
     local hasGold = false
     local sumValue = 0
+    local cash = 0
     
     for _, r in ipairs(rewards) do
         if r.type == BattleManager.REWARD_TYPES.GOLD then
             hasGold = true
+            cash = r.amount
             sumValue = sumValue + r.amount * BattleManager.REWARD_VALUES.GOLD
         elseif r.type == BattleManager.REWARD_TYPES.CARD_DRAW then
             cardDrawCount = cardDrawCount + 1
             sumValue = sumValue + (r.value or BattleManager.REWARD_VALUES.CARD_DRAW)
         elseif r.type == BattleManager.REWARD_TYPES.UPGRADE_MATERIAL then
-            sumValue = sumValue + (r.value or (r.amount * BattleManager.REWARD_VALUES.UPGRADE_MATERIAL))
+            local unit = (r.materialId == "universal_essence") and 100 or 50
+            assert(r.value == r.amount * unit, "Materials cost 50 each (Universal Essence 100)")
+            sumValue = sumValue + r.value
         elseif r.type == BattleManager.REWARD_TYPES.CARD_REMOVAL then
             sumValue = sumValue + (r.value or BattleManager.REWARD_VALUES.CARD_REMOVAL)
         end
@@ -183,9 +192,15 @@ for i = 1, TOTAL_REWARD_RUNS do
     
     if hasGold then goldCount = goldCount + 1 end
     
-    -- Verify total reward value matches budget (within 1 budget due to integer cash rounding at 1 value per cash)
+    -- Every reward comes out of the budget: the total matches it (within 1 for cash
+    -- rounding), unless the rewards cost more than the budget, in which case cash is 0
     local expectedBudget = math.floor((40 + lvl * 10) * mult + 0.5)
-    assert(math.abs(sumValue - expectedBudget) <= 1, string.format("Reward value (%d) must match budget (%d)", sumValue, expectedBudget))
+    assert(cash >= 0, "Cash is never negative")
+    if cash > 0 then
+        assert(math.abs(sumValue - expectedBudget) <= 1, string.format("Reward value (%d) must match budget (%d)", sumValue, expectedBudget))
+    else
+        assert(sumValue >= expectedBudget - 1, string.format("Cash only drops to 0 when the rewards use up the budget (%d of %d)", sumValue, expectedBudget))
+    end
 end
 
 -- Assertions

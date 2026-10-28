@@ -13,10 +13,16 @@ local Chill = require("Game.Effects.StatusEffects.Chill")
 local GlacialMonolith = setmetatable({}, { __index = Turret })
 GlacialMonolith.__index = GlacialMonolith
 
+-- Frost motes shed by each ring as it travels (visual only)
+local MOTES_PER_SECOND = 45
+local MOTE_LIFE_MIN, MOTE_LIFE_MAX = 0.3, 0.6
+local MOTE_DRIFT_MIN, MOTE_DRIFT_MAX = 10, 35 -- outward speed, px/s
+
 function GlacialMonolith:new(config)
     local t = Turret:new(config)
     setmetatable(t, { __index = self })
     t.waves = {}
+    t.motes = {}
     t.cooldown = 0
     t.waveSpeed = config.waveSpeed or 120
     t.chillPerWave = config.chillPerWave or 1
@@ -55,6 +61,7 @@ function GlacialMonolith:update(dt)
     self.targetRotation = self.rotation
 
     self:updateWaves(dt)
+    self:updateMotes(dt)
 
     if self.game.inputMode == "aiming" and self.game.inputHandler.selectedBuilding == self then
         return
@@ -96,10 +103,12 @@ function GlacialMonolith:updateWaves(dt)
                 if dist - r <= wave.radius and dist + r >= prevRadius
                    and angleDiff(math.atan2(dy, dx), dir) <= half then
                     wave.hit[obj] = true
-                    Chill.apply(obj, self.chillPerWave)
+                    Chill.apply(obj, self.chillPerWave, { source = self })
                 end
             end
         end
+
+        self:shedMotes(wave, dt)
 
         if wave.radius >= range then
             table.remove(self.waves, i)
@@ -107,9 +116,47 @@ function GlacialMonolith:updateWaves(dt)
     end
 end
 
+-- Scatters a few motes along the ring's front
+function GlacialMonolith:shedMotes(wave, dt)
+    local cx, cy = self:getCenterPosition()
+    local center = wave.center or self.firingArc.direction
+    wave.moteBudget = (wave.moteBudget or 0) + MOTES_PER_SECOND * dt
+    while wave.moteBudget >= 1 do
+        wave.moteBudget = wave.moteBudget - 1
+        local angle = center + (math.random() - 0.5) * self.ringAngle
+        local drift = MOTE_DRIFT_MIN + math.random() * (MOTE_DRIFT_MAX - MOTE_DRIFT_MIN)
+        local life = MOTE_LIFE_MIN + math.random() * (MOTE_LIFE_MAX - MOTE_LIFE_MIN)
+        table.insert(self.motes, {
+            x = cx + math.cos(angle) * wave.radius, y = cy + math.sin(angle) * wave.radius,
+            vx = math.cos(angle) * drift, vy = math.sin(angle) * drift,
+            life = life, maxLife = life, size = 1 + math.random() * 1.5,
+        })
+    end
+end
+
+function GlacialMonolith:updateMotes(dt)
+    for i = #self.motes, 1, -1 do
+        local m = self.motes[i]
+        m.life = m.life - dt
+        if m.life <= 0 then
+            table.remove(self.motes, i)
+        else
+            m.x, m.y = m.x + m.vx * dt, m.y + m.vy * dt
+        end
+    end
+end
+
 function GlacialMonolith:draw(drawx, drawy)
     Turret.draw(self, drawx, drawy)
-    if drawx or drawy or self.isPreview or #self.waves == 0 then return end
+    if drawx or drawy or self.isPreview then return end
+
+    love.graphics.push("all")
+    for _, m in ipairs(self.motes) do
+        love.graphics.setColor(0.85, 0.97, 1, 0.8 * m.life / m.maxLife)
+        love.graphics.circle("fill", m.x, m.y, m.size)
+    end
+    love.graphics.pop()
+    if #self.waves == 0 then return end
 
     local cx, cy = self:getCenterPosition()
     local range = self:getStat("range")
@@ -119,10 +166,10 @@ function GlacialMonolith:draw(drawx, drawy)
         local a1, a2 = center - self.ringAngle / 2, center + self.ringAngle / 2
         local fade = 1 - wave.radius / range
         love.graphics.setColor(0.55, 0.85, 1, 0.25 * fade)
-        love.graphics.setLineWidth(8)
+        love.graphics.setLineWidth(16)
         love.graphics.arc("line", "open", cx, cy, wave.radius, a1, a2)
         love.graphics.setColor(0.85, 0.97, 1, 0.9 * fade)
-        love.graphics.setLineWidth(2)
+        love.graphics.setLineWidth(5)
         love.graphics.arc("line", "open", cx, cy, wave.radius, a1, a2)
     end
     love.graphics.pop()

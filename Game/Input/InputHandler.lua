@@ -133,6 +133,19 @@ function InputHandler:updateEditAim()
     end
 end
 
+--- Selects every aimable turret (the A key). Any group already being aimed goes
+--- back to how it was first, so this always starts a fresh aim.
+function InputHandler:selectAllEditTurrets()
+    if not self.editMode then return end
+    self:cancelEditAim()
+    self.dragStart = nil
+    local picked = {}
+    for _, obj in ipairs(self.game.objects) do
+        if self:isEditAimable(obj) then table.insert(picked, obj) end
+    end
+    self:setEditSelection(picked)
+end
+
 function InputHandler:finishEditDrag()
     local rx, ry, rw, rh = self:getDragRect()
     self.dragStart = nil
@@ -218,8 +231,10 @@ function InputHandler:update(dt)
         self:handleBuildingHover()
     end
     
-    -- Update selected turret's firing arc direction during preparation phase or when aiming after placement
-    if (game:isState("startup") or game:isState("preparing") or game.inputMode == "aiming") and self.selectedBuilding and self.selectedBuilding.firingArc then
+    -- A just-placed turret's firing arc follows the mouse until the click that
+    -- sets it. Clicking an existing turret only selects it; re-aiming turrets
+    -- is done in edit mode.
+    if game.inputMode == "aiming" and self.selectedBuilding and self.selectedBuilding.firingArc then
         local cx, cy = self.selectedBuilding:getCenterPosition()
         local dx = self.mouseX - cx
         local dy = self.mouseY - cy
@@ -615,7 +630,7 @@ function InputHandler:mousepressed(x, y, button)
                 if success then
                     game:consumeCard(card)
                 else
-                    game:spawnFloatingText("Invalid target!", mx, my, {0.8, 0.2, 0.2, 1})
+                    game:spawnScreenText("Invalid target!", mx, my, {0.8, 0.2, 0.2, 1})
                     game:refundCard(card)
                 end
             end
@@ -967,6 +982,8 @@ function InputHandler:keypressed(key)
         end
     elseif key == "q" then
         self:toggleEditMode()
+    elseif key == "a" and self.editMode then
+        self:selectAllEditTurrets()
     elseif key == "h" then
         if game.gui and game.gui.hand then
             game.gui.hand.isHidden = not game.gui.hand.isHidden

@@ -10,6 +10,17 @@ BattleManager.__index = BattleManager
 
 -- Chance a material reward is Universal Essence instead of a typed material
 BattleManager.UNIVERSAL_MATERIAL_CHANCE = 0.10
+-- Chance a battle (level 2+) offers an upgrade material: about 1.2 of the 3 choices
+BattleManager.MATERIAL_CHANCE = 0.4
+-- Harder battles sometimes give a pair
+BattleManager.MATERIAL_PAIR_MIN_DIFFICULTY = 1.6
+BattleManager.MATERIAL_PAIR_CHANCE = 0.35
+-- Highest difficulty a reward budget scales with (elite battles)
+BattleManager.MAX_REWARD_DIFFICULTY = 2.5
+-- Chance an eligible battle (level 3+, budget 280+) offers a card removal
+BattleManager.CARD_REMOVAL_CHANCE = 0.25
+-- Cash given instead of an artifact reward once every artifact is owned
+BattleManager.ARTIFACT_FALLBACK_CASH = 500
 
 --- Picks the material for a material reward: rarely Universal, otherwise a
 -- uniformly random typed material from the registry.
@@ -36,17 +47,19 @@ function BattleManager:new(config)
     return obj
 end
 
--- Value assignments per reward item:
--- 1 piece of Gold = 2
+-- Value assignments per reward item. Every non-gold reward is paid for out of
+-- the battle's budget, and whatever is left becomes cash (never below 0).
+-- 1 Cash = 1
 -- 1 Card Draft = 50
--- 1 Upgrade Material = 200
--- 1 Card Removal = 250
--- 1 Relic = 500
+-- 1 typed Upgrade Material = 50, 1 Universal Essence = 100
+-- 1 Card Removal = 100
+-- 1 Relic = 500 (the elite artifact is given on top of the budget)
 BattleManager.REWARD_VALUES = {
     GOLD = 1,
     CARD_DRAW = 50,
-    UPGRADE_MATERIAL = 200,
-    CARD_REMOVAL = 250,
+    UPGRADE_MATERIAL = 50,
+    UNIVERSAL_MATERIAL = 100,
+    CARD_REMOVAL = 100,
     RELIC = 500
 }
 
@@ -55,15 +68,15 @@ BattleManager.REWARD_VALUES = {
 --   Total Reward Budget = (Base Value(level) * difficultyMultiplier) / 2
 -- Non-gold rewards are sampled from the pool based on affordability and level,
 -- and the remaining budget is converted into Cash (1:1 value).
--- @param difficultyMultiplier number: Value between 1.0 and 2.0 (higher = tougher battle, more budget)
+-- @param difficultyMultiplier number: Value between 1.0 and 2.5 (higher = tougher battle, more budget; 2.5 is elite)
 -- @param playerLevel number: Current battle / sector level (1, 2, 3...)
 -- @return table: Array of reward objects
 function BattleManager:generateRewards(difficultyMultiplier, playerLevel)
     local mult = difficultyMultiplier or 1.0
     local level = playerLevel or 1
 
-    -- Ensure bounds [1.0, 2.0]
-    mult = math.max(1.0, math.min(2.0, mult))
+    -- Ensure bounds [1.0, 2.5] (2.5 is an elite battle)
+    mult = math.max(1.0, math.min(BattleManager.MAX_REWARD_DIFFICULTY, mult))
 
     -- 1. Calculate Total Value Budget for this battle
     -- Formula: ((100 + (level * 25)) * battle difficulty scale) / 2, rounded to the nearest 1
@@ -74,16 +87,15 @@ function BattleManager:generateRewards(difficultyMultiplier, playerLevel)
     local rewards = {}
     local addedTypes = {}
 
-    -- 2. Determine non-gold reward candidates
-    -- Each candidate has a fixed value cost:
-    --   Card Removal: 250 (level >= 3, rare)
-    --   Upgrade Material: 200 (level >= 2)
-    --   Card Draft: 50 (available from level 1+, high frequency)
+    -- 2. Determine non-gold reward candidates (each one's value comes out of the
+    -- budget; see REWARD_VALUES):
+    --   Card Removal (level >= 3, rare), Card Draft (high frequency),
+    --   Upgrade Material (level >= 2; may take the cash down to 0)
 
-    -- Candidate: Card Removal (Value 250)
-    -- Eligible if level >= 3 and remainingBudget >= 280
-    if level >= 3 and remainingBudget >= 280 and not addedTypes[BattleManager.REWARD_TYPES.CARD_REMOVAL] then
-        if math.random() < 0.35 then
+    -- Candidate: Card Removal
+    -- Eligible if level >= 3 and the budget covers it with 30 to spare
+    if level >= 3 and remainingBudget >= BattleManager.REWARD_VALUES.CARD_REMOVAL + 30 and not addedTypes[BattleManager.REWARD_TYPES.CARD_REMOVAL] then
+        if math.random() < BattleManager.CARD_REMOVAL_CHANCE then
             addedTypes[BattleManager.REWARD_TYPES.CARD_REMOVAL] = true
             remainingBudget = remainingBudget - BattleManager.REWARD_VALUES.CARD_REMOVAL
             table.insert(rewards, {
@@ -94,40 +106,6 @@ function BattleManager:generateRewards(difficultyMultiplier, playerLevel)
                 description = "+1 Card Removal Token",
                 icon = "trash"
             })
-        end
-    end
-
-    -- Candidate: Upgrade Material (Value 200 each)
-    -- Eligible if level >= 2 and remainingBudget >= 230
-    if level >= 2 and remainingBudget >= 230 and not addedTypes[BattleManager.REWARD_TYPES.UPGRADE_MATERIAL] then
-        if math.random() < 0.50 then
-            local maxAfford = math.floor((remainingBudget - 30) / BattleManager.REWARD_VALUES.UPGRADE_MATERIAL)
-            local matAmt = 1
-            if maxAfford >= 2 and (mult >= 1.4 or math.random() < 0.3) then
-                matAmt = 2
-            end
-            matAmt = math.min(matAmt, maxAfford)
-            
-            if matAmt >= 1 then
-                -- Roll which material this battle offers (shown on the battle preview)
-                local materialId = BattleManager.rollMaterial()
-                if materialId == MaterialRegistry.UNIVERSAL then
-                    matAmt = 1 -- Universal Essence is rare: never awarded in pairs
-                end
-                local materialName = MaterialRegistry.getName(materialId)
-                local cost = matAmt * BattleManager.REWARD_VALUES.UPGRADE_MATERIAL
-                remainingBudget = remainingBudget - cost
-                addedTypes[BattleManager.REWARD_TYPES.UPGRADE_MATERIAL] = true
-                table.insert(rewards, {
-                    type = BattleManager.REWARD_TYPES.UPGRADE_MATERIAL,
-                    name = materialName,
-                    materialId = materialId,
-                    amount = matAmt,
-                    value = cost,
-                    description = string.format("+%d %s", matAmt, materialName),
-                    icon = "material"
-                })
-            end
         end
     end
 
@@ -148,10 +126,38 @@ function BattleManager:generateRewards(difficultyMultiplier, playerLevel)
         end
     end
 
+    -- Candidate: Upgrade Material
+    -- Rolled last and not limited by the budget, so materials turn up from level 2
+    -- on; on small budgets they can take the cash all the way to 0
+    if level >= 2 and math.random() < BattleManager.MATERIAL_CHANCE then
+        -- Roll which material this battle offers (shown on the battle preview)
+        local materialId = BattleManager.rollMaterial()
+        local matAmt = 1
+        -- Universal Essence is rare: never awarded in pairs
+        if materialId ~= MaterialRegistry.UNIVERSAL and mult >= BattleManager.MATERIAL_PAIR_MIN_DIFFICULTY
+            and math.random() < BattleManager.MATERIAL_PAIR_CHANCE then
+            matAmt = 2
+        end
+        local materialName = MaterialRegistry.getName(materialId)
+        local unitValue = (materialId == MaterialRegistry.UNIVERSAL) and BattleManager.REWARD_VALUES.UNIVERSAL_MATERIAL
+            or BattleManager.REWARD_VALUES.UPGRADE_MATERIAL
+        remainingBudget = remainingBudget - matAmt * unitValue
+        addedTypes[BattleManager.REWARD_TYPES.UPGRADE_MATERIAL] = true
+        table.insert(rewards, {
+            type = BattleManager.REWARD_TYPES.UPGRADE_MATERIAL,
+            name = materialName,
+            materialId = materialId,
+            amount = matAmt,
+            value = matAmt * unitValue,
+            description = string.format("+%d %s", matAmt, materialName),
+            icon = "material"
+        })
+    end
+
     -- 3. Remainder Budget -> Cash (1 Cash = 1 Value Budget)
-    -- Cash is 100% guaranteed. Even if other rewards were rolled, remaining budget becomes cash.
+    -- The cash reward is always listed; it's 0 if the other rewards used up the budget.
     -- Rounded to the nearest 1.
-    local cashAmount = math.max(1, math.floor((remainingBudget / BattleManager.REWARD_VALUES.GOLD) + 0.5))
+    local cashAmount = math.max(0, math.floor((remainingBudget / BattleManager.REWARD_VALUES.GOLD) + 0.5))
 
     local isSoloCash = (#rewards == 0)
     local cashDesc = string.format("+$%d Cash", cashAmount)
@@ -168,6 +174,20 @@ function BattleManager:generateRewards(difficultyMultiplier, playerLevel)
     })
 
     return rewards
+end
+
+--- A random artifact (elite battles). Which one is only decided when it's
+--- claimed, so the battle preview can't show it. If every artifact is already
+--- owned by then, it pays ARTIFACT_FALLBACK_CASH instead.
+function BattleManager.artifactReward()
+    return {
+        type = BattleManager.REWARD_TYPES.RELIC,
+        name = "Artifact",
+        amount = 1,
+        value = BattleManager.REWARD_VALUES.RELIC,
+        description = "Random Artifact",
+        icon = "artifact"
+    }
 end
 
 --- Applies the resolved rewards to persistent game state and systems.
@@ -195,10 +215,22 @@ function BattleManager:applyRewards(rewards, game)
         elseif reward.type == BattleManager.REWARD_TYPES.RELIC then
             -- Relics are artifacts: a specific one if the reward names it, else a random unowned one
             local ArtifactManager = require("Game.Artifacts.ArtifactManager")
+            local ArtifactIndex = require("Game.Artifacts.ArtifactIndex")
+            local def
             if reward.artifactId then
                 ArtifactManager.grant(reward.artifactId)
+                def = ArtifactIndex.get(reward.artifactId)
             else
-                ArtifactManager.grantRandom()
+                def = ArtifactManager.grantRandom()
+                if not def then
+                    _G.PersistentState.cash = (_G.PersistentState.cash or 0) + BattleManager.ARTIFACT_FALLBACK_CASH
+                    if game then game.artifactFallbackCash = (game.artifactFallbackCash or 0) + BattleManager.ARTIFACT_FALLBACK_CASH end
+                end
+            end
+            -- The battle shows each new artifact with a reveal before the summary
+            if def and game then
+                game.newArtifacts = game.newArtifacts or {}
+                table.insert(game.newArtifacts, def)
             end
         end
     end

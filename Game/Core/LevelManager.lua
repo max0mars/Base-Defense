@@ -8,6 +8,7 @@ local BattleIndex = require("Game.Spawning.BattleIndex")
 local BattleManager = require("Game.Core.BattleManager")
 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
 local WaveDirector = require("Game.Spawning.WaveDirector")
+local Scouting = require("Game.Prep.Scouting")
 
 local LevelManager = {}
 LevelManager.__index = LevelManager
@@ -108,19 +109,12 @@ function LevelManager:pickRandomTemplate(eligibleTemplates)
     return eligibleTemplates[1]
 end
 
---- Obfuscates enemy name: returns enemyId if discovered in current run, or "???" if undiscovered.
+--- Obfuscates enemy name: returns enemyId if the scouting level reveals it, or "???".
 function LevelManager:getEnemyDisplayName(enemyId)
-    _G.PersistentState = _G.PersistentState or {}
-    local discovered = _G.PersistentState.discoveredEnemies or {}
-
-    if discovered[enemyId] then
-        return enemyId
-    else
-        return "???"
-    end
+    return Scouting.canSee(enemyId) and enemyId or "???"
 end
 
---- Generates incoming enemy summary for a template with discovery obfuscation.
+--- Generates incoming enemy summary for a template, hiding enemies the scouting level doesn't reveal.
 function LevelManager:generateEnemyForecast(template, multiplier, dummyGame, existingRoster)
     local BattleDirector = require("Game.Spawning.BattleDirector")
     local bd = BattleDirector:new(dummyGame or {})
@@ -132,26 +126,35 @@ function LevelManager:generateEnemyForecast(template, multiplier, dummyGame, exi
     for _, enemy in ipairs(roster or {}) do
         if enemy and enemy.id and not addedIds[enemy.id] then
             addedIds[enemy.id] = true
-            local isDiscovered = _G.PersistentState and _G.PersistentState.discoveredEnemies and _G.PersistentState.discoveredEnemies[enemy.id]
+            local isScouted = Scouting.canSee(enemy.id)
             table.insert(incomingEnemies, {
                 id = enemy.id,
-                displayName = isDiscovered and enemy.id or "???",
-                isDiscovered = isDiscovered and true or false
+                displayName = isScouted and enemy.id or "???",
+                isScouted = isScouted
             })
         end
     end
 
     -- Fallback safety: if empty, default to Grunt
     if #incomingEnemies == 0 then
-        local isDiscovered = _G.PersistentState and _G.PersistentState.discoveredEnemies and _G.PersistentState.discoveredEnemies["Grunt"]
+        local isScouted = Scouting.canSee("Grunt")
         table.insert(incomingEnemies, {
             id = "Grunt",
-            displayName = isDiscovered and "Grunt" or "???",
-            isDiscovered = isDiscovered and true or false
+            displayName = isScouted and "Grunt" or "???",
+            isScouted = isScouted
         })
     end
 
     return incomingEnemies, roster
+end
+
+-- The 3rd battle of every five-battle loop offers an elite option
+LevelManager.ELITE_LOOP_POSITION = 3
+LevelManager.ELITE_DIFFICULTY = 2.5
+
+--- Checks whether a given battle level offers an elite battle (3, 8, 13...).
+function LevelManager:isEliteLevel(playerLevel)
+    return (playerLevel or 1) % 5 == LevelManager.ELITE_LOOP_POSITION
 end
 
 --- Checks whether a given battle level is a milestone battle (every 5th battle).
@@ -200,15 +203,19 @@ function LevelManager:generateChoices(playerLevel, dummyGame)
 
     -- REGULAR BATTLES: Constraint: 3 choices, at least 1 must have difficultyMultiplier < 1.20
     -- Designate slot 1 as guaranteed safe (< 1.20), slots 2 and 3 as standard [1.00, 2.00]
+    -- On elite levels slot 3 is the elite battle: fixed 2.5x, always rewards an artifact
     local safeIndex = 1
+    local eliteIndex = self:isEliteLevel(level) and 3 or nil
 
     for i = 1, 3 do
         local isSafe = (i == safeIndex)
-        local multiplier = self:generateMultiplier(isSafe)
+        local isElite = (i == eliteIndex)
+        local multiplier = isElite and LevelManager.ELITE_DIFFICULTY or self:generateMultiplier(isSafe)
         local template = self:pickRandomTemplate(eligible)
 
         -- Generate precomputed rewards viewable by the player
         local rewards = self.battleManager:generateRewards(multiplier, level)
+        if isElite then table.insert(rewards, BattleManager.artifactReward()) end
 
         -- Generate incoming enemy roster with discovery obfuscation ('???')
         local enemies, roster = self:generateEnemyForecast(template, multiplier, dummyGame)
@@ -224,6 +231,7 @@ function LevelManager:generateChoices(playerLevel, dummyGame)
             rewards = rewards,
             title = string.format("Sector %d", level),
             isMilestone = false,
+            isElite = isElite,
             isSafe = (multiplier < 1.20)
         }
         table.insert(choices, choice)

@@ -55,12 +55,12 @@ assert(cardDrawFromCard.damageBars > 0, "Card:getCardDraw should have damageBars
 assert(cardDrawFromCard.rangeBars > 0, "Card:getCardDraw should have rangeBars > 0, got " .. tostring(cardDrawFromCard.rangeBars))
 assert(cardDrawFromCard.firerateBars > 0, "Card:getCardDraw should have firerateBars > 0, got " .. tostring(cardDrawFromCard.firerateBars))
 
--- 3. Test preparation_scene rollShop populates valid stat bars
-local prepScene = require("Scenes.preparation_scene")
-prepScene:rollShop()
-assert(#prepScene.shopItems == 3, "Expected 3 shop items")
+-- 3. The merchant's stock has valid stat bars
+local Merchant = require("Game.Prep.Merchant")
+local stock = Merchant.getStock({})
+assert(#stock == 3, "Expected 3 cards from a level 1 merchant")
 
-for _, item in ipairs(prepScene.shopItems) do
+for _, item in ipairs(stock) do
     if item.card.payload and item.card.payload.buildingClass and item.card.payload.config and item.card.payload.config.iconCategory == "turret" then
         local drawObj = item.card:getCardDraw()
         assert(drawObj.buildingType == "Turret", "Expected buildingType to be Turret")

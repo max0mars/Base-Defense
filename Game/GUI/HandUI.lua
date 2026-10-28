@@ -4,6 +4,7 @@ HandUI.__index = HandUI
 local ExecutionType = require("Game.Cards.ExecutionType")
 local Cursor = require("Game.GUI.Cursor")
 local CardReveal = require("Graphics.Animations.CardReveal")
+local Layout = require("Game.GUI.Layout")
 
 local CARD_W, CARD_H = 150, 210
 
@@ -31,12 +32,14 @@ local SHAKE_ANGLE = math.rad(1.5)
 local SHAKE_SHIFT = 1    -- pixels
 local SHAKE_SPEED = 30
 
--- Shared by drawing, clicks and the draw animation
+-- Shared by drawing, clicks and the draw animation. Tokens, mana and the pile
+-- buttons sit at the bottom of the left column (deckX); the hand fills the tray
+-- to the right, up to its control buttons.
 local function handLayout(numCards)
-    local deckX = 320
+    local deckX = Layout.leftColumn.x + 12
     local deckY = VIRTUAL_HEIGHT - CARD_H - 20
-    local handStartX = deckX + 180 + 20
-    local maxHandWidth = 740 - 180 - 20
+    local handStartX = Layout.tray.x + 12
+    local maxHandWidth = (Layout.tray.x + Layout.tray.w - Layout.trayActionsW) - 12 - handStartX
 
     local spacing = 10
     if numCards > 1 then
@@ -91,6 +94,9 @@ local function drawActionButton(btn, label, costText, baseCol, hovered, enabled,
     love.graphics.pop()
 end
 
+-- Pile buttons span the left column
+local function pileWidth() return Layout.leftColumn.w - 24 end
+
 -- View-pile buttons under the currency row. While a wave runs the hand is drawn
 -- from the spell deck, so the buttons show the spell piles instead.
 local function pileButtons(game, deckX)
@@ -98,13 +104,13 @@ local function pileButtons(game, deckX)
     local buttonStartY = VIRTUAL_HEIGHT - 102
     return {
         draw = {
-            btn = { x = deckX, y = buttonStartY, w = 180, h = 34 },
+            btn = { x = deckX, y = buttonStartY, w = pileWidth(), h = 34 },
             label = inWave and "SPELL DRAW" or "VIEW DRAW",
             pileType = inWave and "SpellDrawPile" or "DrawPile",
             cards = (inWave and game.spellDrawPile or game.drawPile) or {},
         },
         discard = {
-            btn = { x = deckX, y = buttonStartY + 42, w = 180, h = 34 },
+            btn = { x = deckX, y = buttonStartY + 42, w = pileWidth(), h = 34 },
             label = inWave and "SPELL DISCARDS" or "VIEW DISCARDS",
             pileType = inWave and "SpellDiscardPile" or "DiscardPile",
             cards = (inWave and game.spellDiscardPile or game.discardPile) or {},
@@ -564,9 +570,9 @@ function HandUI:selectCard(card, x, y)
 
     if not canAfford then
         if cardIsSpell then
-            game:spawnFloatingText("Not enough mana!", x, y, {0.2, 0.6, 1.0, 1})
+            game:spawnScreenText("Not enough mana!", x, y, {0.2, 0.6, 1.0, 1})
         else
-            game:spawnFloatingText("Not enough tokens!", x, y, {0.8, 0.2, 0.2, 1})
+            game:spawnScreenText("Not enough tokens!", x, y, {0.8, 0.2, 0.2, 1})
         end
         return
     end

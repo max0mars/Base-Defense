@@ -50,7 +50,7 @@ assert(hand.drawAnims[a] and hand.drawAnims[b] and hand.drawAnims[c], "every new
 assert(hand.drawAnims[a] > hand.drawAnims[b] and hand.drawAnims[b] > hand.drawAnims[c], "cards drawn together are staggered")
 
 -- 2. Cards can't be clicked while they're coming in
-local _, deckY = 320, VIRTUAL_HEIGHT - 210 - 20
+local deckY = VIRTUAL_HEIGHT - 210 - 20
 local clickX, clickY = hand.cardX[a] + 10, deckY + 10
 hand:mousepressed(clickX, clickY, 1)
 assert(game.activeCard == nil, "a card mid animation can't be selected")
@@ -70,7 +70,10 @@ table.insert(game.hand, d)
 hand:update(0)
 assert(hand.drawAnims[d] and not hand.drawAnims[a], "cards already in hand don't animate again")
 assert(hand.cardX[a] == oldX, "existing cards start from where they were")
-local newBX = oldX + 150 + (540 - 8 * 150) / 7
+-- The hand spans the tray from 12px in, up to 12px short of its control buttons
+local Layout = require("Game.GUI.Layout")
+local handWidth = (Layout.tray.x + Layout.tray.w - Layout.trayActionsW) - 12 - (Layout.tray.x + 12)
+local newBX = oldX + 150 + (handWidth - 8 * 150) / 7
 hand:update(0.02)
 assert(hand.cardX[b] < oldBX and hand.cardX[b] > newBX + 1, "cards glide toward the bunched-up layout")
 step(1)

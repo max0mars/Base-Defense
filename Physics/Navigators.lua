@@ -166,5 +166,8 @@ end
 return {
     Navigator = Navigator,
     DirectNavigator = DirectNavigator,
-    GridNavigator = GridNavigator
+    GridNavigator = GridNavigator,
+    -- Enemies walk straight at the base; the grid pathfinding from an earlier
+    -- version is kept but switched off (set true to bring it back)
+    USE_PATHFINDING = false,
 }

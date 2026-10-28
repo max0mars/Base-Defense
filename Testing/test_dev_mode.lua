@@ -97,9 +97,9 @@ local added = game.hand[#game.hand]
 assert(#game.hand == handSize + 1 and added.id == "spell_blizzard", "Picking a spell adds it to the hand")
 assert(added.game == game and added:getCost() > 0, "The added spell is set up for this battle")
 assert(not picker.isActive, "Picker closes after picking")
-while #game.hand < 8 do picker:select(blizzard) end
+while #game.hand < 10 do picker:select(blizzard) end
 picker:select(blizzard)
-assert(#game.hand == 8, "Picking a spell with a full hand adds nothing")
+assert(#game.hand == 10, "Picking a spell with a full hand (10) adds nothing")
 game.hand = {}
 
 local owned = #_G.PersistentState.artifacts
