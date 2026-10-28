@@ -152,7 +152,7 @@ function game_scene:update(dt)
     
     -- Freeze game if paused or a modal menu is active
     if paused == 1 or
-       (game.gui.codex and game.gui.codex.isActive) or
+       (game.gui.enemyEntry and game.gui.enemyEntry.isActive) or
        (game.rewardSystem and game.rewardSystem.isActive) or
        (game.gui.mutation and game.gui.mutation.isActive) or
        (game.gui.confirmation and game.gui.confirmation.active) or
@@ -340,9 +340,9 @@ function game_scene:keypressed(key)
         return
     end
 
-    -- Codex (if open) captures Esc to close itself first.
-    if game.gui.codex and game.gui.codex.isActive then
-        game.gui.codex:keypressed(key)
+    -- An open enemy entry captures keys (Esc closes it) before the pause menu.
+    if game.gui.enemyEntry and game.gui.enemyEntry.isActive then
+        game.gui.enemyEntry:keypressed(key)
         return
     end
 

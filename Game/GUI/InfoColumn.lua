@@ -269,8 +269,8 @@ function InfoColumn:draw()
     end
 end
 
--- The codex action for a point over a Horde enemy card: returns { tab, id } or
--- nil. (Geometry mirrors drawHorde.)
+-- The enemy id for a point over a Horde enemy card (clicking opens its entry),
+-- or nil. (Geometry mirrors drawHorde.)
 function InfoColumn:clickableAt(x, y)
     local col = Layout.leftColumn
     local rx, rw = col.x + 12, col.w - 24
@@ -285,7 +285,7 @@ function InfoColumn:clickableAt(x, y)
             local cx = rx + ((i - 1) % cols) * (cardW + gap)
             local cy = gy + math.floor((i - 1) / cols) * (cardH + gap)
             if cy + cardH <= 104 + 264 and x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then
-                return { tab = "enemies", id = item.id }
+                return item.id
             end
         end
     end
