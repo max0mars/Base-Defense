@@ -426,6 +426,9 @@ function Base:addBuilding(building, anchorSlot)
     end
     
     building.x, building.y = building:getX() + building.buildGrid.cellSize/2, building:getY() + building.buildGrid.cellSize/2
+
+    -- Let the building react to being placed (e.g. the Outpost unlocks its surroundings)
+    if building.onPlaced then building:onPlaced(self) end
 end
 
 function Base:areSlotsAvailable(building, slotsToCheck, anchorSlot)

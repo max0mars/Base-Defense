@@ -12,8 +12,7 @@ function InputHandler:new(game)
     obj.selectedBuilding = nil
     obj.selectedEnemy = nil
     obj.hoveredBuilding = nil
-    obj.destructionTarget = nil
-    obj.confirmRect = nil
+obj.confirmRect = nil
     obj.fireDelay = 0
     obj.isMouseDown = false
     -- Edit mode (between waves only): drag-select turrets, then aim them together.
@@ -264,7 +263,7 @@ function InputHandler:update(dt)
         -- Only handle building slot hover when placing
         if game.inputMode == "placing" then
             self:handleBuildingSlotHover()
-        elseif game.inputMode == "idle" and not self.destructionTarget and not self.editMode then
+        elseif game.inputMode == "idle" and not self.editMode then
             self:handleLockedSlotHover()
         end
     end
@@ -334,9 +333,8 @@ function InputHandler:handleButtonHold()
     local game = self.game
     local mainLazer = game.mainLazer
     
-    -- Prevent firing while interacting with UI, placing buildings, or destroying
+    -- Prevent firing while interacting with UI or placing buildings
     if game.inputMode ~= "idle" then return end
-    if self.destructionTarget then return end
     if game.rewardSystem and game.rewardSystem.isActive then return end
     if self.fireDelay > 0 then return end
     if self.holdFireUntilRelease then return end
@@ -538,7 +536,7 @@ function InputHandler:mousepressed(x, y, button)
     local mainLazer = game.mainLazer
 
     -- Edit mode owns the battlefield: left drags select / clicks commit the aim,
-    -- right-click cancels an aim in progress (otherwise falls through to destroy).
+    -- right-click cancels an aim in progress.
     if self.editMode then
         if button == 1 then
             if #self.editSelection > 0 then
@@ -565,31 +563,10 @@ function InputHandler:mousepressed(x, y, button)
             game.inputMode = "idle"
             return
         end
-
-        local bestTarget = nil
-        for _, obj in ipairs(game.objects) do
-            if (obj:isType("turret") or obj:isType("passive")) and not obj:isType("mainturret") and not obj.destroyed then
-                if self:isMouseOverBuilding(obj) then
-                    bestTarget = obj
-                    if obj:isType("turret") or obj:isType("passive") then
-                        break
-                    end
-                end
-            end
-        end
-        -- Right-click asks to destroy the building (confirmed via ConfirmationUI),
-        -- freeing its slots for a new one. The main turret is excluded above.
-        if bestTarget then
-            self.destructionTarget = bestTarget
-        end
+        -- Placed buildings are permanent: right-click does nothing else
         return
     end
 
-    -- Destruction handled by GUI, but we can still cancel here if needed
-    if self.destructionTarget and button == 1 then
-        self.destructionTarget = nil
-    end
-    
     -- Handle aiming after placement
     if game.inputMode == "aiming" and button == 1 then
         game.inputMode = "idle"

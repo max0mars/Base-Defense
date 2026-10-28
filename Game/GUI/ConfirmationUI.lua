@@ -45,28 +45,6 @@ function ConfirmationUI:update(dt)
     if self.active and not self.target and self.sliders then
         self.sliders:update(dt)
     end
-    -- Right-clicking a placed building sets a destruction target; confirm it here.
-    if not self.active and self.game.inputHandler and self.game.inputHandler.destructionTarget then
-        self:activate(
-            "Destroy this building? It won't return this battle.",
-            function()
-                local ih = self.game.inputHandler
-                local target = ih.destructionTarget
-                if ih.selectedBuilding == target then
-                    ih:clearSelection()
-                    if self.game.inputMode == "aiming" then self.game.inputMode = "idle" end
-                end
-                if ih.hoveredBuilding == target then ih.hoveredBuilding = nil end
-                target:remove()
-                ih.destructionTarget = nil
-                self.game:recalculateAllBuffs()
-            end,
-            function()
-                self.game.inputHandler.destructionTarget = nil
-            end,
-            self.game.inputHandler.destructionTarget
-        )
-    end
 end
 
 function ConfirmationUI:draw()

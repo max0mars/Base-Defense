@@ -46,6 +46,17 @@ local PassiveIndex = {
             affectedSlots = {{1,0},{0,1},{0,-1}}
         },
         {
+            id = "outpost",
+            name = "Outpost",
+            description = "Unlocks all 8 slots around it for free. Turrets around it get +10% range.",
+            type = "building",
+            types = {"passive", "building", "economy"},
+            building = require("Buildings.Passives.Outpost"),
+            iconCategory = "buff",
+            cost = 2,
+            affectedSlots = {{-1,-1},{0,-1},{1,-1},{-1,0},{1,0},{-1,1},{0,1},{1,1}}
+        },
+        {
             id = "iceMarket",
             name = "Ice Market",
             description = "Gain $5 every time a frozen enemy dies.",
