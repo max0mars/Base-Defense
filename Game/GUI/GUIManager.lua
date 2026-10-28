@@ -14,7 +14,7 @@ local WavePreviewUI = require("Game.GUI.WavePreviewUI")
 local ItemPickerUI = require("Game.GUI.ItemPickerUI")
 local DevEnemySpawnerUI = require("Game.GUI.DevEnemySpawnerUI")
 local InfoColumn = require("Game.GUI.InfoColumn")
-local Codex = require("Game.GUI.Codex")
+local EnemyEntry = require("Game.GUI.EnemyEntry")
 local Cursor = require("Game.GUI.Cursor")
 local DeckViewerUI = require("Game.GUI.DeckViewerUI")
 
@@ -155,10 +155,9 @@ function GUIManager:new(game)
         itemPicker = ItemPickerUI:new(game),
         devSpawner = DevEnemySpawnerUI:new(game),
         infoColumn = InfoColumn:new(game),
-        codex = Codex:new(game),
+        -- An enemy's entry, opened by clicking it in the INCOMING list (InfoColumn)
+        enemyEntry = EnemyEntry:new(game),
         deckViewer = DeckViewerUI:new(game),
-        -- The codex is opened from the "BASE JOURNAL" button at the bottom of the
-        -- info column (see InfoColumn).
     }, self)
     return obj
 end
@@ -201,6 +200,7 @@ function GUIManager:update(dt)
     if self.devSpawner then self.devSpawner:update(dt) end
     if self.infoColumn then self.infoColumn:update(dt) end
     if self.deckViewer then self.deckViewer:update(dt) end
+    if self.enemyEntry then self.enemyEntry:update(dt) end
 
     local mx, my = love.mouse.getPosition()
     self.tooltips.rarityProbs = nil
@@ -229,7 +229,7 @@ function GUIManager:draw()
     self.tooltips:draw()     -- Draw tips above everything
     if self.infoColumn then self.infoColumn:drawHoverStats() end
     if hoveredArtifact then ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my, true) end
-    if self.codex then self.codex:draw() end -- Codex overlays everything
+    if self.enemyEntry then self.enemyEntry:draw() end -- overlays everything
     if self.deckViewer then self.deckViewer:draw() end
 end
 
@@ -240,7 +240,7 @@ function GUIManager:overlayActive()
     local isSummary = scene_manager and scene_manager.current and scene_manager.current.showingSummary
     return (self.game.rewardSystem and self.game.rewardSystem.isActive)
         or (self.mutation and self.mutation.isActive)
-        or (self.codex and self.codex.isActive)
+        or (self.enemyEntry and self.enemyEntry.isActive)
         or (self.enemySpawner and self.enemySpawner.isActive)
         or (self.itemPicker and self.itemPicker.isActive)
         or (self.devSpawner and self.devSpawner.isActive)
@@ -540,9 +540,9 @@ function GUIManager:mousepressed(x, y, button)
         return true
     end
 
-    -- Codex overlays everything and captures all input while open.
-    if self.codex and self.codex.isActive then
-        self.codex:mousepressed(x, y, button)
+    -- An open enemy entry overlays everything and captures all input.
+    if self.enemyEntry and self.enemyEntry.isActive then
+        self.enemyEntry:mousepressed(x, y, button)
         return true
     end
 
@@ -570,11 +570,11 @@ function GUIManager:mousepressed(x, y, button)
         return true
     end
 
-    -- Clicking a Horde / Inspect card (or the BASE JOURNAL button) opens the codex.
+    -- Clicking an enemy in the INCOMING list opens its entry.
     if self.infoColumn and self.infoColumn.mousepressed then
-        local action = self.infoColumn:mousepressed(x, y, button)
-        if action then
-            self.codex:open(action.tab, action.id)
+        local enemyId = self.infoColumn:mousepressed(x, y, button)
+        if enemyId then
+            self.enemyEntry:open(enemyId)
             return true
         end
     end

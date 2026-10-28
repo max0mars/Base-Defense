@@ -22,11 +22,22 @@ function SetGameScissor(x, y, w, h)
     -- virtual (the field is translated + scaled on screen). A no-arg call there
     -- restores the clip to the field rect rather than the whole canvas.
     if Layout and Layout.worldActive then
+        local view = Layout.view
         if x then
             local vx, vy = Layout.worldToScreen(x, y)
-            x, y, w, h = vx, vy, w * Layout.scale, h * Layout.scale
+            local s = view and view.scale or Layout.scale
+            x, y, w, h = vx, vy, w * s, h * s
+            -- Inside a view (e.g. the enemy entry's demo strip), stay within its
+            -- bounds: a clip that replaced them would let fills spill outside
+            if view and view.clip then
+                local c = view.clip
+                local x2, y2 = math.min(x + w, c.x + c.w), math.min(y + h, c.y + c.h)
+                x, y = math.max(x, c.x), math.max(y, c.y)
+                w, h = math.max(0, x2 - x), math.max(0, y2 - y)
+            end
         else
-            x, y, w, h = Layout.field.x, Layout.field.y, Layout.field.w, Layout.field.h
+            local clip = (view and view.clip) or Layout.field
+            x, y, w, h = clip.x, clip.y, clip.w, clip.h
         end
     elseif not x then
         if scalify and not scalify._canvas then

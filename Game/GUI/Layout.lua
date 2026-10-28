@@ -77,8 +77,11 @@ function Layout.mouseToField(mx, my)
     return wx, wy
 end
 
---- Convert a world point to its on-screen (full-canvas) position.
+--- Convert a world point to its on-screen (full-canvas) position (through the
+--- current view, if one is pushed; see pushView).
 function Layout.worldToScreen(wx, wy)
+    local v = Layout.view
+    if v then return v.x + wx * v.scale, v.y + wy * v.scale end
     return FIELD_X + wx * S, FIELD_Y + (wy - Layout.WORLD_Y) * S
 end
 
@@ -112,6 +115,25 @@ end
 
 function Layout.popWorld()
     love.graphics.pop()
+    Layout.worldActive = false
+end
+
+-- An alternative world viewport (e.g. the enemy entry's demo strip): world (0, 0)
+-- maps to screen (view.x, view.y), scaled by view.scale, clipped to view.clip.
+-- World-coordinate scissors (enemy HP fills) go through it like the field's.
+Layout.view = nil
+
+function Layout.pushView(view)
+    love.graphics.push()
+    love.graphics.translate(view.x, view.y)
+    love.graphics.scale(view.scale, view.scale)
+    Layout.view = view
+    Layout.worldActive = true
+end
+
+function Layout.popView()
+    love.graphics.pop()
+    Layout.view = nil
     Layout.worldActive = false
 end
 

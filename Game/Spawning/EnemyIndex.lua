@@ -14,7 +14,7 @@ local EnemyIndex = {
         size = 20,
         types = { enemy = true, red = true },
         baseSpawnDelay = 1,
-        description = "Nothing special about this guy...",
+        description = "A plain foot soldier with no tricks. Average speed, average toughness.",
         mutations = {}
     },
     {
@@ -32,7 +32,7 @@ local EnemyIndex = {
         size = 15,
         types = { enemy = true, yellow = true },
         baseSpawnDelay = 0.5,
-        description = "Fast, but fragile.",
+        description = "Very fast but fragile. Races ahead of the pack to slip past your defenses before they can react.",
         mutations = {}
     },
     {
@@ -50,7 +50,7 @@ local EnemyIndex = {
         size = 12,
         types = { enemy = true, green = true },
         baseSpawnDelay = 0.2,
-        description = "You'll never find just one",
+        description = "A tiny, weak creature. Easy to kill on its own, but it comes in swarms.",
         mutations = {}
     },
     {
@@ -75,7 +75,7 @@ local EnemyIndex = {
         stickyTargets = true,
         debuffStat = "fireRate",
         debuffAmount = -0.01,
-        description = "Reduces turret efficiency with debuffs.",
+        description = "A sturdy machine that fires disabling projectiles at your turrets, wearing down your defenses for as long as it survives.",
         mutations = {}
     },
     {
@@ -96,7 +96,7 @@ local EnemyIndex = {
         affinities = {
             ballistic = 0.75,
         },
-        description = "A sturdy combatant with light armour.",
+        description = "A tough, armoured fighter. Its armour blunts bullets; other kinds of damage cut through it more easily.",
         mutations = {}
     },
     {
@@ -114,7 +114,7 @@ local EnemyIndex = {
         size = 12,
         types = { enemy = true, yellow = true, sapper = true },
         baseSpawnDelay = 0.4,
-        description = "Fragile, fast enemy that deals extreme damage if it reaches the base.",
+        description = "Fragile and very fast. Harmless in a fight, but it hits your base extremely hard if it reaches it.",
         mutations = {}
     },
     {
@@ -135,7 +135,7 @@ local EnemyIndex = {
         spawnAmount = 3,
         spawnFrequency = 6,
         spawnReference = "Critter",
-        description = "Hatches Critters.",
+        description = "A slow, sturdy creature that keeps hatching little Critters as it marches, sending them ahead as a living shield.",
         mutations = {}
     },
     {
@@ -153,12 +153,12 @@ local EnemyIndex = {
         size = 22,
         types = { enemy = true, blue = true, support = true },
         baseSpawnDelay = 1.0,
-        description = "Provides a damage reduction aura to nearby allies.",
-        hasAura = true,
-        grantsShield = false,
+        description = "A sturdy protector that regularly wraps nearby allies in protective shields, making them harder to bring down.",
+        hasAura = false,
+        grantsShield = true,
         auraMult = -0.15,
         mutations = {
-            { id = "blueguardian_shield", name = "Shield Granter", description = "Guardian now also grants shields to nearby allies.", modifiers = { grantsShield = { set = true } }, target = "Guardian" }
+            { id = "blueguardian_aura", name = "Protective Aura", description = "Guardian also gives nearby allies a damage-reducing aura.", modifiers = { hasAura = { set = true } }, target = "Guardian" }
         }
     },
     {
@@ -179,7 +179,7 @@ local EnemyIndex = {
         targets = 1,
         range = 120,
         clearCooldown = 3.0,
-        description = "Periodically clears debuffs on nearby allies.",
+        description = "A tough commander that rallies nearby allies, regularly shaking off slows, chills, poison and other weakening effects.",
         mutations = {}
     },
     {
@@ -201,7 +201,7 @@ local EnemyIndex = {
         range = 120,
         teleportDistance = 25,
         teleportCooldown = 5.0,
-        description = "Periodically teleports nearby allies forward.",
+        description = "A tough mage that regularly opens portals, pulling nearby allies forward toward your base.",
         mutations = {}
     },
     {
@@ -222,7 +222,7 @@ local EnemyIndex = {
         targets = 1,
         range = 150,
         regenAmount = 10,
-        description = "Attaches to a nearby ally and heals them over time.",
+        description = "A tough support unit that latches onto a wounded ally nearby and heals it back to full health, then moves on to the next.",
         mutations = {}
     },
     {
@@ -241,7 +241,7 @@ local EnemyIndex = {
         types = {enemy = true, green = true, duplicator = true},
         affinities = {fire = 1.2},
         baseSpawnDelay = 1.0,
-        description = "A cellular green slime that divides upon death.",
+        description = "A weak, squishy blob that splits into smaller slimes when it dies, and those can split again.",
         mutations = {}
     },
     {
@@ -260,7 +260,7 @@ local EnemyIndex = {
         types = { enemy = true, red = true, tank = true },
         affinities = { heal = 1.5 },
         baseSpawnDelay = 2.5,
-        description = "Slow and heavy. Can soak up massive damage and takes increased healing.",
+        description = "A massive, very slow boss. Extremely tough, and healing works even better on it than on other enemies.",
         mutations = {}
     }
 }
