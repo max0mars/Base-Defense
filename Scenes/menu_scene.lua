@@ -8,6 +8,7 @@ local PlayerDeck = require("Game.Cards.PlayerDeck")
 local Card = require("Game.Cards.Card")
 local ExecutionType = require("Game.Cards.ExecutionType")
 local DevMode = require("Game.Dev.DevMode")
+local SaveGame = require("Game.Core.SaveGame")
 
 
 -- Starting deck creation has been moved to individual Main Turret classes.
@@ -54,22 +55,68 @@ function menu_scene:startRun(devMode)
     self.scene_manager.switch("new_game")
 end
 
+--- Starts a normal run, asking first if that would replace a saved one.
+function menu_scene:requestNewRun()
+    if SaveGame.exists() then
+        self.confirmingNewRun = true
+    else
+        self:startRun(false)
+    end
+end
+
+--- Resumes the saved run where it was saved (preparation or the start of a battle).
+function menu_scene:continueRun()
+    local scene = SaveGame.load()
+    if not scene then
+        self.notice = "Your saved run couldn't be loaded."
+        self:buildMainButtons(false)
+        return
+    end
+    game.testingMode = false
+    self.scene_manager.switch(scene)
+end
+
+function menu_scene:buildMainButtons(hasSave)
+    local cx = (VIRTUAL_WIDTH - 240) / 2
+    local buttons = {
+        { label = "PLAY GAME", action = "play",
+          color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1} },
+        { label = "TUTORIAL", action = "tutorial",
+          color = {0.3, 0.2, 0.55, 1}, hoverColor = {0.48, 0.32, 0.8, 1}, borderColor = {0.7, 0.5, 1, 1} },
+        { label = "SETTINGS", action = "settings",
+          color = {0.18, 0.32, 0.45, 1}, hoverColor = {0.28, 0.5, 0.7, 1}, borderColor = {0.4, 0.7, 0.95, 1} },
+        { label = "QUIT GAME", action = "quit", gap = 25,
+          color = {0.3, 0.18, 0.2, 1}, hoverColor = {0.5, 0.28, 0.3, 1}, borderColor = {0.9, 0.5, 0.5, 1} },
+    }
+    if hasSave then
+        buttons[1].label = "NEW GAME"
+        table.insert(buttons, 1, { label = "CONTINUE", action = "continue",
+            color = {0.45, 0.32, 0.08, 1}, hoverColor = {0.62, 0.45, 0.12, 1}, borderColor = {0.95, 0.75, 0.3, 1} })
+    end
+    local y = hasSave and 260 or 290
+    for _, btn in ipairs(buttons) do
+        y = y + (btn.gap or 0)
+        btn.x, btn.y, btn.w, btn.h, btn.type = cx, y, 240, 45, "main"
+        y = y + 55
+    end
+    self.mainButtons = buttons
+end
+
 function menu_scene:load()
     love.mouse.setVisible(true)
     self.handCursor = love.mouse.getSystemCursor("hand")
     self.arrowCursor = love.mouse.getSystemCursor("arrow")
     self.page = "main" -- "main" | "settings"
+    self.notice = nil
+    self.confirmingNewRun = false
 
-    local cx = (VIRTUAL_WIDTH - 240) / 2
-    self.mainButtons = {
-        { x = cx, y = 290, w = 240, h = 45, label = "PLAY GAME", type = "main", action = "play",
-          color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1} },
-        { x = cx, y = 345, w = 240, h = 45, label = "TUTORIAL", type = "main", action = "tutorial",
-          color = {0.3, 0.2, 0.55, 1}, hoverColor = {0.48, 0.32, 0.8, 1}, borderColor = {0.7, 0.5, 1, 1} },
-        { x = cx, y = 400, w = 240, h = 45, label = "SETTINGS", type = "main", action = "settings",
+    self:buildMainButtons(SaveGame.exists())
+    local mx = VIRTUAL_WIDTH / 2
+    self.confirmButtons = {
+        { x = mx - 190, y = 400, w = 180, h = 45, label = "START NEW RUN", action = "confirm",
+          color = {0.4, 0.18, 0.2, 1}, hoverColor = {0.6, 0.28, 0.3, 1}, borderColor = {0.95, 0.45, 0.45, 1} },
+        { x = mx + 10, y = 400, w = 180, h = 45, label = "CANCEL", action = "cancel",
           color = {0.18, 0.32, 0.45, 1}, hoverColor = {0.28, 0.5, 0.7, 1}, borderColor = {0.4, 0.7, 0.95, 1} },
-        { x = cx, y = 480, w = 240, h = 45, label = "QUIT GAME", type = "main", action = "quit",
-          color = {0.3, 0.18, 0.2, 1}, hoverColor = {0.5, 0.28, 0.3, 1}, borderColor = {0.9, 0.5, 0.5, 1} },
     }
 
     self.settings = SettingsPanel:new({
@@ -88,8 +135,8 @@ function menu_scene:update(dt)
     if self.page == "settings" then self.settings:update(dt) end
 end
 
-function menu_scene:drawMainButtons(mx, my)
-    for _, btn in ipairs(self.mainButtons) do
+function menu_scene:drawMainButtons(mx, my, buttons)
+    for _, btn in ipairs(buttons or self.mainButtons) do
         local isHovered = mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
         if isHovered then Cursor.wantHand = true end
         love.graphics.setColor(isHovered and btn.hoverColor or btn.color)
@@ -137,7 +184,21 @@ function menu_scene:draw()
         love.graphics.setColor(0.55, 0.6, 0.7, 1)
         love.graphics.printf("Protect the Core. Upgrade your Arsenal.", 0, 148 + MENU_OFFSET_Y, VIRTUAL_WIDTH, "center")
 
-        self:drawMainButtons(mx, my)
+        if self.confirmingNewRun then
+            love.graphics.setColor(0.06, 0.07, 0.1, 0.95)
+            love.graphics.rectangle("fill", VIRTUAL_WIDTH / 2 - 220, 290, 440, 175, 10)
+            love.graphics.setColor(0.95, 0.45, 0.45, 1)
+            love.graphics.rectangle("line", VIRTUAL_WIDTH / 2 - 220, 290, 440, 175, 10)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf("Start a new run?\nYour saved run will be lost.", VIRTUAL_WIDTH / 2 - 200, 320, 400, "center")
+            self:drawMainButtons(mx, my, self.confirmButtons)
+        else
+            self:drawMainButtons(mx, my)
+        end
+        if self.notice then
+            love.graphics.setColor(0.95, 0.55, 0.45, 1)
+            love.graphics.printf(self.notice, 0, 600, VIRTUAL_WIDTH, "center")
+        end
     end
 
     self.confirmation:draw()
@@ -155,11 +216,27 @@ function menu_scene:mousepressed(x, y, button)
         return
     end
 
+    if button == 1 and self.confirmingNewRun then
+        for _, btn in ipairs(self.confirmButtons) do
+            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                self.confirmingNewRun = false
+                if btn.action == "confirm" then
+                    SaveGame.delete()
+                    self:startRun(false)
+                end
+                break
+            end
+        end
+        return
+    end
+
     if button == 1 then
         for _, btn in ipairs(self.mainButtons) do
             if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-                if btn.action == "play" then
-                    self:startRun(false)
+                if btn.action == "continue" then
+                    self:continueRun()
+                elseif btn.action == "play" then
+                    self:requestNewRun()
                 elseif btn.action == "tutorial" then
                     self.scene_manager.switch("tutorial")
                 elseif btn.action == "settings" then
@@ -179,8 +256,13 @@ function menu_scene:keypressed(key)
         return
     end
 
+    if self.confirmingNewRun then
+        if key == "escape" then self.confirmingNewRun = false end
+        return
+    end
+
     if key == "return" then
-        self:startRun(false)
+        self:requestNewRun()
     elseif key == "f1" then
         self:startRun(true)
     elseif key == "t" then
