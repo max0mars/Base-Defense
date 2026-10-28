@@ -33,7 +33,12 @@ function RewardIndex.injectCards(cards)
     for rarity, rarityCards in pairs(cards) do
         if RewardIndex[rarity] then
             for _, card in ipairs(rarityCards) do
-                table.insert(RewardIndex[rarity], card)
+                -- Skip cards already injected (a second run, or loading a save)
+                local exists = false
+                for _, existing in ipairs(RewardIndex[rarity]) do
+                    if existing.id == card.id then exists = true; break end
+                end
+                if not exists then table.insert(RewardIndex[rarity], card) end
             end
         end
     end

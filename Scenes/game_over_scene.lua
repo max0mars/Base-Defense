@@ -6,9 +6,18 @@ setmetatable(game_over_scene, { __index = scene })
 
 local game = require("Game.Core.GameManager")
 local Cursor = require("Game.GUI.Cursor")
+local SaveGame = require("Game.Core.SaveGame")
+local DevMode = require("Game.Dev.DevMode")
 
 function game_over_scene:load()
     love.mouse.setVisible(true)
+    local ps = _G.PersistentState or {}
+    print(string.format("[GameOver] Battle %d, wave %d", (ps.battlesCompleted or 0) + 1, game.wave or 0))
+    -- The run is over: it can't be continued
+    if SaveGame.isEnabled() then
+        SaveGame.delete()
+        print("[GameOver] Save deleted")
+    end
     self.damageHistoryList = game.base:getProcessedDamageHistory()
     self.damageHistoryPage = 1
     self.itemsPerPage = 16
@@ -190,7 +199,12 @@ function game_over_scene:mousepressed(x, y, button)
         
         if x >= retryX and x <= retryX + btnW and y >= btnY and y <= btnY + btnH then
             paused = 0
-            self.scene_manager.switch("game")
+            if game.testingMode then
+                self.scene_manager.switch("game") -- the sandbox just restarts
+            else
+                -- A fresh run from main turret selection (staying in dev mode if it was on)
+                self.scene_manager.scenes.menu:startRun(DevMode.isActive())
+            end
         elseif x >= quitX and x <= quitX + btnW and y >= btnY and y <= btnY + btnH then
             love.event.quit()
         end

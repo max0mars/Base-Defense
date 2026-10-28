@@ -214,6 +214,7 @@ function new_game_scene:mousepressed(x, y, button)
             local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
             local startMaterial = MaterialRegistry.resolve(turretModule.template)
             CardUpgradeConfig.Economy.addResource(startMaterial, MaterialRegistry.STARTING_AMOUNT)
+            require("Game.Core.SaveGame").save("game")
             self.scene_manager.switch("game")
         end
     end

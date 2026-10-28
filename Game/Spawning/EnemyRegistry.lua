@@ -24,6 +24,7 @@ function EnemyRegistry:reset(game)
             local subclass = setmetatable({}, { __index = baseClass })
             subclass.__index = subclass
             subclass.baseSpawnDelay = enemy.baseSpawnDelay or 1.0
+            subclass.enemyId = enemy.id -- lets saved waves name the class (SaveGame)
             function subclass:new(config)
                 config = config or {}
                 config.name = enemy.id

@@ -19,6 +19,7 @@ local DevMode = require("Game.Dev.DevMode")
 local PrepLoop = require("Game.Prep.PrepLoop")
 local Scouting = require("Game.Prep.Scouting")
 local Merchant = require("Game.Prep.Merchant")
+local SaveGame = require("Game.Core.SaveGame")
 
 -- The middle of the screen changes with the battle just finished (see PrepLoop)
 local SCREENS = {
@@ -150,6 +151,13 @@ function preparation_scene:load(isPostBattle)
     self.battleManager = BattleManager:new()
     self:precalculateWaves()
     self.visit = PrepLoop.getVisit()
+    SaveGame.save("preparation")
+end
+
+--- Saves (so quitting mid-battle restarts it) and starts the selected battle.
+function preparation_scene:launchBattle()
+    SaveGame.save("game")
+    self.scene_manager.switch("game")
 end
 
 --- Where the current screen (merchant, alchemist...) draws: between the status
@@ -184,8 +192,11 @@ function preparation_scene:precalculateWaves()
     if currentLevel == nextMajorLevel then
         self.levelChoices = self.majorBattleChoices
     else
-        -- Use LevelManager to generate choices for the regular current level
-        self.levelChoices = self.levelManager:generateChoices(currentLevel)
+        -- Use LevelManager to generate choices for the regular current level, once
+        -- per visit so reloading a save doesn't reroll them
+        local visit = PrepLoop.getVisit()
+        visit.levelChoices = visit.levelChoices or self.levelManager:generateChoices(currentLevel)
+        self.levelChoices = visit.levelChoices
     end
 
     -- Default to choice 1 (or safe choice) until player confirms/picks
@@ -1156,6 +1167,12 @@ function preparation_scene:drawLevelSelectWindow()
 end
 
 function preparation_scene:mousepressed(x, y, button)
+    self:handleMousePressed(x, y, button)
+    -- Purchases, upgrades and removals all happen on a click: keep the save in step
+    if self.scene_manager.current == self then SaveGame.save("preparation") end
+end
+
+function preparation_scene:handleMousePressed(x, y, button)
     if paused == 1 and self.settings then
         local action = self.settings:mousepressed(x, y, button)
         if action == "resume" then
@@ -1190,7 +1207,7 @@ function preparation_scene:mousepressed(x, y, button)
                     self:applyLevelChoice(btn.choice)
                     self.viewingLevelSelect = false
                     self.levelSelectMode = "preview"
-                    self.scene_manager.switch("game")
+                    self:launchBattle()
                     return
                 end
             end
@@ -1443,7 +1460,7 @@ function preparation_scene:keypressed(key)
     end
 
     if key == "return" and not self.viewingDeck and not self.viewingUpgrades and not self.artifactViewer.isActive then
-        self.scene_manager.switch("game")
+        self:launchBattle()
     end
 end
 
