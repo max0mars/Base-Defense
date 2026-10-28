@@ -2,6 +2,12 @@ local Enemy = require("Enemies.Enemy")
 local Spawner = setmetatable({}, {__index = Enemy})
 Spawner.__index = Spawner
 
+-- Each batch fans out side by side, in its own lane: one spawn's width plus
+-- SPAWN_GAP apart, jittered by up to SPAWN_JITTER, so they never stack up and
+-- sit close together as a wall in front of the spawner
+local SPAWN_GAP = 2
+local SPAWN_JITTER = 1
+
 local default = {
     name = "Spawner",
     reward = 150,
@@ -67,6 +73,10 @@ function Spawner:update(dt)
         self.spawnTimer = 0
         local count = self:getStat("spawnAmount") or self:getStat("spawnCount") or 1
         self.spawnQueue = (self.spawnQueue or 0) + count
+        -- Lanes are laid out around where the spawner stood when the batch started,
+        -- so its movement between staggered spawns doesn't squeeze them together
+        self.batchSize, self.batchSlot = count, 0
+        self.batchX, self.batchY = self.x, self.y
     end
 
     -- Staggered Spawning Logic
@@ -80,11 +90,16 @@ function Spawner:update(dt)
     end
 end
 
+--- Sideways offset of this spawn's lane: slots are centred on the spawner and
+--- spaced so neighbours of size `size` never overlap.
+function Spawner:nextLaneOffset(size)
+    local n = math.max(1, self.batchSize or 1)
+    self.batchSlot = (self.batchSlot or 0) % n + 1
+    local spacing = size + SPAWN_GAP
+    return (self.batchSlot - (n + 1) / 2) * spacing + (math.random() * 2 - 1) * SPAWN_JITTER
+end
+
 function Spawner:spawnOneReinforcement()
-    local offset = 10
-    local rx = self.x + (math.random() - 0.5) * offset
-    local ry = self.y + (math.random() - 0.5) * offset
-    
     local isTesting = self.game and self.game.testingMode
     local nameStr = self:getStat("spawnReference") or (isTesting and "Speeder" or "Scout")
     
@@ -101,10 +116,32 @@ function Spawner:spawnOneReinforcement()
     
     local spawnedInstance = enemyClass:new({
         game = self.game,
-        x = rx,
-        y = ry,
+        x = self.x,
+        y = self.y,
         name = nameStr
     })
+
+    -- Just in front of the spawner (toward the base), in this spawn's lane, and
+    -- kept in that lane as it walks
+    local size = spawnedInstance:getStat("size") or 12
+    local lane = self:nextLaneOffset(size)
+    local forward = ((self.target or 0) < self.x) and -1 or 1
+    local originX, originY = self.batchX or self.x, self.batchY or self.y
+    spawnedInstance.x = originX + forward * ((self:getStat("size") or 0) / 2 + size / 2 + SPAWN_GAP)
+    spawnedInstance.y = originY + lane
+    local nav, ownNav = spawnedInstance.navigator, self.navigator
+    if nav then
+        -- The navigator's sideways axis points the other way when walking left
+        nav.perpendicularOffset = lane * forward
+        -- Follow the spawner's own path: pathing from each spawn's cell would snap
+        -- them onto different grid rows and pull the lanes apart
+        if ownNav and ownNav.path and ownNav.currentNodeIndex and ownNav.currentNodeIndex <= #ownNav.path then
+            nav.path = ownNav.path
+            nav.currentNodeIndex = ownNav.currentNodeIndex
+            nav.needsRecalculation = false
+            nav:calculateNodeTarget()
+        end
+    end
     
     -- Apply any active upgrades to the spawned enemy
     EnemyRegistry:applyActiveMutations(spawnedInstance)

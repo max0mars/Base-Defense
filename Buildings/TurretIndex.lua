@@ -60,7 +60,7 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.55, range = 150,
             firingArc = {direction = 0, minRange = 0, angle = math.rad(100)},
             spread = math.rad(15), pelletCount = 8,
-            bulletSpeed = 480, damageType = "ballistic", damage = 4,
+            bulletSpeed = 480, damageType = "ballistic", damage = 6,
             pierce = 1, lifespan = 0.8, bulletId = "shotgunPellet"
         },
         {
@@ -235,8 +235,8 @@ local RewardIndex = {
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.4, range = 340, firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 200, damageType = "explosive", damage = 81,
-            pierce = 1, lifespan = 3, explosionDamage = 81, explosion_from_damage = 1.0, radius = 100, bulletId = "missile",
+            bulletSpeed = 200, damageType = "explosive", damage = 50,
+            pierce = 1, lifespan = 3, explosionDamage = 50, explosion_from_damage = 1.0, radius = 40, bulletId = "missile",
             hitEffects = { ExplosionEffect:new({ name = "Missile Explosion" }) }
         },
         {

@@ -46,8 +46,13 @@ table.insert(game.objects, enemy)
 table.insert(game.objects, enemyBullet)
 table.insert(game.objects, playerBullet)
 
+-- Cards left in the draw pile must stay there: no hand is drawn once the battle is won
+game.drawPile = { { name = "a" }, { name = "b" }, { name = "c" }, { name = "d" } }
+
 game:winBattle()
 
+assert(#game.hand == 0, "No cards are drawn once the battle is over")
+assert(#game.drawPile == 4, "The draw pile is untouched")
 assert(game.battleComplete == true, "battleComplete should be true")
 assert(_G.PersistentState.cash == 150, "Persistent cash should increase by 100")
 assert(#_G.PersistentState.upcomingWaves == 0, "Upcoming waves should be emptied")
@@ -56,5 +61,23 @@ assert(#game.WaveSpawner.waveList == 0, "WaveSpawner waveList should be empty")
 assert(enemy.destroyed == true, "Enemy should be destroyed")
 assert(enemyBullet.destroyed == true, "Enemy bullet should be destroyed")
 assert(playerBullet.destroyed == false, "Player bullet should not be destroyed by enemy filter")
+
+-- Finishing the last wave naturally: the wave's upkeep runs once (not again in winBattle)
+game.battleComplete = false
+game.state = "wave"
+game.pulseTimer = 0
+game.gui.update = function() end
+game.WaveSpawner.waveState = "complete"
+_G.PersistentState.upcomingWaves = {}
+local completions = 0
+local realWaveComplete = GameManager.waveComplete
+game.waveComplete = function(self, battleOver)
+    completions = completions + 1
+    return realWaveComplete(self, battleOver)
+end
+game:update(0.016)
+assert(game.battleComplete == true, "Finishing the last wave wins the battle")
+assert(completions == 1, "The last wave's upkeep runs once, got " .. completions)
+assert(#game.hand == 0, "No cards are drawn after the last wave")
 
 print("test_win_battle: All assertions passed!")

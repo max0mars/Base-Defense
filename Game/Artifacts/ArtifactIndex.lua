@@ -5,7 +5,7 @@
 -- style, a role) so they pull a run in a direction.
 --
 -- Definition fields (see ArtifactManager for how they are used):
---   id, name, rarity, description, color, icon   -- identity / display
+--   id, name, description, color, icon   -- identity / display
 --   effects       static effect templates, applied for the whole battle
 --   getEffects    function(self, game) -> templates; re-evaluated whenever the
 --                 board changes, for effects that scale with what's placed
@@ -66,7 +66,6 @@ ArtifactIndex.list = {
     {
         id = "overclocked_capacitor",
         name = "Overclocked Capacitor",
-        rarity = "uncommon",
         icon = "bolt",
         color = {0.3, 0.6, 1, 1},
         description = "Energy turrets fire 30% faster.",
@@ -77,7 +76,6 @@ ArtifactIndex.list = {
     {
         id = "volatile_payload",
         name = "Volatile Payload",
-        rarity = "uncommon",
         icon = "burst",
         color = {1, 0.6, 0.2, 1},
         description = "Explosive turrets have 40% larger blasts and deal 15% more damage.",
@@ -88,7 +86,6 @@ ArtifactIndex.list = {
     {
         id = "buckshot_choke",
         name = "Buckshot Choke",
-        rarity = "rare",
         icon = "spread",
         color = {1, 0.85, 0.3, 1},
         description = "Shotgun turrets fire 2 extra pellets.",
@@ -99,7 +96,6 @@ ArtifactIndex.list = {
     {
         id = "prismatic_core",
         name = "Prismatic Core",
-        rarity = "uncommon",
         icon = "diamond",
         color = {0.4, 1, 0.9, 1},
         description = "Your main turret deals 40% more damage and fires 20% faster.",
@@ -114,7 +110,6 @@ ArtifactIndex.list = {
     {
         id = "arms_race",
         name = "Arms Race",
-        rarity = "rare",
         icon = "hexagon",
         color = {0.85, 0.45, 1, 1},
         description = "All turrets deal +6% damage for each different damage type among your turrets on the field (including your main turret).",
@@ -137,7 +132,6 @@ ArtifactIndex.list = {
     {
         id = "specialist_doctrine",
         name = "Specialist Doctrine",
-        rarity = "rare",
         icon = "chevron",
         color = {1, 0.4, 0.4, 1},
         description = "Turrets of your most common damage type on the field deal +5% damage for each turret of that type (max +50%).",
@@ -167,7 +161,6 @@ ArtifactIndex.list = {
     {
         id = "brittle_ice",
         name = "Brittle Ice",
-        rarity = "rare",
         icon = "crystal",
         color = {0.55, 0.85, 1, 1},
         description = "Frozen enemies take 30% more damage.",
@@ -182,7 +175,6 @@ ArtifactIndex.list = {
     {
         id = "heart_of_the_tundra",
         name = "Heart of the Tundra",
-        rarity = "rare",
         icon = "diamond",
         color = {0.75, 0.95, 1, 1},
         description = "When a frozen enemy thaws, it takes damage equal to 15% of its max HP.",
@@ -190,13 +182,13 @@ ArtifactIndex.list = {
         onEnemyThaw = function(self, game, enemy)
             if enemy.destroyed then return end
             local damage = enemy:getStat("maxHp") * self.MAX_HP_FRACTION
-            enemy:takeDamage(damage, "ice", nil, nil, { "thaw" })
+            -- Damage (and the kill) count for whichever turret froze it
+            enemy:takeDamage(damage, "ice", nil, nil, { "thaw" }, Chill.getFreezer(enemy))
         end,
     },
     {
         id = "cryo_coolant",
         name = "Cryo Coolant",
-        rarity = "uncommon",
         icon = "drop",
         color = {0.45, 0.8, 1, 1},
         description = "Non-ice turrets fire 10% faster for each ice turret next to them.",

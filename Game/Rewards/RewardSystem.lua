@@ -49,8 +49,6 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
     self.nextRevealIndex = 1
     
     local count = numCards or 3
-    local shopLevel = self.game.shopLevel or 1
-    
     local isSpecial = false
     local specialInterval = self.game.specialWaveInterval or 5
     if self.game.wave and (self.game.wave % specialInterval == 0) then
@@ -61,14 +59,9 @@ function RewardSystem:initializeRewardPool(poolLogicMode, numCards)
 
     
     self.poolLogic = RewardPool:new(indexToUse, self.game)
-    local choices
-    if self.mode == "cards" then
-        -- Card draft rarity scales with the current battle level, not the shop level
-        local weights = RewardPool.getCardDraftRarityWeights(self:getBattleLevel())
-        choices = self.poolLogic:generateChoicesWithWeights(count, weights)
-    else
-        choices = self.poolLogic:generateChoices(count, shopLevel)
-    end
+    -- Rarity scales with the current battle level (the merchant's level only affects his stock)
+    local weights = RewardPool.getCardDraftRarityWeights(self:getBattleLevel())
+    local choices = self.poolLogic:generateChoicesWithWeights(count, weights)
     
     local totalWidth = (count * self.cardWidth) + ((count - 1) * self.cardSpacing)
     local startX = (VIRTUAL_WIDTH - totalWidth) / 2

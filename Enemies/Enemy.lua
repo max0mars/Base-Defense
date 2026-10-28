@@ -95,7 +95,7 @@ function Enemy:new(config)
     setmetatable(obj, { __index = self })
     obj:getTargetPos()
     
-    local navType = config.navigator or "GridNavigator"
+    local navType = config.navigator or (Navigators.USE_PATHFINDING and "GridNavigator" or "DirectNavigator")
     obj.navigator = Navigators[navType]:new(obj, obj.game)
     
     obj.enemyId = config.enemyId or (base and base.id) or config.name

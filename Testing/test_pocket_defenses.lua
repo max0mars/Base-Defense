@@ -106,9 +106,9 @@ print(string.format("  level 20: common %d, uncommon %d, rare %d",
 
 -- 4. Hand limit still respected
 local fullGame = makeGame(1)
-for i = 1, 7 do fullGame.hand[i] = {} end
+for i = 1, 9 do fullGame.hand[i] = {} end
 InstantCardRegistry.PocketDefenses.customExecute(fullGame)
-assert(#fullGame.hand == 8, "Stops adding cards when the hand is full")
+assert(#fullGame.hand == 10, "Stops adding cards when the hand is full (10)")
 
 if failures > 0 then
     print(failures .. " test(s) failed")

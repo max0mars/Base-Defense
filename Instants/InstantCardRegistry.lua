@@ -223,7 +223,7 @@ CardRegistry.PocketDefenses = InstantCard.new({
 
         local added = 0
         for i = 1, 3 do
-            if #gameObj.hand >= 8 then
+            if #gameObj.hand >= (gameObj.MAX_HAND_SIZE or 10) then
                 gameObj:spawnFloatingText("Hand is full!", 400, 300, {0.8, 0.2, 0.2, 1})
                 break
             end

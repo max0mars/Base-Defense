@@ -138,7 +138,9 @@ function Base:getProcessedDamageHistory()
     return history
 end
 
-function Base:draw()
+--- `gridOnly` draws just the slots: no wall and no buildings (the battle summary
+--- draws the buildings itself).
+function Base:draw(gridOnly)
     for i = 1, self.buildGrid.width do
         for j = 1, self.buildGrid.height do
             local slot = (j - 1) * self.buildGrid.width + i
@@ -280,6 +282,8 @@ function Base:draw()
         love.graphics.setLineWidth(1) -- Reset line width
     end
 
+    if gridOnly then return end
+
     -- Draw the glowing green wall on the right edge only (the side facing the
     -- incoming enemies); the other three sides are left open.
     local pulse = (math.sin(self.game.pulseTimer * self.game.oscillationSpeed) + 1) / 2 -- Range 0 to 1
@@ -343,10 +347,25 @@ function Base:initMainLazer(turretClass)
     
     self.game:newBuilding(self.mainLazer, centerSlot)
     
-    -- Unlock additional adjacent slots if player chose the starting slots upgrade
+    -- Unlock additional adjacent slots if player chose the starting slots upgrade.
+    -- They're spread evenly around the main turret: the base is split into four
+    -- quarters about the turret's centre, and each new slot goes to the quarter
+    -- with the fewest so far (nearest the centre first), so every 4 slots add one
+    -- to each quarter instead of bunching up on one side.
     local extraUnlocks = _G.PersistentState and _G.PersistentState.startBattleExtraSlotsUnlocked or 0
     local slotsToUnlockCount = extraUnlocks * 4
-    
+    local midX, midY = centerCol + 0.5, centerRow + 0.5 -- the 2x2 main turret's centre
+    local function cellOf(s) return ((s - 1) % gridWidth) + 1, math.ceil(s / gridWidth) end
+    local function quarterOf(s)
+        local x, y = cellOf(s)
+        return (y < midY and 0 or 2) + (x < midX and 1 or 2)
+    end
+    local function distSq(s)
+        local x, y = cellOf(s)
+        return (x - midX)^2 + (y - midY)^2
+    end
+    local perQuarter = { 0, 0, 0, 0 }
+
     for i = 1, slotsToUnlockCount do
         local candidates = {}
         for s = 1, gridWidth * gridHeight do
@@ -360,23 +379,19 @@ function Base:initMainLazer(turretClass)
                 end
             end
         end
-        
+
         if #candidates > 0 then
-            -- Sort candidates by distance to the center row/column
             table.sort(candidates, function(a, b)
-                local ax = ((a - 1) % gridWidth) + 1
-                local ay = math.ceil(a / gridWidth)
-                local bx = ((b - 1) % gridWidth) + 1
-                local by = math.ceil(b / gridWidth)
-                local distA = (ax - centerCol)^2 + (ay - centerRow)^2
-                local distB = (bx - centerCol)^2 + (by - centerRow)^2
-                if distA == distB then
-                    return a < b
-                end
-                return distA < distB
+                local qa, qb = perQuarter[quarterOf(a)], perQuarter[quarterOf(b)]
+                if qa ~= qb then return qa < qb end
+                local da, db = distSq(a), distSq(b)
+                if da ~= db then return da < db end
+                return a < b
             end)
-            
+
             self.buildGrid.unlocked[candidates[1]] = true
+            local q = quarterOf(candidates[1])
+            perQuarter[q] = perQuarter[q] + 1
         else
             break
         end

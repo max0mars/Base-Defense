@@ -70,12 +70,17 @@ function DamageNumber:draw()
     local alpha = math.min(1, self.lifetime / (self.maxLifetime * 0.5))
     local r, g, b = self.color[1], self.color[2], self.color[3]
     local s = self.scale or 1
+    local x, y = self.x, self.y
+    if self.centered then
+        local font = love.graphics.getFont()
+        x, y = x - font:getWidth(self.text) * s / 2, y - font:getHeight() * s / 2
+    end
 
     love.graphics.setColor(0, 0, 0, alpha) -- shadow/outline
-    love.graphics.print(self.text, self.x + 1, self.y + 1, 0, s, s)
+    love.graphics.print(self.text, x + 1, y + 1, 0, s, s)
 
     love.graphics.setColor(r, g, b, alpha)
-    love.graphics.print(self.text, self.x, self.y, 0, s, s)
+    love.graphics.print(self.text, x, y, 0, s, s)
 
     love.graphics.setColor(1, 1, 1, 1)
 end

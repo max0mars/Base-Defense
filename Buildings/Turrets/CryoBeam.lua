@@ -12,6 +12,10 @@ local Chill = require("Game.Effects.StatusEffects.Chill")
 local CryoBeam = setmetatable({}, { __index = Turret })
 CryoBeam.__index = CryoBeam
 
+-- After its first lock, the beam takes this long to re-lock onto each new target
+-- (it turns to face it but doesn't tick or draw meanwhile)
+CryoBeam.RETARGET_DELAY = 0.3
+
 function CryoBeam:new(config)
     local t = Turret:new(config)
     setmetatable(t, { __index = self })
@@ -31,13 +35,24 @@ function CryoBeam:update(dt)
         return
     end
 
+    local previous = self.target
     self:acquireTarget()
     if not self.target then
         self.cooldown = 0 -- tick immediately on the next lock
         return
     end
+    if self.target ~= previous and self.hasLocked then
+        self.retargetTimer = CryoBeam.RETARGET_DELAY
+    end
+    self.hasLocked = true
 
     self:lookAt(self.target.x, self.target.y, dt)
+
+    if (self.retargetTimer or 0) > 0 then
+        self.retargetTimer = self.retargetTimer - dt
+        if self.retargetTimer > 0 then return end
+        self.cooldown = 0 -- first tick lands as soon as the beam locks
+    end
 
     self.cooldown = self.cooldown - dt
     local fireRate = self:getStat("fireRate")
@@ -91,7 +106,7 @@ function CryoBeam:draw(drawx, drawy)
     if drawx or drawy or self.isPreview then return end
 
     local target = self.target
-    if not target or target.destroyed then return end
+    if not target or target.destroyed or (self.retargetTimer or 0) > 0 then return end
 
     local fx, fy = self:getFirePoint()
     local flicker = 0.85 + 0.15 * math.sin(love.timer.getTime() * 30)

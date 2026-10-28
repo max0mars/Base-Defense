@@ -43,9 +43,8 @@ local game = require("Game.Core.GameManager")
 
 -- 1. Definitions are well formed
 for _, def in ipairs(ArtifactIndex.list) do
-    local ok = def.id and def.name and def.description and def.rarity and def.color and def.icon
-        and ArtifactManager.RARITY_COLORS[def.rarity]
-    assert(ok, "Artifact '" .. tostring(def.id) .. "' has id, name, description, rarity, color and icon")
+    local ok = def.id and def.name and def.description and def.color and def.icon and def.rarity == nil
+    assert(ok, "Artifact '" .. tostring(def.id) .. "' has id, name, description, color and icon (and no rarity)")
 end
 
 -- 2. Persistent ownership
@@ -174,7 +173,7 @@ assert(near(c:getStat("damage"), c.damage), "Specialist Doctrine: off-type turre
 
 -- 6. Engine hooks (no shipped artifact uses these yet; exercised with a test-only one)
 local probe = {
-    id = "test_probe", name = "Test Probe", rarity = "common", icon = "star", color = {1, 1, 1, 1},
+    id = "test_probe", name = "Test Probe", icon = "star", color = {1, 1, 1, 1},
     description = "Test only.",
     modifyMaxTokens = function(self, game, max) return max + 2 end,
     modifyBaseDamage = function(self, game, amount) return amount * 0.5 end,

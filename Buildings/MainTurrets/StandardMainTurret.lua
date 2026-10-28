@@ -60,6 +60,9 @@ function StandardMainTurret:update(dt)
 end
 
 function StandardMainTurret:PlayerClick(tX, tY)
+    -- Only fires during a wave, not while placing between waves
+    if not self.game:isState("wave") then return false end
+
     local base = self.game.base
     if base then
         local bx1 = base.x - base.w / 2

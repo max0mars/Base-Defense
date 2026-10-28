@@ -32,7 +32,7 @@ MainLazer.template = {
     bulletName = "Heavy Laser",
     bulletColor = {0, 0, 1},
     bulletSpeed = 400,
-    damage = 45,
+    damage = 60,
     pierce = 1,
     lifespan = 1,
     displayLifespan = 0.5,
@@ -285,23 +285,7 @@ function MainLazer.getStartingDeck()
     
     StandardMainTurret.addCard(deck, "sentry", 2, "common")
     StandardMainTurret.addCard(deck, "blaster", 2, "common")
-
-    
-    deck:addCard(Card:new({
-        id = "unstable_laser",
-        name = "Unstable Laser",
-        description = "Increases adjacent Energy Turrets' attacks with a 25% chance to burn enemies.",
-        executionType = ExecutionType.Placement,
-        cost = 2,
-        quantity = 1,
-        payload = {
-            buildingClass = require("Buildings.Passives.UnstableLaser"),
-            config = {},
-            rarity = "rare",
-            iconCategory = "buff",
-            affectedSlots = {{-1, 0}, {0, 1}, {0, -1}, {1, 0}}
-        }
-    }))
+    StandardMainTurret.addCard(deck, "fluxCannon", 1)
     
     StandardMainTurret.addCard(deck, "inst_overclock_1", 2)
     StandardMainTurret.addCard(deck, "inst_range_1", 2)

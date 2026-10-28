@@ -10,6 +10,8 @@ local SettingsPanel = require("Game.GUI.SettingsPanel")
 local Cursor = require("Game.GUI.Cursor")
 local DamageStats = require("Game.Core.DamageStats")
 local DevMode = require("Game.Dev.DevMode")
+local Layout = require("Game.GUI.Layout")
+local ArtifactReveal = require("Graphics.Animations.ArtifactReveal")
 
 function game_scene:load()
     local isTesting = game.testingMode
@@ -32,6 +34,10 @@ function game_scene:load()
 end
 
 function game_scene:mousepressed(x, y, button)
+    if self.artifactReveal then
+        self.artifactReveal:click()
+        return
+    end
     if self.showingSummary then
         self.showingSummary = false
         self.scene_manager.switch("preparation", true)
@@ -71,8 +77,22 @@ function game_scene:update(dt)
         self.scene_manager.switch("gameover")
     end
 
+    -- Artifacts won this battle are revealed one at a time before the summary
+    if self.artifactReveal then
+        self.artifactReveal:update(dt)
+        if self.artifactReveal.done then self.artifactReveal = nil end
+        return
+    end
+
     if game.battleComplete then
         if not (game.rewardSystem and game.rewardSystem.isActive) then
+            local won = game.newArtifacts and table.remove(game.newArtifacts, 1)
+            if won then
+                self.wonArtifacts = self.wonArtifacts or {}
+                table.insert(self.wonArtifacts, won)
+                self.artifactReveal = ArtifactReveal.new(won)
+                return
+            end
             game.battleComplete = false
             self.showingSummary = true
             self.summaryDamage = game.damageTakenThisBattle or 0
@@ -82,7 +102,8 @@ function game_scene:update(dt)
             self.summaryIceMarket = game.iceMarketIncome or 0
 
             local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
-            local cashBeforeBattle = currentCash - self.summaryIncome - self.summaryIceMarket
+            local fallbackCash = game.artifactFallbackCash or 0
+            local cashBeforeBattle = currentCash - self.summaryIncome - self.summaryIceMarket - fallbackCash
             if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
             self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
             
@@ -103,10 +124,17 @@ function game_scene:update(dt)
             end
 
             self.summaryOtherRewards = {}
+            local wonArtifacts = self.wonArtifacts or {}
+            self.wonArtifacts = nil
             if game.awardedBattleRewards then
                 for _, r in ipairs(game.awardedBattleRewards) do
                     if r.type ~= "gold" and r.name then
                         local desc = r.name
+                        -- Name the artifact that was revealed
+                        if r.type == "relic" then
+                            desc = wonArtifacts[1] and table.remove(wonArtifacts, 1).name
+                                or ("$" .. fallbackCash .. " (every artifact owned)")
+                        end
                         if r.amount and r.amount > 1 then
                             desc = desc .. " (x" .. r.amount .. ")"
                         end
@@ -141,8 +169,50 @@ function game_scene:update(dt)
     game:update(effectiveDt)
 end
 
+--- Hover card for a turret on the summary screen: its damage and kills this battle.
+function game_scene:drawTurretStats(turret, mx, my)
+    local stats = game.damageStats and game.damageStats:get(turret) or { damage = 0, kills = 0, share = 0 }
+    local fmt = DamageStats.formatNumber
+    local lines = {
+        string.format("Damage: %s (%d%%)", fmt(stats.damage), math.floor((stats.share or 0) * 100 + 0.5)),
+        "Kills: " .. stats.kills,
+    }
+    local w, h = 200, 24 + #lines * 20
+    -- Sits beside the cursor, flipping to the other side near a screen edge
+    local x = mx + 16
+    if x + w > VIRTUAL_WIDTH then x = mx - 16 - w end
+    local y = my + 16
+    if y + h > VIRTUAL_HEIGHT then y = my - 16 - h end
+    love.graphics.setColor(0.06, 0.08, 0.12, 0.96)
+    love.graphics.rectangle("fill", x, y, w, h, 8, 8)
+    love.graphics.setColor(0.2, 0.6, 0.85, 0.8)
+    love.graphics.rectangle("line", x, y, w, h, 8, 8)
+    love.graphics.setColor(1, 0.9, 0.6, 1)
+    love.graphics.printf(turret.name or "Turret", x + 10, y + 6, w - 20, "left")
+    love.graphics.setColor(0.85, 0.85, 0.9, 1)
+    for i, line in ipairs(lines) do
+        love.graphics.printf(line, x + 10, y + 6 + i * 20, w - 20, "left")
+    end
+end
+
 function game_scene:draw()
-    game:draw()
+    if self.artifactReveal then
+        -- The base behind a dark veil, shaking with the slam
+        local sx, sy = self.artifactReveal:screenShake()
+        love.graphics.push()
+        love.graphics.translate(sx, sy)
+        game:drawBaseView()
+        love.graphics.pop()
+        love.graphics.setColor(0, 0, 0, 0.7)
+        love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+        self.artifactReveal:draw()
+        Cursor.applyOS()
+    elseif self.showingSummary then
+        -- The summary shows only the base, so the player can look over their setup
+        game:drawBaseView()
+    else
+        game:draw()
+    end
     if paused == 1 then
         love.graphics.setColor(0, 0, 0, 0.6) -- Dim overlay behind the pause menu
         love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
@@ -151,10 +221,8 @@ function game_scene:draw()
         Cursor.applyOS()
     end
     if self.showingSummary then
-        love.graphics.setColor(0, 0, 0, 0.85)
-        love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
-        
-        -- Centered rounded container box
+
+        -- Rounded container box, centered in the space right of the base
         local boxW = 460
         local hasOther = (self.summaryOtherRewards and #self.summaryOtherRewards > 0)
         local top = self.summaryTopTurrets or {}
@@ -162,7 +230,8 @@ function game_scene:draw()
         local mvpH = (#top > 0) and (58 + (#top - 1) * 20) or 0
         local iceRowH = ((self.summaryIceMarket or 0) > 0) and 30 or 0
         local boxH = (hasOther and 340 or 300) + mvpH + iceRowH
-        local boxX = math.floor((VIRTUAL_WIDTH - boxW) / 2)
+        local baseRight = game.base and Layout.worldToScreen(game.base.x + game.base.w / 2, 0) or 0
+        local boxX = math.floor((math.max(baseRight, 0) + VIRTUAL_WIDTH - boxW) / 2)
         local boxY = math.floor((VIRTUAL_HEIGHT - boxH) / 2) - 10
         
         -- Box background (dark tech-glass)
@@ -234,6 +303,13 @@ function game_scene:draw()
         love.graphics.setColor(0.55, 0.6, 0.68, 1)
         love.graphics.printf("Click anywhere to continue", boxX, nextY + 12, boxW, "center")
         
+        -- Hover a turret for its damage and kills this battle
+        local mx, my = love.mouse.getPosition()
+        local hovered = game:buildingAt(Layout.mouseToField(mx, my))
+        if hovered and hovered:isType("turret") then
+            self:drawTurretStats(hovered, mx, my)
+        end
+
         -- Restore standard OS cursor over the summary screen
         Cursor.applyOS()
     end

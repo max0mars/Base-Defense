@@ -104,6 +104,8 @@ end
 
 function BattlefieldGrid:recalculatePaths()
     if not self.game then return end
+    -- Nothing to recalculate while enemies walk straight at the base
+    if not require("Physics.Navigators").USE_PATHFINDING then return end
     for _, obj in ipairs(self.game.objects) do
         if obj:isType("enemy") and not obj.destroyed then
             if obj.recalculatePath then

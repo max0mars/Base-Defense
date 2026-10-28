@@ -9,7 +9,6 @@ local Reward             = require("Game.Rewards.Reward")
 local CardFactory        = require("Game.Cards.CardFactory")
 local DevMode            = require("Game.Dev.DevMode")
 
-local HAND_LIMIT = 8 -- matches game:drawCard
 
 local ItemPickerUI = {}
 ItemPickerUI.__index = ItemPickerUI
@@ -147,7 +146,7 @@ function ItemPickerUI:select(entry)
         local rewardObj = Reward:new(cfg)
         game:placeBuilding(item.building, rewardObj)
     elseif item.type == "spell" or item.type == "instant" then
-        if #game.hand >= HAND_LIMIT then
+        if #game.hand >= (game.MAX_HAND_SIZE or 10) then
             DevMode.notify("Hand is full")
         else
             game:addCardToHand(CardFactory.fromReward(item))

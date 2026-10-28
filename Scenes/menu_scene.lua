@@ -23,8 +23,9 @@ local function newRunState()
         baseHP = 200,
         cash = 0,
         deck = nil, -- Will be set in new_game_scene
-        shopLevel = 1,
-        shopXP = 0,
+        shopLevel = 1, -- the traveling merchant's level (raised by investing)
+        scoutingLevel = 1,
+        upgradePurchases = {}, -- major upgrade id -> times bought
         globalDifficulty = 1,
         battlesCompleted = 0,
         damageTracker = {},
@@ -35,6 +36,8 @@ local function newRunState()
         waveCompleteDrawSize = 4,
         incomeTokens = 3,
         startBattleExtraSlotsUnlocked = 0,
+        maxMana = 100,
+        manaRegenPerWave = 25,
         upgradeCostTokens = 20,
         upgradeCostHand = 20,
         upgradeCostIncome = 20,

@@ -6,6 +6,9 @@
 local game = {}
 game.__index = game
 
+-- Most cards the hand can hold
+game.MAX_HAND_SIZE = 10
+
 -- -----------------------------------------------------------------------------
 -- Dependencies
 -- -----------------------------------------------------------------------------
@@ -132,14 +135,15 @@ function game:load(saveData, isTesting)
             self.tokens   = _G.PersistentState and _G.PersistentState.startingTokens or 3
         end
         self.maxTokens    = _G.PersistentState and _G.PersistentState.startingTokens or 3
-        self.maxMana      = 100
-        self.manaRegenPerWave = 25    -- Mana refilled after every wave (capped at maxMana)
+        self.maxMana      = _G.PersistentState and _G.PersistentState.maxMana or 100
+        self.manaRegenPerWave = _G.PersistentState and _G.PersistentState.manaRegenPerWave or 25 -- Mana refilled after every wave (capped at maxMana)
         self.mana         = self.maxMana
         EnemyRegistry:reset(self)
-        self.shopLevel    = _G.PersistentState and _G.PersistentState.shopLevel or 1
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
         self.damageStats  = DamageStats.new() -- Per-turret damage / kills this battle (MVP)
+        self.newArtifacts = {}        -- Artifacts won this battle, revealed before the summary
+        self.artifactFallbackCash = 0 -- Cash paid instead of an artifact (every artifact owned)
         self.iceMarketIncome = 0              -- Cash from Ice Markets this battle (summary line)
         
         -- Initialize Core Gameplay Systems
@@ -313,13 +317,13 @@ function game:update(dt)
 
     -- State Transitions: Wave Completion
     if self:isState("wave") and self.WaveSpawner.waveState == "complete" then
-        self:waveComplete()
-        
         local finished = not (_G.PersistentState and _G.PersistentState.upcomingWaves and #_G.PersistentState.upcomingWaves > 0)
         if finished then
+            -- winBattle runs the last wave's completion itself
             self:winBattle()
             return
         end
+        self:waveComplete()
 
         -- Enemy discovery and mutations happen between battles (preparation_scene)
         self:setState("preparing")
@@ -354,6 +358,40 @@ end
 -- -----------------------------------------------------------------------------
 -- Game Loop: Drawing
 -- -----------------------------------------------------------------------------
+
+--- Draws only the base and the buildings on it, over a plain background
+--- (the battle summary, so the player can look over their setup).
+function game:drawBaseView()
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.rectangle("fill", 0, 0, Layout.W, Layout.H)
+    SetGameScissor(Layout.field.x, Layout.field.y, Layout.field.w, Layout.field.h)
+    Layout.pushWorld()
+    if self.base then self.base:draw(true) end
+    for _, obj in ipairs(self.objects) do
+        if not obj.destroyed and obj ~= self.base and obj.isType and obj:isType("building") and obj.draw then
+            obj:draw()
+        end
+    end
+    Layout.popWorld()
+    SetGameScissor()
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+--- The placed building covering world point (wx, wy), if any.
+function game:buildingAt(wx, wy)
+    for _, obj in ipairs(self.objects) do
+        if not obj.destroyed and obj.slot and obj.buildGrid and obj.isType and obj:isType("building") then
+            local grid = obj.buildGrid
+            for _, slot in ipairs(obj:getSlotsFromPattern(obj.slot)) do
+                local sx = grid.x + ((slot - 1) % grid.width) * grid.cellSize
+                local sy = grid.y + (math.ceil(slot / grid.width) - 1) * grid.cellSize
+                if wx >= sx and wx < sx + grid.cellSize and wy >= sy and wy < sy + grid.cellSize then
+                    return obj
+                end
+            end
+        end
+    end
+end
 
 function game:draw()
     local healthyboys = {} -- Temporary list for drawing overlays (health bars, etc.)
@@ -508,7 +546,7 @@ function game:draw()
         -- 2. Draw Title
         love.graphics.setColor(0, 0.85, 1.0, 1)
         local titleFont = love.graphics.getFont()
-        love.graphics.printf("MULLIGAN PHASE", 0, layout.cards[1].y - 70, Layout.W, "center")
+        love.graphics.printf("STARTING HAND", 0, layout.cards[1].y - 70, Layout.W, "center")
         love.graphics.setColor(0.7, 0.8, 0.9, 0.8)
         love.graphics.printf("Reroll up to 2 cards to optimize your starting hand.", 0, layout.cards[1].y - 40, Layout.W, "center")
         
@@ -671,7 +709,9 @@ end
 function game:interest()
     self:addTokens(math.floor(self.tokens * 0.1))
 end
-function game:waveComplete()
+--- End-of-wave upkeep. `battleOver` skips drawing the next hand: the battle
+--- has no next wave.
+function game:waveComplete(battleOver)
     -- Wave-Transition Economy (Token Reset, Mana Regen)
     self.tokens = self:getMaxTokens()
     self:addMana(self.manaRegenPerWave or 0)
@@ -684,7 +724,9 @@ function game:waveComplete()
     end
     
     -- Draw new cards for the next wave based on upgrade stats
-    self:drawCard(_G.PersistentState and _G.PersistentState.waveCompleteDrawSize or 4)
+    if not battleOver then
+        self:drawCard(_G.PersistentState and _G.PersistentState.waveCompleteDrawSize or 4)
+    end
     
     -- Trigger onWaveComplete for other objects (if any)
     for _, obj in ipairs(self.objects) do
@@ -783,8 +825,24 @@ function game:spawnDamageNumber(amount, x, y, damageType, effectiveness, damageT
     end
 end
 
+-- Message text centred on (x, y), drifting up. Unlike damage numbers it isn't
+-- jittered, so it starts exactly where it's aimed.
+local function messageText(text, x, y, color)
+    local t = DamageNumber:new(text, x, y, nil, color)
+    t.x, t.y, t.velX, t.centered = x, y, 0, true
+    return t
+end
+
+--- Message text at a world point.
 function game:spawnFloatingText(text, x, y, color)
-    table.insert(self.animations, DamageNumber:new(text, x, y, nil, color))
+    table.insert(self.animations, messageText(text, x, y, color))
+end
+
+--- Message text at a screen point (e.g. the mouse over the hand), drawn over the HUD.
+function game:spawnScreenText(text, x, y, color)
+    local t = messageText(text, x, y, color)
+    t.isUI = true
+    table.insert(self.animations, t)
 end
 
 function game:toggleDamageNumbers()
@@ -1066,7 +1124,7 @@ function game:drawCard(amount, spells)
     self[discardKey] = self[discardKey] or {}
     local drawn = 0
     for i = 1, amount do
-        if #self.hand >= 8 then
+        if #self.hand >= game.MAX_HAND_SIZE then
             self:spawnFloatingText("Hand is full!", 400, 300, {0.8, 0.2, 0.2, 1})
             break
         end
@@ -1086,7 +1144,6 @@ function game:drawCard(amount, spells)
                     drawPile[j], drawPile[r] = drawPile[r], drawPile[j]
                 end
 
-                self:spawnFloatingText(spells and "Spells Reshuffled!" or "Deck Reshuffled!", 400, 300, {0.4, 0.8, 1.0, 1})
             else
                 -- Both piles empty
                 break
@@ -1228,7 +1285,7 @@ function game:winBattle()
         _G.PersistentState.upcomingSummaries = {}
     end
 
-    self:waveComplete()
+    self:waveComplete(true)
 
     self.battleComplete = true
     self:clearGlobalBuffs()

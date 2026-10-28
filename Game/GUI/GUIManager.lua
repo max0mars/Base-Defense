@@ -1,5 +1,9 @@
 local HandUI = require("Game.GUI.HandUI")
 local Layout = require("Game.GUI.Layout")
+local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
+
+-- Battle artifact bar icons (fit inside the battlefield's top row)
+local ARTIFACT_ICON, ARTIFACT_GAP = 24, 6
 local TooltipManager = require("Game.GUI.TooltipManager")
 local ConfirmationUI = require("Game.GUI.ConfirmationUI")
 local GameText = require("Game.GUI.GameText")
@@ -210,6 +214,12 @@ function GUIManager:draw()
     -- bottom-right hover card).
     if self.infoColumn then self.infoColumn:draw() end
 
+    -- Owned artifacts along the top of the battlefield (enemies never use the top row)
+    local mx, my = love.mouse.getPosition()
+    local hoveredArtifact = ArtifactViewerUI.drawRow(Layout.field.x + 8, Layout.field.y + 3,
+        ARTIFACT_ICON, ARTIFACT_GAP, mx, my)
+    if self:overlayActive() then hoveredArtifact = nil end
+
     -- UI elements on top of masks
     self.hand:draw()
     self.mutation:draw()     -- Draw mutation screen
@@ -217,6 +227,8 @@ function GUIManager:draw()
     if self.itemPicker then self.itemPicker:draw() end
     if self.devSpawner then self.devSpawner:draw() end
     self.tooltips:draw()     -- Draw tips above everything
+    if self.infoColumn then self.infoColumn:drawHoverStats() end
+    if hoveredArtifact then ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my, true) end
     if self.codex then self.codex:draw() end -- Codex overlays everything
     if self.deckViewer then self.deckViewer:draw() end
 end
@@ -429,7 +441,7 @@ function GUIManager:drawHUD()
         local f = Layout.field
         local text = (#ih.editSelection > 0)
             and ("AIMING " .. #ih.editSelection .. " TURRET" .. (#ih.editSelection == 1 and "" or "S") .. "  -  CLICK TO SET  /  RIGHT-CLICK TO CANCEL")
-            or "EDIT MODE  -  DRAG TO SELECT TURRETS  /  Q TO EXIT"
+            or "EDIT MODE  -  DRAG TO SELECT TURRETS  /  A FOR ALL  /  Q TO EXIT"
         local font = love.graphics.getFont()
         local boxW, boxH = font:getWidth(text) + 32, 28
         local bx = f.x + (f.w - boxW) / 2

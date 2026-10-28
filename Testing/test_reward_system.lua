@@ -96,12 +96,11 @@ assert(foundS2, "Test spell 2 injected into rare tier successfully")
 -- 2. Test RewardPool
 local mockGame = {
     wave = 1,
-    shopLevel = 1,
     base = { hp = 100 }
 }
 
 local pool = RewardPool:new(RewardIndex, mockGame)
-local choices = pool:generateChoices(3, 1)
+local choices = pool:generateChoicesWithWeights(3, RewardPool.getCardDraftRarityWeights(1))
 
 assert(#choices == 3, "RewardPool generated exactly 3 choices")
 
@@ -113,11 +112,11 @@ for _, c in ipairs(choices) do
 end
 assert(unique, "Generated choices have no duplicates")
 
--- Test fallback mechanism (force luck to max so it requests legendary, but clear legendary)
+-- Test fallback mechanism (request only legendary, but clear legendary)
 local oldLegendary = RewardIndex.legendary
 RewardIndex.legendary = {}
 -- Generate again
-local highLuckChoices = pool:generateChoices(1, 10)
+local highLuckChoices = pool:generateChoicesWithWeights(1, { legendary = 100 })
 assert(#highLuckChoices == 1, "RewardPool fell back and found a lower tier reward when legendary was empty")
 RewardIndex.legendary = oldLegendary
 

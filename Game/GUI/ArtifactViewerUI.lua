@@ -105,10 +105,10 @@ local function drawGlyph(icon, cx, cy, s)
     end
 end
 
---- Neon badge for an artifact: rarity-coloured ring with the artifact's glyph.
+--- Neon badge for an artifact: a ring and glyph in the artifact's colour.
 function ArtifactViewerUI.drawIcon(def, cx, cy, radius)
     local r, g, b = unpack(def.color or { 1, 1, 1, 1 })
-    local ring = ArtifactManager.RARITY_COLORS[def.rarity] or ArtifactManager.RARITY_COLORS.common
+    local ring = def.color or { 1, 1, 1, 1 }
 
     love.graphics.push("all")
     love.graphics.setColor(0.06, 0.06, 0.09, 1)
@@ -125,10 +125,6 @@ function ArtifactViewerUI.drawIcon(def, cx, cy, radius)
     love.graphics.setColor(r, g, b, 1)
     drawGlyph(def.icon, cx, cy, radius * 0.55)
     love.graphics.pop()
-end
-
-local function rarityLabel(rarity)
-    return (rarity or "common"):upper()
 end
 
 -- -----------------------------------------------------------------------------
@@ -153,26 +149,31 @@ function ArtifactViewerUI:drawStrip(x, y, mx, my)
         return nil
     end
 
+    local hovered = ArtifactViewerUI.drawRow(x, y, STRIP_ICON, STRIP_GAP, mx, my)
+    if hovered then Cursor.wantHand = true end
+    return hovered
+end
+
+--- Owned artifacts as a row of `size`px icons from (x, y). Returns the hovered one.
+function ArtifactViewerUI.drawRow(x, y, size, gap, mx, my)
     local hovered
-    for i, def in ipairs(defs) do
-        local ix = x + (i - 1) * (STRIP_ICON + STRIP_GAP)
-        ArtifactViewerUI.drawIcon(def, ix + STRIP_ICON / 2, y + STRIP_ICON / 2, STRIP_ICON / 2)
-        if inRect(mx, my, { x = ix, y = y, w = STRIP_ICON, h = STRIP_ICON }) then
-            hovered = def
-            Cursor.wantHand = true
-        end
+    for i, def in ipairs(ArtifactManager.getOwnedDefinitions()) do
+        local ix = x + (i - 1) * (size + gap)
+        ArtifactViewerUI.drawIcon(def, ix + size / 2, y + size / 2, size / 2)
+        if inRect(mx, my, { x = ix, y = y, w = size, h = size }) then hovered = def end
     end
     return hovered
 end
 
---- Small floating card with an artifact's name, rarity and effect, near (mx, my).
-function ArtifactViewerUI.drawTooltip(def, mx, my)
+--- Small floating card with an artifact's name and effect, near (mx, my):
+--- above the cursor, or below it when `below` is set.
+function ArtifactViewerUI.drawTooltip(def, mx, my, below)
     local font = love.graphics.getFont()
     local w = 260
     local _, lines = font:getWrap(def.description, w - 20)
-    local h = 48 + #lines * font:getHeight()
+    local h = 32 + #lines * font:getHeight()
     local x = math.min(mx + 14, VIRTUAL_WIDTH - w - 6)
-    local y = math.max(6, my - h - 10)
+    local y = below and (my + 20) or math.max(6, my - h - 10)
 
     love.graphics.push("all")
     love.graphics.setColor(0.07, 0.07, 0.1, 0.96)
@@ -180,10 +181,8 @@ function ArtifactViewerUI.drawTooltip(def, mx, my)
     love.graphics.setColor(def.color)
     love.graphics.rectangle("line", x, y, w, h, 6)
     love.graphics.print(def.name, x + 10, y + 8)
-    love.graphics.setColor(ArtifactManager.RARITY_COLORS[def.rarity] or { 1, 1, 1, 1 })
-    love.graphics.print(rarityLabel(def.rarity), x + 10, y + 24)
     love.graphics.setColor(0.9, 0.9, 0.92, 1)
-    love.graphics.printf(def.description, x + 10, y + 42, w - 20, "left")
+    love.graphics.printf(def.description, x + 10, y + 26, w - 20, "left")
     love.graphics.pop()
 end
 
@@ -242,8 +241,6 @@ function ArtifactViewerUI:draw(mx, my)
         local textX, textW = tx + 68, tileW - 78
         love.graphics.setColor(def.color)
         love.graphics.print(def.name, textX, ty + 8)
-        love.graphics.setColor(ArtifactManager.RARITY_COLORS[def.rarity] or { 1, 1, 1, 1 })
-        love.graphics.printf(rarityLabel(def.rarity), textX, ty + 8, textW, "right")
         love.graphics.setColor(0.88, 0.88, 0.92, 1)
         love.graphics.printf(def.description, textX, ty + 8 + font:getHeight() + 6, textW, "left")
     end

@@ -8,7 +8,7 @@
 -- the thaw ends. Bosses (tier 5) need more stacks and freeze for less time.
 --
 -- Usage from a turret: hitEffects = { Chill.onHit({ amount = 1, chance = 0.3 }) }
--- Usage from code:     Chill.apply(enemy, amount)
+-- Usage from code:     Chill.apply(enemy, amount, { source = turret })
 
 local Chill = {
     SLOW_PER_STACK       = 0.10, -- each stack: speed x0.9 (partial stacks scale smoothly)
@@ -16,7 +16,7 @@ local Chill = {
     DECAY_DELAY          = 0.3, -- each application pauses decay for this long
     FREEZE_STACKS        = 5,
     BOSS_FREEZE_STACKS   = 10,
-    FREEZE_DURATION      = 1.5,
+    FREEZE_DURATION      = 2,
     BOSS_FREEZE_DURATION = 0.75,
     THAW_DURATION        = 1.5,
     THAW_SLOW            = 0.5,
@@ -72,8 +72,9 @@ end
 local FreezeState = {}
 FreezeState.__index = FreezeState
 
-function FreezeState:new(freezeDuration)
+function FreezeState:new(freezeDuration, frozenBy)
     return setmetatable({
+        frozenBy = frozenBy, -- whatever applied the freezing chill (credited for thaw damage)
         name = Chill.FREEZE_NAME,
         displayName = "Frozen",
         isDebuff = true,
@@ -190,19 +191,28 @@ function Chill.getApplyMultiplier(game)
 end
 
 --- Freezes a target outright, clearing its chill. Ignored while frozen or thawing.
+-- @param source any|nil: what froze it (a turret or its bullet), credited for thaw damage
 -- @return boolean true if the target was frozen
-function Chill.freeze(target)
+function Chill.freeze(target, source)
     local em = target and target.effectManager
     if not em or target.destroyed or em:getEffect(Chill.FREEZE_NAME) then return false end
     local state = em:getEffect(Chill.CHILL_NAME)
     if state then em:removeEffect(state) end
     local duration = Chill.isBoss(target) and Chill.BOSS_FREEZE_DURATION or Chill.FREEZE_DURATION
-    em:applyEffect(FreezeState:new(duration))
+    em:applyEffect(FreezeState:new(duration, source))
     return true
 end
 
+--- What froze the target (a turret or its bullet), or nil if it isn't frozen /
+--- thawing or nothing was credited (e.g. a spell).
+function Chill.getFreezer(target)
+    local state = target and target.effectManager and target.effectManager:getEffect(Chill.FREEZE_NAME)
+    return state and state.frozenBy
+end
+
 --- Adds chill stacks to a target. Ignored while frozen or thawing.
--- @param opts table|nil: cap = this application never raises chill above `cap` stacks
+-- @param opts table|nil: cap = this application never raises chill above `cap` stacks;
+--                       source = the turret (or its bullet) applying it, credited if it freezes
 -- @return boolean true if this application froze the target
 function Chill.apply(target, amount, opts)
     local em = target and target.effectManager
@@ -224,7 +234,7 @@ function Chill.apply(target, amount, opts)
     state.stacks = state.stacks + amount
     state.decayDelay = Chill.DECAY_DELAY
     if state.stacks >= Chill.getFreezeThreshold(target) then
-        return Chill.freeze(target)
+        return Chill.freeze(target, opts and opts.source)
     end
 
     state:refreshSlow()
@@ -286,7 +296,7 @@ end
 function ChillOnHit:trigger(target, source)
     if not target or not target.isType or not target:isType("enemy") then return end
     if self.hitChance < 1 and math.random() > self.hitChance then return end
-    Chill.apply(target, self:getAmount(source))
+    Chill.apply(target, self:getAmount(source), { source = source })
 end
 
 -- EffectManager:applyEffect routes independent effects through onApply.

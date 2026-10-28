@@ -42,15 +42,10 @@ end
 function IncomeFeedbackManager:triggerSequence()
     self.queue = {}
     self.timer = 0
-    
-    local game = self.game
-    
-    -- Queue simple feedback for Energy Refill
+
+    -- Energy refill chime (no text popup)
     self:queueFeedback(0.6, function()
         if AUDIO then AUDIO:playSFX("money_01") end
-        local cx = (VIRTUAL_WIDTH or 800) / 2
-        local cy = (VIRTUAL_HEIGHT or 600) / 2
-        game:spawnFloatingText("Energy Refilled", cx, cy - 20, {0.2, 0.9, 1.0, 1})
     end)
 end
 
