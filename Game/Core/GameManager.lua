@@ -889,6 +889,14 @@ function game:spawnScreenText(text, x, y, color)
     table.insert(self.animations, t)
 end
 
+-- Game speed: the -/+ buttons, the -/+ keys and Q/E step it between these
+game.SPEED_MIN, game.SPEED_MAX, game.SPEED_STEP = 0.5, 2, 0.5
+
+--- Steps the game speed down (direction -1) or up (+1).
+function game:changeSpeed(direction)
+    self.time_mul = math.max(self.SPEED_MIN, math.min(self.SPEED_MAX, self.time_mul + direction * self.SPEED_STEP))
+end
+
 function game:toggleDamageNumbers()
     self.showDamageNumbers = not self.showDamageNumbers
 end

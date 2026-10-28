@@ -135,8 +135,8 @@ game.inputMode = "idle"
 local ih = game.inputHandler
 ih:keypressed("a")
 assert(#ih.editSelection == 0, "A does nothing outside edit mode")
-ih:keypressed("q")
-assert(ih.editMode, "Q enters edit mode")
+ih:keypressed("lshift")
+assert(ih.editMode, "Shift enters build mode")
 ih:keypressed("a")
 local selected = {}
 for _, t in ipairs(ih.editSelection) do selected[t] = true end
@@ -149,19 +149,57 @@ ih:updateEditAim()
 assert(placed[1].firingArc.direction ~= before, "the group turns to the cursor")
 ih:keypressed("a")
 assert(placed[1].firingArc.direction == before and #ih.editSelection == 3, "pressing A again restores the aim and reselects all")
-ih:keypressed("q")
-assert(not ih.editMode, "Q leaves edit mode")
+ih:keypressed("lshift")
+assert(not ih.editMode, "Shift leaves build mode")
 
--- 7. Clicking a placed turret selects it without re-aiming it
+-- 7. Between waves, clicking a turret picks it up: its aim follows the mouse
+--    until the next click. During a wave, clicking one only selects it.
+local Layout = require("Game.GUI.Layout")
 game:setState("preparing")
 game.inputMode = "idle"
 local t1 = placed[1]
 local dirBefore = t1.firingArc.direction
-ih:selectBuilding(t1)
-love.mouse.getPosition = function() return 1200, 50 end
+local sx, sy = Layout.worldToScreen(t1:getCenterPosition())
+local function clickAt(x, y)
+    love.mouse.getPosition = function() return x, y end
+    ih:update(0.016)
+    ih:mousepressed(x, y, 1)
+    ih:mousereleased(x, y, 1)
+end
+clickAt(sx, sy)
+assert(ih.selectedBuilding == t1 and not ih.editMode, "Clicking a turret between waves selects it (no build mode needed)")
+local fx, fy = Layout.worldToScreen(t1.x + 200, t1.y - 150)
+love.mouse.getPosition = function() return fx, fy end
 ih:update(0.016)
-assert(ih.selectedBuilding == t1 and t1.firingArc.direction == dirBefore, "a selected turret keeps its aim while the mouse moves")
+local aimed = t1.firingArc.direction
+assert(aimed ~= dirBefore, "and its aim follows the mouse")
+ih:clearSelection() -- (what clicking elsewhere does)
+love.mouse.getPosition = function() return sx, sy + 200 end
+ih:update(0.016)
+assert(t1.firingArc.direction == aimed, "Once let go it keeps that aim")
+
+game:setState("wave")
+clickAt(sx, sy)
+assert(ih.selectedBuilding == t1, "During a wave a turret can still be clicked")
+love.mouse.getPosition = function() return fx, fy + 300 end
+ih:update(0.016)
+assert(t1.firingArc.direction == aimed, "but not re-aimed")
+game:setState("preparing")
+ih:update(0.016)
+assert(t1.firingArc.direction == aimed, "nor once the wave ends, while still selected from the wave")
 ih:clearSelection()
+dirBefore = aimed
+
+-- Q and E change the game speed (0.5x to 2x)
+local game_scene = require("Scenes.game_scene")
+game.time_mul = 1
+game_scene:keypressed("e")
+assert(game.time_mul == 1.5, "E speeds the game up")
+game_scene:keypressed("e"); game_scene:keypressed("e")
+assert(game.time_mul == 2, "up to 2x")
+game_scene:keypressed("q"); game_scene:keypressed("q"); game_scene:keypressed("q"); game_scene:keypressed("q")
+assert(game.time_mul == 0.5, "Q slows it down, to 0.5x at the least")
+game.time_mul = 1
 -- ...but a turret that was just placed is aimed by the mouse until the click
 game.inputMode = "aiming"
 ih:selectBuilding(t1)

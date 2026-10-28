@@ -336,13 +336,6 @@ function game_scene:keypressed(key)
         return
     end
 
-    -- Testing debug command: Shift + Z instantly wins the battle
-    if (key == "z" or key == "Z") and (love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")) then
-        paused = 0
-        game:winBattle()
-        return
-    end
-
     -- An open enemy entry captures keys (Esc closes it) before the pause menu.
     if game.gui.enemyEntry and game.gui.enemyEntry.isActive then
         game.gui.enemyEntry:keypressed(key)
@@ -357,10 +350,10 @@ function game_scene:keypressed(key)
 
     if paused == 1 then return end -- ignore gameplay keys while paused
 
-    if key == "+" or key == "=" then
-        game.time_mul = math.min(game.time_mul + 0.5, 2) -- Increase time multiplier up to 2x
-    elseif key == "-" then
-        game.time_mul = math.max(game.time_mul - 0.5, 0.5) -- Decrease time multiplier down to 0.5x
+    if key == "+" or key == "=" or key == "e" then
+        game:changeSpeed(1)
+    elseif key == "-" or key == "q" then
+        game:changeSpeed(-1)
     else
         if game.inputHandler and game.inputHandler.keypressed then
             game.inputHandler:keypressed(key) -- Route through InputHandler

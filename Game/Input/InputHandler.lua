@@ -236,10 +236,15 @@ function InputHandler:update(dt)
         self:handleBuildingHover()
     end
     
-    -- A just-placed turret's firing arc follows the mouse until the click that
-    -- sets it. Clicking an existing turret only selects it; re-aiming turrets
-    -- is done in edit mode.
-    if game.inputMode == "aiming" and self.selectedBuilding and self.selectedBuilding.firingArc then
+    -- The selected turret's firing arc follows the mouse: a just-placed turret
+    -- until the click that sets it, and between waves any turret clicked on
+    -- (until the next click). During a wave, turrets keep their aim, and one
+    -- clicked during a wave isn't re-aimed once it ends. Edit mode aims groups
+    -- of turrets instead; the main turret aims at the cursor itself.
+    local selected = self.selectedBuilding
+    local reAiming = self.reAimSelected and self:isEditPhase() and not self.editMode
+    if (game.inputMode == "aiming" or reAiming) and selected and selected.firingArc
+       and not selected:isType("mainturret") then
         local cx, cy = self.selectedBuilding:getCenterPosition()
         local dx = self.mouseX - cx
         local dy = self.mouseY - cy
@@ -804,6 +809,8 @@ function InputHandler:mousepressed(x, y, button)
 
         if selected then
             self:selectBuilding(selected)
+            -- Between waves, clicking a turret picks it up to re-aim (see update)
+            self.reAimSelected = self:isEditPhase()
             clickedOnBuilding = true
         else
             -- No building under the cursor: focus a hovered enemy instead, so it
@@ -875,6 +882,7 @@ function InputHandler:clearSelection()
     end
 
     self.selectedEnemy = nil
+    self.reAimSelected = false
 
     -- Clear buff hover visualization
     self.game.base.buffHoverSlots = nil
@@ -963,7 +971,7 @@ function InputHandler:keypressed(key)
         if game.mainLazer then
             game.mainLazer.autofire = not game.mainLazer.autofire
         end
-    elseif key == "q" then
+    elseif key == "lshift" or key == "rshift" then
         self:toggleEditMode()
     elseif key == "a" and self.editMode then
         self:selectAllEditTurrets()

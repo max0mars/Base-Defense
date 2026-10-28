@@ -117,9 +117,9 @@ function GUIManager:new(game)
         autoFireButton   = { x = Layout.W - 188, y = Layout.tray.y + 16, w = 180, h = 24 },
         dmgNumsButton    = { x = Layout.W - 188, y = Layout.tray.y + 44, w = 180, h = 24 },
 
-        speedMinusButton = { x = Layout.W - 188, y = Layout.tray.y + 72, w = 24, h = 24 },
-        speedPanel       = { x = Layout.W - 188 + 28, y = Layout.tray.y + 72, w = 120, h = 24 },
-        speedPlusButton  = { x = Layout.W - 188 + 156, y = Layout.tray.y + 72, w = 24, h = 24 },
+        speedMinusButton = { x = Layout.W - 188, y = Layout.tray.y + 72, w = 50, h = 24 },
+        speedPanel       = { x = Layout.W - 188 + 50, y = Layout.tray.y + 72, w = 80, h = 24 },
+        speedPlusButton  = { x = Layout.W - 188 + 130, y = Layout.tray.y + 72, w = 50, h = 24 },
         editModeButton   = { x = Layout.W - 188, y = Layout.tray.y + 100, w = 180, h = 24 },
         
         mutation = MutationUI:new(game),
@@ -359,17 +359,17 @@ function GUIManager:drawHUD()
                          my >= self.dmgNumsButton.y and my <= self.dmgNumsButton.y + self.dmgNumsButton.h
 
     local autofireEnabled = game.mainLazer and game.mainLazer.autofire or false
-    drawToggle(self.autoFireButton, "AUTO-FIRE", autofireEnabled, hoverAutoFire, pulse * 0.4)
-    drawToggle(self.dmgNumsButton, "DMG NUMS", game.showDamageNumbers, hoverDmgNums, pulse * 0.4)
+    drawToggle(self.autoFireButton, "AUTO-FIRE (TAB)", autofireEnabled, hoverAutoFire, pulse * 0.4)
+    drawToggle(self.dmgNumsButton, "DMG NUMS (0)", game.showDamageNumbers, hoverDmgNums, pulse * 0.4)
 
     local ih = game.inputHandler
     local canEdit = ih and ih:canEdit()
     local hoverEdit = canEdit and mx >= self.editModeButton.x and mx <= self.editModeButton.x + self.editModeButton.w and
                       my >= self.editModeButton.y and my <= self.editModeButton.y + self.editModeButton.h
-    drawToggle(self.editModeButton, "EDIT MODE (Q)", ih and ih.editMode, hoverEdit, pulse * 0.4, not canEdit)
+    drawToggle(self.editModeButton, "BUILD MODE (SHIFT)", ih and ih.editMode, hoverEdit, pulse * 0.4, not canEdit)
 
     -- ==========================================
-    -- TOP STRIP: Speed control  ( -  >>  + ), borderless
+    -- Speed control  ( (Q) -   1.5x   + (E) ), borderless
     -- ==========================================
     local hoverSpeedMinus = mx >= self.speedMinusButton.x and mx <= self.speedMinusButton.x + self.speedMinusButton.w and
                             my >= self.speedMinusButton.y and my <= self.speedMinusButton.y + self.speedMinusButton.h
@@ -378,20 +378,21 @@ function GUIManager:drawHUD()
 
     love.graphics.push("all")
 
-    -- Minus / Plus glyphs (brighten on hover).
-    if hoverSpeedMinus then love.graphics.setColor(0.0, 0.9, 1.0, 1) else love.graphics.setColor(0.7, 0.78, 0.88, 0.9) end
-    love.graphics.printf("-", self.speedMinusButton.x, self.speedMinusButton.y + 5, self.speedMinusButton.w, "center")
-    if hoverSpeedPlus then love.graphics.setColor(0.0, 0.9, 1.0, 1) else love.graphics.setColor(0.7, 0.78, 0.88, 0.9) end
-    love.graphics.printf("+", self.speedPlusButton.x, self.speedPlusButton.y + 5, self.speedPlusButton.w, "center")
+    -- Minus / Plus glyphs (brighten on hover), with their keys beside them.
+    local function speedButton(btn, label, hovered)
+        if hovered then love.graphics.setColor(0.0, 0.9, 1.0, 1) else love.graphics.setColor(0.7, 0.78, 0.88, 0.9) end
+        love.graphics.printf(label, btn.x, btn.y + 5, btn.w, "center")
+    end
+    speedButton(self.speedMinusButton, "(Q)  -", hoverSpeedMinus)
+    speedButton(self.speedPlusButton, "+  (E)", hoverSpeedPlus)
 
-    -- Speed chevrons: 1x ">", 1.5x ">>", 2x ">>>"; 0.5x is a single orange ">".
+    -- The speed itself (0.5x, 1x, 1.5x, 2x): orange when slowed, green at top speed.
     local m = game.time_mul
     local glyph, gr, gg, gb
-    if m == 0 then          glyph, gr, gg, gb = "II",  1.0, 0.2, 0.2   -- paused
-    elseif m <= 0.5 then    glyph, gr, gg, gb = ">",   1.0, 0.6, 0.1   -- slow (orange)
-    elseif m < 1.25 then    glyph, gr, gg, gb = ">",   0.0, 0.9, 1.0   -- 1x
-    elseif m < 1.75 then    glyph, gr, gg, gb = ">>",  0.0, 0.9, 1.0   -- 1.5x
-    else                    glyph, gr, gg, gb = ">>>", 0.2, 1.0, 0.4   -- 2x
+    if m == 0 then          glyph, gr, gg, gb = "PAUSED", 1.0, 0.2, 0.2
+    elseif m < 1 then       glyph, gr, gg, gb = string.format("%gx", m), 1.0, 0.6, 0.1
+    elseif m < 2 then       glyph, gr, gg, gb = string.format("%gx", m), 0.0, 0.9, 1.0
+    else                    glyph, gr, gg, gb = string.format("%gx", m), 0.2, 1.0, 0.4
     end
     love.graphics.setColor(gr, gg, gb, 0.9 + pulse * 0.1)
     love.graphics.printf(glyph, self.speedPanel.x, self.speedPanel.y + 5, self.speedPanel.w, "center")
@@ -417,7 +418,7 @@ function GUIManager:drawHUD()
         local f = Layout.field
         local text = (#ih.editSelection > 0)
             and ("AIMING " .. #ih.editSelection .. " TURRET" .. (#ih.editSelection == 1 and "" or "S") .. "  -  CLICK TO SET  /  RIGHT-CLICK TO CANCEL")
-            or "EDIT MODE  -  DRAG TO SELECT TURRETS  /  A FOR ALL  /  Q TO EXIT"
+            or "BUILD MODE  -  DRAG TO SELECT TURRETS  /  A FOR ALL  /  SHIFT TO EXIT"
         local font = love.graphics.getFont()
         local boxW, boxH = font:getWidth(text) + 32, 28
         local bx = f.x + (f.w - boxW) / 2
@@ -549,14 +550,14 @@ function GUIManager:mousepressed(x, y, button)
         -- Check Speed Minus Button
         if x >= self.speedMinusButton.x and x <= self.speedMinusButton.x + self.speedMinusButton.w and
            y >= self.speedMinusButton.y and y <= self.speedMinusButton.y + self.speedMinusButton.h then
-            self.game.time_mul = math.max(self.game.time_mul - 0.5, 0.5)
+            self.game:changeSpeed(-1)
             return true
         end
 
         -- Check Speed Plus Button
         if x >= self.speedPlusButton.x and x <= self.speedPlusButton.x + self.speedPlusButton.w and
            y >= self.speedPlusButton.y and y <= self.speedPlusButton.y + self.speedPlusButton.h then
-            self.game.time_mul = math.min(self.game.time_mul + 0.5, 2.0)
+            self.game:changeSpeed(1)
             return true
         end
 
