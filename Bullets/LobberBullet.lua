@@ -27,10 +27,20 @@ function LobberBullet:new(config)
     b.v_z = 0
     b.explodeOnGroundOnly = config.explodeOnGroundOnly
     
+    -- No landing point given: land along its heading at the firing turret's
+    -- range (rather than dropping straight down at the muzzle)
+    local targetX, targetY = config.targetX, config.targetY
+    if not (targetX and targetY) and config.angle then
+        local source = config.source
+        local dist = (source and source.getStat and source:getStat("range")) or 200
+        targetX = b.x + math.cos(config.angle) * dist
+        targetY = b.y + math.sin(config.angle) * dist
+    end
+
     -- Calculate vertical and horizontal components for a fixed peak height
-    if config.targetX and config.targetY then
-        local dx = config.targetX - b.x
-        local dy = config.targetY - b.y
+    if targetX and targetY then
+        local dx = targetX - b.x
+        local dy = targetY - b.y
         local dist = math.sqrt(dx*dx + dy*dy)
         
         b.v_z = math.sqrt(2 * self.GRAVITY * self.MAX_HEIGHT)

@@ -144,6 +144,9 @@ function Turret:fire(args)
 
     local currentSpread = self:getStat("spread") or 0
     local offset = love.math.random() * currentSpread * 2 - currentSpread
+    if args and args.targetX and args.targetY then
+        self.lastAimX, self.lastAimY = args.targetX, args.targetY
+    end
     local x, y
     -- Use provided position or default to fire point
     if args and args.fireX and args.fireY then
@@ -303,7 +306,9 @@ function Turret:update(dt)
                 self:lookAt(tx, ty, dt)
                 self:fire({targetX = tx, targetY = ty, isBurst = true})
             else
-                self:fire({isBurst = true})
+                -- Target gone mid-burst: finish the burst at the last spot aimed at
+                -- (lobbed shells need a landing point, or they drop at the muzzle)
+                self:fire({targetX = self.lastAimX, targetY = self.lastAimY, isBurst = true})
             end
             
             self.burstsRemaining = self.burstsRemaining - 1

@@ -184,8 +184,7 @@ function RewardSystem:draw()
         local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local cardY = self.startY
         local isHovered = (mx >= cardX and mx <= cardX + self.cardWidth and my >= cardY and my <= cardY + self.cardHeight)
-        local isSelected = (i == self.selectedIndex) or isHovered
-        card:draw(isSelected)
+        card:draw(isHovered) -- only the hovered card is highlighted
     end
 
     -- Draw skip button (card draft) or reroll button (standard mid-battle upgrade mode)

@@ -113,14 +113,30 @@ function Neon.button(btn, state)
 end
 
 --- Glowing title text (it opts in to the glow that other text is kept out of).
+-- Title fonts by size: rasterised at the screen's real resolution, so big
+-- titles stay sharp instead of being a small font stretched up
+local titleFonts = {}
+local function titleFont(size)
+    local pw, ph = love.graphics.getPixelDimensions()
+    local dpi = (pw and ph and VIRTUAL_WIDTH) and math.max(1, math.min(pw / VIRTUAL_WIDTH, ph / VIRTUAL_HEIGHT)) or 1
+    local key = size .. "@" .. string.format("%.2f", dpi)
+    if not titleFonts[key] then
+        titleFonts[key] = love.graphics.newFont(size, "normal", dpi)
+    end
+    return titleFonts[key]
+end
+
+Neon.TITLE_BASE_SIZE = 12 -- LÖVE's default font size; title scales are relative to it
+
+--- A glowing title, `scale` times the size of the default font.
 function Neon.title(text, x, y, w, align, color, scale)
     scale = scale or 1
+    local size = math.floor(Neon.TITLE_BASE_SIZE * scale + 0.5)
     love.graphics.push("all")
-    love.graphics.translate(x, y)
-    love.graphics.scale(scale, scale)
+    love.graphics.setFont(titleFont(size))
     Glow.emissive(function()
         love.graphics.setColor(color[1], color[2], color[3], 1)
-        love.graphics.printf(text, 0, 0, w / scale, align or "center")
+        love.graphics.printf(text, x, y, w, align or "center")
     end)
     love.graphics.pop()
 end
