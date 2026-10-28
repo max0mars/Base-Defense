@@ -132,7 +132,7 @@ actions.f10 = function(game)
     if game.gui and game.gui.devSpawner then game.gui.devSpawner:clearQueue() end
     local killed = 0
     for _, obj in ipairs(game.objects) do
-        if not obj.destroyed and obj.isType and obj:isType("enemy") then
+        if not obj.destroyed and obj.isType and (obj:isType("enemy") or obj.untargetable) then
             obj:died()
             killed = killed + 1
         end

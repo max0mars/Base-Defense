@@ -82,7 +82,8 @@ function WaveSpawner:update(dt)
                 -- Check if all enemies are defeated
                 local enemiesAlive = 0
                 for _, obj in ipairs(self.game.objects) do
-                    if obj:isType("enemy") and not obj.destroyed then
+                    -- (a blinking Phantom is still alive)
+                    if (obj:isType("enemy") or obj.untargetable) and not obj.destroyed then
                         enemiesAlive = enemiesAlive + 1
                     end
                 end

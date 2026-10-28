@@ -2,6 +2,7 @@ local living_object = require("Classes.living_object")
 local DamageTypes = require("Classes.DamageTypes")
 local Navigators = require("Physics.Navigators")
 local Chill = require("Game.Effects.StatusEffects.Chill")
+local Zombie = require("Enemies.Zombie")
 local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
 
@@ -150,10 +151,20 @@ Enemy.PORTAL_TIME = 0.22 -- seconds to shrink away, and again to grow back
 Enemy.SPREAD_TIME = 0.3 -- seconds split-off children take to spread apart
 Enemy.PULSE_TIME = 0.2 -- seconds of one pulse
 Enemy.GLINT_TIME = 0.5 -- seconds of a shine after being cleansed
+Enemy.RISE_TIME = 0.45 -- seconds a raised zombie takes to grow back to full size
 Enemy.SHIELD_COLOR = { 0.25, 0.55, 1.0 } -- shield brackets (matches the Guardian that grants it)
 Enemy.SHIELD_HIT_TIME = 0.25 -- seconds the shield brackets pulse after a hit
 
 local GROUND_SHAPES = { rectangle = true, soldier = true, tank = true }
+
+--- While `untargetable` (a blinking Phantom) it doesn't count as an enemy, so
+--- turrets, bullets, area damage and other enemies' abilities all pass it by.
+--- Code that must still see it (wave completion, clearing the field) checks the
+--- flag itself.
+function Enemy:isType(typeName)
+    if typeName == "enemy" and self.untargetable then return false end
+    return self.types ~= nil and self.types[typeName] == true
+end
 
 --- Square-bodied enemies walk on the ground; every other shape floats.
 function Enemy:isGrounded()
@@ -162,7 +173,7 @@ end
 
 --- True while an animation holds the enemy in place.
 function Enemy:isHalted()
-    return self.portal ~= nil or self.spread ~= nil
+    return self.portal ~= nil or self.spread ~= nil or self.rise ~= nil
 end
 
 --- Vertical bob of a floating enemy (0 for grounded ones).
@@ -219,6 +230,10 @@ function Enemy:updateMotionFx(dt)
         self.pulse = self.pulse + dt
         if self.pulse >= Enemy.PULSE_TIME then self.pulse = nil end
     end
+    if self.rise then
+        self.rise = self.rise + dt
+        if self.rise >= Enemy.RISE_TIME then self.rise = nil end
+    end
     if self.glint then
         self.glint = self.glint + dt
         if self.glint >= Enemy.GLINT_TIME then self.glint = nil end
@@ -241,6 +256,8 @@ end
 
 function Enemy:startPulse() self.pulse = 0 end
 function Enemy:startGlint() self.glint = 0 end
+--- Grows up from nothing where it stands (a zombie being raised), holding still meanwhile.
+function Enemy:startRise() self.rise = 0 end
 
 --- Draw scale from the running animations (1 when none).
 function Enemy:getFxScale()
@@ -252,6 +269,10 @@ function Enemy:getFxScale()
     end
     if self.spread then
         scale = scale * (0.7 + 0.3 * (self.spread.t / Enemy.SPREAD_TIME))
+    end
+    if self.rise then
+        local p = math.min(1, self.rise / Enemy.RISE_TIME)
+        scale = scale * (1 - (1 - p) * (1 - p))
     end
     if self.pulse then
         scale = scale * (1 + 0.22 * math.sin(math.pi * self.pulse / Enemy.PULSE_TIME))
@@ -637,8 +658,10 @@ Enemy.EMPTY_ALPHA = 0.08 -- missing HP
 Enemy.HP_ALPHA = 0.32 -- remaining HP, dim enough not to glow
 
 --- Draws an outline as a neon tube: drawShape() is called twice, first in the
---- colour at `width`, then as a thinner near-white core.
+--- colour at `width`, then as a thinner near-white core. Zombies get the
+--- Reanimator's green outline instead.
 function Enemy:drawNeonOutline(color, width, drawShape)
+    if self.isZombie then color = Zombie.COLOR end
     local r, g, b = color[1], color[2], color[3]
     love.graphics.setColor(r, g, b, 1)
     love.graphics.setLineWidth(width)

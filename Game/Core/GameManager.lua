@@ -123,6 +123,7 @@ function game:load(saveData, isTesting)
         -- Initialize Game State
         self.state        = "mulligan" -- States: "mulligan", "startup", "preparing", "wave", "gameover"
         self.objects      = {}        -- Entity master list
+        self.corpses      = {}        -- Recent deaths a Reanimator can raise (recordCorpse)
         self.score        = 0
         self.xp           = 0
         self.mulliganSkipsUsed = 0
@@ -346,6 +347,7 @@ function game:update(dt)
     self.WaveSpawner:update(dt)
     self.playerEffectManager:update(dt)
     self.enemyEffectManager:update(dt)
+    self:updateCorpses(dt)
 
     -- Entity Updates
     for _, obj in ipairs(self.objects) do
@@ -813,12 +815,50 @@ end
 function game:EnemyDied(enemy)
     self:addXP(enemy.reward)
     self:spawnParticleExplosion(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
+    self:recordCorpse(enemy)
     -- Drain this enemy's slot from the in-progress wave panel (with a flash).
-    if self.WaveSpawner and self.WaveSpawner.notifyEnemyKilled then
+    -- Raised zombies were already counted the first time they died.
+    if not enemy.isZombie and self.WaveSpawner and self.WaveSpawner.notifyEnemyKilled then
         self.WaveSpawner:notifyEnemyKilled(enemy)
     end
     if self.artifacts and not enemy.reachedBase then
         self.artifacts:trigger("onEnemyKilled", enemy, enemy.killingBlow)
+    end
+end
+
+-- Enemies killed in battle leave a corpse for CORPSE_LIFETIME seconds that a
+-- Reanimator can raise. Zombies, bosses and enemies that reached the base leave none.
+game.CORPSE_LIFETIME = 10
+game.MAX_CORPSES = 150
+
+function game:recordCorpse(enemy)
+    if enemy.reachedBase or enemy.isZombie or (enemy.tier or 0) >= 5 then return end
+    local id = enemy.enemyId or enemy.name
+    if not id then return end
+    self.corpses = self.corpses or {}
+    table.insert(self.corpses, {
+        id = id, x = enemy.x, y = enemy.y, tier = enemy.tier or 0, age = 0,
+        -- A Slime comes back as the same generation (size, health, splits left) it died as
+        overrides = enemy.generation and {
+            generation = enemy.generation, maxHp = enemy.maxHp, size = enemy.size,
+            damage = enemy.damage, speed = enemy.speed,
+        } or nil,
+    })
+    if #self.corpses > self.MAX_CORPSES then table.remove(self.corpses, 1) end
+end
+
+function game:updateCorpses(dt)
+    local corpses = self.corpses or {}
+    for i = #corpses, 1, -1 do
+        corpses[i].age = corpses[i].age + dt
+        if corpses[i].age >= self.CORPSE_LIFETIME then table.remove(corpses, i) end
+    end
+end
+
+--- Removes a corpse once it has been raised.
+function game:takeCorpse(corpse)
+    for i, c in ipairs(self.corpses or {}) do
+        if c == corpse then table.remove(self.corpses, i); return end
     end
 end
 
@@ -1109,6 +1149,7 @@ end
 --- hand for a hand drawn from the spell deck.
 function game:startWave(customWaveList)
     self:recalculateAllBuffs() -- Recalculate all buffs before wave starts
+    self.corpses = {}
     if customWaveList then
         self.WaveSpawner:startCustomWave(customWaveList)
     else
@@ -1273,7 +1314,7 @@ function game:winBattle()
     -- Clear all enemies and enemy bullets
     for i = #self.objects, 1, -1 do
         local obj = self.objects[i]
-        if obj.isType and (obj:isType("enemy") or (obj:isType("bullet") and obj.targetType == "building")) then
+        if obj.isType and (obj:isType("enemy") or obj.untargetable or (obj:isType("bullet") and obj.targetType == "building")) then
             obj.destroyed = true
             table.remove(self.objects, i)
         end

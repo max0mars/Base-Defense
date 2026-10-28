@@ -298,7 +298,7 @@ function Turret:update(dt)
     if (self.burstsRemaining or 0) > 0 then
         self.burstTimer = self.burstTimer - dt
         if self.burstTimer <= 0 then
-            if self.target and not self.target.destroyed then
+            if self.target and not self.target.destroyed and not self.target.untargetable then
                 local tx, ty = self:getTargetLeadPosition()
                 self:lookAt(tx, ty, dt)
                 self:fire({targetX = tx, targetY = ty, isBurst = true})
@@ -535,8 +535,8 @@ function Turret:drawArcSector(x, y, innerRadius, outerRadius, startAngle, endAng
 end
 
 function Turret:getTarget()
-    if self.target and self.target.destroyed then
-        self.target = nil -- Reset target if it is destroyed
+    if self.target and (self.target.destroyed or self.target.untargetable) then
+        self.target = nil -- Reset target if it is destroyed (or has blinked out)
     elseif self.target then
         return self.target -- Return the current target if it is still valid
     end-- If we already have a target, no need to search again
@@ -581,7 +581,7 @@ function Turret:getTargetArc()
 end
 
 function Turret:isInFiringArc(target)
-    if not target then return false end
+    if not target or target.untargetable then return false end
     
     local dx = target.x - self.x
     local dy = target.y - self.y

@@ -1,4 +1,5 @@
 local Enemy = require("Enemies.Enemy")
+local Zombie = require("Enemies.Zombie")
 local Duplicator = setmetatable({}, {__index = Enemy})
 Duplicator.__index = Duplicator
 
@@ -91,7 +92,7 @@ function Duplicator:died()
             -- Find all enemies in radius and heal them
             if self.game and self.game.objects then
                 for _, obj in ipairs(self.game.objects) do
-                    if obj.isType and obj:isType("enemy") and not obj.destroyed and obj ~= self then
+                    if obj.isType and obj:isType("enemy") and not obj.destroyed and obj ~= self and not obj.isZombie then
                         local dx = obj.x - self.x
                         local dy = obj.y - self.y
                         if (dx*dx + dy*dy) <= healRadiusSq then
@@ -166,6 +167,8 @@ function Duplicator:died()
                 -- Interface with existing logic: Apply current active mutations from EnemyRegistry
                 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
                 EnemyRegistry:applyActiveMutations(childInstance)
+                -- A zombie Slime splits into zombies
+                if self.isZombie then Zombie.apply(childInstance) end
                 
                 local angle = baseAngle + (i - 1) * math.pi * 2 / numClones
                 childInstance:startSpread(self.x + math.cos(angle) * spreadDist, self.y + math.sin(angle) * spreadDist)

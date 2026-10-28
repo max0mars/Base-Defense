@@ -1,7 +1,7 @@
 -- Testing/test_tier3_templates.lua
--- Templates can ask for tier 3 enemies before any exist: the tier 3 slots stay
--- empty and the wave budget goes to the template's other tiers. Once a tier 3
--- enemy exists, those templates field it.
+-- Templates that ask for tier 3 enemies: with none available the tier 3 slots
+-- stay empty and the wave budget goes to the template's other tiers (tested by
+-- hiding the tier 3 enemies); with them, those templates field them.
 
 package.path = package.path .. ";./?.lua"
 local noop = function() end
@@ -45,9 +45,14 @@ end
 table.sort(tier3Templates)
 assert(#tier3Templates >= 6, "There are tier 3 templates (" .. #tier3Templates .. ")")
 
-local noTier3 = true
-for _, e in ipairs(EnemyRegistry.allEnemies) do if e.tier == 3 then noTier3 = false end end
-assert(noTier3, "No tier 3 enemies exist yet (this test covers the empty case first)")
+-- Hide the tier 3 enemies to test the empty case first
+local hidden = {}
+for i = #EnemyRegistry.allEnemies, 1, -1 do
+    if EnemyRegistry.allEnemies[i].tier == 3 then
+        table.insert(hidden, table.remove(EnemyRegistry.allEnemies, i))
+    end
+end
+assert(#hidden > 0, "There are tier 3 enemies to hide (" .. #hidden .. ")")
 
 -- 2. With no tier 3 enemies: no tier 3 in the roster, and every wave spends its budget elsewhere
 local wd = WaveDirector:new({})
@@ -91,17 +96,8 @@ local spent = 0
 for _, s in ipairs(summary) do spent = spent + s.count * s.spawnCost end
 assert(spent > 500 * WaveDirector.FILLER_BUDGET_SHARE, "and the escort gets the whole budget, not just the filler share")
 
--- 4. Once a tier 3 enemy exists, the templates field it
-local heavy
-for _, e in ipairs(EnemyRegistry.allEnemies) do
-    if e.id == "Captain" then
-        heavy = {}
-        for k, v in pairs(e) do heavy[k] = v end
-    end
-end
-heavy.id, heavy.type, heavy.tier, heavy.spawnCost = "TestHeavy", "TestHeavy", 3, 60
-table.insert(EnemyRegistry.allEnemies, heavy)
-quiet(function() EnemyRegistry:discoverEnemy("TestHeavy") end)
+-- 4. With the tier 3 enemies back, the templates field them
+for _, e in ipairs(hidden) do table.insert(EnemyRegistry.allEnemies, e) end
 
 local fielded = true
 for _, id in ipairs(tier3Templates) do
@@ -117,7 +113,7 @@ local _, heavySummary = quiet(function()
     return wd:generateWaveList(8, bd:buildBattleRoster(juggernaut), juggernaut, 500, false, 1)
 end)
 local heavyCount = 0
-for _, s in ipairs(heavySummary) do if s.id == "TestHeavy" then heavyCount = s.count end end
+for _, s in ipairs(heavySummary) do if hasTier(s.id, 3) then heavyCount = heavyCount + s.count end end
 assert(heavyCount > 0, "and it spawns in the waves")
 assert(hasTier("Grunt", 0), "Sanity: registry lookups still work")
 

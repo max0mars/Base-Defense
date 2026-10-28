@@ -245,6 +245,40 @@ local EnemyIndex = {
         mutations = {}
     },
     {
+        id = "Reanimator",
+        type = "Reanimator",
+        class = require("Enemies.Reanimator"),
+        tier = 3,
+        spawnCost = 60,
+        spawnWeight = 0.4,
+        maxHp = 250,
+        damage = 15,
+        speed = 20,
+        color = {0.65, 1, 0.15, 1}, -- Toxic Green
+        shape = "diamond", -- a tall, narrow one (Reanimator:drawCustomShape)
+        size = 24,
+        types = { enemy = true, green = true, support = true, reanimator = true },
+        baseSpawnDelay = 1.2,
+        description = "A sturdy, slow necromancer that keeps raising enemies that recently fell around it as zombies. It has to channel first, and stunning or freezing it then breaks the spell. Zombies keep all their abilities but come back at half health and can't be healed.",
+    },
+    {
+        id = "Phantom",
+        type = "Phantom",
+        class = require("Enemies.Phantom"),
+        tier = 3,
+        spawnCost = 55,
+        spawnWeight = 0.4,
+        maxHp = 150,
+        damage = 20,
+        speed = 55,
+        color = {1, 0.95, 0.35, 1}, -- Pale Yellow
+        shape = "arrow",
+        size = 28,
+        types = { enemy = true, yellow = true, phantom = true },
+        baseSpawnDelay = 0.8,
+        description = "A fast, elusive arrow that blinks away when hit, vanishing for a moment and reappearing further up or down the field. It can't be targeted while it's gone, and needs a short rest before it can blink again.",
+    },
+    {
         id = "Tank",
         type = "Tank",
         class = require("Enemies.Tank"),

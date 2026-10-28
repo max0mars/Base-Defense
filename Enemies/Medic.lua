@@ -58,8 +58,9 @@ function Medic:update(dt)
     if #self.attachedTargets < self.targets then
         local candidates = {}
         for _, obj in ipairs(self.game.objects) do
+            -- Zombies can't be healed, so it doesn't latch onto them
             if obj.isType and obj:isType("enemy") and obj ~= self and not obj.destroyed and not obj.isDead
-               and obj.hp and obj.maxHp and obj.hp < obj.maxHp then
+               and not obj.isZombie and obj.hp and obj.maxHp and obj.hp < obj.maxHp then
                 -- Check if already attached
                 local alreadyAttached = false
                 for _, attached in ipairs(self.attachedTargets) do

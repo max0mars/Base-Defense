@@ -11,6 +11,7 @@
 local EnemyIndex = require("Game.Spawning.EnemyIndex")
 local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
 local Chill = require("Game.Effects.StatusEffects.Chill")
+local Zombie = require("Enemies.Zombie")
 local Layout = require("Game.GUI.Layout")
 
 local EnemyDemo = {}
@@ -201,7 +202,7 @@ function EnemyDemo:updateEffects(dt)
         local dx, dy = tx - b.x, ty - b.y
         local d = math.sqrt(dx * dx + dy * dy)
         local step = b.speed * dt
-        if b.target.demoDead or (b.toTurret and not self.turret) then
+        if b.target.demoDead or b.target.untargetable or (b.toTurret and not self.turret) then
             table.remove(self.bullets, i)
         elseif d <= step then
             table.remove(self.bullets, i)
@@ -597,6 +598,88 @@ scripts.Slime = {
         end
     end,
     isDone = function(demo) return #demo:alive() == 0 and #demo.texts == 0 end,
+}
+
+-- Reanimator: the turret drops the Grunts walking ahead of it, then it channels,
+-- slams the ground and raises them as half-health zombies (which the turret then
+-- ignores, to keep it short)
+scripts.Reanimator = {
+    setup = function(demo)
+        local r = demo:spawnStar()
+        for i, dy in ipairs({ -18, 0, 18 }) do
+            local gr = demo:spawn("Grunt", r.x - 30 - (i == 2 and 10 or 0), r.y + dy)
+            gr.demoSpeedMult = r:getStat("speed") / gr:getStat("speed")
+        end
+        demo.corpses = {}
+        demo.state = {}
+        demo:addTurret({
+            interval = 0.25,
+            pick = function(d) return d:frontmost(function(e) return e ~= d.star and not e.isZombie end) end,
+            onHit = bulletHit(25),
+        })
+    end,
+    onDeath = function(demo, e)
+        if e ~= demo.star and not e.isZombie then table.insert(demo.corpses, { x = e.x, y = e.y }) end
+    end,
+    update = function(demo, dt)
+        local r = demo.star
+        if r.phase then
+            if not r:advanceCast(dt) then return end
+            demo:ring(r.x, r.y, 60, Zombie.COLOR, 0.6)
+        else
+            if #demo.corpses >= 3 and not demo.state.raised then
+                demo.state.raised = true
+                r:startChannel()
+            end
+            return
+        end
+        for _, c in ipairs(demo.corpses) do
+            local z = demo:spawn("Grunt", c.x, c.y)
+            Zombie.apply(z)
+            z:startRise()
+            z.demoSpeedMult = r:getStat("speed") / z:getStat("speed")
+            demo:ring(c.x, c.y, 12, Zombie.COLOR, 0.4)
+        end
+        demo.corpses = {}
+    end,
+    isDone = function(demo)
+        for _, e in ipairs(demo:alive()) do
+            if e.x > -e.w then return false end
+        end
+        return true
+    end,
+}
+
+-- Phantom: each time the turret hits it, it's wiped away left to right (still
+-- hittable), then it's gone and reappears higher or lower; the turret can't
+-- target it while it's gone or make it blink again until its cooldown is up
+-- (it holds still throughout)
+scripts.Phantom = {
+    setup = function(demo)
+        demo:spawnStar()
+        demo:addTurret({
+            interval = 0.35,
+            pick = function(d)
+                local p = d.star
+                return (p.x < d.W - 10 and not p.untargetable and not p.demoDead) and p or nil
+            end,
+            onHit = function(d, target)
+                d:damage(target, 12)
+                if target.demoDead or not target:canBlink() then return end
+                local margin = target.h / 2 + 4
+                local toY = target.pickBlinkY(target.y, margin, d.H - margin, d.H)
+                if toY then target:startVanish(toY) end
+            end,
+        })
+    end,
+    update = function(demo, dt)
+        local p = demo.star
+        local wasVanishing, wasGone = p.vanishTime ~= nil, p.blinkTime ~= nil
+        local fromY = p.y
+        p:updateBlink(dt)
+        if wasVanishing and p.blinkTime then demo:ring(p.x + p.w * 0.5, fromY, p.w * 0.6, p.color, 0.2) end
+        if wasGone and not p.blinkTime then demo:ring(p.x, p.y, p.w, p.color, 0.25) end
+    end,
 }
 
 -- Tank: barely dented by the turret, and a Medic's healing lands extra hard on it

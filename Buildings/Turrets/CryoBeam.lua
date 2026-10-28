@@ -56,7 +56,7 @@ function CryoBeam:update(dt)
 
     self.cooldown = self.cooldown - dt
     local fireRate = self:getStat("fireRate")
-    while self.cooldown <= 0 and fireRate > 0 and self.target and not self.target.destroyed do
+    while self.cooldown <= 0 and fireRate > 0 and self.target and not self.target.destroyed and not self.target.untargetable do
         self:tick(self.target)
         self.cooldown = self.cooldown + 1 / fireRate
     end
