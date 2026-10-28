@@ -179,8 +179,8 @@ print(string.format("[PASS] Frost Cannon registered (~%.1f pellets hit at max ra
 
 local slush = find("uncommon", "slushCannon")
 assert(slush, "Slush Cannon should be an uncommon turret")
-assert(near(slush.damage, 36 * 0.8 * 0.8) and near(slush.fireRate, 0.25 * 1.2 * 1.2),
-    "Slush: two rounds of -20% damage / +20% fire rate")
+assert(near(slush.damage, 36 * 0.8 * 0.8) and near(slush.fireRate, 0.25 * 1.2 * 1.2 * 1.1),
+    "Slush: two rounds of -20% damage / +20% fire rate, then +10% fire rate")
 assert(#slush.hitEffects == 1 and slush.hitEffects[1].amount == 2 and slush.hitEffects[1].hitChance == 1,
     "Slush: 2 chill per hit and no separate slow")
 print("[PASS] Slush Cannon reworked")
@@ -188,7 +188,7 @@ print("[PASS] Slush Cannon reworked")
 -- 9. Cryo Beam: locks on, 25 DPS, freezes a locked target at ~3s
 local beamEntry = find("epic", "cryoBeam")
 assert(beamEntry and beamEntry.cost == 1, "Cryo Beam should be an epic costing 1")
-assert(beamEntry.range == 380, "Cryo Beam range matches the Sentry")
+assert(beamEntry.range == 380, "Cryo Beam range is 380")
 assert(near(beamEntry.damage * beamEntry.fireRate, 25), "Cryo Beam deals 25 DPS")
 
 local beamGame = { objects = {}, seenEnemies = {}, inputMode = "idle", inputHandler = {}, base = { x = 0, w = 100 } }
@@ -283,9 +283,9 @@ Chill.apply(boss, 9)
 assert(Chill.getDamageMultiplier(boss, bonus) < mFrozen, "a heavily chilled boss still takes less than a frozen enemy")
 print(string.format("[PASS] Icicle Ballista (%.1f DPS; x%.2f at 2 stacks, x%.2f at 4, x%.2f frozen)", dpsOf(ballista), m2, m4, mFrozen))
 
--- 11. Glacial Monolith: rare, cost 2, Sentry range, 28 deg arc with 18 deg rings, 2 chill per wave
+-- 11. Glacial Monolith: rare, cost 2, 380 range, 28 deg arc with 18 deg rings, 2 chill per wave
 local mono = find("rare", "glacialMonolith")
-assert(mono and mono.cost == 2 and mono.range == sentry.range, "Monolith: rare, cost 2, Sentry range")
+assert(mono and mono.cost == 2 and mono.range == 380, "Monolith: rare, cost 2, 380 range")
 assert(near(mono.firingArc.angle, math.rad(28)) and mono.damage == 0, "Monolith: 28 degree arc, no damage")
 assert(near(mono.ringAngle, math.rad(18)), "Monolith: rings stay 18 degrees wide")
 assert(mono.chillPerWave == 2, "Monolith: 2 chill per wave")

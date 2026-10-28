@@ -47,7 +47,9 @@ function Bounce:trigger(target, sourceBullet)
         
         -- Calculate the initial damage if this is the first bounce in the chain
         local initialDamage = sourceBullet.initialDamage or sourceBullet:getStat("damage")
-        
+        -- Which bounce this is (1 = first), so falloff doesn't depend on the bounce count
+        local bounceNumber = (sourceBullet.bounceNumber or 0) + 1
+
         -- Create the bounced bullet
         local bounceConfig = {
             name = (sourceBullet.name or "Tesla") .. " Arc",
@@ -56,7 +58,8 @@ function Bounce:trigger(target, sourceBullet)
             angle = angle,
             bulletSpeed = sourceBullet:getStat("bulletSpeed"),
             initialDamage = initialDamage,
-            damage = initialDamage * ((bouncesLeft - 1) / 10), -- Linear 10% decrease (100% -> 90% -> 80%...)
+            damage = initialDamage * math.max(0, 1 - 0.1 * bounceNumber), -- Linear 10% decrease (100% -> 90% -> 80%...)
+            bounceNumber = bounceNumber,
             bouncesLeft = bouncesLeft - 1,
             pierce = 1,
             lifespan = sourceBullet:getStat("lifespan"),

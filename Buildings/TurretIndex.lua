@@ -14,7 +14,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.7, range = 380,
+            rotation = 0, fireRate = 0.7, range = 420,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 400, damageType = "ballistic", damage = 11,
             pierce = 1, lifespan = 1.25, bulletId = "sentryBullet"
@@ -28,7 +28,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.7, range = 340,
+            rotation = 0, fireRate = 0.63, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/8},
             bulletSpeed = 450, damageType = "energy", damage = 6,
             pierce = 1, lifespan = 1.5, bulletId = "energyBolt",
@@ -88,7 +88,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            -- Between Sentry (0.7/s x 11, 380) and Heavy Gun (0.15/s x 54, 450),
+            -- Between Sentry (0.7/s x 11, 420) and Heavy Gun (0.15/s x 54, 450),
             -- with ~15% more base DPS (9.1) as an uncommon.
             rotation = 0, fireRate = 0.35, range = 420,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/9},
@@ -109,7 +109,7 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.4, range = 300,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
             bulletSpeed = 500, damageType = "poison", damage = 9,
-            pierce = 1, lifespan = 2, dps_poison = 4, duration_poison = 4, maxStacks = 4, bulletId = "poisonDart",
+            pierce = 1, lifespan = 2, dps_poison = 8, duration_poison = 4, maxStacks = 4, bulletId = "poisonDart",
             hitEffects = { PoisonEffect:new({name = "Poison"}) }
         },
         {
@@ -139,7 +139,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.3, range = 340,
+            rotation = 0, fireRate = 0.33, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 350, damageType = "energy", damage = 54,
             pierce = 1, lifespan = 1.5, bulletId = "fluxCharge"
@@ -156,7 +156,8 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.3, range = 380, firingArc = {direction = 0, minRange = 200, angle = math.pi/6},
             fuseTime = 0.7, bulletSpeed = 250, damageType = "explosive", damage = 7,
             burstCount = 3, burstDelay = 0.2, spread = math.rad(5),
-            pierce = 1, lifespan = 1.5, explosionDamage = 35, explosion_from_damage = 1.0, radius = 60, bulletId = "grenade",
+            -- Grenades never hit directly: each explodes for damage x explosion_from_damage = 7.
+            pierce = 1, lifespan = 1.5, explosionDamage = 7, explosion_from_damage = 1.0, radius = 60, bulletId = "grenade",
             hitEffects = { ExplosionEffect:new({ name = "Grenade Explosion" }) }
         },
         {
@@ -168,7 +169,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.36, range = 340,
+            rotation = 0, fireRate = 0.396, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 350, damageType = "ice", damage = 23.04,
             pierce = 1, lifespan = 2, bulletId = "slush",
@@ -252,7 +253,7 @@ local RewardIndex = {
             spread = math.rad(16.5), pelletCount = 10,
             ammoMax = 15, reloadTime = 4,
             bulletSpeed = 600, damageType = "energy", damage = 11,
-            pierce = 2, lifespan = 0.5, bulletId = "plasmaBolt"
+            pierce = 1, lifespan = 0.5, bulletId = "plasmaBolt"
         },
         {
             id = "sequenceTurret",
@@ -277,7 +278,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.25, range = 230,
+            rotation = 0, fireRate = 0.25, range = 270,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
             bulletSpeed = 250, damageType = "ballistic", damage = 72,
             pierce = 1, lifespan = 2, bulletId = "heavyHook",
@@ -331,7 +332,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.10, range = 550, firingArc = {direction = 0, minRange = 150, angle = math.pi/2},
+            rotation = 0, fireRate = 0.10, range = 550, firingArc = {direction = 0, minRange = 225, angle = math.pi/2},
             bulletSpeed = 0, damageType = "ballistic", damage = 225,
             pierce = 1, lifespan = 0.3, maxLifespan = 0.3, bulletId = "sniperShot"
         },
@@ -344,7 +345,7 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.1, range = 380, firingArc = {direction = 0, minRange = 300, angle = math.pi/4},
+            rotation = 0, fireRate = 0.115, range = 380, firingArc = {direction = 0, minRange = 255, angle = math.pi/4},
             bulletSpeed = 200, damageType = "explosive", damage = 90,
             pierce = 1, lifespan = 2, explosionDamage = 90, explosion_from_damage = 1.0, radius = 80, bulletId = "mortarShell",
             hitEffects = { ExplosionEffect:new({ name = "Mortar Explosion" }) }
@@ -364,7 +365,7 @@ local RewardIndex = {
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             color = {0.4, 0.7, 1, 1},
             bulletSpeed = 600, damageType = "energy", damage = 27,
-            pierce = 1, lifespan = 5, bouncesLeft = 10, bulletId = "chainLaserBolt",
+            pierce = 1, lifespan = 5, bouncesLeft = 5, bulletId = "chainLaserBolt",
             hitEffects = { BounceEffect:new({ name = "Chain Bounce" }) }
         }
     }

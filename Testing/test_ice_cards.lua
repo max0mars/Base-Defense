@@ -121,9 +121,9 @@ clearBoard()
 --    second in smaller hits, and no single shot adds more than 2 stacks
 -- -----------------------------------------------------------------------------
 local cryo = InstantCardRegistry.Cryoelectronics
-local blaster = place("blaster", 0, 0)         -- 0.7/s, 1 pellet
+local blaster = place("blaster", 0, 0)         -- 0.63/s, 1 pellet
 local scatter = place("plasmaScattershot", 2, 0) -- 1.6/s, 10 pellets
-local flux = place("fluxCannon", 0, 2)         -- 0.3/s, untagged but deals energy damage
+local flux = place("fluxCannon", 0, 2)         -- 0.33/s, untagged but deals energy damage
 local nonEnergy = place("sentry", 2, 2)
 assert(cryo:isValidTarget(blaster) and cryo:isValidTarget(scatter) and cryo:isValidTarget(flux),
     "Cryoelectronics targets any turret that deals energy damage")
@@ -142,7 +142,7 @@ assert(not cryo:isValidTarget(blaster), "Cryoelectronics can't be stacked on the
 local function perShot(t) return hitEffectOf(t):getAmount({ source = t }) * (t:getStat("pelletCount") or 1) end
 local function perSecond(t) return perShot(t) * t:getStat("fireRate") end
 -- 1.2 x sqrt(fire rate) per second
-assert(near(perSecond(blaster), 1.2 * math.sqrt(0.7)), string.format("Blaster chills %.2f/s", perSecond(blaster)))
+assert(near(perSecond(blaster), 1.2 * math.sqrt(blaster.fireRate)), string.format("Blaster chills %.2f/s", perSecond(blaster)))
 -- Pellets count as extra fire rate: 10 pellets = sqrt(10) shots
 assert(near(perSecond(scatter), 1.2 * math.sqrt(1.6 * math.sqrt(10))),
     string.format("Plasma Scattershot chills %.2f/s (pellets count toward fire rate)", perSecond(scatter)))
@@ -150,13 +150,13 @@ assert(perSecond(scatter) > perSecond(blaster) and perSecond(blaster) > perSecon
     "faster turrets chill more per second")
 assert(perShot(flux) > perShot(blaster), "slower single-shot turrets chill more per shot")
 assert(hitEffectOf(scatter):getAmount({ source = scatter }) < perShot(blaster), "each shotgun pellet chills less than a single shot")
--- Flux Cannon would be 1.2 / sqrt(0.3) = 2.19 a shot: capped
+-- Flux Cannon would be 1.2 / sqrt(0.33) = 2.09 a shot: capped
 assert(near(perShot(flux), 2), "one shot never adds more than 2 stacks")
 
 local target = Enemy:new({ game = game, x = 400, y = 300, size = 20, maxHp = 1000, hp = 1000 })
 game:addObject(target)
 hitEffectOf(blaster):trigger(target, { source = blaster })
-assert(near(Chill.getStacks(target), 1.2 / math.sqrt(0.7)), "a hit chills the enemy")
+assert(near(Chill.getStacks(target), 1.2 / math.sqrt(blaster.fireRate)), "a hit chills the enemy")
 
 -- Net over time against decay: a lone fast turret builds chill, a lone slow one barely does
 local function netAfter(t, seconds)
@@ -184,7 +184,7 @@ assert(netAfter(flux, 6) < 2.5, "Flux Cannon alone barely builds chill")
 local unbuffedHit = hitEffectOf(blaster):getAmount({ source = blaster })
 blaster.effectManager:applyEffect({ name = "test_haste", statModifiers = { fireRate = { mult = 1 } } })
 assert(near(hitEffectOf(blaster):getAmount({ source = blaster }), unbuffedHit), "a fire-rate buff doesn't shrink each hit")
-assert(near(perSecond(blaster), 2 * 1.2 * math.sqrt(0.7)), "doubling fire rate doubles chill per second")
+assert(near(perSecond(blaster), 2 * 1.2 * math.sqrt(blaster.fireRate)), "doubling fire rate doubles chill per second")
 
 -- Bullets fired by the turret carry the effect
 blaster.target = target
