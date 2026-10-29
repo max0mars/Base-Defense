@@ -102,9 +102,6 @@ function menu_scene:buildMainButtons(hasSave)
 end
 
 function menu_scene:load()
-    love.mouse.setVisible(true)
-    self.handCursor = love.mouse.getSystemCursor("hand")
-    self.arrowCursor = love.mouse.getSystemCursor("arrow")
     self.page = "main" -- "main" | "settings"
     self.notice = nil
     self.confirmingNewRun = false
@@ -180,9 +177,6 @@ function menu_scene:draw()
     end
 
     self.confirmation:draw()
-
-    -- Swap the OS cursor to a hand over clickable elements.
-    love.mouse.setCursor(Cursor.wantHand and self.handCursor or self.arrowCursor)
 end
 
 function menu_scene:mousepressed(x, y, button)

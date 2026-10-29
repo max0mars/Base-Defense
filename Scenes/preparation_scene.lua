@@ -82,9 +82,6 @@ function preparation_scene:drawTrashIcon(cx, cy, size, col)
 end
 
 function preparation_scene:load(isPostBattle)
-    love.mouse.setVisible(true)
-    self.handCursor = love.mouse.getSystemCursor("hand")
-    self.arrowCursor = love.mouse.getSystemCursor("arrow")
     
     _G.PersistentState = _G.PersistentState or {}
     _G.PersistentState.materials = _G.PersistentState.materials or { ["Card Removal"] = 2 }
@@ -337,6 +334,7 @@ self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1
                 isHovered = mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH
                 if isHovered and self.deckTrashMode then
                     Cursor.wantHand = true
+                    Cursor.setIcon("removeCard")
                 end
             end
 
@@ -447,7 +445,10 @@ function preparation_scene:drawDestroyConfirmation(mx, my)
     
     -- Draw Confirm Button
     local isConfirmHover = mx >= self.confirmDestroyBtn.x and mx <= self.confirmDestroyBtn.x + self.confirmDestroyBtn.w and my >= self.confirmDestroyBtn.y and my <= self.confirmDestroyBtn.y + self.confirmDestroyBtn.h
-    if isConfirmHover then Cursor.wantHand = true end
+    if isConfirmHover then
+        Cursor.wantHand = true
+        Cursor.setIcon("removeCard")
+    end
     self.confirmDestroyBtn.borderColor = Neon.RED
     Neon.button(self.confirmDestroyBtn, { hovered = isConfirmHover })
 
@@ -797,7 +798,10 @@ function preparation_scene:drawUpgradeWindow()
                 end
                 
                 local isBtnHover = mx >= cx and mx <= cx + cardW and my >= btnY and my <= btnY + btnH
-                if isBtnHover then Cursor.wantHand = true end
+                if isBtnHover then
+                    Cursor.wantHand = true
+                    Cursor.setIcon("upgradeCard")
+                end
                 
                 local fillCol = canAfford and (isBtnHover and {0.2, 0.65, 0.35, 1} or {0.15, 0.45, 0.25, 1})
                                           or {0.28, 0.16, 0.18, 0.85}
@@ -954,8 +958,6 @@ function preparation_scene:draw()
     end
 
     DevMode.draw(false)
-
-    love.mouse.setCursor(Cursor.wantHand and self.handCursor or self.arrowCursor)
 end
 
 function preparation_scene:drawLevelSelectWindow()
