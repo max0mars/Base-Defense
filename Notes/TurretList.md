@@ -54,10 +54,10 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 - **Range**: 420
 - **Fire Rate**: 0.35
 - **DPS**: 9.1 | 18.2 vs frozen
-- **Description**: Heavy icicles that hit harder the more chilled the target is.
+- **Description**: Fires heavy icicles that deal more damage the more chilled the target is, and the most to frozen enemies.
 
 ### Poison Turret
-- **Cost**: 2
+- **Cost**: 1
 - **Damage**: 9 direct + poison 8/s for 4s (up to 4 stacks)
 - **Range**: 300
 - **Fire Rate**: 0.4
@@ -73,11 +73,11 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 - **Description**: Fires shells that explode mid-air into shrapnel.
 
 ### Flux Cannon
-- **Cost**: 2
-- **Damage**: 54 (energy)
+- **Cost**: 1
+- **Damage**: 38 (energy)
 - **Range**: 340
 - **Fire Rate**: 0.33
-- **DPS**: 17.8
+- **DPS**: 12.5
 - **Description**: Energy damage that ignores heavy armor.
 
 ### Grenadier
@@ -96,6 +96,14 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 - **DPS**: 9.1
 - **Description**: Fires heavy clumps of slush that chill enemies.
 
+### Heavy Shotgun
+- **Cost**: 2
+- **Damage**: 16 per pellet (physical), 7 pellets, 7 degree spread, pierce 2
+- **Range**: 340 (40 degree arc)
+- **Fire Rate**: 0.5
+- **DPS**: 56 if every pellet hits (~27 at max range, where ~3.4 of 7 land)
+- **Description**: Long range, tight spread shotgun. Its heavy pellets pierce an extra enemy.
+
 ## Rare
 
 ### Glacial Monolith
@@ -103,7 +111,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 - **Damage**: None. One wave every 3s, 2 chill to every enemy the wave passes (18 degree ring inside a 28 degree arc, expands at 120 px/s)
 - **Range**: 380
 - **Fire Rate**: 0.33 waves/s
-- **Description**: Area chill support; slowly builds chill on everything in its arc.
+- **Description**: Deals no damage. Sends slow freezing waves through its arc that chill enemies.
 
 ### Ice Shard Gunner
 - **Cost**: 1
@@ -127,15 +135,15 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 - **Range**: 340
 - **Fire Rate**: 0.4
 - **DPS**: 20.0
-- **Description**: Slow (200 speed) missiles that explode on the first enemy they hit.
+- **Description**: Wouldn't want to get in the way of one of these.
 
 ### Plasma Scattershot
 - **Cost**: 2
-- **Damage**: 11 per bolt (energy), 10 bolts, no pierce
-- **Range**: 150
-- **Fire Rate**: 1.6, 15 shots per magazine, 4s reload
-- **DPS**: 176 while firing | ~129 sustained (both if every bolt hits)
-- **Description**: Fires plasma rounds at high speed but has limited ammo. Reloads slowly.
+- **Damage**: 10 per bolt (energy), 8 bolts, 16.5 degree spread, no pierce
+- **Range**: 150 (80 degree arc)
+- **Fire Rate**: 1.6, 6-round magazine, loads one round every 2s while not full
+- **DPS**: 128 while firing | 40 sustained (both if every bolt hits)
+- **Description**: Fires plasma rounds at high speed from a 6-round magazine. Loads one round every 2 seconds.
 
 ### CSR-8 Sequence
 - **Cost**: 2

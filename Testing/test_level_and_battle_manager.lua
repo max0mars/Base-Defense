@@ -227,14 +227,7 @@ print(string.format("  - High tier (Lvl 10, 2.0x mult) Total Value: %d (%.1fx sc
 -- -----------------------------------------------------------------------------
 -- TEST 5: BattleManager applyRewards Integration
 -- -----------------------------------------------------------------------------
-local mockGame = {
-    rewardSystem = {
-        activateCount = 0,
-        activate = function(self, mode, count)
-            self.activateCount = self.activateCount + 1
-        end
-    }
-}
+local mockGame = {}
 
 _G.PersistentState.cash = 100
 _G.PersistentState.materials = {}
@@ -254,7 +247,7 @@ assert(_G.PersistentState.cash == 250, "Gold application failed: " .. _G.Persist
 assert(_G.PersistentState.materials.energy_cells == 2, "Typed material reward application failed")
 assert(_G.PersistentState.materials.scrap == 1, "Untyped material reward should fall back to Scrap")
 assert(_G.PersistentState.cardRemovals == 1, "Card removal application failed")
-assert(mockGame.rewardSystem.activateCount == 1, "Card draw reward activation failed")
+assert(mockGame.pendingCardDraws == 1, "Card draw reward should be queued for after the summary")
 
 print("[PASS] Test 5: Reward application and persistent state modification passed.")
 

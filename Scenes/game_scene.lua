@@ -34,13 +34,18 @@ function game_scene:load()
 end
 
 function game_scene:mousepressed(x, y, button)
-    if self.artifactReveal then
-        self.artifactReveal:click()
+    if self.showingRewards then
+        if self.artifactReveal then
+            self.artifactReveal:click()
+        elseif game.rewardSystem and game.rewardSystem.isActive then
+            game.rewardSystem:mousepressed(x, y, button)
+        end
         return
     end
     if self.showingSummary then
+        -- The battle's rewards (card picks, artifacts) follow on a black screen
         self.showingSummary = false
-        self.scene_manager.switch("preparation", true)
+        self.showingRewards = true
         return
     end
 
@@ -58,7 +63,7 @@ function game_scene:mousepressed(x, y, button)
 end
 
 function game_scene:mousereleased(x, y, button)
-    if self.showingSummary then return end
+    if self.showingSummary or self.showingRewards then return end
     if paused == 1 then
         self.settings:mousereleased(x, y, button)
         return
@@ -77,75 +82,80 @@ function game_scene:update(dt)
         self.scene_manager.switch("gameover")
     end
 
-    -- Artifacts won this battle are revealed one at a time before the summary
-    if self.artifactReveal then
-        self.artifactReveal:update(dt)
-        if self.artifactReveal.done then self.artifactReveal = nil end
+    -- After the summary: each card pick, then each artifact reveal, then on to prep
+    if self.showingRewards then
+        if self.artifactReveal then
+            self.artifactReveal:update(dt)
+            if self.artifactReveal.done then self.artifactReveal = nil end
+        elseif game.rewardSystem and game.rewardSystem.isActive then
+            game.rewardSystem:update(dt)
+        elseif (game.pendingCardDraws or 0) > 0 and game.rewardSystem then
+            game.pendingCardDraws = game.pendingCardDraws - 1
+            game.rewardSystem:activate("cards", 3)
+        elseif game.newArtifacts and #game.newArtifacts > 0 then
+            self.artifactReveal = ArtifactReveal.new(table.remove(game.newArtifacts, 1))
+        else
+            self.showingRewards = false
+            self.scene_manager.switch("preparation", true)
+        end
         return
     end
 
     if game.battleComplete then
-        if not (game.rewardSystem and game.rewardSystem.isActive) then
-            local won = game.newArtifacts and table.remove(game.newArtifacts, 1)
-            if won then
-                self.wonArtifacts = self.wonArtifacts or {}
-                table.insert(self.wonArtifacts, won)
-                self.artifactReveal = ArtifactReveal.new(won)
-                return
-            end
-            game.battleComplete = false
-            self.showingSummary = true
-            self.summaryDamage = game.damageTakenThisBattle or 0
-            self.summaryIncome = game.battleReward or 0
-            self.summaryPerfectBonus = (self.summaryDamage == 0) and 25 or 0
-            -- Already added to cash during the battle, as frozen enemies died
-            self.summaryIceMarket = game.iceMarketIncome or 0
-            -- Already added to cash when the battle was won
-            self.summaryVault = game.vaultIncome or 0
+        game.battleComplete = false
+        self.showingSummary = true
+        self.summaryDamage = game.damageTakenThisBattle or 0
+        self.summaryIncome = game.battleReward or 0
+        self.summaryPerfectBonus = (self.summaryDamage == 0) and 25 or 0
+        -- Already added to cash during the battle, as frozen enemies died
+        self.summaryIceMarket = game.iceMarketIncome or 0
+        -- Already added to cash when the battle was won
+        self.summaryVault = game.vaultIncome or 0
 
-            local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
-            local fallbackCash = game.artifactFallbackCash or 0
-            local cashBeforeBattle = currentCash - self.summaryIncome - self.summaryIceMarket - self.summaryVault - fallbackCash
-            if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
-            self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
-            
-            if _G.PersistentState then
-                _G.PersistentState.cash = currentCash + self.summaryInterest + self.summaryPerfectBonus
-                self.summaryTotalCash = _G.PersistentState.cash
-            else
-                self.summaryTotalCash = 0
-            end
-
-            -- Top 3 turrets by damage dealt this battle (first is the MVP)
-            self.summaryTopTurrets = {}
-            if game.damageStats then
-                for i, entry in ipairs(game.damageStats:getRanking()) do
-                    if i > 3 then break end
-                    table.insert(self.summaryTopTurrets, entry)
-                end
-            end
-
-            self.summaryOtherRewards = {}
-            local wonArtifacts = self.wonArtifacts or {}
-            self.wonArtifacts = nil
-            if game.awardedBattleRewards then
-                for _, r in ipairs(game.awardedBattleRewards) do
-                    if r.type ~= "gold" and r.name then
-                        local desc = r.name
-                        -- Name the artifact that was revealed
-                        if r.type == "relic" then
-                            desc = wonArtifacts[1] and table.remove(wonArtifacts, 1).name
-                                or ("$" .. fallbackCash .. " (every artifact owned)")
-                        end
-                        if r.amount and r.amount > 1 then
-                            desc = desc .. " (x" .. r.amount .. ")"
-                        end
-                        table.insert(self.summaryOtherRewards, desc)
-                    end
-                end
-            end
-            return
+        local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
+        local fallbackCash = game.artifactFallbackCash or 0
+        local cashBeforeBattle = currentCash - self.summaryIncome - self.summaryIceMarket - self.summaryVault - fallbackCash
+        if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
+        self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
+        
+        if _G.PersistentState then
+            _G.PersistentState.cash = currentCash + self.summaryInterest + self.summaryPerfectBonus
+            self.summaryTotalCash = _G.PersistentState.cash
+        else
+            self.summaryTotalCash = 0
         end
+
+        -- Top 3 turrets by damage dealt this battle (first is the MVP)
+        self.summaryTopTurrets = {}
+        if game.damageStats then
+            for i, entry in ipairs(game.damageStats:getRanking()) do
+                if i > 3 then break end
+                table.insert(self.summaryTopTurrets, entry)
+            end
+        end
+
+        self.summaryOtherRewards = {}
+        local unrevealed = #(game.newArtifacts or {})
+        if game.awardedBattleRewards then
+            for _, r in ipairs(game.awardedBattleRewards) do
+                if r.type ~= "gold" and r.name then
+                    local desc = r.name
+                    -- Which artifact stays hidden until its reveal after the summary
+                    if r.type == "relic" then
+                        if unrevealed > 0 then
+                            unrevealed = unrevealed - 1
+                        else
+                            desc = "$" .. fallbackCash .. " (every artifact owned)"
+                        end
+                    end
+                    if r.amount and r.amount > 1 then
+                        desc = desc .. " (x" .. r.amount .. ")"
+                    end
+                    table.insert(self.summaryOtherRewards, desc)
+                end
+            end
+        end
+        return
     end
     
     if self.showingSummary then return end
@@ -201,17 +211,21 @@ function game_scene:drawTurretStats(turret, mx, my)
 end
 
 function game_scene:draw()
-    if self.artifactReveal then
-        -- The base behind a dark veil, shaking with the slam
-        local sx, sy = self.artifactReveal:screenShake()
-        love.graphics.push()
-        love.graphics.translate(sx, sy)
-        game:drawBaseView()
-        love.graphics.pop()
-        love.graphics.setColor(0, 0, 0, 0.7)
+    if self.showingRewards then
+        -- Card picks and artifact reveals on a black screen
+        love.graphics.setColor(0, 0, 0, 1)
         love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
-        self.artifactReveal:draw()
+        if self.artifactReveal then
+            local sx, sy = self.artifactReveal:screenShake()
+            love.graphics.push()
+            love.graphics.translate(sx, sy)
+            self.artifactReveal:draw()
+            love.graphics.pop()
+        elseif game.rewardSystem and game.rewardSystem.isActive then
+            game.rewardSystem:draw()
+        end
         Cursor.applyOS()
+        return
     elseif self.showingSummary then
         -- The summary shows only the base, so the player can look over their setup
         game:drawBaseView()
@@ -338,6 +352,9 @@ function game_scene:draw()
 end
 
 function game_scene:keypressed(key)
+    -- The post-battle rewards are click-only
+    if self.showingRewards then return end
+
     -- Developer mode F keys (not on the post-battle summary: the battle is already over)
     if not self.showingSummary and not game.battleComplete and DevMode.keypressed(key, game) then
         return

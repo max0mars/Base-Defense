@@ -149,6 +149,17 @@ ih:updateEditAim()
 assert(placed[1].firingArc.direction ~= before, "the group turns to the cursor")
 ih:keypressed("a")
 assert(placed[1].firingArc.direction == before and #ih.editSelection == 3, "pressing A again restores the aim and reselects all")
+-- Backspace turns every turret back to face forward
+ih:updateEditAim()
+ih:commitEditAim()
+local mgDir = mg.firingArc.direction
+ih:keypressed("backspace")
+local allForward = true
+for _, t in ipairs(placed) do
+    allForward = allForward and t.firingArc.direction == 0 and t.rotation == 0 and t.targetRotation == 0
+end
+assert(allForward and #ih.editSelection == 0, "Backspace resets every turret to face forward")
+assert(mg.firingArc.direction == mgDir, "Backspace leaves the main turret's aim alone")
 ih:keypressed("lshift")
 assert(not ih.editMode, "Shift leaves build mode")
 

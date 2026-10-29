@@ -106,21 +106,45 @@ game:load(nil, false)
 _G.PersistentState.selectedBattle = { rewards = { { type = "gold", name = "Cash", amount = 50 }, BattleManager.artifactReward() } }
 game:winBattle()
 assert(#game.newArtifacts == 1, "winning an elite battle queues its artifact for a reveal")
-local wonName = game.newArtifacts[1].name
 
+local switchedTo
+scene.scene_manager = { switch = function(name) switchedTo = name end }
 scene:update(0.016)
-assert(scene.artifactReveal and not scene.showingSummary, "the reveal plays before the summary")
+assert(scene.showingSummary and not scene.artifactReveal, "the summary shows first")
+local hidden = false
+for _, r in ipairs(scene.summaryOtherRewards) do hidden = hidden or r == "Artifact" end
+assert(hidden, "the summary lists the artifact without spoiling which one")
+scene:mousepressed(0, 0, 1)
+assert(not scene.showingSummary and scene.showingRewards, "clicking the summary moves on to the rewards")
+scene:update(0.016)
+assert(scene.artifactReveal, "then the reveal plays")
 assert(pcall(function() scene:draw() end), "the battle scene draws the reveal")
 for _ = 1, 400 do scene:update(0.01) end
 scene:mousepressed(0, 0, 1)
 assert(scene.artifactReveal and scene.artifactReveal.done, "clicking after it lands finishes the reveal")
 scene:update(0.016)
+assert(not switchedTo, "it doesn't leave the battle the same frame the reveal finishes")
 scene:update(0.016)
-assert(not scene.artifactReveal and scene.showingSummary, "then the summary shows")
-local named = false
-for _, r in ipairs(scene.summaryOtherRewards) do named = named or r == wonName end
-assert(named, "the summary names the artifact that was won")
-scene.showingSummary = false
+assert(not scene.showingRewards and switchedTo == "preparation", "then it switches to the prep scene")
+scene.scene_manager = { switch = noop }
+
+-- 2b. A card draft is offered after the summary too, not over the battle
+game:load(nil, false)
+_G.PersistentState.selectedBattle = { rewards = { { type = "gold", name = "Cash", amount = 50 }, { type = "card_draw", name = "Card Draft", amount = 1 } } }
+game:winBattle()
+assert(not game.rewardSystem.isActive, "the card draft doesn't open over the battle")
+switchedTo = nil
+scene.scene_manager = { switch = function(name) switchedTo = name end }
+scene:update(0.016)
+assert(scene.showingSummary, "the summary shows first")
+scene:mousepressed(0, 0, 1)
+scene:update(0.016)
+assert(game.rewardSystem.isActive and game.rewardSystem.mode == "cards", "then the card draft opens")
+assert(pcall(function() scene:draw() end), "the battle scene draws the card draft")
+game.rewardSystem:close()
+scene:update(0.016)
+assert(switchedTo == "preparation", "once it's picked or skipped, on to the prep scene")
+scene.scene_manager = { switch = noop }
 
 -- 3. With every artifact owned, the elite pays $500 and there's nothing to reveal
 game:load(nil, false)

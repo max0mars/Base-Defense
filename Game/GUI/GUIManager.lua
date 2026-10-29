@@ -418,7 +418,7 @@ function GUIManager:drawHUD()
         local f = Layout.field
         local text = (#ih.editSelection > 0)
             and ("AIMING " .. #ih.editSelection .. " TURRET" .. (#ih.editSelection == 1 and "" or "S") .. "  -  CLICK TO SET  /  RIGHT-CLICK TO CANCEL")
-            or "BUILD MODE  -  DRAG TO SELECT TURRETS  /  A FOR ALL  /  SHIFT TO EXIT"
+            or "BUILD MODE  -  DRAG TO SELECT TURRETS  /  A FOR ALL  /  BACKSPACE TO RESET  /  SHIFT TO EXIT"
         local font = love.graphics.getFont()
         local boxW, boxH = font:getWidth(text) + 32, 28
         local bx = f.x + (f.w - boxW) / 2

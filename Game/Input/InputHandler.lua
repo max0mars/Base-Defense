@@ -145,6 +145,21 @@ function InputHandler:selectAllEditTurrets()
     self:setEditSelection(picked)
 end
 
+--- Turns every aimable turret back to face forward (the Backspace key). Any
+--- group being aimed is dropped first.
+function InputHandler:resetEditAim()
+    if not self.editMode then return end
+    self:commitEditAim()
+    self.dragStart = nil
+    for _, obj in ipairs(self.game.objects) do
+        if self:isEditAimable(obj) then
+            obj.firingArc.direction = 0
+            obj.rotation = 0
+            obj.targetRotation = 0
+        end
+    end
+end
+
 function InputHandler:finishEditDrag()
     local rx, ry, rw, rh = self:getDragRect()
     self.dragStart = nil
@@ -1031,6 +1046,8 @@ function InputHandler:keypressed(key)
         self:toggleEditMode()
     elseif key == "a" and self.editMode then
         self:selectAllEditTurrets()
+    elseif key == "backspace" and self.editMode then
+        self:resetEditAim()
     elseif key == "h" then
         if game.gui and game.gui.hand then
             game.gui.hand.isHidden = not game.gui.hand.isHidden

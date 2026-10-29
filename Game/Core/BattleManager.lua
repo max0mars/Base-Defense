@@ -210,9 +210,9 @@ function BattleManager:applyRewards(rewards, game)
             local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
             CardUpgradeConfig.Economy.addCardRemovals(reward.amount or 1)
         elseif reward.type == BattleManager.REWARD_TYPES.CARD_DRAW then
-            -- Card draw is presented as a pick 1 of 3 card reward
-            if game and game.rewardSystem then
-                game.rewardSystem:activate("cards", 3)
+            -- Card draw is a pick 1 of 3 card reward, offered after the battle summary
+            if game then
+                game.pendingCardDraws = (game.pendingCardDraws or 0) + 1
             end
         elseif reward.type == BattleManager.REWARD_TYPES.RELIC then
             -- Relics are artifacts: a specific one if the reward names it, else a random unowned one
@@ -229,7 +229,7 @@ function BattleManager:applyRewards(rewards, game)
                     if game then game.artifactFallbackCash = (game.artifactFallbackCash or 0) + BattleManager.ARTIFACT_FALLBACK_CASH end
                 end
             end
-            -- The battle shows each new artifact with a reveal before the summary
+            -- The battle shows each new artifact with a reveal after the summary
             if def and game then
                 game.newArtifacts = game.newArtifacts or {}
                 table.insert(game.newArtifacts, def)

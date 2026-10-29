@@ -384,10 +384,9 @@ function MainLazer.getStartingDeck()
     local energySurge = InstantCard.new({
         id = "inst_energy_surge_1",
         name = "Energy Surge",
-        description = "All energy turrets gain +20% damage. Consume.",
+        description = "All energy turrets gain +20% damage.",
         cost = 2,
         rarity = "rare",
-        isConsume = true,
         executionType = InstantCard.ExecutionType.Group,
         statModifiers = { damage = { mult = 0.20 } },
         targetTypes = { energy = true }

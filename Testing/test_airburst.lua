@@ -128,6 +128,16 @@ shell.lifespan = 0.1
 for _ = 1, 30 do if not shell.destroyed then shell:update(1 / 60) end end
 assert(#mockGame.objects == 6, "Shell that runs out of lifespan bursts instead of vanishing")
 
+-- 7. The shrapnel count comes from splitamount, spread evenly over the 60 degree cone
+turret = placeAirburst()
+shell, dist, life, shrapnel = fireAndFly(turret)
+local first, last = shrapnel[1].angle - shell.angle, shrapnel[#shrapnel].angle - shell.angle
+assert(math.abs(first + math.rad(30)) < 1e-6 and math.abs(last - math.rad(30)) < 1e-6,
+    "Shrapnel fans from -30 to +30 degrees")
+turret.effectManager:applyEffect({ name = "test_split", duration = math.huge, statModifiers = { splitamount = { add = 2 } } })
+shell, dist, life, shrapnel = fireAndFly(turret)
+assert(#shrapnel == 7, "+2 splitamount bursts into 7 shrapnel (got " .. #shrapnel .. ")")
+
 if failures > 0 then
     print(failures .. " test(s) failed")
     os.exit(1)

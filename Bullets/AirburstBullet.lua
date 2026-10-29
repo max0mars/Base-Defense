@@ -7,6 +7,7 @@ AirburstBullet.__index = AirburstBullet
 AirburstBullet.BURST_RANGE_FRACTION = 0.6
 AirburstBullet.SHRAPNEL_SPEED = 800
 AirburstBullet.SHRAPNEL_LIFESPAN = 0.5
+AirburstBullet.SHRAPNEL_CONE = 60 -- degrees, edge to edge
 
 function AirburstBullet:new(config)
     local b = Bullet:new(config)
@@ -65,10 +66,13 @@ function AirburstBullet:airburst()
     local remaining = math.max(0, currentRange - travelled)
     local shrapnelLifespan = math.max(self.SHRAPNEL_LIFESPAN, remaining * 1.1 / self.SHRAPNEL_SPEED)
 
-    -- 5 small, fast Shrapnel bullets in a forward-facing cone
-    local angles = {-30, -15, 0, 15, 30}
-    for _, offsetDeg in ipairs(angles) do
-        local offsetRad = math.rad(offsetDeg)
+    -- `splitamount` small, fast Shrapnel bullets spread evenly over a forward-facing cone
+    local count = math.max(1, math.floor(self:getStat("splitamount")))
+    for i = 1, count do
+        local offsetRad = 0
+        if count > 1 then
+            offsetRad = math.rad(-self.SHRAPNEL_CONE / 2 + (i - 1) * self.SHRAPNEL_CONE / (count - 1))
+        end
         local config = {
             game = self.game,
             source = self.source,

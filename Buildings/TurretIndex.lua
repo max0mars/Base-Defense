@@ -127,7 +127,7 @@ local RewardIndex = {
             bulletSpeed = 180, damageType = "physical", damage = 23,
             -- No `spread`: Turret:fire uses it as aim jitter (±spread), so math.pi here made
             -- shells fly in random directions. The burst cone lives in AirburstBullet:airburst().
-            pierce = 1, lifespan = 1.5, splitamount = 6, splitDamage = 23, splitDamage_from_damage = 1.0,
+            pierce = 1, lifespan = 1.5, splitamount = 5, splitDamage = 23, splitDamage_from_damage = 1.0,
             bulletId = "airburst"
         },
         {
@@ -137,11 +137,11 @@ local RewardIndex = {
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
-            cost = 2,
+            cost = 1,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.33, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 350, damageType = "energy", damage = 54,
+            bulletSpeed = 350, damageType = "energy", damage = 38,
             pierce = 1, lifespan = 1.5, bulletId = "fluxCharge"
         },
         {

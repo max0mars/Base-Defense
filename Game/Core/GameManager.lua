@@ -142,7 +142,8 @@ function game:load(saveData, isTesting)
         self.wave         = 0
         self.buildingCounts = {}      -- Tracks counts of buildings by type and damageType
         self.damageStats  = DamageStats.new() -- Per-turret damage / kills this battle (MVP)
-        self.newArtifacts = {}        -- Artifacts won this battle, revealed before the summary
+        self.newArtifacts = {}        -- Artifacts won this battle, revealed after the summary
+        self.pendingCardDraws = 0     -- Card picks won this battle, offered after the summary
         self.artifactFallbackCash = 0 -- Cash paid instead of an artifact (every artifact owned)
         self.iceMarketIncome = 0              -- Cash from Ice Markets this battle (summary line)
         self.vaultIncome = 0                  -- Cash from Vaults when the battle is won (summary line)
