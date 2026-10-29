@@ -42,13 +42,16 @@ function Outpost:new(config)
     return b
 end
 
---- Called by Base:addBuilding once placed: unlocks the surrounding slots that
---- are still locked (ones off the edge of the grid don't exist).
-function Outpost:onPlaced(base)
+--- Called once placed (on the base or a lane border): unlocks the surrounding
+--- slots of its own grid that are still locked. Cells off the edge of the grid,
+--- or that can't be built on (between the lane border slots), aren't slots.
+function Outpost:onPlaced()
+    local grid = self.buildGrid
     local unlocked = 0
     for _, slot in ipairs(self:getAffectedSlotsFromAnchor(self.slot)) do
-        if not base.buildGrid.unlocked[slot] then
-            base.buildGrid.unlocked[slot] = true
+        local isSlot = not grid.isBuildSlot or grid:isBuildSlot(slot)
+        if isSlot and not grid.unlocked[slot] then
+            grid.unlocked[slot] = true
             unlocked = unlocked + 1
         end
     end
@@ -57,7 +60,7 @@ function Outpost:onPlaced(base)
     local game = self.game
     if unlocked > 0 and game then
         if game.spawnExpandingCircle then
-            game:spawnExpandingCircle(self.x, self.y, base.buildGrid.cellSize * 0.5, base.buildGrid.cellSize * 1.6,
+            game:spawnExpandingCircle(self.x, self.y, grid.cellSize * 0.5, grid.cellSize * 1.6,
                 self.color, 0.5)
         end
         if game.spawnFloatingText then

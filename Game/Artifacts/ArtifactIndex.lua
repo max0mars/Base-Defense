@@ -35,11 +35,11 @@ local function fieldTurrets(game, includeMain)
     return turrets
 end
 
---- Distinct ice turrets orthogonally next to `turret` on the base grid
---- (0 for turrets that aren't on the base grid).
+--- Distinct ice turrets orthogonally next to `turret` on the grid it's placed
+--- on (the base, or a lane border).
 local function countAdjacentIceTurrets(game, turret)
-    local grid = game.base and game.base.buildGrid
-    if not grid or turret.buildGrid ~= grid or not turret.slot then return 0 end
+    local grid = turret.buildGrid
+    if not grid or not grid.buildings or not turret.slot then return 0 end
     local seen, count = {}, 0
     for _, slot in ipairs(turret:getSlotsFromPattern(turret.slot)) do
         local x = (slot - 1) % grid.width

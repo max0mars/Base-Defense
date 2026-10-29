@@ -1,5 +1,5 @@
 local Layout = require("Game.GUI.Layout")
-local LockIcon = require("Graphics.LockIcon")
+local SlotVisuals = require("Game.GUI.SlotVisuals")
 
 local BattlefieldGrid = {}
 BattlefieldGrid.__index = BattlefieldGrid
@@ -111,33 +111,28 @@ function BattlefieldGrid:isBuildSlot(slot)
     return self.slotPrices[slot] ~= nil
 end
 
---- True if a turret or passive placed on this grid covers the slot.
+--- True if a building placed on this grid covers the slot.
 function BattlefieldGrid:isSlotTaken(slot)
-    for _, obj in ipairs(self.game.objects) do
-        if not obj.destroyed and (obj:isType("turret") or obj:isType("passive"))
-           and obj.buildGrid == self and obj.occupiesSlot and obj:occupiesSlot(slot) then
-            return true
-        end
-    end
-    return false
+    local b = self.buildings[slot]
+    return b ~= nil and not b.destroyed
 end
 
 function BattlefieldGrid:addBuilding(building, anchorSlot)
     local slotsToOccupy = building:getSlotsFromPattern(anchorSlot)
-    -- Only non-turret structures go in the buildings lookup table
-    -- Turrets coexist in self.game.objects but shouldn't overwrite the platform foundation
+    -- Every building is looked up by slot, as on the base grid (passives find
+    -- their neighbours this way)
+    for _, slot in ipairs(slotsToOccupy) do
+        self.buildings[slot] = building
+    end
+    -- Blockers also keep other buildings out of the cells around them
     if not (building:isType("turret") or building:isType("passive")) then
-        for _, slot in ipairs(slotsToOccupy) do
-            self.buildings[slot] = building
-        end
-        
-        -- Update noBuildZones (radius logic)
         local radius = building.noBuildRadius or 1
         self:updateReservations(slotsToOccupy, radius, 1)
     end
     
+    -- Same as Base:addBuilding: the building gets the grid owner it was placed on
     if building.onPlaced then
-        building:onPlaced(anchorSlot)
+        building:onPlaced(self)
     end
     
     self:recalculatePaths()
@@ -148,13 +143,12 @@ function BattlefieldGrid:removeBuilding(building)
     
     local slotsToOccupy = building:getSlotsFromPattern(building.slot)
     
-    if not (building:isType("turret") or building:isType("passive")) then
-        for _, slot in ipairs(slotsToOccupy) do
-            if self.buildings[slot] == building then
-                self.buildings[slot] = nil
-            end
+    for _, slot in ipairs(slotsToOccupy) do
+        if self.buildings[slot] == building then
+            self.buildings[slot] = nil
         end
-        
+    end
+    if not (building:isType("turret") or building:isType("passive")) then
         local radius = building.noBuildRadius or 1
         self:updateReservations(slotsToOccupy, radius, -1)
     end
@@ -235,36 +229,18 @@ function BattlefieldGrid:drawBorders()
     end
 end
 
---- Border building slots: locked ones show a padlock (price in the hover tooltip),
---- unlocked ones an empty pad.
+--- Border building slots, drawn by the same rules as the base's (SlotVisuals).
 function BattlefieldGrid:drawBorderSlots()
     local cs = self.cellSize
     for slot, price in pairs(self.slotPrices) do
         local sx, sy = self:getSlotPosition(slot)
-        if self.unlocked[slot] then
-            love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
-            love.graphics.rectangle("line", sx + 2, sy + 2, cs - 4, cs - 4)
-        else
-            love.graphics.setColor(0.1, 0.1, 0.1)
-            love.graphics.rectangle("fill", sx + 1, sy + 1, cs - 2, cs - 2)
-            if self.game.tokens and self.game.tokens >= price then
-                love.graphics.setColor(0, 0.5, 0) -- faint green
-            else
-                love.graphics.setColor(0.5, 0, 0) -- faint red
-            end
-            love.graphics.rectangle("line", sx + 1, sy + 1, cs - 2, cs - 2)
-            LockIcon.draw(sx + cs / 2, sy + cs / 2)
+        local hovered = self.hoveredSlot == slot
+        if not self.unlocked[slot] then
+            SlotVisuals.drawLocked(self.game, sx, sy, cs, price, hovered)
+        elseif not self:isSlotTaken(slot) then
+            SlotVisuals.drawEmpty(self.game, sx, sy, cs, hovered)
         end
-
-        -- Hover highlight for the border slot under the cursor
-        if self.hoveredSlot == slot then
-            local affordable = self.unlocked[slot] or (self.game.tokens or 0) >= price
-            if affordable then love.graphics.setColor(0.3, 1.0, 0.5, 0.95)
-            else love.graphics.setColor(1.0, 0.4, 0.4, 0.95) end
-            love.graphics.setLineWidth(2)
-            love.graphics.rectangle("line", sx + 1, sy + 1, cs - 2, cs - 2)
-            love.graphics.setLineWidth(1)
-        end
+        SlotVisuals.drawFrame(self.game, sx, sy, cs, (not self.unlocked[slot]) and price or nil)
     end
 end
 
@@ -299,24 +275,8 @@ function BattlefieldGrid:drawOverlays()
         local bp = self.game.blueprint
         if not bp then return end
         
-        local isTurret = bp:isType("turret") or bp:isType("passive")
-        
-        -- 3. Draw the vacant border slots it could go on - OVER buildings
-        if isTurret then
-            for slot in pairs(self.slotPrices) do
-                if not self:isSlotTaken(slot) then
-                    local sx, sy = self:getSlotPosition(slot)
-                    local a = self.unlocked[slot] and 1 or 0.5
-                    love.graphics.setColor(0, 1, 1, 0.2 * a)
-                    love.graphics.rectangle("fill", sx + 2, sy + 2, self.cellSize - 4, self.cellSize - 4)
-                    
-                    love.graphics.setColor(0, 1, 1, 0.5 * a)
-                    love.graphics.rectangle("line", sx + 2, sy + 2, self.cellSize - 4, self.cellSize - 4)
-                end
-            end
-        end
-
-        -- 4. Draw invalid/selected slots border - OVER buildings
+        -- Invalid/selected slots border - OVER buildings (open slots are
+        -- highlighted with the rest of the slot drawing, see drawBorderSlots)
         if self.invalidSlots then
             love.graphics.setColor(1, 0, 0, 0.8)
             love.graphics.setLineWidth(2)
