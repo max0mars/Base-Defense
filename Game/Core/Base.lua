@@ -6,9 +6,9 @@ setmetatable(Base, { __index = living_object }) -- Inherit from the object class
 
 local default = {
     x = 50,
-    y = 300,
+    y = 325,
     w = 100,
-    h = 400,
+    h = 450,
     shape = "rectangle",
     color = {love.math.colorFromBytes(69, 69, 69)},
     hitbox = {shape = "rectangle"},
@@ -19,7 +19,7 @@ local default = {
     buildGrid = {
         cellSize = 25,
         width = 4,
-        height = 16,
+        height = 18,
         buildings = {}
     },
     selectedSlot = nil,
@@ -170,7 +170,7 @@ function Base:draw(gridOnly)
                             self.buildGrid.y + (j - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charH)/2 - 2)
 
                         -- Hover highlight for the locked (token) slot under the cursor.
-                        if self.hoveredLockedSlot and self.hoveredLockedSlot.slot == slot then
+                        if self.hoveredLockedSlot and not self.hoveredLockedSlot.battlefield and self.hoveredLockedSlot.slot == slot then
                             local sx = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
                             local sy = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
                             local cs = self.buildGrid.cellSize

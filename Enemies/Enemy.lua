@@ -249,8 +249,23 @@ function Enemy:startPortal(x, y)
     self.portal = { t = 0, x = x, y = y }
 end
 
+--- Keeps the enemy inside its battlefield lane (the one it first appears in,
+--- unless a spawner hands it `lane`). Enemies can't walk across the borders;
+--- an ability that moves one to another lane sets `lane` itself.
+function Enemy:confineToLane()
+    local grid = self.game and self.game.battlefieldGrid
+    if not (grid and grid.getLaneAt) then return end
+    self.lane = self.lane or grid:getLaneAt(self.y)
+    self.y = grid:clampToLane(self.lane, self.y, (self.h or 0) / 2)
+end
+
 --- Slides from where it is to (x, y), popping up to full size on the way.
 function Enemy:startSpread(x, y)
+    local grid = self.game and self.game.battlefieldGrid
+    if grid and grid.getLaneAt then
+        self.lane = self.lane or grid:getLaneAt(self.y)
+        y = grid:clampToLane(self.lane, y, (self.h or 0) / 2)
+    end
     self.spread = { t = 0, fromX = self.x, fromY = self.y, toX = x, toY = y }
 end
 
@@ -406,6 +421,7 @@ function Enemy:update(dt)
 
     self.effectManager:update(dt) -- Update status effects
     self:updateMotionFx(dt)
+    self:confineToLane()
 
     if self:getStat("stunned", 0) > 0 then
         return
@@ -418,6 +434,7 @@ function Enemy:update(dt)
 
     if self.navigator then
         self.navigator:update(dt)
+        self:confineToLane()
     end
     
     if self.x < self.target then
@@ -616,7 +633,8 @@ function Enemy:died()
                 game = self.game,
                 x = self.x + offsets[i].x,
                 y = self.y + offsets[i].y,
-                name = self.name
+                name = self.name,
+                lane = self.lane
             }
             local basicClass = require("Enemies.Enemy")
             local childInstance = basicClass:new(spawnConfig)

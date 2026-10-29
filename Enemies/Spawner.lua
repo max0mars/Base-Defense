@@ -135,6 +135,7 @@ function Spawner:spawnOneReinforcement()
     local originX, originY = self.batchX or self.x, self.batchY or self.y
     spawnedInstance.x = originX + forward * ((self:getStat("size") or 0) / 2 + size / 2 + SPAWN_GAP)
     spawnedInstance.y = originY + lane
+    spawnedInstance.lane = self.lane -- the fan-out is squeezed into the spawner's own lane
     local nav, ownNav = spawnedInstance.navigator, self.navigator
     if nav then
         -- The navigator's sideways axis points the other way when walking left

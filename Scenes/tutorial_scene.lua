@@ -5,6 +5,9 @@ setmetatable(tutorial_scene, { __index = scene })
 
 local game = require("Game.Core.GameManager")
 
+-- Runs the battle, so it uses the battle's taller canvas
+tutorial_scene.virtualHeight = require("Game.GUI.Layout").H
+
 function tutorial_scene:load()
     love.mouse.setVisible(true)
     

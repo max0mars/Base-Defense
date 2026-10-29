@@ -148,6 +148,7 @@ function Duplicator:died()
                     name = self.name, -- same enemy type (colour, shape) as the parent
                     x = self.x,
                     y = self.y,
+                    lane = self.lane,
                     generation = childGeneration,
                     maxHp = childMaxHp,
                     hp = childMaxHp,

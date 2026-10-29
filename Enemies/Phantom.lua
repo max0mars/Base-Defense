@@ -121,6 +121,12 @@ function Phantom:startBlink(toY)
     self.untargetable = true
     self.blinkTime = 0
     self.y = toY
+    -- Blinking is the one way across a lane border: it now belongs to the lane it landed in
+    local grid = self.game.battlefieldGrid
+    if grid and grid.getLaneAt then
+        self.lane = grid:getLaneAt(toY)
+        self.y = grid:clampToLane(self.lane, toY, (self.h or 0) / 2)
+    end
     self.trail = {}
     if self.game.battlefieldGrid and self.recalculatePath then self:recalculatePath() end
 end
