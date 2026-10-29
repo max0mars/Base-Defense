@@ -82,21 +82,21 @@ assert(DamageStats.resolveTurret({}) == nil, "Source with no turret behind it: n
 
 -- 2. Enemy:takeDamage records effective damage only
 local e1 = makeEnemy(100)
-e1:takeDamage(40, "ballistic", nil, nil, nil, bullet)
+e1:takeDamage(40, "physical", nil, nil, nil, bullet)
 assert(near(stats:get(sentry).damage, 40), "Partial hit credits its full amount (40)")
-e1:takeDamage(225, "ballistic", nil, nil, nil, bullet)
+e1:takeDamage(225, "physical", nil, nil, nil, bullet)
 assert(near(stats:get(sentry).damage, 100), "Overkill is not counted: only the remaining 60 HP is credited")
 assert(stats:get(sentry).kills == 1, "Killing blow counts as a kill")
-e1:takeDamage(50, "ballistic", nil, nil, nil, bullet)
+e1:takeDamage(50, "physical", nil, nil, nil, bullet)
 assert(near(stats:get(sentry).damage, 100) and stats:get(sentry).kills == 1, "Hitting a dead enemy credits nothing")
 
 local e2 = makeEnemy(100, 30)
-e2:takeDamage(80, "ballistic", nil, nil, nil, gator)
+e2:takeDamage(80, "physical", nil, nil, nil, gator)
 assert(near(stats:get(gator).damage, 30), "Shield hit credits only the shield actually removed (30)")
 assert(stats:get(gator).kills == 0, "Breaking a shield is not a kill")
 
 local e3 = makeEnemy(100)
-e3:takeDamage(50, "ballistic")
+e3:takeDamage(50, "physical")
 assert(near(stats.total, 130), "Damage with no source (spells) is not credited to any turret")
 
 -- 3. Real bullet fired by a turret

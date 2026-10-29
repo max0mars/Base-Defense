@@ -79,7 +79,7 @@ function Turret:new(config)
     t.bulletW = config.bulletW
     t.bulletH = config.bulletH
     t.bulletShape = config.bulletShape
-    t.damageType = config.damageType or "ballistic"
+    t.damageType = config.damageType or "physical"
     if t.types then
         t.types[t.damageType] = true
     end

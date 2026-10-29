@@ -106,8 +106,8 @@ local energyTurret = {
 }
 energyTurret.effectManager.parent = energyTurret
 
-local ballisticTurret = {
-    isType = function(self, t) return t == "turret" or t == "ballistic" end,
+local physicalTurret = {
+    isType = function(self, t) return t == "turret" or t == "physical" end,
     effectManager = {
         applyEffect = function(self, buff)
             self.parent.buffs = self.parent.buffs or {}
@@ -116,13 +116,13 @@ local ballisticTurret = {
         recalculateStats = function() end
     }
 }
-ballisticTurret.effectManager.parent = ballisticTurret
+physicalTurret.effectManager.parent = physicalTurret
 
-_G.GameManager.objects = { energyTurret, ballisticTurret }
+_G.GameManager.objects = { energyTurret, physicalTurret }
 energySurge:execute(_G.GameManager)
 
 assert(energyTurret.buffs and #energyTurret.buffs == 1 and energyTurret.buffs[1].statModifiers.damage.mult == 0.20, "Energy Surge successfully applied to energy turret")
-assert(ballisticTurret.buffs == nil or #ballisticTurret.buffs == 0, "Energy Surge ignored ballistic turret")
+assert(physicalTurret.buffs == nil or #physicalTurret.buffs == 0, "Energy Surge ignored physical turret")
 
 -- Test custom execute
 local initialHp = _G.Base.hp

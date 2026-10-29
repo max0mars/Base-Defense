@@ -8,7 +8,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Sentry
 - **Cost**: 1
-- **Damage**: 11 (ballistic)
+- **Damage**: 11 (physical)
 - **Range**: 420
 - **Fire Rate**: 0.7
 - **DPS**: 7.7
@@ -24,7 +24,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Auto Cannon
 - **Cost**: 1
-- **Damage**: 5 (ballistic)
+- **Damage**: 5 (physical)
 - **Range**: 190
 - **Fire Rate**: 3.2
 - **DPS**: 16.0
@@ -32,7 +32,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Shotgun Turret
 - **Cost**: 1
-- **Damage**: 6 per pellet (ballistic), 8 pellets, 15 degree spread
+- **Damage**: 6 per pellet (physical), 8 pellets, 15 degree spread
 - **Range**: 150 (100 degree arc)
 - **Fire Rate**: 0.55
 - **DPS**: 26.4 if every pellet hits (about half do at max range)
@@ -40,7 +40,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Heavy Gun
 - **Cost**: 1
-- **Damage**: 54 (ballistic)
+- **Damage**: 54 (physical)
 - **Range**: 450
 - **Fire Rate**: 0.15
 - **DPS**: 8.1
@@ -66,7 +66,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Airburst Turret
 - **Cost**: 1
-- **Damage**: 23 (ballistic) direct, or bursts at 60% of range into 5 shrapnel of 23 each (30 degree cone each side)
+- **Damage**: 23 (physical) direct, or bursts at 60% of range into 5 shrapnel of 23 each (30 degree cone each side)
 - **Range**: 300
 - **Fire Rate**: 0.4
 - **DPS**: 9.2 per hit | 46 if all shrapnel connects
@@ -115,7 +115,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### GTR-55 Gator
 - **Cost**: 2
-- **Damage**: 54 (ballistic), pierce 3
+- **Damage**: 54 (physical), pierce 3
 - **Range**: 380
 - **Fire Rate**: 0.55
 - **DPS**: 29.7 per target (up to 3 in a line)
@@ -139,7 +139,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### CSR-8 Sequence
 - **Cost**: 2
-- **Damage**: 18 (ballistic)
+- **Damage**: 18 (physical)
 - **Range**: 340
 - **Fire Rate**: 0.4, ramping to 4.8 (x12) over 8s locked on one target. Loses half its charge when it switches target.
 - **DPS**: 7.2 | 86.4 fully ramped
@@ -147,7 +147,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### The Hook
 - **Cost**: 1
-- **Damage**: 72 (ballistic) + 1s stun
+- **Damage**: 72 (physical) + 1s stun
 - **Range**: 270
 - **Fire Rate**: 0.25
 - **DPS**: 18.0
@@ -172,7 +172,7 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Sniper Turret
 - **Cost**: 2
-- **Damage**: 225 (ballistic, hitscan)
+- **Damage**: 225 (physical, hitscan)
 - **Range**: 225 - 550 (90 degree arc)
 - **Fire Rate**: 0.1
 - **DPS**: 22.5

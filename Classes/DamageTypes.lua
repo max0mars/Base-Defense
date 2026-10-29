@@ -7,7 +7,7 @@
 local DamageTypes = {}
 
 DamageTypes.types = {
-    ballistic = true,
+    physical = true,
     energy = true,
     explosive = true,
     fire = true,
@@ -18,7 +18,7 @@ DamageTypes.types = {
 
 -- Keyed by damage type, or by a tag that recolours its hit (toxic is poison damage).
 DamageTypes.colors = {
-    ballistic = {1, 1, 1, 1},
+    physical = {1, 1, 1, 1},
     energy = {0.3, 0.6, 1, 1},
     explosive = {1, 0.6, 0.2, 1},
     fire = {1, 0.5, 0, 1},

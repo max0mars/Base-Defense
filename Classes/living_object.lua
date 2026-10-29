@@ -22,7 +22,7 @@ function living_object:new(config)
     obj.maxShield = config.maxShield or math.huge
     obj.armour = config.armour or 0
     obj.affinities = config.affinities or {
-        ballistic = 1,
+        physical = 1,
         energy = 1,
         explosive = 1,
         fire = 1,

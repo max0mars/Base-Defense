@@ -264,7 +264,7 @@ function game:updateBuildingCounts()
                 end
             end
             if obj:isType("turret") then
-                local damageType = obj.damageType or "ballistic"
+                local damageType = obj.damageType or "physical"
                 self.buildingCounts[damageType] = (self.buildingCounts[damageType] or 0) + 1
             end
         end

@@ -21,7 +21,7 @@ function Tank:new(config)
     
     if not obj.affinities then
         obj.affinities = {
-            ballistic = 1,
+            physical = 1,
             energy = 1,
             explosive = 1,
             fire = 1,

@@ -374,16 +374,16 @@ scripts.Drone = {
 scripts.Soldier = {
     setup = function(demo)
         demo:spawnStar()
-        local ballistic = true
+        local physical = true
         local tr = demo:addTurret({
             interval = 0.7,
             pick = function(d) return d.star.x < d.W - 10 and d.star or nil end,
         })
         tr.onHit = function(d, target)
-            local mult = ballistic and ((target.affinities and target.affinities.ballistic) or 1) or 1
-            d:damage(target, 10 * mult, ballistic and { 0.65, 0.65, 0.7 } or { 0.4, 0.9, 1 })
-            ballistic = not ballistic
-            tr.color = ballistic and { 1, 0.85, 0.3 } or { 0.4, 0.9, 1 }
+            local mult = physical and ((target.affinities and target.affinities.physical) or 1) or 1
+            d:damage(target, 10 * mult, physical and { 0.65, 0.65, 0.7 } or { 0.4, 0.9, 1 })
+            physical = not physical
+            tr.color = physical and { 1, 0.85, 0.3 } or { 0.4, 0.9, 1 }
         end
     end,
 }

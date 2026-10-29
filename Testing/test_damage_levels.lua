@@ -57,8 +57,8 @@ local mockEnemy = {
 }
 
 -- Apply damage in Level 1 (battlesCompleted = 0)
-baseInst:takeDamage(10, "ballistic", 0, 0, mockEnemy, nil)
-baseInst:takeDamage(15, "ballistic", 0, 0, mockEnemy, nil)
+baseInst:takeDamage(10, "physical", 0, 0, mockEnemy, nil)
+baseInst:takeDamage(15, "physical", 0, 0, mockEnemy, nil)
 
 assert(_G.PersistentState.damageTracker[1] ~= nil, "Damage tracker recorded entries for Level 1")
 assert(_G.PersistentState.damageTracker[1]["FastEnemy"].damage == 25, "Level 1 FastEnemy damage accumulated correctly (25)")
@@ -67,7 +67,7 @@ assert(_G.PersistentState.damageTracker[1]["FastEnemy"].damage == 25, "Level 1 F
 _G.PersistentState.battlesCompleted = 1
 mockGame.wave = 3 -- Wave inside Level 2 doesn't affect the level key
 
-baseInst:takeDamage(50, "ballistic", 0, 0, mockEnemy, nil)
+baseInst:takeDamage(50, "physical", 0, 0, mockEnemy, nil)
 
 assert(_G.PersistentState.damageTracker[2] ~= nil, "Damage tracker recorded entries for Level 2")
 assert(_G.PersistentState.damageTracker[2]["FastEnemy"].damage == 50, "Level 2 FastEnemy damage recorded correctly (50)")

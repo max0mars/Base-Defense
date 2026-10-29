@@ -37,13 +37,13 @@ do
     end
 
     local energyTurret = createMockTurret(10, { turret = true, energy = true })
-    local ballisticTurret = createMockTurret(10, { turret = true, ballistic = true })
+    local physicalTurret = createMockTurret(10, { turret = true, physical = true })
     
     local emEnergy = EffectManager:new(energyTurret, nil)
     energyTurret.effectManager = emEnergy
     
-    local emBallistic = EffectManager:new(ballisticTurret, nil)
-    ballisticTurret.effectManager = emBallistic
+    local emPhysical = EffectManager:new(physicalTurret, nil)
+    physicalTurret.effectManager = emPhysical
     
     -- Buff: +20% damage only for energy types
     local buff = {
@@ -53,17 +53,17 @@ do
     }
     
     emEnergy:applyEffect(buff)
-    emBallistic:applyEffect(buff)
+    emPhysical:applyEffect(buff)
     
     -- Recalculate
     emEnergy:recalculateStats()
-    emBallistic:recalculateStats()
+    emPhysical:recalculateStats()
     
     local energyDmg = energyTurret:getStat("damage", energyTurret.damage)
-    local ballisticDmg = ballisticTurret:getStat("damage", ballisticTurret.damage)
+    local physicalDmg = physicalTurret:getStat("damage", physicalTurret.damage)
     
     assert(energyDmg == 12, "Energy turret successfully gained +20% damage (10 -> 12)")
-    assert(ballisticDmg == 10, "Ballistic turret ignored energy damage buff (remained 10)")
+    assert(physicalDmg == 10, "Physical turret ignored energy damage buff (remained 10)")
 end
 
 -- 2. Test parent/global effect matching propagation
@@ -88,15 +88,15 @@ do
     end
 
     local energyTurret = createMockTurret(10, { turret = true, energy = true })
-    local ballisticTurret = createMockTurret(10, { turret = true, ballistic = true })
+    local physicalTurret = createMockTurret(10, { turret = true, physical = true })
     
     local emEnergy = EffectManager:new(energyTurret, nil)
     emEnergy.parent = parentEM
     energyTurret.effectManager = emEnergy
     
-    local emBallistic = EffectManager:new(ballisticTurret, nil)
-    emBallistic.parent = parentEM
-    ballisticTurret.effectManager = emBallistic
+    local emPhysical = EffectManager:new(physicalTurret, nil)
+    emPhysical.parent = parentEM
+    physicalTurret.effectManager = emPhysical
     
     -- Apply global buff to the parent manager
     local globalBuff = {
@@ -108,13 +108,13 @@ do
     
     -- Recalculate child stats
     emEnergy:recalculateStats()
-    emBallistic:recalculateStats()
+    emPhysical:recalculateStats()
     
     local energyDmg = energyTurret:getStat("damage", energyTurret.damage)
-    local ballisticDmg = ballisticTurret:getStat("damage", ballisticTurret.damage)
+    local physicalDmg = physicalTurret:getStat("damage", physicalTurret.damage)
     
     assert(energyDmg == 15, "Energy turret inherited +50% global damage (10 -> 15)")
-    assert(ballisticDmg == 10, "Ballistic turret ignored global energy damage buff (remained 10)")
+    assert(physicalDmg == 10, "Physical turret ignored global energy damage buff (remained 10)")
 end
 
 print("--- targetTypes System Tests Completed with " .. failures .. " failures ---")

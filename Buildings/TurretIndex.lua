@@ -16,7 +16,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.7, range = 420,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 400, damageType = "ballistic", damage = 11,
+            bulletSpeed = 400, damageType = "physical", damage = 11,
             pierce = 1, lifespan = 1.25, bulletId = "sentryBullet"
         },
         {
@@ -45,7 +45,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 3.2, range = 190,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
-            bulletSpeed = 350, damageType = "ballistic", damage = 5,
+            bulletSpeed = 350, damageType = "physical", damage = 5,
             pierce = 1, lifespan = 0.8, bulletId = "cannonBullet"
         },
         {
@@ -60,7 +60,7 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.55, range = 150,
             firingArc = {direction = 0, minRange = 0, angle = math.rad(100)},
             spread = math.rad(15), pelletCount = 8,
-            bulletSpeed = 480, damageType = "ballistic", damage = 6,
+            bulletSpeed = 480, damageType = "physical", damage = 6,
             pierce = 1, lifespan = 0.8, bulletId = "shotgunPellet"
         },
         {
@@ -74,7 +74,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.15, range = 450,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/14},
-            bulletSpeed = 500, damageType = "ballistic", damage = 54,
+            bulletSpeed = 500, damageType = "physical", damage = 54,
             pierce = 1, lifespan = 1.5, bulletId = "heavyShell"
         },
     },
@@ -124,7 +124,7 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.4, range = 300,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
             -- Slow shell that bursts at 60% of range into fast shrapnel (see AirburstBullet)
-            bulletSpeed = 180, damageType = "ballistic", damage = 23,
+            bulletSpeed = 180, damageType = "physical", damage = 23,
             -- No `spread`: Turret:fire uses it as aim jitter (±spread), so math.pi here made
             -- shells fly in random directions. The burst cone lives in AirburstBullet:airburst().
             pierce = 1, lifespan = 1.5, splitamount = 6, splitDamage = 23, splitDamage_from_damage = 1.0,
@@ -189,7 +189,7 @@ local RewardIndex = {
             -- 7 degree cone: ~3.4 of 7 pellets land on a 20px enemy at max range.
             spread = math.rad(7), pelletCount = 7,
             -- Pellet speed varies +-10%, so 650 x 0.6s still reaches 340 at the slowest.
-            bulletSpeed = 650, damageType = "ballistic", damage = 16,
+            bulletSpeed = 650, damageType = "physical", damage = 16,
             pierce = 2, lifespan = 0.6, bulletId = "heavyPellet"
         },
     },
@@ -240,7 +240,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.55, range = 380,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 500, damageType = "ballistic", damage = 54,
+            bulletSpeed = 500, damageType = "physical", damage = 54,
             pierce = 3, lifespan = 1.5, bulletId = "gatorRound"
         },
         {
@@ -283,7 +283,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.SequenceTurret"),
             rotation = 0, fireRate = 0.4, range = 340, firingArc = {direction = 0, minRange = 0, angle = math.pi/5},
             coolDownRate = 0.5, fireRateMultiplier = 12,
-            bulletSpeed = 500, damageType = "ballistic", damage = 18,
+            bulletSpeed = 500, damageType = "physical", damage = 18,
             pierce = 1, lifespan = 1.5, bulletId = "sequenceRound"
         },
         {
@@ -297,7 +297,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.25, range = 270,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/4},
-            bulletSpeed = 250, damageType = "ballistic", damage = 72,
+            bulletSpeed = 250, damageType = "physical", damage = 72,
             pierce = 1, lifespan = 2, bulletId = "heavyHook",
             hitEffects = { StunEffect:new({name = "Hook Stun", duration = 1.0}) }
         },
@@ -350,7 +350,7 @@ local RewardIndex = {
             cost = 2,
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.10, range = 550, firingArc = {direction = 0, minRange = 225, angle = math.pi/2},
-            bulletSpeed = 0, damageType = "ballistic", damage = 225,
+            bulletSpeed = 0, damageType = "physical", damage = 225,
             pierce = 1, lifespan = 0.3, maxLifespan = 0.3, bulletId = "sniperShot"
         },
         {

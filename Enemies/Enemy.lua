@@ -421,7 +421,7 @@ function Enemy:update(dt)
     end
     
     if self.x < self.target then
-        self.game.base:takeDamage(self:getStat("damage"), "ballistic", self.x, self.y, self) -- Damage the base if the enemy reaches it
+        self.game.base:takeDamage(self:getStat("damage"), "physical", self.x, self.y, self) -- Damage the base if the enemy reaches it
         self.reachedBase = true -- Not a kill (artifacts' onEnemyKilled skips it)
         self:died() -- Destroy the enemy if it reaches the base
     end

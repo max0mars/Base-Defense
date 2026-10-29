@@ -60,9 +60,9 @@ local function enemy(hp)
     return e
 end
 local a = enemy(100)
-a:takeDamage(30, "ballistic")
+a:takeDamage(30, "physical")
 assert(ps.totalDamageDealt == 30, "damage without a turret behind it (e.g. a spell) counts")
-a:takeDamage(500, "ballistic")
+a:takeDamage(500, "physical")
 assert(ps.totalDamageDealt == 100 and ps.totalKills == 1, "overkill doesn't count; the kill does")
 local b = enemy(50)
 b:takeDamage(50, "fire")
@@ -91,7 +91,7 @@ assert(rows[3].first and not rows[4].first and #rows[3].enemies == 11 and #rows[
 -- 4. The screen loads and draws with the run's numbers
 game_over_scene.scene_manager = { switch = noop, scenes = { menu = menu } }
 ps.battlesCompleted = 4
-game.base:takeDamage(20, "ballistic", 0, 0, { name = "Grunt" })
+game.base:takeDamage(20, "physical", 0, 0, { name = "Grunt" })
 game_over_scene:load()
 assert(game_over_scene.level == 5 and game_over_scene.totalDamage == 150 and game_over_scene.totalKills == 2,
     "the screen shows the level reached and the run totals")

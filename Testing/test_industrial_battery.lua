@@ -68,17 +68,17 @@ function mockEnergyTurret:getStat(name)
 end
 
 -- Non-energy turret placed at slot 33
-local mockBallisticTurret = {
+local mockPhysicalTurret = {
     slot = 33,
-    isType = function(self, t) return t == "turret" or t == "ballistic" end,
+    isType = function(self, t) return t == "turret" or t == "physical" end,
     damage = 10,
     buildGrid = mockGrid,
     destroyed = false
 }
-mockBallisticTurret.effectManager = EffectManager:new(mockBallisticTurret, mockGame)
-mockBallisticTurret.effectManager.parent = mockGame.playerEffectManager
-mockGrid.buildings[33] = mockBallisticTurret
-function mockBallisticTurret:getStat(name)
+mockPhysicalTurret.effectManager = EffectManager:new(mockPhysicalTurret, mockGame)
+mockPhysicalTurret.effectManager.parent = mockGame.playerEffectManager
+mockGrid.buildings[33] = mockPhysicalTurret
+function mockPhysicalTurret:getStat(name)
     return self.effectManager:getStat(name, self[name])
 end
 
@@ -95,7 +95,7 @@ end
 
 local mockPhysicalSpell = {
     damage = 20,
-    isType = function(self, t) return t == "spell" or t == "ballistic" end
+    isType = function(self, t) return t == "spell" or t == "physical" end
 }
 mockPhysicalSpell.effectManager = EffectManager:new(mockPhysicalSpell, mockGame)
 mockPhysicalSpell.effectManager.parent = mockGame.playerEffectManager
@@ -116,7 +116,7 @@ end
 
 local mockPhysicalInstant = {
     damage = 30,
-    isType = function(self, t) return t == "instant" or t == "ballistic" end
+    isType = function(self, t) return t == "instant" or t == "physical" end
 }
 mockPhysicalInstant.effectManager = EffectManager:new(mockPhysicalInstant, mockGame)
 mockPhysicalInstant.effectManager.parent = mockGame.playerEffectManager
@@ -132,21 +132,21 @@ local battery = IndustrialBattery:new({
 mockGrid.buildings[35] = battery
 table.insert(mockGame.objects, battery)
 table.insert(mockGame.objects, mockEnergyTurret)
-table.insert(mockGame.objects, mockBallisticTurret)
+table.insert(mockGame.objects, mockPhysicalTurret)
 
 -- Test 1: Industrial Battery is adjacent to main turret
 assert(battery:isAdjacentToMainTurret() == true, "Industrial Battery at slot 35 is adjacent to Main Turret at slot 45")
 
 -- Reset and recalculate/apply buffs
 mockEnergyTurret.effectManager.activeEffects = {}
-mockBallisticTurret.effectManager.activeEffects = {}
+mockPhysicalTurret.effectManager.activeEffects = {}
 mockGame.playerEffectManager.activeEffects = {}
 
 battery:applyBuffs()
 
 -- Recalculate stats on targets
 mockEnergyTurret.effectManager:recalculateStats()
-mockBallisticTurret.effectManager:recalculateStats()
+mockPhysicalTurret.effectManager:recalculateStats()
 mockEnergySpell.effectManager:recalculateStats()
 mockPhysicalSpell.effectManager:recalculateStats()
 mockEnergyInstant.effectManager:recalculateStats()
@@ -154,7 +154,7 @@ mockPhysicalInstant.effectManager:recalculateStats()
 
 -- Asserts
 assert(mockEnergyTurret:getStat("damage") == 12, "Energy turret damage increased by 20% (10 -> 12)")
-assert(mockBallisticTurret:getStat("damage") == 10, "Ballistic turret damage remains unmodified (10)")
+assert(mockPhysicalTurret:getStat("damage") == 10, "Physical turret damage remains unmodified (10)")
 assert(mockEnergySpell:getStat("damage") == 24, "Energy spell damage increased by 20% (20 -> 24)")
 assert(mockPhysicalSpell:getStat("damage") == 20, "Physical spell damage remains unmodified (20)")
 assert(mockEnergyInstant:getStat("damage") == 36, "Energy instant damage increased by 20% (30 -> 36)")
@@ -190,13 +190,13 @@ mockGrid.buildings[15] = farBattery
 assert(farBattery:isAdjacentToMainTurret() == false, "Industrial Battery at slot 15 is NOT adjacent to Main Turret")
 
 mockEnergyTurret.effectManager.activeEffects = {}
-mockBallisticTurret.effectManager.activeEffects = {}
+mockPhysicalTurret.effectManager.activeEffects = {}
 mockGame.playerEffectManager.activeEffects = {}
 
 farBattery:applyBuffs()
 
 mockEnergyTurret.effectManager:recalculateStats()
-mockBallisticTurret.effectManager:recalculateStats()
+mockPhysicalTurret.effectManager:recalculateStats()
 mockEnergySpell.effectManager:recalculateStats()
 mockPhysicalSpell.effectManager:recalculateStats()
 mockEnergyInstant.effectManager:recalculateStats()
