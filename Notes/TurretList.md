@@ -32,10 +32,10 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Shotgun Turret
 - **Cost**: 1
-- **Damage**: 6 per pellet (physical), 8 pellets, 15 degree spread
+- **Damage**: 6 per pellet (physical), 6 pellets, 15 degree spread
 - **Range**: 150 (100 degree arc)
-- **Fire Rate**: 0.55
-- **DPS**: 26.4 if every pellet hits (about half do at max range)
+- **Fire Rate**: 0.8
+- **DPS**: 28.8 if every pellet hits (about half do at max range)
 - **Description**: Shreds close-range targets.
 
 ### Heavy Gun

@@ -57,9 +57,9 @@ local RewardIndex = {
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.55, range = 150,
+            rotation = 0, fireRate = 0.8, range = 150,
             firingArc = {direction = 0, minRange = 0, angle = math.rad(100)},
-            spread = math.rad(15), pelletCount = 8,
+            spread = math.rad(15), pelletCount = 6,
             bulletSpeed = 480, damageType = "physical", damage = 6,
             pierce = 1, lifespan = 0.8, bulletId = "shotgunPellet"
         },
