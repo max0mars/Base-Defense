@@ -141,7 +141,7 @@ local RewardIndex = {
             building = require("Buildings.Turrets.Turret"),
             rotation = 0, fireRate = 0.33, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
-            bulletSpeed = 350, damageType = "energy", damage = 38,
+            bulletSpeed = 350, damageType = "energy", damage = 43,
             pierce = 1, lifespan = 1.5, bulletId = "fluxCharge"
         },
         {

@@ -74,10 +74,10 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Flux Cannon
 - **Cost**: 1
-- **Damage**: 38 (energy)
+- **Damage**: 43 (energy)
 - **Range**: 340
 - **Fire Rate**: 0.33
-- **DPS**: 12.5
+- **DPS**: 14.2
 - **Description**: Energy damage that ignores heavy armor.
 
 ### Grenadier

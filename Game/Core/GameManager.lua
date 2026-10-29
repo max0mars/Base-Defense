@@ -710,13 +710,15 @@ end
 --- its icon, the hand or the pointer), "reticle" (the main turret's aim,
 --- battlefield during a wave only) or a Cursor.ICONS name. In order: a HUD
 --- element with its own icon (hand cards, pile buttons), a card waiting for its
---- target, a turret being aimed, the reticle; any open menu/modal gets "ui".
+--- target, a turret being aimed, Build Mode's hammer, the reticle; any open
+--- menu/modal gets "ui".
 function game:pickCursor(mx, my, menuActive, overBase)
     if menuActive or Cursor.icon then return "ui" end
     local targeting = self:getTargetingIcon()
     if targeting then return targeting end
     local ih = self.inputHandler
     if ih and ih:isAimingTurret() then return "aimTurret" end
+    if ih and ih.editMode and not Cursor.wantHand then return "buildMode" end
     if not Cursor.wantHand and not overBase and self:isState("wave") and Layout.inFieldScreen(mx, my) then
         return "reticle"
     end

@@ -117,6 +117,20 @@ assert(pick() ~= "aimTurret", "the main turret aims itself, so no aiming icon")
 game.inputMode = "idle"
 game.inputHandler.selectedBuilding = nil
 
+-- 3b. Build Mode shows the hammer (the hand over buttons, the aim arrow while aiming a group)
+local ih = game.inputHandler
+ih.editMode = true
+Cursor.reset()
+assert(pick() == "buildMode", "Build Mode shows the hammer")
+Cursor.wantHand = true
+assert(pick() == "ui", "but a button under the mouse still gets the hand")
+Cursor.reset()
+ih.editSelection = { turret }
+assert(pick() == "aimTurret", "aiming a group in Build Mode shows the aiming icon")
+ih.editSelection = {}
+ih.editMode = false
+assert(pick() == "ui", "out of Build Mode the hammer goes away")
+
 -- 4. HUD hovers flag their own icons, over targeting and aiming
 Cursor.reset()
 Cursor.setIcon("selectCard")
@@ -170,7 +184,7 @@ love.mouse.getPosition = function() return 0, 0 end
 -- 5. Every icon draws, along with the pointer and hand
 local ok = true
 for _, name in ipairs({ "selectCard", "viewPile", "placeBuilding", "targetTurret", "targetMainTurret",
-                        "targetAnywhere", "aimTurret", "removeCard", "buyCard", "upgradeCard" }) do
+                        "targetAnywhere", "aimTurret", "buildMode", "removeCard", "buyCard", "upgradeCard" }) do
     local fine = Cursor.ICONS[name] ~= nil and pcall(Cursor.drawIcon, name, 100, 100)
     if not fine then log("  icon failed: " .. name) end
     ok = ok and fine
