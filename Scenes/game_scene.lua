@@ -227,7 +227,7 @@ function game_scene:draw()
         elseif game.rewardSystem and game.rewardSystem.isActive then
             game.rewardSystem:draw()
         end
-        Cursor.applyOS()
+        Cursor.usePointer()
         return
     elseif self.showingSummary then
         -- The summary shows only the base, so the player can look over their setup
@@ -238,9 +238,9 @@ function game_scene:draw()
     if paused == 1 then
         love.graphics.setColor(0, 0, 0, 0.6) -- Dim overlay behind the pause menu
         love.graphics.rectangle("fill", 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+        -- The plain pointer / hand over the pause menu, ignoring the battle underneath
+        Cursor.reset()
         self.settings:draw()
-        -- Real OS hand/arrow cursor over the pause menu (matches the main menu).
-        Cursor.applyOS()
     end
     if self.showingSummary then
 
@@ -337,8 +337,8 @@ function game_scene:draw()
             self:drawTurretStats(hovered, mx, my)
         end
 
-        -- Restore standard OS cursor over the summary screen
-        Cursor.applyOS()
+        -- The plain pointer over the summary screen
+        Cursor.usePointer()
     end
     
     -- Key list steps aside while a menu (e.g. a dev panel) is open over the battle
@@ -376,6 +376,12 @@ function game_scene:keypressed(key)
     end
 
     if paused == 1 then return end -- ignore gameplay keys while paused
+
+    -- The starting-hand screen covers the battle: only its own keys (Enter) get through
+    if game:isState("mulligan") then
+        game.inputHandler:keypressed(key)
+        return
+    end
 
     if key == "+" or key == "=" or key == "e" then
         game:changeSpeed(1)

@@ -62,7 +62,6 @@ function game_over_scene.buildRows(history)
 end
 
 function game_over_scene:load()
-    love.mouse.setVisible(true)
     local ps = _G.PersistentState or {}
     self.level = (ps.battlesCompleted or 0) + 1
     self.totalDamage = ps.totalDamageDealt or 0
@@ -274,8 +273,8 @@ function game_over_scene:draw()
         ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my, true)
     end
 
-    -- Ensure OS cursor is visible and updated (hand vs arrow)
-    Cursor.applyOS()
+    -- The menu's pointer / hand, not the battle's cursor drawn underneath
+    Cursor.usePointer()
 end
 
 function game_over_scene:mousepressed(x, y, button)

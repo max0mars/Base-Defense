@@ -213,10 +213,10 @@ function RewardSystem:draw()
         end
     end
 
-    -- Hand cursor over reward cards / skip / reroll.
+    -- Card-pick cursor over reward cards, hand over skip / reroll.
     for i = 1, #self.currentChoices do
         local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
-        Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight)
+        Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight, "selectCard")
     end
     Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
 end

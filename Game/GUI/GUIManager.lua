@@ -215,6 +215,7 @@ function GUIManager:overlayActive()
     local scene_manager = package.loaded["Scenes.scene_manager"]
     local isSummary = scene_manager and scene_manager.current and scene_manager.current.showingSummary
     return (self.game.rewardSystem and self.game.rewardSystem.isActive)
+        or self.game:isState("mulligan") -- the starting-hand screen covers the board
         or (self.mutation and self.mutation.isActive)
         or (self.enemyEntry and self.enemyEntry.isActive)
         or (self.enemySpawner and self.enemySpawner.isActive)
