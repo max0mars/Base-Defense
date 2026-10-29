@@ -123,7 +123,10 @@ function Merchant.draw(scene, visit, area, mx, my)
             love.graphics.printf("SOLD", r.x, r.y + r.h / 2 - 7, r.w, "center")
         else
             local hovered = inside(r, mx, my)
-            if hovered then Cursor.wantHand = true end
+            if hovered then
+                Cursor.wantHand = true
+                Cursor.setIcon("buyCard")
+            end
             local cardDraw = item.card.getCardDraw and item.card:getCardDraw()
             if cardDraw then cardDraw:draw(r.x, r.y, r.w, r.h, hovered) end
             love.graphics.setColor(cash >= item.cost and {0.2, 0.8, 0.2, 1} or {0.8, 0.2, 0.2, 1})

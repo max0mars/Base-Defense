@@ -216,7 +216,6 @@ function game:load(saveData, isTesting)
     self.artifacts:refresh()
     self.artifacts:trigger("onBattleStart")
     
-    love.mouse.setVisible(false)
 end
 
 -- -----------------------------------------------------------------------------
@@ -655,11 +654,8 @@ function game:draw()
         love.graphics.print(text, cx - textW / 2, cy - textH / 2)
     end
 
-    -- Cursor. Skipped while paused (the pause menu draws its own). In order:
-    -- a HUD element with its own icon (hand cards, pile buttons), a card waiting
-    -- for its target, a turret being aimed, the OS hand for other clickables, the
-    -- reload reticle over the battlefield during a wave, else the OS arrow. Any
-    -- open menu/modal just gets the OS cursor.
+    -- Cursor (drawn by main.lua at the end of the frame). Skipped while paused
+    -- (the pause menu has its own). See pickCursor for the order.
     if not (paused == 1) then
         local mx, my = love.mouse.getPosition()
         local menuActive = (self.rewardSystem and self.rewardSystem.isActive)
@@ -677,34 +673,50 @@ function game:draw()
             Cursor.wantHand = true
         end
         local cursor = self:pickCursor(mx, my, menuActive, overBase)
-        if cursor == "os" then
-            Cursor.applyOS()
-        elseif cursor == "reticle" then
-            love.mouse.setVisible(false)
+        if cursor == "reticle" then
             local mt = self.mainLazer
-            Cursor.drawAim(mx, my, mt and not mt.destroyed and mt.getCharge and mt:getCharge() or nil)
-        else
-            Cursor.drawIcon(cursor, mx, my)
+            Cursor.use("reticle", mt and not mt.destroyed and mt.getCharge and mt:getCharge() or nil)
+        elseif cursor ~= "ui" then
+            Cursor.use(cursor)
         end
-        love.graphics.setColor(1, 1, 1, 1)
     end
 end
 
-local TARGETING_MODES = { placing = true, targeting_card = true, targeting_spell = true,
-    targeting_area = true, targeting_global = true }
+-- Cards played anywhere on the field rather than on a turret
+local ANYWHERE_MODES = { targeting_spell = true, targeting_area = true, targeting_global = true }
 
---- Which cursor to show at screen (mx, my): "os" (the OS hand/arrow), "reticle"
---- (the main turret's aim, battlefield during a wave only) or a Cursor.ICONS name.
+--- The targeting icon for the card being played (nil if none is): on the main
+--- turret, on a turret / building, a building being placed, or anywhere.
+function game:getTargetingIcon()
+    local mode = self.inputMode
+    if mode == "placing" then return "placeBuilding" end
+    if ANYWHERE_MODES[mode] then return "targetAnywhere" end
+    if mode == "targeting_card" then
+        local card = self.activeCard
+        local payload = card and card.payload
+        local required = (card and card.requiredType) or (payload and payload.requiredType)
+        if (payload and payload.isMainUpgrade) or required == "mainturret" then
+            return "targetMainTurret"
+        end
+        return "targetTurret"
+    end
+end
+
+--- Which cursor to show at screen (mx, my): "ui" (whatever the HUD asked for:
+--- its icon, the hand or the pointer), "reticle" (the main turret's aim,
+--- battlefield during a wave only) or a Cursor.ICONS name. In order: a HUD
+--- element with its own icon (hand cards, pile buttons), a card waiting for its
+--- target, a turret being aimed, the reticle; any open menu/modal gets "ui".
 function game:pickCursor(mx, my, menuActive, overBase)
-    if menuActive then return "os" end
-    if Cursor.icon then return Cursor.icon end
-    if TARGETING_MODES[self.inputMode] then return "targetCard" end
+    if menuActive or Cursor.icon then return "ui" end
+    local targeting = self:getTargetingIcon()
+    if targeting then return targeting end
     local ih = self.inputHandler
     if ih and ih:isAimingTurret() then return "aimTurret" end
     if not Cursor.wantHand and not overBase and self:isState("wave") and Layout.inFieldScreen(mx, my) then
         return "reticle"
     end
-    return "os"
+    return "ui"
 end
 
 -- -----------------------------------------------------------------------------

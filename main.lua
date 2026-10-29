@@ -7,6 +7,7 @@ local Settings = require("Game.Core.Settings")
 
 scalify = require("Libraries.scalify")
 local Layout = require("Game.GUI.Layout")
+local Cursor = require("Game.GUI.Cursor")
 
 -- Override mouse position to always return virtual coordinates
 local originalGetPosition = love.mouse.getPosition
@@ -69,6 +70,13 @@ function SetGameScissor(x, y, w, h)
     end
 end
 
+--- The game's cursor, on top of everything (and crisp: after the glow pass).
+--- Uses the raw mouse position so it's still drawn over the letterbox bars.
+local function drawCursor()
+    if not love.window.hasMouseFocus() then return end
+    Cursor.drawOnScreen(originalGetPosition())
+end
+
 local state = 0
 local scene_manager = require("Scenes.scene_manager")
 
@@ -91,6 +99,7 @@ function love.load()
     scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, windowW, windowH, { resizable = true, vsync = true, highdpi = true, canvas = false})
     Settings.applyDisplay(scalify)
     scalify:setBorderColor(0.03, 0.04, 0.06)
+    love.mouse.setVisible(false) -- the game draws its own cursor (Game/GUI/Cursor.lua)
     math.randomseed( os.time() )
     love.graphics.setBlendMode("alpha", "alphamultiply")
     
@@ -128,12 +137,14 @@ function love.update(dt)
 end
 
 function love.draw()
+    Cursor.reset() -- the scene flags what's under the mouse as it draws
     Glow.begin()
     scalify:start()
     love.graphics.clear(0.03, 0.04, 0.06) -- Clear the screen with a dark color
     scene_manager:draw() -- Draw the current scene
     scalify:finish()
     Glow.finish()
+    drawCursor()
 end
 
 function love.keypressed(key)

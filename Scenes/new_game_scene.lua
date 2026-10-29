@@ -137,10 +137,6 @@ function new_game_scene:draw()
     if self.deckViewer.isActive then
         self.deckViewer:draw()
     end
-
-    -- Instead of relying on global OS cursor here directly, it's generally best to use the Cursor component if game_scene/menu_scene do so, but love.mouse.setCursor is common.
-    -- Menu_scene sets wantHand in update and calls setCursor. We will do it here.
-    love.mouse.setCursor(Cursor.wantHand and love.mouse.getSystemCursor("hand") or love.mouse.getSystemCursor("arrow"))
 end
 
 function new_game_scene:mousepressed(x, y, button)
