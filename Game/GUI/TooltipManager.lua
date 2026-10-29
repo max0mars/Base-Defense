@@ -6,7 +6,7 @@ TooltipManager.__index = TooltipManager
 
 -- Core damage types.
 local DAMAGE_TYPE_NAMES = {
-    ballistic      = "Ballistic",
+    physical       = "Physical",
     energy         = "Energy",
     explosive      = "Explosive",
     fire           = "Fire",
@@ -282,7 +282,7 @@ function TooltipManager:drawTurretTooltip(turret)
     local pellets  = turret.pelletCount or 1
     local range    = turret:getStat("range", 0)
     local pierce   = turret:getStat("pierce", 1)
-    local dtype    = turret:getStat("damageType", "ballistic")
+    local dtype    = turret:getStat("damageType", "physical")
     local volley   = dmg * pellets          -- effective per-volley damage
     local dps      = volley * fireRate
 

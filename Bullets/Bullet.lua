@@ -26,7 +26,7 @@ function Bullet:new(config)
     b.hitCache = config.hitCache or {} -- Cache for hit enemies to avoid multiple hits
     b.damageTags = config.damageTags or { "projectile" }
     b.source = config.source -- Track bullet source for stat calculation
-    b.damageType = config.damageType or "ballistic"
+    b.damageType = config.damageType or "physical"
     b.hitEffects = config.hitEffects or {}
     b.displayLifespan = config.displayLifespan or 0.1
     b.onHitCallback = config.onHitCallback

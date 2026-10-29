@@ -9,7 +9,7 @@ This document lists all the structural "types" attached to game objects and card
 **Structural types:** `building`, `turret`, `passive`, `mainturret`
 
 **Flavour types:**
-* Damage type (added automatically from `damageType`): `ballistic`, `energy`, `explosive`, `fire`, `poison`, `ice`
+* Damage type (added automatically from `damageType`): `physical`, `energy`, `explosive`, `fire`, `poison`, `ice`
 * Firing style: `shotgun`, `lobber`
 * Status effect: `toxic` (Chem Lab), `slow`, `stun`
 * Role: `control` (anything that slows or stuns), `economy`
@@ -17,29 +17,29 @@ This document lists all the structural "types" attached to game objects and card
 All buildings inherit the `building` type from `Building.lua`. Turrets and passives get their types from their entry in `TurretIndex.lua` / `PassiveIndex.lua`, which override the class defaults.
 
 ### Turrets (`Buildings/TurretIndex.lua`)
-* **Sentry**: `turret`, `ballistic`
+* **Sentry**: `turret`, `physical`
 * **Blaster**: `turret`, `energy`
-* **Auto Cannon**: `turret`, `ballistic`
-* **Shotgun Turret**: `turret`, `ballistic`, `shotgun`
-* **Heavy Gun**: `turret`, `ballistic`
+* **Auto Cannon**: `turret`, `physical`
+* **Shotgun Turret**: `turret`, `physical`, `shotgun`
+* **Heavy Gun**: `turret`, `physical`
 * **Poison Turret**: `turret`, `poison`
-* **Airburst Turret**: `turret`, `ballistic`
+* **Airburst Turret**: `turret`, `physical`
 * **Flux Cannon**: `turret`, `energy`
 * **Grenadier**: `turret`, `explosive`, `lobber`
 * **Slush Cannon**: `turret`, `ice`, `slow`, `control`
-* **GTR-55 Gator**: `turret`, `ballistic`
+* **GTR-55 Gator**: `turret`, `physical`
 * **Missile Launcher**: `turret`, `explosive`
 * **Plasma Scattershot**: `turret`, `energy`, `shotgun`
-* **CSR-8 Sequence**: `turret`, `ballistic`
-* **The Hook**: `turret`, `ballistic`, `stun`, `control`
-* **Sniper Turret**: `turret`, `ballistic`
+* **CSR-8 Sequence**: `turret`, `physical`
+* **The Hook**: `turret`, `physical`, `stun`, `control`
+* **Sniper Turret**: `turret`, `physical`
 * **Mortar**: `turret`, `explosive`, `lobber`
 * **PROJECT CHIMERA**: `turret`, `energy`
 
 ### Main Turrets (`Buildings/MainTurrets/`)
 All main turrets inherit from `StandardMainTurret.lua`, which adds the `mainturret` type.
 * **Heavy Laser** (`MainLazer.lua`): `mainturret`, `turret`, `energy`
-* **Machine Gun** (`FastMainTurret.lua`): `mainturret`, `turret`, `ballistic`
+* **Machine Gun** (`FastMainTurret.lua`): `mainturret`, `turret`, `physical`
 
 ### Passives (`Buildings/PassiveIndex.lua`)
 * **Unstable Laser**: `passive`

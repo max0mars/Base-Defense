@@ -21,7 +21,7 @@ function DamageNumber:new(text, x, y, damageType, customColor, delay, effectiven
     obj.velY = -60
     obj.velX = love.math.random(-20, 20)
     obj.color = customColor or typeColors[damageType] or DamageTypes.colorFor(damageType, damageTags)
-        or DamageTypes.colors.ballistic
+        or DamageTypes.colors.physical
     obj.lifetime = 1.0
     obj.maxLifetime = 1.0
     obj.delay = delay or 0

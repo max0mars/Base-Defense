@@ -70,7 +70,7 @@ end
 -- HP lost to one hit
 local function hit(v, amount, damageType, tags, source)
     local before = v.hp
-    v:takeDamage(amount, damageType or "ballistic", nil, nil, tags, source)
+    v:takeDamage(amount, damageType or "physical", nil, nil, tags, source)
     local lost = before - v.hp
     v.hp = v.maxHp
     return lost
@@ -88,10 +88,10 @@ local grid = game.battlefieldGrid
 local v = spawn("Vanguard", grid.x + 500, grid.y + 200)
 v.speed = 0
 assert(v.facingX == -1 and v.facingY == 0, "It starts facing the base")
-assert(near(hit(v, 100, "ballistic", nil, bullet(0)), 25), "A bullet into its front does 25% damage")
-assert(near(hit(v, 100, "ballistic", nil, bullet(math.rad(30))), 25), "So does one coming in at an angle")
-assert(near(hit(v, 100, "ballistic", nil, bullet(math.pi)), 100), "A bullet into its back does full damage")
-assert(near(hit(v, 100, "ballistic", nil, bullet(math.pi / 2)), 100), "So does one straight into its side")
+assert(near(hit(v, 100, "physical", nil, bullet(0)), 25), "A bullet into its front does 25% damage")
+assert(near(hit(v, 100, "physical", nil, bullet(math.rad(30))), 25), "So does one coming in at an angle")
+assert(near(hit(v, 100, "physical", nil, bullet(math.pi)), 100), "A bullet into its back does full damage")
+assert(near(hit(v, 100, "physical", nil, bullet(math.pi / 2)), 100), "So does one straight into its side")
 local turret = { x = v.x - 150, y = v.y }
 assert(near(hit(v, 100, "energy", { "beam" }, turret), 25), "A beam from a turret in front is blocked too")
 assert(near(hit(v, 100, "energy", nil, { x = v.x + 150, y = v.y }), 100), "but not from one behind it")
@@ -101,26 +101,26 @@ assert(near(hit(v, 100, "explosive", { "aoe" }, bullet(0)), 100), "Explosions do
 assert(near(hit(v, 100, "poison", { "dot" }), 100), "Poison ticks do full damage")
 assert(near(hit(v, 100, "fire", { "dot" }), 100), "Burn ticks do full damage")
 assert(near(hit(v, 100, "trueDamage", nil, turret), 100), "True damage ignores the shield")
-assert(near(hit(v, 100, "ballistic"), 100), "A hit with no known source isn't blocked")
+assert(near(hit(v, 100, "physical"), 100), "A hit with no known source isn't blocked")
 
 -- 4. Stunned or frozen: the shield is down
 v.effectManager:applyEffect(Stun:new({ duration = 0.5 }))
 v.effectManager:update(0)
 assert(not v:isShielded(), "Stunned, its shield is down")
-assert(near(hit(v, 100, "ballistic", nil, bullet(0)), 100), "and frontal shots do full damage")
+assert(near(hit(v, 100, "physical", nil, bullet(0)), 100), "and frontal shots do full damage")
 local function run(seconds) for _ = 1, math.floor(seconds / 0.05 + 0.5) do v:update(0.05) end end
 run(0.6)
 assert(v:getStat("stunned", 0) <= 0, "The stun wears off")
-assert(not v:isShielded() and near(hit(v, 100, "ballistic", nil, bullet(0)), 100),
+assert(not v:isShielded() and near(hit(v, 100, "physical", nil, bullet(0)), 100),
     "but the shield stays down a while longer, so frontal shots still land in full")
 run(Vanguard.RECOVER_DELAY) -- (the stun ended partway through the 0.6s above)
 assert(v.shieldState == "raising" and not v:isShielded(), "Then it starts raising (not blocking yet)")
 run(Vanguard.RAISE_TIME + 0.1)
 assert(v:isShielded(), "Once fully raised the shield is back")
-assert(near(hit(v, 100, "ballistic", nil, bullet(0)), 25), "and blocks again")
+assert(near(hit(v, 100, "physical", nil, bullet(0)), 25), "and blocks again")
 local realIsFrozen = Chill.isFrozen
 Chill.isFrozen = function(t) return t == v end
-assert(not v:isShielded() and near(hit(v, 100, "ballistic", nil, bullet(0)), 100), "Frozen, its shield is down too")
+assert(not v:isShielded() and near(hit(v, 100, "physical", nil, bullet(0)), 100), "Frozen, its shield is down too")
 Chill.isFrozen = realIsFrozen
 
 -- 5. It turns its shield with the path
@@ -129,8 +129,8 @@ for _ = 1, 40 do
     v:update(0.05)
 end
 assert(v.facingY < -0.9, "Walking up, it faces up")
-assert(near(hit(v, 100, "ballistic", nil, bullet(math.pi / 2)), 25), "so a shot coming down at it hits the shield")
-assert(near(hit(v, 100, "ballistic", nil, bullet(0)), 100), "and a shot from the base hits its side")
+assert(near(hit(v, 100, "physical", nil, bullet(math.pi / 2)), 25), "so a shot coming down at it hits the shield")
+assert(near(hit(v, 100, "physical", nil, bullet(0)), 100), "and a shot from the base hits its side")
 
 -- 6. Codex demo: blocked shots, full-damage explosions, then full shots while stunned
 local demo = EnemyDemo.new("Vanguard", { x = 0, y = 0, w = 600, h = 160 })

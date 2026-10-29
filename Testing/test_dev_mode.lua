@@ -75,7 +75,7 @@ assert(game.tokens >= DevMode.TOKENS, "Spending tokens is refilled on the next f
 
 DevMode.keypressed("f3", game)
 local hp = game.base.hp
-game.base:takeDamage(50, "ballistic")
+game.base:takeDamage(50, "physical")
 assert(DevMode.isOn("invincible") and game.base.hp == hp, "F3 makes the base invincible")
 
 DevMode.keypressed("f4", game)

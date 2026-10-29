@@ -1,7 +1,7 @@
 Damage types and their colours are defined in Classes/DamageTypes.lua.
 
 Damage Types (exactly one per hit, validated on takeDamage):
-- ballistic  - default for turrets, bullets and enemies hitting the base
+- physical  - default for turrets, bullets and enemies hitting the base
 - energy     - Blaster, Flux Cannon, Plasma Scattershot, Chimera, Main Lazer, Zap
 - explosive  - Grenadier, Missile Launcher, Mortar, and every explosion
 - fire       - Burn ticks, Fireball

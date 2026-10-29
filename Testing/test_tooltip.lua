@@ -19,13 +19,13 @@ local mockEnergyTurret = {
 local emEnergy = EffectManager:new(mockEnergyTurret, nil)
 mockEnergyTurret.effectManager = emEnergy
 
--- Mock ballistic turret
-local mockBallisticTurret = {
-    types = { turret = true, ballistic = true },
+-- Mock physical turret
+local mockPhysicalTurret = {
+    types = { turret = true, physical = true },
     isType = function(self, t) return self.types[t] == true end
 }
-local emBallistic = EffectManager:new(mockBallisticTurret, nil)
-mockBallisticTurret.effectManager = emBallistic
+local emPhysical = EffectManager:new(mockPhysicalTurret, nil)
+mockPhysicalTurret.effectManager = emPhysical
 
 -- Industrial Battery Buff
 local buff = {
@@ -35,10 +35,10 @@ local buff = {
 }
 
 emEnergy:applyEffect(buff)
-emBallistic:applyEffect(buff)
+emPhysical:applyEffect(buff)
 
 local energyStrings = emEnergy:getTooltipStrings()
-local ballisticStrings = emBallistic:getTooltipStrings()
+local physicalStrings = emPhysical:getTooltipStrings()
 
 local energyHasDmg = false
 for _, s in ipairs(energyStrings) do
@@ -47,14 +47,14 @@ for _, s in ipairs(energyStrings) do
     end
 end
 
-local ballisticHasDmg = false
-for _, s in ipairs(ballisticStrings) do
+local physicalHasDmg = false
+for _, s in ipairs(physicalStrings) do
     if s:find("Damage") then
-        ballisticHasDmg = true
+        physicalHasDmg = true
     end
 end
 
 assert(energyHasDmg == true, "Energy turret tooltip shows Damage buff")
-assert(ballisticHasDmg == false, "Ballistic turret tooltip DOES NOT show Damage buff")
+assert(physicalHasDmg == false, "Physical turret tooltip DOES NOT show Damage buff")
 
 os.exit(failures == 0 and 0 or 1)

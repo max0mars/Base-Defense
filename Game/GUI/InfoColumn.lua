@@ -24,7 +24,7 @@ local ENEMY_COLORS = {
 local ENEMY_NAMES = { BeastMaster = "Beast Master" }
 
 local DAMAGE_TYPE_NAMES = {
-    ballistic = "Ballistic", energy = "Energy", explosive = "Explosive",
+    physical = "Physical", energy = "Energy", explosive = "Explosive",
     fire = "Fire", poison = "Poison", ice = "Ice", trueDamage = "True",
 }
 

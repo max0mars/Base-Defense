@@ -117,7 +117,7 @@ ArtifactIndex.list = {
         getEffects = function(self, game)
             local seen, count = {}, 0
             for _, t in ipairs(fieldTurrets(game, true)) do
-                local dt = t.damageType or "ballistic"
+                local dt = t.damageType or "physical"
                 if not seen[dt] then
                     seen[dt] = true
                     count = count + 1
@@ -141,7 +141,7 @@ ArtifactIndex.list = {
             local counts = {}
             local bestType, bestCount = nil, 0
             for _, t in ipairs(fieldTurrets(game)) do
-                local dt = t.damageType or "ballistic"
+                local dt = t.damageType or "physical"
                 counts[dt] = (counts[dt] or 0) + 1
                 if counts[dt] > bestCount then
                     bestType, bestCount = dt, counts[dt]
