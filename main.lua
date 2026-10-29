@@ -77,7 +77,6 @@ scene_manager.scenes.new_game = require("Scenes.new_game_scene")
 scene_manager.scenes.preparation = require("Scenes.preparation_scene")
 scene_manager.scenes.game = require("Scenes.game_scene")
 scene_manager.scenes.test = require("Scenes.test_scene")
-scene_manager.scenes.tutorial = require("Scenes.tutorial_scene")
 scene_manager.scenes.gameover = require("Scenes.game_over_scene")
 
 scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to menu_scene
