@@ -153,12 +153,20 @@ function Base:draw(gridOnly)
                         love.graphics.setColor(0.1, 0.1, 0.1)
                         love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
                         
-                        -- Color logic: Green if affordable, Red if locked and expensive
+                        -- Color logic: Green if affordable, Red if locked and expensive.
+                        -- While placing a card, it has to cover the unlock and the card.
                         local price = self:getSlotPrice(slot)
-                        if self.game.tokens >= price then
+                        if self:canAffordUnlock(price) then
                             love.graphics.setColor(0, 0.5, 0) -- faint green
                         else
-                            love.graphics.setColor(0.5, 0, 0) -- faint red
+                            if self.game.inputMode == "placing" then
+                                -- Can't place here: tint the whole slot red
+                                love.graphics.setColor(0.9, 0.2, 0.2, 0.28)
+                                love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+                                love.graphics.setColor(1, 0.3, 0.3) -- red
+                            else
+                                love.graphics.setColor(0.5, 0, 0) -- faint red
+                            end
                         end
                         
                         -- Padlock in the center of locked but visible slots
@@ -466,6 +474,15 @@ end
 
 function Base:getBuildingAtSlot(slot)
     return self.buildGrid.buildings[slot]
+end
+
+--- Whether the player can pay `price` to unlock a slot: while placing a card
+--- (whose cost is paid too) that's unlock + card, otherwise just the unlock.
+function Base:canAffordUnlock(price)
+    if self.game.inputMode == "placing" then
+        return self.game:canAffordPlacement(price)
+    end
+    return self.game.tokens >= price
 end
 
 function Base:getSlotPrice(slot)

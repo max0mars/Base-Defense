@@ -94,6 +94,15 @@ assert(not occupied(lockedSlot), "Building must not be placed on the locked slot
 assert(game.inputMode == "placing", "Player should stay in placing mode to pick another slot")
 realPrint("[PASS] Exactly the card cost cannot unlock a slot (tokens stay at " .. game.tokens .. ").")
 
+-- 1b. While placing, the locked slot is drawn red (can't cover unlock + card),
+-- though outside placement the same tokens could unlock it
+assert(not base:canAffordUnlock(unlockCost), "While placing, the locked slot counts as unaffordable (red)")
+game.inputMode = "idle"
+assert(base:canAffordUnlock(unlockCost), "Outside placement, the same tokens can unlock it (green)")
+game.inputMode = "placing"
+assert(pcall(base.draw, base), "The base draws its red locked slots while placing")
+realPrint("[PASS] While placing, slots the player can't afford with the card are shown red.")
+
 -- 2. The hover tooltip agrees: unaffordable
 game.inputHandler.mouseX, game.inputHandler.mouseY = Layout.mouseToField(sx, sy)
 game.inputHandler.screenMouseX, game.inputHandler.screenMouseY = sx, sy
