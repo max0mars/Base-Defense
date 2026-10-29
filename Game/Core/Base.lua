@@ -2,6 +2,7 @@ local Base = {
 }
 local living_object = require("Classes.living_object") -- Import the living_object module
 local DevMode = require("Game.Dev.DevMode")
+local LockIcon = require("Graphics.LockIcon")
 setmetatable(Base, { __index = living_object }) -- Inherit from the object class
 
 local default = {
@@ -160,14 +161,9 @@ function Base:draw(gridOnly)
                             love.graphics.setColor(0.5, 0, 0) -- faint red
                         end
                         
-                        -- Draw $ symbol in the center of locked but visible slots
-                        local font = love.graphics.getFont()
-                        local char = "T"
-                        local charW = font:getWidth(char)
-                        local charH = font:getHeight()
-                        love.graphics.print(char,
-                            self.buildGrid.x + (i - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charW)/2,
-                            self.buildGrid.y + (j - 1) * self.buildGrid.cellSize + (self.buildGrid.cellSize - charH)/2 - 2)
+                        -- Padlock in the center of locked but visible slots
+                        LockIcon.draw(self.buildGrid.x + (i - 0.5) * self.buildGrid.cellSize,
+                            self.buildGrid.y + (j - 0.5) * self.buildGrid.cellSize)
 
                         -- Hover highlight for the locked (token) slot under the cursor.
                         if self.hoveredLockedSlot and self.hoveredLockedSlot.slot == slot then
