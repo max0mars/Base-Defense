@@ -154,6 +154,19 @@ Cursor.usePointer()
 assert(Cursor.current() == "hand", "a menu over the battle goes back to the hand / pointer")
 Cursor.reset()
 
+-- 4b2. "Choose One" card picks show the add-to-deck icon
+local rs = game.rewardSystem
+rs:activate("cards", 3)
+assert(rs.isActive and rs.mode == "cards" and #rs.currentChoices > 0, "a Choose One card pick is open")
+local cardMx, cardMy = rs.startX + rs.cardWidth / 2, rs.startY + rs.cardHeight / 2
+love.mouse.getPosition = function() return cardMx, cardMy end
+Cursor.reset()
+assert(pcall(rs.draw, rs), "the Choose One screen draws")
+assert(Cursor.current() == "addCard", "hovering one of its cards shows the add-to-deck icon (got " .. Cursor.current() .. ")")
+love.mouse.getPosition = function() return 0, 0 end
+rs.isActive = false
+Cursor.reset()
+
 -- 4c. The starting-hand screen covers the board: nothing behind it reacts
 local scene = require("Scenes.game_scene")
 game:setState("mulligan")
@@ -183,7 +196,7 @@ love.mouse.getPosition = function() return 0, 0 end
 
 -- 5. Every icon draws, along with the pointer and hand
 local ok = true
-for _, name in ipairs({ "selectCard", "viewPile", "placeBuilding", "targetTurret", "targetMainTurret",
+for _, name in ipairs({ "selectCard", "addCard", "viewPile", "placeBuilding", "targetTurret", "targetMainTurret",
                         "targetAnywhere", "aimTurret", "buildMode", "removeCard", "buyCard", "upgradeCard" }) do
     local fine = Cursor.ICONS[name] ~= nil and pcall(Cursor.drawIcon, name, 100, 100)
     if not fine then log("  icon failed: " .. name) end

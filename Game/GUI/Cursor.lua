@@ -153,6 +153,21 @@ local function cardBadge(cx, cy, c)
     love.graphics.pop()
 end
 
+-- A small deck (three stacked cards) with a plus on top: adding a card to it.
+local function addToDeckBadge(cx, cy)
+    for i = 2, 0, -1 do
+        local ox, oy = cx - 1 + i * 2, cy + 1 - i * 2
+        love.graphics.setColor(FILL[1], FILL[2], FILL[3], 1)
+        love.graphics.rectangle("fill", ox - 5, oy - 7, 10, 14, 2, 2)
+        tube(CYAN, i == 0 and 1.5 or 1, function(mode) love.graphics.rectangle(mode, ox - 5, oy - 7, 10, 14, 2, 2) end)
+    end
+    local px, py = cx - 1, cy + 1
+    tube(GREEN, 1.75, function()
+        love.graphics.line(px - 3, py, px + 3, py)
+        love.graphics.line(px, py - 3, px, py + 3)
+    end)
+end
+
 local function eyeBadge(cx, cy)
     local pts = {}
     for i = 0, 16 do
@@ -377,7 +392,8 @@ end
 
 Cursor.ICONS = {
     -- In battle
-    selectCard = withBadge(cardBadge),         -- hovering a card to pick (hand, rewards)
+    selectCard = withBadge(cardBadge),         -- hovering a card to play from the hand
+    addCard = withBadge(addToDeckBadge),       -- hovering a card to add to the deck ("Choose One")
     viewPile = withBadge(eyeBadge),            -- hovering a draw / discard pile button
     placeBuilding = drawPlaceBuilding,         -- a building card waiting for its slot
     targetTurret = drawTargetTurret,           -- a card waiting for a turret / building
