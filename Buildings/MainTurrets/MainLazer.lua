@@ -68,12 +68,13 @@ function MainLazer:applyUpgrade(reward)
         if self.effectManager then
             self.effectManager:applyEffect({
                 name = "Low Power Operating",
+                isUpgrade = true,
                 statModifiers = { damage = { mult = -0.2 }, fireRate = { mult = 0.5 } }
             })
         end
     elseif reward.id == "electric_field" then
         if self.effectManager then
-            self.effectManager:applyEffect({ name = "Electric Field" })
+            self.effectManager:applyEffect({ name = "Electric Field", isUpgrade = true })
         end
     end
     print("Main Turret Upgrade Applied: " .. reward.name)

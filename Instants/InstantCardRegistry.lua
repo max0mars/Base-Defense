@@ -51,6 +51,46 @@ CardRegistry.Permafrost = InstantCard.new({
     statModifiers = { ice_damage = { mult = 0.2 } }
 })
 
+CardRegistry.Cannibalize = InstantCard.new({
+    id = "inst_cannibalize_1",
+    name = "Cannibalize",
+    description = "Destroy a building. Your main turret gains +50% Damage.",
+    cost = 1,
+    rarity = "Uncommon",
+    executionType = InstantCard.ExecutionType.Targeted,
+    targetsBuildings = true,
+    destroysTarget = true,
+    canTarget = function(target)
+        return not target:isType("mainturret")
+    end,
+    customExecute = function(targetEntity)
+        local gameObj = targetEntity.game
+        -- Read position and size before removal clears the building's grid
+        local tx, ty = targetEntity:getCenterPosition()
+        local cellSize = targetEntity.buildGrid and targetEntity.buildGrid.cellSize or 40
+        local color = targetEntity.color or {1, 1, 1, 1}
+        targetEntity:remove()
+
+        gameObj:spawnParticleExplosion(color, cellSize, tx, ty, 0.7, 14)
+        gameObj:spawnParticleExplosion({1, 0.55, 0.15, 1}, cellSize * 0.6, tx, ty, 0.5, 10)
+        gameObj:spawnExpandingCircle(tx, ty, cellSize * 0.2, cellSize * 1.2, {1, 0.45, 0.1}, 0.35)
+        if AUDIO then AUDIO:playSFX("explosion_01") end
+
+        -- Auras from a destroyed passive have to come off its neighbours
+        gameObj:recalculateAllBuffs()
+
+        local main = gameObj.base and gameObj.base.mainLazer
+        if main and main.effectManager then
+            main.effectManager:applyEffect({
+                name = "inst_cannibalize_1_eff",
+                displayName = "Cannibalize",
+                statModifiers = { damage = { mult = 0.5 } },
+            })
+            gameObj:spawnBuffPluses(main:getCenterPosition())
+        end
+    end
+})
+
 -- ==========================================
 -- TIER 3: RARE CARDS
 -- ==========================================
@@ -265,6 +305,63 @@ CardRegistry.SquadTactics = InstantCard.new({
     executionType = InstantCard.ExecutionType.Area,
     areaSize = 2,
     statModifiers = { damage = { mult = 0.2 } }
+})
+
+-- Moves card-style buffs only: debuffs, totem auras (reapplied by recalculateAllBuffs)
+-- and main turret upgrades stay where they are
+local function isTransferableBuff(effect)
+    return not (effect.isDebuff or effect.isBuffTotem or effect.isUpgrade or effect.isIndependent)
+end
+
+CardRegistry.PowerDispersal = InstantCard.new({
+    id = "inst_power_dispersal_1",
+    name = "Power Dispersal",
+    description = "Remove all buffs from your main turret and give them to every other turret. Consume.",
+    cost = 1,
+    isConsume = true,
+    rarity = "Rare",
+    executionType = InstantCard.ExecutionType.Global,
+
+    customExecute = function(gameObj)
+        local main = gameObj and gameObj.base and gameObj.base.mainLazer
+        if not main or not main.effectManager then return end
+
+        local buffs = {}
+        for _, effect in ipairs(main.effectManager.activeEffects) do
+            if isTransferableBuff(effect) then table.insert(buffs, effect) end
+        end
+        if #buffs == 0 then
+            gameObj:spawnFloatingText("No buffs to disperse!", 400, 300, {0.8, 0.2, 0.2, 1})
+            return
+        end
+
+        for _, effect in ipairs(buffs) do
+            main.effectManager:removeEffect(effect)
+        end
+
+        for _, obj in ipairs(gameObj.objects) do
+            if obj ~= main and not obj.destroyed and obj:isType("turret") and obj.effectManager then
+                for _, effect in ipairs(buffs) do
+                    -- Each turret gets its own statModifiers, since iterative
+                    -- effects (Accelerating Core) grow theirs in place each wave
+                    local copy = setmetatable({}, getmetatable(effect))
+                    for k, v in pairs(effect) do copy[k] = v end
+                    if effect.statModifiers then
+                        copy.statModifiers = {}
+                        for stat, mod in pairs(effect.statModifiers) do
+                            local modCopy = {}
+                            for k, v in pairs(mod) do modCopy[k] = v end
+                            copy.statModifiers[stat] = modCopy
+                        end
+                    end
+                    obj.effectManager:applyEffect(copy)
+                end
+                if gameObj.spawnBuffPluses then
+                    gameObj:spawnBuffPluses(obj:getCenterPosition())
+                end
+            end
+        end
+    end
 })
 
 CardRegistry.AcceleratingCore = InstantCard.new({

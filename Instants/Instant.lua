@@ -32,6 +32,8 @@ function Instant.new(config)
     self.customExecute = config.customExecute or nil
     self.requiredType = config.requiredType or nil
     self.canTarget = config.canTarget or nil -- function(target) -> bool, extra check for targeted cards
+    self.targetsBuildings = config.targetsBuildings or false -- targeted cards may also pick passives
+    self.destroysTarget = config.destroysTarget or false -- customExecute removes the target
     self.targetTypes = config.targetTypes or nil
     
     self.isConsume = config.isConsume or false
@@ -112,7 +114,8 @@ function Instant:isValidTarget(targetEntity)
     end
 
     -- For targeted cards, fail if they clicked empty grass or a non-turret
-    if not targetEntity or type(targetEntity.isType) ~= "function" or not targetEntity:isType("turret") then
+    if not targetEntity or type(targetEntity.isType) ~= "function" then return false end
+    if not (targetEntity:isType("turret") or (self.targetsBuildings and targetEntity:isType("passive"))) then
         return false 
     end
 
@@ -133,7 +136,10 @@ function Instant:execute(targetEntity)
     -- Double check validity before spending the card
     if self.executionType == Instant.ExecutionType.Targeted then
         if not self:isValidTarget(targetEntity) then return false end
-        self:applyTargetedEffect(targetEntity)
+        -- No buff (or its animation) on a target the card is about to destroy
+        if not self.destroysTarget then
+            self:applyTargetedEffect(targetEntity)
+        end
         
     elseif self.executionType == Instant.ExecutionType.Group then
         self:applyGroupEffect(targetEntity)

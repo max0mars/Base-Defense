@@ -38,7 +38,7 @@ function StandardMainTurret:applyUpgrade(reward)
     if not reward or not reward.id then return end
     self.upgrades[reward.id] = true
     if self.effectManager and reward.name then
-        self.effectManager:applyEffect({ name = reward.name })
+        self.effectManager:applyEffect({ name = reward.name, isUpgrade = true })
     end
     print("Main Turret Upgrade Applied: " .. reward.name)
 end

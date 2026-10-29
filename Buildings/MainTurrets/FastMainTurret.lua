@@ -71,6 +71,7 @@ function FastMainTurret:applyUpgrade(reward)
     if reward.id == "heavy_rounds" and self.effectManager then
         self.effectManager:applyEffect({
             name = "Heavy Rounds",
+            isUpgrade = true,
             statModifiers = { damage = { mult = 0.5 }, fireRate = { mult = -0.2 } }
         })
     end

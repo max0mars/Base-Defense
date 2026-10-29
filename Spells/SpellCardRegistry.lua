@@ -122,6 +122,54 @@ SpellCardRegistry.Judgment = Spell.new({
     end
 })
 
+-- Lightning: strikes the highest-HP enemies in the area, each at most once.
+-- Strikes beyond the number of enemies in range are wasted.
+SpellCardRegistry.Lightning = Spell.new({
+    id = "spell_lightning",
+    name = "Lightning",
+    description = "Strikes the 3 highest HP enemies in an area for 300 damage each.",
+    cost = 35,
+    rarity = "Rare",
+    radius = 100,
+    damage = 300,
+    strikes = 3,
+    customExecute = function(self, x, y, game)
+        local r = self:getStat("radius")
+        local r2 = r * r
+        if game.spawnCircleFade then
+            game:spawnCircleFade(x, y, r, {0.2, 0.8, 1, 0.5}, 0.25)
+        end
+
+        local inRange = {}
+        for _, obj in ipairs(game.objects) do
+            if obj:isType("enemy") and not obj.destroyed then
+                local dx = obj.x - x
+                local dy = obj.y - y
+                if dx * dx + dy * dy <= r2 then
+                    table.insert(inRange, obj)
+                end
+            end
+        end
+        table.sort(inRange, function(a, b) return a.hp > b.hp end)
+
+        local dmg = self:getStat("damage")
+        for i = 1, math.min(self:getStat("strikes"), #inRange) do
+            local enemy = inRange[i]
+            -- Single target: no "aoe" tag
+            enemy:takeDamage(dmg, "energy", enemy.x, enemy.y)
+            if game.spawnLightningBolt then
+                game:spawnLightningBolt(enemy.x, enemy.y)
+            end
+            if game.spawnParticleExplosion then
+                game:spawnParticleExplosion({0.2, 0.8, 1, 1}, 10, enemy.x, enemy.y, 0.3, 10)
+            end
+        end
+        if AUDIO then
+            AUDIO:playSFX("lightning_01")
+        end
+    end
+})
+
 -- Zap
 SpellCardRegistry.Zap = Spell.new({
     id = "spell_zap",
@@ -134,7 +182,7 @@ SpellCardRegistry.Zap = Spell.new({
     customExecute = function(self, x, y, game)
         -- Visuals
         if game.spawnLightningBolt then
-            game:spawnLightningBolt(x, y)
+            game:spawnLightningBolt(x, y, { scale = 0.5 })
         end
         if game.spawnParticleExplosion then
             game:spawnParticleExplosion({0.2, 0.8, 1, 1}, 8, x, y, 0.3, 10)
@@ -160,7 +208,7 @@ SpellCardRegistry.Zap = Spell.new({
                 if dx*dx + dy*dy <= r2 then
                     obj:takeDamage(dmg, "energy", nil, nil, { "aoe" })
                     if obj.effectManager then
-                        obj.effectManager:applyEffect(Stun:new({ duration = 0.2 }))
+                        obj.effectManager:applyEffect(Stun:new({ duration = 0.4 }))
                     end
                 end
             end
