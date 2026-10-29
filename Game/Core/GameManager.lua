@@ -655,10 +655,11 @@ function game:draw()
         love.graphics.print(text, cx - textW / 2, cy - textH / 2)
     end
 
-    -- Cursor. Skipped while paused (the pause menu draws its own). Over the live
-    -- battlefield we hide the OS cursor and draw a red aim dot; over the HUD and
-    -- any open menu/modal we fall back to the real OS hand/arrow cursor (the same
-    -- crisp pointer the main menu uses).
+    -- Cursor. Skipped while paused (the pause menu draws its own). In order:
+    -- a HUD element with its own icon (hand cards, pile buttons), a card waiting
+    -- for its target, a turret being aimed, the OS hand for other clickables, the
+    -- reload reticle over the battlefield during a wave, else the OS arrow. Any
+    -- open menu/modal just gets the OS cursor.
     if not (paused == 1) then
         local mx, my = love.mouse.getPosition()
         local menuActive = (self.rewardSystem and self.rewardSystem.isActive)
@@ -679,14 +680,35 @@ function game:draw()
         if self.base and self.base.hoveredLockedSlot and self.base.hoveredLockedSlot.battlefield then
             Cursor.wantHand = true
         end
-        if (not Cursor.wantHand) and (not menuActive) and (not overBase) and Layout.inFieldScreen(mx, my) then
-            love.mouse.setVisible(false)
-            Cursor.drawAim(mx, my)
-        else
+        local cursor = self:pickCursor(mx, my, menuActive, overBase)
+        if cursor == "os" then
             Cursor.applyOS()
+        elseif cursor == "reticle" then
+            love.mouse.setVisible(false)
+            local mt = self.mainLazer
+            Cursor.drawAim(mx, my, mt and not mt.destroyed and mt.getCharge and mt:getCharge() or nil)
+        else
+            Cursor.drawIcon(cursor, mx, my)
         end
         love.graphics.setColor(1, 1, 1, 1)
     end
+end
+
+local TARGETING_MODES = { placing = true, targeting_card = true, targeting_spell = true,
+    targeting_area = true, targeting_global = true }
+
+--- Which cursor to show at screen (mx, my): "os" (the OS hand/arrow), "reticle"
+--- (the main turret's aim, battlefield during a wave only) or a Cursor.ICONS name.
+function game:pickCursor(mx, my, menuActive, overBase)
+    if menuActive then return "os" end
+    if Cursor.icon then return Cursor.icon end
+    if TARGETING_MODES[self.inputMode] then return "targetCard" end
+    local ih = self.inputHandler
+    if ih and ih:isAimingTurret() then return "aimTurret" end
+    if not Cursor.wantHand and not overBase and self:isState("wave") and Layout.inFieldScreen(mx, my) then
+        return "reticle"
+    end
+    return "os"
 end
 
 -- -----------------------------------------------------------------------------

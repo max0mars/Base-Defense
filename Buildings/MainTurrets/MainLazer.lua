@@ -187,12 +187,6 @@ MainLazer.RECOIL = 2
 MainLazer.RECOIL_TIME = 0.12
 local COIL_X = { 10.5, 15.5, 20.5 } -- along the rails (local, rotated coordinates)
 
---- How far the next shot has charged, 0 to 1.
-function MainLazer:getCharge()
-    local fireRate = self:getStat("fireRate")
-    if fireRate <= 0 then return 0 end
-    return math.max(0, math.min(1, 1 - self.cooldown * fireRate))
-end
 
 local function hexagon(cx, cy, radius, turn)
     local pts = {}

@@ -373,6 +373,7 @@ function HandUI:draw()
 
     if inRegion(viewDrawBtn) or inRegion(viewDiscardBtn) then
         Cursor.wantHand = true
+        Cursor.setIcon("viewPile")
     end
     
     local function drawCard(i, card, isTopPass)
@@ -399,7 +400,10 @@ function HandUI:draw()
         end
         
         local isHovered = mx >= cx and mx <= cx + cardWidth and my >= cy and my <= cy + cardHeight
-        if isHovered then Cursor.wantHand = true end
+        if isHovered then
+            Cursor.wantHand = true
+            Cursor.setIcon("selectCard")
+        end
         
         local isTopCard = (isHovered or self.game.activeCard == card)
         if isTopPass ~= isTopCard then return end

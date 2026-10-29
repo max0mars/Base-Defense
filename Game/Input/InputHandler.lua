@@ -32,6 +32,16 @@ function InputHandler:isEditPhase()
     return (game:isState("startup") or game:isState("preparing")) and game.inputMode == "idle"
 end
 
+--- True while the mouse is setting a turret's aim: just after placing it, while
+--- re-aiming one between waves, or aiming a group in edit mode.
+function InputHandler:isAimingTurret()
+    if self.editMode and #self.editSelection > 0 then return true end
+    local selected = self.selectedBuilding
+    if not (selected and selected.firingArc and not selected:isType("mainturret")) then return false end
+    local reAiming = self.reAimSelected and self:isEditPhase() and not self.editMode
+    return self.game.inputMode == "aiming" or reAiming
+end
+
 --- Whether edit mode can be switched on right now (also blocked behind overlays).
 function InputHandler:canEdit()
     return self:isEditPhase() and not (self.game.gui and self.game.gui:overlayActive())
