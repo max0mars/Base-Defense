@@ -145,6 +145,7 @@ function game:load(saveData, isTesting)
         self.newArtifacts = {}        -- Artifacts won this battle, revealed before the summary
         self.artifactFallbackCash = 0 -- Cash paid instead of an artifact (every artifact owned)
         self.iceMarketIncome = 0              -- Cash from Ice Markets this battle (summary line)
+        self.vaultIncome = 0                  -- Cash from Vaults when the battle is won (summary line)
         
         -- Initialize Core Gameplay Systems
         self.base            = Base:new({game = self})
@@ -465,6 +466,26 @@ function game:draw()
         self.blueprint.isPreview = false
     end
 
+    -- Area card: outline the square it would hit and the turrets inside it
+    if self.inputMode == "targeting_area" and self.activeCard then
+        local area = self.inputHandler:getAreaTarget(self.activeCard.areaSize or 2)
+        if area then
+            love.graphics.push("all")
+            local hasTurrets = #area.turrets > 0
+            local col = hasTurrets and {0.3, 1, 0.4} or {0.9, 0.3, 0.3}
+            love.graphics.setColor(col[1], col[2], col[3], 0.12)
+            love.graphics.rectangle("fill", area.x, area.y, area.w, area.h)
+            love.graphics.setColor(col[1], col[2], col[3], 0.9)
+            love.graphics.setLineWidth(2)
+            love.graphics.rectangle("line", area.x, area.y, area.w, area.h)
+            for _, t in ipairs(area.turrets) do
+                local cx, cy = t:getCenterPosition()
+                love.graphics.circle("line", cx, cy, (t.size or 10) * 0.9)
+            end
+            love.graphics.pop()
+        end
+    end
+
     if self.inputMode == "targeting_spell" and self.activeCard then
         local radius = self.activeCard:getStat("radius") or 50
         local drawX = self.inputHandler.mouseX
@@ -773,6 +794,24 @@ function game:onFrozenEnemyDied(enemy)
     end
     self.iceMarketIncome = (self.iceMarketIncome or 0) + payout
     self:spawnFloatingText("+$" .. payout, enemy.x, enemy.y, {0.3, 1.0, 0.5, 1})
+end
+
+--- The battle was won: every placed Vault still standing pays out its cash.
+--- The total is also tallied for the battle summary.
+function game:payVaults()
+    local payout = 0
+    for _, obj in ipairs(self.objects) do
+        if obj.cashOnBattleWon and obj.slot and not obj.destroyed then
+            payout = payout + obj.cashOnBattleWon
+            self:spawnFloatingText("+$" .. obj.cashOnBattleWon, obj.x, obj.y - 20, {1, 0.82, 0.3, 1})
+        end
+    end
+    if payout <= 0 then return end
+
+    if _G.PersistentState then
+        _G.PersistentState.cash = (_G.PersistentState.cash or 0) + payout
+    end
+    self.vaultIncome = (self.vaultIncome or 0) + payout
 end
 
 function game:spawnParticleExplosion(color, size, x, y, lifetime, numParticles)
@@ -1336,6 +1375,7 @@ function game:winBattle()
     end
 
     self:waveComplete(true)
+    self:payVaults()
 
     self.battleComplete = true
     self:clearGlobalBuffs()

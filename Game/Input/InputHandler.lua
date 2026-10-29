@@ -377,6 +377,41 @@ function InputHandler:isMouseOverBuilding(building)
     return false
 end
 
+--- The square an Area card would hit: `size` x `size` cells of the base grid
+--- (or the battlefield grid, when only that is under the mouse), centred as
+--- near the mouse as fits inside the grid. Returns
+--- { grid, x, y, w, h, turrets } in world space, or nil off the grids.
+function InputHandler:getAreaTarget(size)
+    local game = self.game
+    local grid
+    if self:isMouseOverGrid(game.base.buildGrid) then
+        grid = game.base.buildGrid
+    elseif self:isMouseOverGrid(game.battlefieldGrid) then
+        grid = game.battlefieldGrid
+    else
+        return nil
+    end
+    local cs = grid.cellSize
+    local cols, rows = math.min(size, grid.width), math.min(size, grid.height)
+    -- Top-left cell (0-based) of the square whose middle is nearest the mouse
+    local col = math.floor((self.mouseX - grid.x) / cs - cols / 2 + 0.5)
+    local row = math.floor((self.mouseY - grid.y) / cs - rows / 2 + 0.5)
+    col = math.max(0, math.min(grid.width - cols, col))
+    row = math.max(0, math.min(grid.height - rows, row))
+
+    local area = { grid = grid, x = grid.x + col * cs, y = grid.y + row * cs, w = cols * cs, h = rows * cs, turrets = {} }
+    for _, obj in ipairs(game.objects) do
+        if obj:isType("turret") and not obj:isType("mainturret") and not obj.destroyed and obj.slot then
+            local cx, cy = obj.x, obj.y
+            if obj.getCenterPosition then cx, cy = obj:getCenterPosition() end
+            if cx >= area.x and cx < area.x + area.w and cy >= area.y and cy < area.y + area.h then
+                table.insert(area.turrets, obj)
+            end
+        end
+    end
+    return area
+end
+
 function InputHandler:isMouseOverGrid(grid)
     if not grid then return false end
     return self.mouseX >= grid.x and self.mouseX < grid.x + grid.width * grid.cellSize and
@@ -558,7 +593,8 @@ function InputHandler:mousepressed(x, y, button)
     end
 
     if button == 2 then
-        if game.inputMode == "placing" or game.inputMode == "targeting_card" or game.inputMode == "targeting_global" or game.inputMode == "targeting_spell" then
+        if game.inputMode == "placing" or game.inputMode == "targeting_card" or game.inputMode == "targeting_global"
+           or game.inputMode == "targeting_spell" or game.inputMode == "targeting_area" then
             if game.activeCard then
                 game:refundCard(game.activeCard)
             end
@@ -605,6 +641,26 @@ function InputHandler:mousepressed(x, y, button)
             end
         end
         game.inputMode = "idle"
+        return
+    end
+
+    -- Handle area targeting execution (a square of grid cells)
+    if game.inputMode == "targeting_area" and button == 1 then
+        local card = game.activeCard
+        local area = card and self:getAreaTarget(card.areaSize or 2)
+        if card and area then
+            if card:execute(area) then
+                game:consumeCard(card)
+            else
+                game:spawnFloatingText("No turrets there!", x, y, {0.8, 0.2, 0.2, 1})
+                game:refundCard(card)
+            end
+        elseif card then
+            game:refundCard(card)
+        end
+        game.inputMode = "idle"
+        -- The click that plays the card must not turn into main-turret fire while held
+        self.holdFireUntilRelease = true
         return
     end
 

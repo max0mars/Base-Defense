@@ -255,6 +255,18 @@ CardRegistry.PocketDefenses = InstantCard.new({
     end
 })
 
+-- Area: the player picks a 2x2 square of grid cells (see InputHandler:getAreaTarget)
+CardRegistry.SquadTactics = InstantCard.new({
+    id = "inst_squad_tactics_1",
+    name = "Squad Tactics",
+    description = "Give turrets in a 2x2 square +20% Damage. Can't target the main turret.",
+    cost = 1,
+    rarity = "Rare",
+    executionType = InstantCard.ExecutionType.Area,
+    areaSize = 2,
+    statModifiers = { damage = { mult = 0.2 } }
+})
+
 CardRegistry.AcceleratingCore = InstantCard.new({
     id = "inst_accel_core_1",
     name = "Accelerating Core",

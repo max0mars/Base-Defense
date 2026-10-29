@@ -67,6 +67,17 @@ local PassiveIndex = {
             cost = 2,
             affectedSlots = {}
         },
+        {
+            id = "vault",
+            name = "The Vault",
+            description = "Gain $50 when the battle is won.",
+            type = "building",
+            types = {"passive", "building", "economy"},
+            building = require("Buildings.Passives.Vault"),
+            iconCategory = "buff",
+            cost = 2,
+            affectedSlots = {}
+        },
     },
     rare = {
         {

@@ -100,10 +100,12 @@ function game_scene:update(dt)
             self.summaryPerfectBonus = (self.summaryDamage == 0) and 25 or 0
             -- Already added to cash during the battle, as frozen enemies died
             self.summaryIceMarket = game.iceMarketIncome or 0
+            -- Already added to cash when the battle was won
+            self.summaryVault = game.vaultIncome or 0
 
             local currentCash = _G.PersistentState and _G.PersistentState.cash or 0
             local fallbackCash = game.artifactFallbackCash or 0
-            local cashBeforeBattle = currentCash - self.summaryIncome - self.summaryIceMarket - fallbackCash
+            local cashBeforeBattle = currentCash - self.summaryIncome - self.summaryIceMarket - self.summaryVault - fallbackCash
             if cashBeforeBattle < 0 then cashBeforeBattle = 0 end
             self.summaryInterest = math.floor(cashBeforeBattle * 0.10 + 0.5)
             
@@ -232,7 +234,8 @@ function game_scene:draw()
         -- MVP block: name + damage line, then one line per runner-up, then a divider
         local mvpH = (#top > 0) and (58 + (#top - 1) * 20) or 0
         local iceRowH = ((self.summaryIceMarket or 0) > 0) and 30 or 0
-        local boxH = (hasOther and 340 or 300) + mvpH + iceRowH
+        local vaultRowH = ((self.summaryVault or 0) > 0) and 30 or 0
+        local boxH = (hasOther and 340 or 300) + mvpH + iceRowH + vaultRowH
         local baseRight = game.base and Layout.worldToScreen(game.base.x + game.base.w / 2, 0) or 0
         local boxX = math.floor((math.max(baseRight, 0) + VIRTUAL_WIDTH - boxW) / 2)
         local boxY = math.floor((VIRTUAL_HEIGHT - boxH) / 2) - 10
@@ -287,6 +290,10 @@ function game_scene:draw()
             love.graphics.printf("Ice Market: +$" .. self.summaryIceMarket, boxX, oy + 185, boxW, "center")
         end
         oy = oy + iceRowH -- Rows below shift down when the Ice Market line shows
+        if vaultRowH > 0 then
+            love.graphics.printf("The Vault: +$" .. self.summaryVault, boxX, oy + 185, boxW, "center")
+        end
+        oy = oy + vaultRowH
 
         -- Thin divider above Total Cash
         love.graphics.setColor(0.3, 0.5, 0.7, 0.4)

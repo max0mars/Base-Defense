@@ -585,6 +585,8 @@ function HandUI:selectCard(card, x, y)
         end
     elseif card.executionType == ExecutionType.Targeted or card.executionType == "Targeted" then
         game.inputMode = "targeting_card"
+    elseif card.executionType == "Area" then
+        game.inputMode = "targeting_area"
     end
 end
 

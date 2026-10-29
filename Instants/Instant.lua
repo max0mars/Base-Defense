@@ -6,7 +6,8 @@ Instant.__index = Instant -- This tells Lua where to look for methods
 Instant.ExecutionType = {
     Global = "Global",
     Group = "Group",
-    Targeted = "Targeted"
+    Targeted = "Targeted",
+    Area = "Area" -- the player picks a square of `areaSize` x `areaSize` grid cells
 }
 
 -- The Constructor
@@ -70,6 +71,7 @@ function Instant:getCardDraw()
     if not self.rewardCard then
         local CardDraw = require("Game.Cards.CardDraw")
         local isTargeted = self.executionType == Instant.ExecutionType.Targeted or self.executionType == "Targeted"
+                           or self.executionType == Instant.ExecutionType.Area
         local isGlobal = self.executionType == Instant.ExecutionType.Global or self.executionType == "Global"
                          or self.executionType == Instant.ExecutionType.Group or self.executionType == "Group"
         
@@ -104,6 +106,11 @@ function Instant:isValidTarget(targetEntity)
         return true -- Global/Group cards don't need a specific map target
     end
 
+    -- Area cards need at least one turret inside the chosen square
+    if self.executionType == Instant.ExecutionType.Area then
+        return targetEntity ~= nil and targetEntity.turrets ~= nil and #targetEntity.turrets > 0
+    end
+
     -- For targeted cards, fail if they clicked empty grass or a non-turret
     if not targetEntity or type(targetEntity.isType) ~= "function" or not targetEntity:isType("turret") then
         return false 
@@ -130,6 +137,13 @@ function Instant:execute(targetEntity)
         
     elseif self.executionType == Instant.ExecutionType.Group then
         self:applyGroupEffect(targetEntity)
+
+    elseif self.executionType == Instant.ExecutionType.Area then
+        if not self:isValidTarget(targetEntity) then return false end
+        for _, turret in ipairs(targetEntity.turrets) do
+            self:applyTargetedEffect(turret)
+            if turret.effectManager then turret.effectManager:recalculateStats() end
+        end
 
     elseif self.executionType == Instant.ExecutionType.Global then
         self:applyGlobalEffect(targetEntity)
