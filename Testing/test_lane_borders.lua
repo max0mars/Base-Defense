@@ -174,6 +174,39 @@ assert(phantom.y >= lane3Top and phantom.y <= lane3Bottom, "and it stays there")
 phantom.destroyed = true
 game:takeOutTheTrash()
 
+-- 5b. A Phantom's blink always takes it to one of the other two lanes, any
+-- distance away, at a random height inside that lane
+local Phantom2 = require("Enemies.Phantom")
+for fromLane = 1, 3 do
+    local landed, wrongLane, outside = {}, 0, 0
+    local laneMin, laneMax = {}, {}
+    for _ = 1, 300 do
+        local ftop, fbottom = grid:getLaneBounds(fromLane)
+        local p = Phantom2:new({ game = game, x = 600, y = (ftop + fbottom) / 2, lane = fromLane })
+        p.blinkCooldown = 0
+        p:tryBlink()
+        -- run the wipe and the blink through to the end
+        p:updateBlink(Phantom2.VANISH_TIME + 0.01)
+        if p.lane == fromLane then wrongLane = wrongLane + 1 end
+        local top, bottom = grid:getLaneBounds(p.lane)
+        if p.y - p.h / 2 < top - 0.001 or p.y + p.h / 2 > bottom + 0.001 then outside = outside + 1 end
+        landed[p.lane] = (landed[p.lane] or 0) + 1
+        laneMin[p.lane] = math.min(laneMin[p.lane] or math.huge, p.y)
+        laneMax[p.lane] = math.max(laneMax[p.lane] or -math.huge, p.y)
+    end
+    local others = {}
+    for lane = 1, 3 do if lane ~= fromLane then table.insert(others, lane) end end
+    assert(wrongLane == 0, "from lane " .. fromLane .. ": a blink never stays in the same lane")
+    assert((landed[others[1]] or 0) > 50 and (landed[others[2]] or 0) > 50,
+        "from lane " .. fromLane .. ": it reaches both other lanes, near and far ("
+        .. others[1] .. ": " .. (landed[others[1]] or 0) .. ", " .. others[2] .. ": " .. (landed[others[2]] or 0) .. ")")
+    assert(outside == 0, "from lane " .. fromLane .. ": it always lands fully inside its new lane")
+    local o = others[1]
+    local top, bottom = grid:getLaneBounds(o)
+    assert(laneMax[o] - laneMin[o] > (bottom - top) * 0.6,
+        "from lane " .. fromLane .. ": the height it lands at varies across the lane")
+end
+
 -- 6. Placing turrets and buildings on border slots
 local ih = game.inputHandler
 local function cellCentre(slot)
@@ -268,6 +301,49 @@ hoverAndClick(mid2)
 assert(grid.unlocked[mid2] and game.tokens == 3, "clicking it with 5 tokens unlocks it for 2")
 local unlockedTurret = newTurret()
 assert(placeBlueprint(unlockedTurret, mid2, 0), "an already-unlocked slot costs nothing more to build on")
+
+-- 8. Lane slots follow the same rules as base slots
+local SlotVisuals = require("Game.GUI.SlotVisuals")
+assert(grid:isSlotTaken(near) and grid.buildings[near] == turret, "placed buildings are looked up by slot, as on the base")
+
+-- An adjacency buff on a lane slot buffs the turret beside it, as it would on the base
+local buffedSlot = slotAt(pairs_[1].cols[1], row2)
+local cacheSlot = slotAt(pairs_[1].cols[2], row2)
+local buffed = newTurret()
+assert(placeBlueprint(buffed, buffedSlot, 1), "a turret goes on the second border's nearest pair")
+local before = buffed:getStat("damage")
+local cache = newPassive("ammoCache")
+assert(placeBlueprint(cache, cacheSlot, 1), "an Ammo Cache goes on the slot beside it")
+game:recalculateAllBuffs()
+assert(buffed:getStat("damage") > before, "the Ammo Cache buffs its lane-slot neighbour ("
+    .. before .. " -> " .. buffed:getStat("damage") .. ")")
+
+-- An Outpost unlocks its surrounding slots: on a lane border that's only its pair partner
+local outpostSlot = slotAt(pairs_[3].cols[2], row2)
+local partner = slotAt(pairs_[3].cols[1], row2)
+assert(not grid.unlocked[partner], "the far pair's partner slot starts locked")
+local outpost = newPassive("outpost")
+local okPlace, placed = pcall(placeBlueprint, outpost, outpostSlot, 3)
+assert(okPlace and placed, "an Outpost can be placed on a lane slot")
+assert(grid.unlocked[partner], "it unlocks its pair partner for free, as it does neighbours on the base")
+local strayUnlocks = 0
+for s, open in pairs(grid.unlocked) do
+    if open and not grid:isBuildSlot(s) then strayUnlocks = strayUnlocks + 1 end
+end
+assert(strayUnlocks == 0, "and doesn't mark cells that aren't slots as unlocked")
+
+-- The same affordability rule and slot drawing on both grids
+game.activeCard = { getCost = function() return 1 end }
+game.tokens = 2
+game.inputMode = "placing"
+assert(game.base:canAffordUnlock(1) and not game.base:canAffordUnlock(2), "base: unlock + card while placing")
+assert(SlotVisuals.canAffordUnlock(game, 1) and not SlotVisuals.canAffordUnlock(game, 2), "lane slots use the same rule")
+game.blueprint = newTurret()
+assert(pcall(grid.drawGrid, grid) and pcall(game.base.draw, game.base), "both grids draw their slots while placing")
+game.inputMode = "idle"
+game.blueprint = nil
+game.activeCard = nil
+assert(pcall(grid.drawGrid, grid) and pcall(game.base.draw, game.base), "and outside placement")
 
 log("--- Lane Border Tests Completed with " .. failures .. " failures ---")
 os.exit(failures == 0 and 0 or 1)

@@ -2,10 +2,12 @@
 --
 -- Blink: first it vanishes, wiped away from left to right over VANISH_TIME
 -- (still visible and hittable meanwhile). Then it's gone: invisible and
--- untargetable (Enemy:isType) for BLINK_TIME, after which it reappears between
--- MIN_BLINK and MAX_BLINK of the battlefield's height up or down from where it
--- was. It holds still throughout. Its BLINK_COOLDOWN only starts once it
--- reappears.
+-- untargetable (Enemy:isType) for BLINK_TIME, after which it reappears in one
+-- of the other lanes, picked at random however far away it is, at a random
+-- height within that lane. It's the only enemy that crosses lane borders. It
+-- holds still throughout. Its BLINK_COOLDOWN only starts once it reappears.
+-- (Without lanes, e.g. the codex demo, it blinks MIN_BLINK to MAX_BLINK of the
+-- field's height up or down instead: see pickBlinkY.)
 --
 -- Damage over time doesn't make it blink (only actual hits do), and it can't
 -- start a blink while stunned or frozen.
@@ -83,8 +85,23 @@ function Phantom:getBlinkBounds()
     return grid.y + grid.cellSize, grid.y + fieldH - grid.cellSize, fieldH
 end
 
---- A y between min and max blink distance from `y`, up or down at random,
---- staying within [top, bottom]. nil if neither direction has room.
+--- Where it reappears on a laned battlefield: one of the lanes other than
+--- `fromLane` at random, and a random y inside it with room for a body
+--- `halfSize` tall either side. Returns the lane and the y.
+function Phantom.pickBlinkLane(grid, fromLane, halfSize)
+    local choices = {}
+    for lane = 1, #grid.LANES do
+        if lane ~= fromLane then table.insert(choices, lane) end
+    end
+    if #choices == 0 then return nil end
+    local lane = choices[math.random(#choices)]
+    local top, bottom = grid:getLaneBounds(lane)
+    halfSize = math.min(halfSize or 0, (bottom - top) / 2)
+    return lane, top + halfSize + math.random() * (bottom - top - 2 * halfSize)
+end
+
+--- Without lanes: a y between min and max blink distance from `y`, up or down
+--- at random, staying within [top, bottom]. nil if neither direction has room.
 function Phantom.pickBlinkY(y, top, bottom, fieldH)
     local minDist, maxDist = fieldH * Phantom.MIN_BLINK, fieldH * Phantom.MAX_BLINK
     local dirs = {}
@@ -98,6 +115,14 @@ end
 
 function Phantom:tryBlink()
     if not self:canBlink() then return false end
+    local grid = self.game.battlefieldGrid
+    if grid and grid.LANES and grid.getLaneBounds then
+        local fromLane = self.lane or grid:getLaneAt(self.y)
+        local lane, toY = Phantom.pickBlinkLane(grid, fromLane, (self.h or 0) / 2)
+        if not lane then return false end
+        self:startVanish(toY, lane)
+        return true
+    end
     local top, bottom, fieldH = self:getBlinkBounds()
     if not top then return false end
     local toY = Phantom.pickBlinkY(self.y, top, bottom, fieldH)
@@ -106,14 +131,15 @@ function Phantom:tryBlink()
     return true
 end
 
---- Starts the wipe; once it's done it's gone, and reappears at `toY`.
-function Phantom:startVanish(toY)
+--- Starts the wipe; once it's done it's gone, and reappears at `toY` (in `lane`).
+function Phantom:startVanish(toY, lane)
     self.vanishTime = 0
     self.blinkY = toY
+    self.blinkLane = lane
 end
 
 --- Gone now (invisible and untargetable), moved to where it will reappear.
-function Phantom:startBlink(toY)
+function Phantom:startBlink(toY, lane)
     if self.game.spawnExpandingCircle then
         self.game:spawnExpandingCircle(self.x + self.w * 0.5, self.y, self.w * 0.6, 2, self.color, 0.2)
     end
@@ -124,9 +150,10 @@ function Phantom:startBlink(toY)
     -- Blinking is the one way across a lane border: it now belongs to the lane it landed in
     local grid = self.game.battlefieldGrid
     if grid and grid.getLaneAt then
-        self.lane = grid:getLaneAt(toY)
+        self.lane = lane or grid:getLaneAt(toY)
         self.y = grid:clampToLane(self.lane, toY, (self.h or 0) / 2)
     end
+    self.blinkLane = nil
     self.trail = {}
     if self.game.battlefieldGrid and self.recalculatePath then self:recalculatePath() end
 end
@@ -146,7 +173,7 @@ end
 function Phantom:updateBlink(dt)
     if self.vanishTime then
         self.vanishTime = self.vanishTime + dt
-        if self.vanishTime >= Phantom.VANISH_TIME then self:startBlink(self.blinkY) end
+        if self.vanishTime >= Phantom.VANISH_TIME then self:startBlink(self.blinkY, self.blinkLane) end
     elseif self.blinkTime then
         self.blinkTime = self.blinkTime + dt
         if self.blinkTime >= Phantom.BLINK_TIME then self:appear() end
