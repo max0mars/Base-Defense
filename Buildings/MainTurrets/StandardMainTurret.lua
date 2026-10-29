@@ -97,6 +97,13 @@ function StandardMainTurret:PlayerClick(tX, tY)
     return false
 end
 
+--- How far the next shot has charged, 0 to 1 (1 = ready to fire).
+function StandardMainTurret:getCharge()
+    local fireRate = self:getStat("fireRate")
+    if fireRate <= 0 then return 0 end
+    return math.max(0, math.min(1, 1 - self.cooldown * fireRate))
+end
+
 function StandardMainTurret:getFirePoint()
     local cx, cy = self:getCenterPosition()
     return cx, cy
