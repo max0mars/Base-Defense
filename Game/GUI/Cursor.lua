@@ -347,6 +347,22 @@ local function drawTargetAnywhere(x, y)
     love.graphics.circle("fill", x, y, 1.75)
 end
 
+--- Build Mode: a hammer, its striking face on the point and the handle
+--- running down and to the left.
+local function drawBuildMode(x, y)
+    love.graphics.push()
+    love.graphics.translate(x, y)
+    love.graphics.rotate(math.pi / 4)
+    local head = function(mode) love.graphics.rectangle(mode, 0, -4, 15, 8, 1.5, 1.5) end
+    local handle = function(mode) love.graphics.rectangle(mode, 6, 4, 4, 15, 1.5, 1.5) end
+    love.graphics.setColor(FILL[1], FILL[2], FILL[3], 0.92)
+    handle("fill")
+    head("fill")
+    tube(AMBER, 1.5, handle)
+    tube(AMBER, 1.5, head)
+    love.graphics.pop()
+end
+
 --- A card that goes on a turret or building.
 local function drawTargetTurret(x, y)
     brackets(x, y, CYAN)
@@ -368,6 +384,7 @@ Cursor.ICONS = {
     targetMainTurret = drawTargetMainTurret,   -- a card waiting for the main turret
     targetAnywhere = drawTargetAnywhere,       -- a spell / global / area card
     aimTurret = drawAimTurret,                 -- the mouse is setting a turret's aim
+    buildMode = drawBuildMode,                 -- Build Mode is on
     -- Between battles
     removeCard = withBadge(trashBadge),        -- removing a card from the deck
     buyCard = withBadge(coinBadge),            -- buying from the merchant
