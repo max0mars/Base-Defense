@@ -170,10 +170,11 @@ function ArtifactViewerUI.drawRow(x, y, size, gap, mx, my)
     return hovered
 end
 
---- Owned artifacts in rows of up to `maxW` wide, stacked upward so the last row
---- ends at `bottomY`. Returns the hovered artifact definition, or nil.
-function ArtifactViewerUI.drawBlock(x, bottomY, maxW, size, gap, mx, my)
-    local owned = ArtifactManager.getOwnedDefinitions()
+--- Owned artifacts (or the definitions in `defs`) in rows of up to `maxW` wide,
+--- stacked upward so the last row ends at `bottomY`. Returns the hovered
+--- artifact definition, or nil.
+function ArtifactViewerUI.drawBlock(x, bottomY, maxW, size, gap, mx, my, defs)
+    local owned = defs or ArtifactManager.getOwnedDefinitions()
     if #owned == 0 then return nil end
     local perRow = math.max(1, math.floor((maxW + gap) / (size + gap)))
     local rows = math.ceil(#owned / perRow)

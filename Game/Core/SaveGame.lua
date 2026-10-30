@@ -158,12 +158,22 @@ local function newCard(id, mainTurretId)
         end
     end
     local reward = findReward(id)
+    -- The main turret's unique cards, for callers that haven't injected them
+    -- into the reward pool (the leaderboard shows other players' decks)
+    if not reward and ok and turret.getUniqueCards then
+        for _, cards in pairs(turret.getUniqueCards() or {}) do
+            for _, card in ipairs(cards) do
+                if card.id == id then reward = card end
+            end
+        end
+    end
     if reward then return require("Game.Cards.CardFactory").fromReward(reward, reward) end
     local entry = findInRegistry(require("Instants.InstantCardRegistry"), id)
         or findInRegistry(require("Spells.SpellCardRegistry"), id)
     if entry then return Utils.deepCopy(entry) end
 end
 
+--- A deck card rebuilt from { id, tier, quantity } (nil if the id is unknown).
 local function decodeCard(saved, mainTurretId)
     local card = newCard(saved.id, mainTurretId)
     if not card then
@@ -175,6 +185,7 @@ local function decodeCard(saved, mainTurretId)
     if card.payload then card.payload.rewardCard = nil end -- cached art is per tier
     return card
 end
+SaveGame.decodeCard = decodeCard
 
 local function enemyClass(id)
     local EnemyRegistry = require("Game.Spawning.EnemyRegistry")

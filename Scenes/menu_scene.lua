@@ -87,6 +87,8 @@ function menu_scene:buildMainButtons(hasSave)
           color = {0.45, 0.32, 0.08, 1}, hoverColor = {0.62, 0.45, 0.12, 1}, borderColor = {0.95, 0.75, 0.3, 1} },
         { label = "NEW GAME", action = "play",
           color = {0.1, 0.45, 0.25, 1}, hoverColor = {0.18, 0.7, 0.4, 1}, borderColor = {0.3, 0.9, 0.5, 1} },
+        { label = "LEADERBOARD", action = "leaderboard",
+          color = {0.35, 0.15, 0.4, 1}, hoverColor = {0.5, 0.22, 0.58, 1}, borderColor = {1.0, 0.25, 0.85, 1} },
         { label = "SETTINGS", action = "settings",
           color = {0.18, 0.32, 0.45, 1}, hoverColor = {0.28, 0.5, 0.7, 1}, borderColor = {0.4, 0.7, 0.95, 1} },
         { label = "QUIT GAME", action = "quit", gap = 25,
@@ -209,6 +211,8 @@ function menu_scene:mousepressed(x, y, button)
                     self:continueRun()
                 elseif btn.action == "play" then
                     self:requestNewRun()
+                elseif btn.action == "leaderboard" then
+                    self.scene_manager.switch("leaderboard")
                 elseif btn.action == "settings" then
                     self.page = "settings"
                 elseif btn.action == "quit" then

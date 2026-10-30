@@ -1,0 +1,12 @@
+name = "base-defense-leaderboard"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# A run must take at least this long per completed level, or its result is turned down
+MIN_SECONDS_PER_LEVEL = "20"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "base-defense-leaderboard"
+database_id = "5d9e23fb-855e-4d2c-896b-a4ba685cce4c"

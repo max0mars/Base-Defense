@@ -12,6 +12,10 @@ local DamageStats = require("Game.Core.DamageStats")
 local DeckViewerUI = require("Game.GUI.DeckViewerUI")
 local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
 local ArtifactManager = require("Game.Artifacts.ArtifactManager")
+local Leaderboard = require("Game.Online.Leaderboard")
+local TextInput = require("Game.GUI.TextInput")
+local Neon = require("Game.GUI.Neon")
+local LeaderboardTable = require("Game.GUI.LeaderboardTable")
 
 -- Damage taken: one row per level, listing the enemies that hit the base on it
 -- (a level with more enemies than fit wraps onto extra rows)
@@ -26,6 +30,10 @@ local ICON_X = 22   -- the icon's centre in its cell, leaving room for the "x 15
 -- The run's artifacts: a centred row of icons (wrapping if there are many)
 local ARTIFACT_ICON, ARTIFACT_GAP, ARTIFACTS_MAX_W = 26, 8, 1000
 local ARTIFACTS_BOTTOM = 262
+-- Leaderboard status (or the name box, until the player has picked a name)
+local LEADERBOARD_Y = 597
+-- YOUR RANK tab: the runs around this one, in place of the base hits
+local RANK_ROW_H = 44
 
 local function inside(r, x, y)
     return x >= r.x and x <= r.x + r.w and y >= r.y and y <= r.y + r.h
@@ -75,7 +83,22 @@ function game_over_scene:load()
     end
     self.rows = game_over_scene.buildRows(game.base:getProcessedDamageHistory())
     self.page = 1
+    self.tab = "hits" -- "hits" | "rank"
+    self.tabChosen = false -- once the player picks a tab, it isn't switched for them
+    self.around, self.aroundError, self.aroundRequested = nil, nil, false
     self.deckViewer = DeckViewerUI:new(nil)
+
+    -- Onto the leaderboard (already sent if we're back from viewing it)
+    self.leaderboardRunId = Leaderboard.submitRun(ps) or (ps.leaderboardSubmitted and ps.leaderboardRunId)
+    self.nameInput = TextInput:new({
+        x = VIRTUAL_WIDTH / 2 - 90, y = LEADERBOARD_Y, w = 180, h = 28,
+        maxLength = Leaderboard.NAME_MAX, placeholder = "Your name",
+        onSubmit = function(text) self:submitName(text) end,
+    })
+end
+
+function game_over_scene:submitName(text)
+    if Leaderboard.setName(text) then self.nameInput:unfocus() end
 end
 
 --- The run's deck as a flat list of cards (one entry per copy).
@@ -98,11 +121,17 @@ end
 function game_over_scene:getLayout()
     local btnW, btnH, btnY, gap = 130, 45, 630, 15
     local arrowY = ROWS_Y + ROWS_PER_PAGE * ROW_H + 8
-    local left = VIRTUAL_WIDTH / 2 - (3 * btnW + 2 * gap) / 2
+    local left = VIRTUAL_WIDTH / 2 - (5 * btnW + 4 * gap) / 2
+    local tabW = 160
     return {
         viewDeck = { x = left, y = btnY, w = btnW, h = btnH },
-        retry = { x = left + btnW + gap, y = btnY, w = btnW, h = btnH },
-        quit = { x = left + 2 * (btnW + gap), y = btnY, w = btnW, h = btnH },
+        leaderboard = { x = left + btnW + gap, y = btnY, w = btnW, h = btnH },
+        retry = { x = left + 2 * (btnW + gap), y = btnY, w = btnW, h = btnH },
+        mainMenu = { x = left + 3 * (btnW + gap), y = btnY, w = btnW, h = btnH },
+        quit = { x = left + 4 * (btnW + gap), y = btnY, w = btnW, h = btnH },
+        hitsTab = { x = VIRTUAL_WIDTH / 2 - tabW - 5, y = 272, w = tabW, h = 26, label = "BASE HITS", borderColor = Neon.CYAN },
+        rankTab = { x = VIRTUAL_WIDTH / 2 + 5, y = 272, w = tabW, h = 26, label = "YOUR RANK", borderColor = Neon.MAGENTA },
+        submitName = { x = VIRTUAL_WIDTH / 2 + 100, y = LEADERBOARD_Y, w = 90, h = 28, label = "SUBMIT", borderColor = Neon.GREEN },
         prev = { x = VIRTUAL_WIDTH / 2 - 110, y = arrowY, w = 30, h = 30 },
         next = { x = VIRTUAL_WIDTH / 2 + 80, y = arrowY, w = 30, h = 30 },
     }
@@ -205,10 +234,56 @@ function game_over_scene:draw()
             ARTIFACTS_MAX_W, ARTIFACT_ICON, ARTIFACT_GAP, mx, my)
     end
 
-    -- Damage taken, by level
-    love.graphics.setColor(0, 0.85, 1.0, 1)
-    love.graphics.printf("ENEMIES THAT HIT YOUR BASE", 0, 278, VIRTUAL_WIDTH, "center")
+    -- Runs on the leaderboard get two tabs here: base hits and their rank
+    if self:hasRankTab() then
+        for _, t in ipairs({ { layout.hitsTab, "hits" }, { layout.rankTab, "rank" } }) do
+            local hover = not modalOpen and self.tab ~= t[2] and inside(t[1], mx, my)
+            if hover then Cursor.wantHand = true end
+            Neon.button(t[1], { hovered = hover, active = self.tab == t[2] })
+        end
+    else
+        love.graphics.setColor(0, 0.85, 1.0, 1)
+        love.graphics.printf("ENEMIES THAT HIT YOUR BASE", 0, 278, VIRTUAL_WIDTH, "center")
+    end
 
+    if self.tab == "rank" then
+        self:drawRankTab()
+    else
+        self:drawHits(layout, mx, my, modalOpen)
+    end
+
+    self:drawLeaderboardStatus(layout, mx, my, modalOpen)
+
+    -- View Deck, Leaderboard, Retry, Main Menu and Quit Buttons
+    local isDeckHovered = not modalOpen and inside(layout.viewDeck, mx, my)
+    local isBoardHovered = not modalOpen and inside(layout.leaderboard, mx, my)
+    local isRetryHovered = not modalOpen and inside(layout.retry, mx, my)
+    local isMenuHovered = not modalOpen and inside(layout.mainMenu, mx, my)
+    local isQuitHovered = not modalOpen and inside(layout.quit, mx, my)
+    if isDeckHovered or isBoardHovered or isRetryHovered or isMenuHovered or isQuitHovered then Cursor.wantHand = true end
+    drawButton(layout.viewDeck, "View Deck", isDeckHovered, {0.12, 0.25, 0.45, 1}, {0.2, 0.4, 0.7, 1}, {0.4, 0.75, 1, 1})
+    drawButton(layout.leaderboard, "Leaderboard", isBoardHovered, {0.35, 0.15, 0.4, 1}, {0.5, 0.22, 0.58, 1}, {1, 0.45, 0.9, 1})
+    drawButton(layout.retry, "Retry", isRetryHovered, {0.1, 0.5, 0.1, 1}, {0.2, 0.8, 0.2, 1}, {0.5, 1, 0.5, 1})
+    drawButton(layout.mainMenu, "Main Menu", isMenuHovered, {0.45, 0.32, 0.08, 1}, {0.62, 0.45, 0.12, 1}, {0.95, 0.75, 0.3, 1})
+    drawButton(layout.quit, "Quit Game", isQuitHovered, {0.5, 0.1, 0.1, 1}, {0.8, 0.2, 0.2, 1}, {1, 0.5, 0.5, 1})
+
+    if modalOpen then
+        self.deckViewer:draw()
+    elseif hoveredArtifact then
+        ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my, true)
+    end
+
+    -- The menu's pointer / hand, not the battle's cursor drawn underneath
+    Cursor.usePointer()
+end
+
+--- True when the run went to the leaderboard, so it has a YOUR RANK tab.
+function game_over_scene:hasRankTab()
+    return Leaderboard.getRunStatus(self.leaderboardRunId) ~= nil
+end
+
+--- The enemies that hit the base, by level, a page at a time.
+function game_over_scene:drawHits(layout, mx, my, modalOpen)
     if #self.rows == 0 then
         love.graphics.setColor(0.7, 0.75, 0.85, 0.8)
         love.graphics.printf("No enemies reached your base.", 0, ROWS_Y + 20, VIRTUAL_WIDTH, "center")
@@ -266,24 +341,89 @@ function game_over_scene:draw()
         love.graphics.setColor(1, 1, 1, 0.8)
         love.graphics.printf("Page " .. self.page .. " / " .. totalPages, 0, layout.prev.y + 8, VIRTUAL_WIDTH, "center")
     end
+end
 
-    -- View Deck, Retry and Quit Buttons
-    local isDeckHovered = not modalOpen and inside(layout.viewDeck, mx, my)
-    local isRetryHovered = not modalOpen and inside(layout.retry, mx, my)
-    local isQuitHovered = not modalOpen and inside(layout.quit, mx, my)
-    if isDeckHovered or isRetryHovered or isQuitHovered then Cursor.wantHand = true end
-    drawButton(layout.viewDeck, "View Deck", isDeckHovered, {0.12, 0.25, 0.45, 1}, {0.2, 0.4, 0.7, 1}, {0.4, 0.75, 1, 1})
-    drawButton(layout.retry, "Retry", isRetryHovered, {0.1, 0.5, 0.1, 1}, {0.2, 0.8, 0.2, 1}, {0.5, 1, 0.5, 1})
-    drawButton(layout.quit, "Quit Game", isQuitHovered, {0.5, 0.1, 0.1, 1}, {0.8, 0.2, 0.2, 1}, {1, 0.5, 0.5, 1})
-
-    if modalOpen then
-        self.deckViewer:draw()
-    elseif hoveredArtifact then
-        ArtifactViewerUI.drawTooltip(hoveredArtifact, mx, my, true)
+--- The YOUR RANK tab: the runs around this one (or why they aren't showing yet).
+function game_over_scene:drawRankTab()
+    if self.around then
+        local x = (VIRTUAL_WIDTH - LeaderboardTable.WIDTH) / 2
+        LeaderboardTable.drawHeader(x, ROWS_Y, ROWS_Y + 20)
+        for i, entry in ipairs(self.around.scores) do
+            LeaderboardTable.drawRow(entry, x, ROWS_Y + 24 + (i - 1) * RANK_ROW_H, RANK_ROW_H, entry.you and "this" or nil)
+        end
+        return
     end
 
-    -- The menu's pointer / hand, not the battle's cursor drawn underneath
-    Cursor.usePointer()
+    local state = (Leaderboard.getRunStatus(self.leaderboardRunId) or {}).state
+    local text = "Loading your place on the leaderboard..."
+    if self.aroundError then
+        text = self.aroundError
+    elseif state == "needs_name" then
+        text = "Pick a name below to put this run on the leaderboard."
+    elseif state == "offline" then
+        text = "Your place will show here once the run reaches the leaderboard."
+    elseif state == "rejected" then
+        text = "This run isn't on the leaderboard."
+    elseif state == "queued" or state == "sending" then
+        text = "Sending your run to the leaderboard..."
+    end
+    love.graphics.setColor(0.7, 0.75, 0.85, 0.9)
+    love.graphics.printf(text, 0, ROWS_Y + 100, VIRTUAL_WIDTH, "center")
+end
+
+--- How the run's trip to the leaderboard is going, or a name box if it's waiting for one.
+function game_over_scene:drawLeaderboardStatus(layout, mx, my, modalOpen)
+    local status = Leaderboard.getRunStatus(self.leaderboardRunId)
+    if not status then return end
+    local textY = LEADERBOARD_Y + 7
+
+    if status.state == "needs_name" then
+        love.graphics.setColor(0.85, 0.75, 1, 1)
+        love.graphics.printf("Name for the leaderboard:", 0, textY, self.nameInput.x - 12, "right")
+        self.nameInput:draw()
+        local hover = not modalOpen and inside(layout.submitName, mx, my)
+        if hover then Cursor.wantHand = true end
+        Neon.button(layout.submitName, { hovered = hover })
+        return
+    end
+
+    local text, color = "Sending your run to the leaderboard...", {0.7, 0.75, 0.85, 1}
+    if status.state == "sent" then
+        if self.around then
+            text = "Your run is #" .. self.around.rank .. " of " .. self.around.total .. " on the leaderboard!"
+        else
+            text = status.rank and ("Your run is #" .. status.rank .. " on the leaderboard!") or "Your run is on the leaderboard!"
+        end
+        color = {0.4, 1, 0.5, 1}
+    elseif status.state == "offline" then
+        text = "Couldn't reach the leaderboard. Your run will be sent when you're back online."
+        color = {1, 0.75, 0.3, 1}
+    elseif status.state == "rejected" then
+        text = "The leaderboard turned this run down: " .. tostring(status.message or "unknown reason")
+        color = {0.95, 0.55, 0.45, 1}
+    end
+    love.graphics.setColor(color)
+    love.graphics.printf(text, 0, textY, VIRTUAL_WIDTH, "center")
+end
+
+function game_over_scene:update(dt)
+    self.nameInput:update(dt)
+
+    -- Once the run is on the leaderboard, fetch its place and show it
+    local status = Leaderboard.getRunStatus(self.leaderboardRunId)
+    if status and status.state == "sent" and not self.aroundRequested then
+        self.aroundRequested = true
+        local runId = self.leaderboardRunId
+        Leaderboard.fetchAround(runId, function(data, err)
+            if self.leaderboardRunId ~= runId then return end -- a newer run's screen
+            self.around, self.aroundError = data, err
+            if data and not self.tabChosen then self.tab = "rank" end
+        end)
+    end
+end
+
+function game_over_scene:textinput(text)
+    self.nameInput:textinput(text)
 end
 
 function game_over_scene:mousepressed(x, y, button)
@@ -294,9 +434,25 @@ function game_over_scene:mousepressed(x, y, button)
     if button ~= 1 then return end
     local layout = self:getLayout()
 
-    if inside(layout.viewDeck, x, y) then
+    local status = Leaderboard.getRunStatus(self.leaderboardRunId)
+    if status and status.state == "needs_name" then
+        if self.nameInput:mousepressed(x, y, button) then return end
+        if inside(layout.submitName, x, y) then
+            self:submitName(self.nameInput.text)
+            return
+        end
+    end
+
+    if self:hasRankTab() and (inside(layout.hitsTab, x, y) or inside(layout.rankTab, x, y)) then
+        self.tab = inside(layout.hitsTab, x, y) and "hits" or "rank"
+        self.tabChosen = true
+    elseif inside(layout.viewDeck, x, y) then
         self.deckViewer:open("Deck", game_over_scene.getDeckCards())
+    elseif inside(layout.leaderboard, x, y) then
+        self.nameInput:unfocus()
+        self.scene_manager.switch("leaderboard", "gameover")
     elseif inside(layout.retry, x, y) then
+        self.nameInput:unfocus()
         paused = 0
         if game.testingMode then
             self.scene_manager.switch("game") -- the sandbox just restarts
@@ -304,9 +460,13 @@ function game_over_scene:mousepressed(x, y, button)
             -- A fresh run from main turret selection (staying in dev mode if it was on)
             self.scene_manager.scenes.menu:startRun(DevMode.isActive())
         end
+    elseif inside(layout.mainMenu, x, y) then
+        self.nameInput:unfocus()
+        paused = 0
+        self.scene_manager.switch("menu")
     elseif inside(layout.quit, x, y) then
         love.event.quit()
-    elseif self:getTotalPages() > 1 then
+    elseif self.tab == "hits" and self:getTotalPages() > 1 then
         if inside(layout.prev, x, y) then
             self.page = math.max(1, self.page - 1)
         elseif inside(layout.next, x, y) then
@@ -316,6 +476,7 @@ function game_over_scene:mousepressed(x, y, button)
 end
 
 function game_over_scene:keypressed(key)
+    if self.nameInput:keypressed(key) then return end
     if key == "escape" and self.deckViewer.isActive then
         self.deckViewer:close()
     end

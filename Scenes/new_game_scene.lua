@@ -212,6 +212,8 @@ function new_game_scene:mousepressed(x, y, button)
             local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
             local startMaterial = MaterialRegistry.resolve(turretModule.template)
             CardUpgradeConfig.Economy.addResource(startMaterial, MaterialRegistry.STARTING_AMOUNT)
+            -- The run starts now: the leaderboard times it from here
+            require("Game.Online.Leaderboard").startRun(_G.PersistentState)
             require("Game.Core.SaveGame").save("game")
             self.scene_manager.switch("game")
         end

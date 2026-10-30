@@ -36,7 +36,13 @@ function M:mousereleased(x, y, button)
         M.current:mousereleased(x, y, button)
     end
 end
- 
+
+function M:textinput(text)
+    if M.current.textinput then
+        M.current:textinput(text)
+    end
+end
+
 function M:keypressed(key)
     if M.current.keypressed then
         M.current:keypressed(key)
