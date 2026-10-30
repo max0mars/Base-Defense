@@ -98,10 +98,10 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ### Heavy Shotgun
 - **Cost**: 2
-- **Damage**: 16 per pellet (physical), 7 pellets, 7 degree spread, pierce 2
+- **Damage**: 8 per pellet (physical), 7 pellets, 7 degree spread, pierce 2
 - **Range**: 340 (40 degree arc)
 - **Fire Rate**: 0.5
-- **DPS**: 56 if every pellet hits (~27 at max range, where ~3.4 of 7 land)
+- **DPS**: 28 if every pellet hits (~14 at max range, where ~3.4 of 7 land)
 - **Description**: Long range, tight spread shotgun. Its heavy pellets pierce an extra enemy.
 
 ## Rare

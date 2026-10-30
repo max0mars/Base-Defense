@@ -85,18 +85,19 @@ local RewardIndex = {
         {
             id = "flareGun",
             name = "Flare Gun",
-            description = "Fires flares that apply 3 burn on hit.",
+            description = "Fires flares that apply 1 burn on hit.",
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            -- 3 burn every 1.4s holds a target at ~6 stacks (stage 1) on its own
+            -- 1 burn every 1.4s holds a target at ~2 stacks (stage 1) on its own;
+            -- each hit on a fresh enemy is worth ~20 burn damage
             rotation = 0, fireRate = 0.7, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 380, damageType = "fire", damage = 4,
             pierce = 1, lifespan = 1.0, bulletId = "flare",
-            hitEffects = { Burn.onHit({ amount = 3 }) }
+            hitEffects = { Burn.onHit({ amount = 1 }) }
         },
     },
     uncommon = {
@@ -210,7 +211,7 @@ local RewardIndex = {
             -- 7 degree cone: ~3.4 of 7 pellets land on a 20px enemy at max range.
             spread = math.rad(7), pelletCount = 7,
             -- Pellet speed varies +-10%, so 650 x 0.6s still reaches 340 at the slowest.
-            bulletSpeed = 650, damageType = "physical", damage = 16,
+            bulletSpeed = 650, damageType = "physical", damage = 8,
             pierce = 2, lifespan = 0.6, bulletId = "heavyPellet"
         },
         {

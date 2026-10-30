@@ -6,7 +6,7 @@ Common
 - Auto Cannon [Buildings.Turrets.AutoCannon]: High fire rate, low damage, short range.
 - Shotgun Turret [Buildings.Turrets.ShotgunTurret]: Shreds close-range targets.
 - Heavy Gun [Buildings.Turrets.HeavyGun]: Long range, high damage.
-- Flare Gun [Buildings.Turrets.Turret]: Fires flares that apply 3 burn on hit.
+- Flare Gun [Buildings.Turrets.Turret]: Fires flares that apply 1 burn on hit.
 
 Uncommon
 - Oil Gun [Buildings.Turrets.Turret]: Oils and slows enemies. Burn ignites the oil for 5 extra burn (oiling a burning enemy ignites it at once).

@@ -21,7 +21,7 @@ local Burn = {
     },
 
     -- Stacks lost per second = DECAY_BASE + DECAY_SCALE * stacks ^ DECAY_POWER.
-    -- With the defaults: ~2/s at 6 stacks (one Flare Gun keeps that up),
+    -- With the defaults: ~2/s at 6 stacks (one Flamethrower keeps up ~9),
     -- 4.5/s at 10 and 16.5/s at 20.
     DECAY_BASE  = 0.5,
     DECAY_SCALE = 0.04,
