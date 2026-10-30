@@ -10,6 +10,7 @@ local RewardPool = require("Game.Rewards.RewardPool")
 local CardReveal = require("Graphics.Animations.CardReveal")
 local CardFactory = require("Game.Cards.CardFactory")
 local Neon = require("Game.GUI.Neon")
+local CardIcons = require("Game.Cards.CardIcons")
 
 function RewardSystem:new(game)
     -- Always use the real reward pool (testing mode included) so "Buy Upgrade"
@@ -182,11 +183,16 @@ function RewardSystem:draw()
     
     -- Draw reward cards
     local mx, my = love.mouse.getPosition()
+    local hoveredIcon, iconX, iconY
     for i, card in ipairs(self.currentChoices) do
         local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local cardY = self.startY
         local isHovered = (mx >= cardX and mx <= cardX + self.cardWidth and my >= cardY and my <= cardY + self.cardHeight)
         card:draw(isHovered) -- only the hovered card is highlighted
+        local cardDraw = card.reward.rewardCard
+        if isHovered and card.state == "revealed" and cardDraw and cardDraw.iconAt then
+            hoveredIcon, iconX, iconY = cardDraw:iconAt(mx, my, cardX, cardY, self.cardWidth, self.cardHeight)
+        end
     end
 
     -- Draw skip button (card draft) or reroll button (standard mid-battle upgrade mode)
@@ -221,6 +227,11 @@ function RewardSystem:draw()
         Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight, pickIcon)
     end
     Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
+
+    -- Hovering a synergy icon explains it (drawn last so it sits over neighbouring cards)
+    if hoveredIcon then
+        CardIcons.drawTooltip(hoveredIcon, iconX, iconY)
+    end
 end
 
 function RewardSystem:mousepressed(x, y, button)
