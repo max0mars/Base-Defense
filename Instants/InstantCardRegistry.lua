@@ -1,6 +1,7 @@
 -- Game/Cards/InstantCardRegistry.lua
 local InstantCard = require("Instants.Instant")
 local Chill = require("Game.Effects.StatusEffects.Chill")
+local Burn = require("Game.Effects.StatusEffects.Burn")
 
 local CardRegistry = {}
 
@@ -128,6 +129,62 @@ CardRegistry.Cryoelectronics = InstantCard.new({
                 }),
             })
         end
+    end
+})
+
+-- ==========================================
+-- FIRE SYNERGY (burn, see Burn.lua)
+-- ==========================================
+CardRegistry.IncendiaryRounds = InstantCard.new({
+    id = "inst_incendiary_1",
+    name = "Incendiary Rounds",
+    description = "Give a physical turret's attacks 2 burn on hit.",
+    cost = 1,
+    rarity = "Uncommon",
+    executionType = InstantCard.ExecutionType.Targeted,
+    canTarget = function(target)
+        if target.damageType ~= "physical" then return false end
+        -- Already converted: playing it again would do nothing
+        return not (target.effectManager and target.effectManager:getEffect("inst_incendiary_1_eff"))
+    end,
+    customExecute = function(targetEntity)
+        if targetEntity and targetEntity.effectManager then
+            targetEntity.effectManager:applyEffect({
+                name = "inst_incendiary_1_eff",
+                displayName = "Incendiary Rounds",
+                grantedHitEffect = Burn.onHit({ name = "incendiary_burn", amount = 2 }),
+            })
+        end
+    end
+})
+
+-- Global, so fire turrets placed later in the battle get it too
+CardRegistry.FanTheFlames = InstantCard.new({
+    id = "inst_fantheflames_1",
+    name = "Fan the Flames",
+    description = "Fire turrets fire 10% faster this battle.",
+    cost = 1,
+    rarity = "Uncommon",
+    executionType = InstantCard.ExecutionType.Global,
+    targetTypes = { fire = true },
+    statModifiers = { fireRate = { mult = 0.1 } }
+})
+
+CardRegistry.CheapAccelerants = InstantCard.new({
+    id = "inst_accelerants_1",
+    name = "Cheap Accelerants",
+    description = "Fire damage, including burn, deals double damage until the end of the wave.",
+    cost = 1,
+    rarity = "Rare",
+    executionType = InstantCard.ExecutionType.Global,
+    customExecute = function(gameObj)
+        if not (gameObj and gameObj.playerEffectManager) then return end
+        gameObj.playerEffectManager:applyEffect({
+            name = "inst_accelerants_1_eff",
+            displayName = "Cheap Accelerants",
+            clearOnWaveEnd = true,
+            statModifiers = { fire_damage = { mult = 1.0 } },
+        })
     end
 })
 

@@ -23,11 +23,13 @@
 --                                      the base); killingBlow = {source,
 --                                      damageType, damageTags}
 --   onEnemyThaw(enemy)                 a frozen enemy started thawing
+--   onBurningEnemyDied(enemy, burnState)  a burning enemy was killed (see Burn.lua)
 --
 -- Modifier hooks  -- artifact:hook(game, value, ...) -> new value
 --   modifyMaxTokens(maxTokens)
 --   modifyEnemyDamage(amount, enemy, damageType, damageTags, source)
 --   modifyBaseDamage(amount, sourceEntity)
+--   modifyBurnApplied(stacks, enemy, source)  stacks one burn application adds
 -- =============================================================================
 
 local ArtifactIndex = require("Game.Artifacts.ArtifactIndex")

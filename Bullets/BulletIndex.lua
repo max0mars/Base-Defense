@@ -4,6 +4,7 @@ local HitscanBullet = require("Bullets.HitscanBullet")
 local GrenadeBullet = require("Bullets.GrenadeBullet")
 local MissileBullet = require("Bullets.MissileBullet")
 local AirburstBullet = require("Bullets.AirburstBullet")
+local CinderBullet = require("Bullets.CinderBullet")
 
 local ToxicEffect = require("Game.Effects.StatusEffects.Toxic")
 local SlowEffect = require("Game.Effects.StatusEffects.Slow")
@@ -113,6 +114,41 @@ local BulletIndex = {
         w = 5, h = 3,
         color = {0.75, 0.92, 1, 1},
         shape = "rectangle"
+    },
+    flare = {
+        class = Bullet,
+        name = "Flare",
+        drawStyle = "flare",
+        maxTrail = 10,
+        w = 5, h = 5,
+        color = {1, 0.3, 0.3, 1}
+    },
+    flame = {
+        class = Bullet,
+        name = "Flame",
+        drawStyle = "flame",
+        w = 5, h = 5,
+        color = {1, 0.5, 0.1, 1}
+    },
+    thermiteCharge = {
+        class = Bullet,
+        name = "Thermite Charge",
+        drawStyle = "thermite",
+        w = 5, h = 5,
+        color = {1, 0.8, 0.5, 1}
+    },
+    oilGlob = {
+        class = Bullet,
+        name = "Oil Glob",
+        drawStyle = "oil",
+        maxTrail = 6,
+        w = 7, h = 7,
+        color = {0.3, 0.22, 0.1, 1}
+    },
+    cinder = {
+        class = CinderBullet,
+        name = "Cinder",
+        shape = "rectangle", w = 4, h = 4
     },
     toxicShard = {
         class = Bullet,

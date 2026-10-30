@@ -4,7 +4,7 @@ local PassiveIndex = {
         {
             id = "unstable_laser",
             name = "Unstable Laser",
-            description = "Gives adjacent Energy Turrets' attacks with a 25% chance to burn enemies.",
+            description = "Gives adjacent Energy Turrets' attacks a 25% chance to apply 3 burn.",
             type = "building",
             types = {"passive", "building"},
             building = require("Buildings.Passives.UnstableLaser"),

@@ -104,6 +104,42 @@ local VisualIndex = {
         sfx = "gunshot_04"
     },
     chainLaser = {
+    },
+    -- Fire synergy
+    flareGun = {
+        size = 15, barrel = 11, color = {1, 0.35, 0.35, 1},
+        baseShape = "circle", barrelShape = "thick",
+        sfx = "gunshot_01"
+    },
+    oilGun = {
+        barrel = 12, color = {0.8, 0.65, 0.3, 1},
+        baseShape = "hexagon", barrelShape = "thick",
+        sfx = "gunshot_04"
+    },
+    flamethrower = {
+        barrel = 12, color = {1, 0.5, 0.1, 1},
+        baseShape = "square", barrelShape = "funnel",
+        sfx = "gunshot_01"
+    },
+    cinderMortar = {
+        size = 15, barrel = 10, color = {1, 0.4, 0.15, 1},
+        baseShape = "circle", barrelShape = "flared",
+        sfx = "gunshot_04"
+    },
+    thermiteLauncher = {
+        barrel = 13, color = {1, 0.8, 0.5, 1},
+        baseShape = "diamond", barrelShape = "double",
+        sfx = "gunshot_02"
+    },
+    infernoTower = {
+        barrel = 12, color = {1, 0.35, 0.05, 1},
+        baseShape = "hexagon", barrelShape = "long"
+    },
+    meteor = {
+        -- Satellite dish (MeteorTurret:drawCustomBarrel); fire point at the dish's receiver
+        barrel = 12, color = {1, 0.55, 0.2, 1},
+        baseShape = "square",
+        sfx = "missile_01"
     }
 }
 
