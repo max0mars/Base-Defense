@@ -1,7 +1,6 @@
 local StandardMainTurret = require("Buildings.MainTurrets.StandardMainTurret")
 local Layout = require("Game.GUI.Layout")
 local HitscanBullet = require("Bullets.HitscanBullet")
-local BurnEffect = require("Game.Effects.StatusEffects.Burn")
 local Chill = require("Game.Effects.StatusEffects.Chill")
 local Utils = require("Classes.Utils")
 local PlayerDeck = require("Game.Cards.PlayerDeck")

@@ -115,9 +115,21 @@ local Burn = require("Game.Effects.StatusEffects.Burn")
 local burnTarget = makeEnemy(1000)
 local dot = makeTurret("blaster")
 local dotBullet = { source = dot, getStat = function() return 0 end }
-burnTarget.effectManager:applyEffect(Burn:new({ dps_burn = 10, duration_burn = 3, maxStacks = 1 }), dotBullet)
+Burn.apply(burnTarget, 3, { source = dotBullet })
 for _ = 1, 120 do burnTarget.effectManager:update(1 / 60) end
 assert(stats:get(dot).damage > 0, string.format("Burn ticks are credited to the turret behind the bullet (%.1f)", stats:get(dot).damage))
+
+-- 4b. Shared burn splits credit by the stacks each turret added
+mockGame.damageStats = DamageStats.new()
+stats = mockGame.damageStats
+local shared = makeEnemy(1000)
+local small, big = makeTurret("sentry"), makeTurret("gator")
+Burn.apply(shared, 1, { source = small })
+Burn.apply(shared, 3, { source = big })
+for _ = 1, 60 do shared.effectManager:update(1 / 60) end
+assert(near(stats:get(big).damage, stats:get(small).damage * 3),
+    string.format("Burn credit splits 3:1 by stacks added (%.2f vs %.2f)", stats:get(big).damage, stats:get(small).damage))
+assert(near(stats.total, stats:get(big).damage + stats:get(small).damage), "Split burn credit adds up to the damage dealt")
 
 -- 5. Explosions credit the turret behind the bullet
 local Explosion = require("Game.Effects.IndependantEffects.explosion")

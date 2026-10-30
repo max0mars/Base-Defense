@@ -97,6 +97,11 @@ local function drawGlyph(icon, cx, cy, s)
     elseif icon == "coin" then
         love.graphics.circle("line", cx, cy, 0.85 * s)
         love.graphics.circle("line", cx, cy, 0.55 * s)
+    elseif icon == "flame" then
+        love.graphics.polygon("line", cx, cy - s, cx + 0.3 * s, cy - 0.35 * s, cx + 0.65 * s, cy + 0.2 * s,
+            cx + 0.45 * s, cy + 0.8 * s, cx, cy + s, cx - 0.45 * s, cy + 0.8 * s, cx - 0.65 * s, cy + 0.2 * s,
+            cx - 0.25 * s, cy - 0.2 * s)
+        love.graphics.polygon("line", cx, cy + 0.1 * s, cx + 0.25 * s, cy + 0.6 * s, cx, cy + 0.85 * s, cx - 0.25 * s, cy + 0.6 * s)
     elseif icon == "shield" then
         love.graphics.polygon("line", cx - 0.75 * s, cy - 0.75 * s, cx + 0.75 * s, cy - 0.75 * s, cx + 0.75 * s, cy,
             cx, cy + s, cx - 0.75 * s, cy)

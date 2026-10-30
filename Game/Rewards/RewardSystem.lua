@@ -213,10 +213,12 @@ function RewardSystem:draw()
         end
     end
 
-    -- Card-pick cursor over reward cards, hand over skip / reroll.
+    -- Add-to-deck cursor over "Choose One" cards (select-card for other rewards),
+    -- hand over skip / reroll.
+    local pickIcon = (self.mode == "cards") and "addCard" or "selectCard"
     for i = 1, #self.currentChoices do
         local cardX = self.startX + (i - 1) * (self.cardWidth + self.cardSpacing)
-        Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight, "selectCard")
+        Cursor.hover(cardX, self.startY, self.cardWidth, self.cardHeight, pickIcon)
     end
     Cursor.hover(self.skipBtnX, self.skipBtnY, self.skipBtnW, self.skipBtnH)
 end

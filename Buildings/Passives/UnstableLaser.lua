@@ -1,5 +1,5 @@
 local Buff = require("Buildings.Passives.Buff")
-local BurnEffect = require("Game.Effects.StatusEffects.Burn")
+local Burn = require("Game.Effects.StatusEffects.Burn")
 
 local UnstableLaser = setmetatable({}, Buff)
 UnstableLaser.__index = UnstableLaser
@@ -16,13 +16,7 @@ local default = {
         name = "Unstable Energy",
         targetTypes = { energy = true }, -- Only affects energy turrets
         duration = math.huge,
-        grantedHitEffect = BurnEffect:new({
-            name = "burn",
-            duration_burn = 3.2,
-            dps_burn = 10,
-            maxStacks = 1,
-            chance = 0.25
-        })
+        grantedHitEffect = Burn.onHit({ name = "burn", amount = 3, chance = 0.25 })
     }
 }
 
@@ -41,7 +35,7 @@ end
 function UnstableLaser:getTooltipStrings()
     local strings = {}
     table.insert(strings, "ACTIVE: Grants adjacent Energy Turrets")
-    table.insert(strings, "a 25% chance to burn enemies.")
+    table.insert(strings, "a 25% chance to apply 3 burn.")
     return strings
 end
 

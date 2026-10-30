@@ -2,6 +2,9 @@ local living_object = require("Classes.living_object")
 local DamageTypes = require("Classes.DamageTypes")
 local Navigators = require("Physics.Navigators")
 local Chill = require("Game.Effects.StatusEffects.Chill")
+local Burn = require("Game.Effects.StatusEffects.Burn")
+local Oil = require("Game.Effects.StatusEffects.Oil")
+local Thermite = require("Game.Effects.StatusEffects.Thermite")
 local Zombie = require("Enemies.Zombie")
 local Enemy = setmetatable({}, {__index = living_object})
 Enemy.__index = Enemy
@@ -516,9 +519,22 @@ function Enemy:creditDamage(source, dealt, killed)
     if ps and dealt and dealt > 0 then
         ps.totalDamageDealt = (ps.totalDamageDealt or 0) + dealt
     end
-    if source and self.game and self.game.damageStats then
-        self.game.damageStats:record(source, dealt, killed)
+    if not (source and self.game and self.game.damageStats) then return end
+    if source.creditShares then
+        -- Shared damage (burn): split between turrets by their share; the
+        -- biggest share gets the kill
+        local total = source.creditTotal or 0
+        if total <= 0 then return end
+        local top, topShare = nil, 0
+        for turret, share in pairs(source.creditShares) do
+            if share > topShare then top, topShare = turret, share end
+        end
+        for turret, share in pairs(source.creditShares) do
+            self.game.damageStats:record(turret, dealt * share / total, killed and turret == top)
+        end
+        return
     end
+    self.game.damageStats:record(source, dealt, killed)
 end
 
 function Enemy:getFuturePosition(time)
@@ -673,6 +689,9 @@ end
 function Enemy:drawStatusEffects()
     living_object.drawStatusEffects(self)
     Chill.draw(self)
+    Oil.draw(self)
+    Thermite.draw(self)
+    Burn.draw(self)
 end
 
 -- Neon look: a dim body whose fill level shows HP, under a bright neon tube
