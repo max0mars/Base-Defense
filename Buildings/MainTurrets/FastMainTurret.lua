@@ -271,6 +271,7 @@ function FastMainTurret.getUniqueCards()
                 id = "heavy_rounds",
                 name = "Heavy Rounds",
                 description = "Your machine gun shoots slower but hits much harder.",
+                icons = { "projectile", "physical" },
                 type = "main_upgrade",
                 iconCategory = "upgrade",
                 cost = 2,

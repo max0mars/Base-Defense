@@ -16,6 +16,7 @@ for _, inst in pairs(InstantCardRegistry) do
                 id = inst.id,
                 name = inst.name,
                 description = inst.description,
+                icons = inst.icons,
                 type = "instant",
                 types = {"instant"},
                 cost = inst.cost or 1,

@@ -150,7 +150,9 @@ function Card:getCardDraw()
         local tierFrBonus = frBars * (CardUpgradeConfig.getTierMultiplier("fireRate", displayTier) - 1)
 
         local data = {
+            id = self.id,
             name = self.name,
+            icons = require("Game.Cards.CardIcons").resolve(self.payload.config, self.id),
             tier = isUpgradable and tier or 1,
             upgradable = isUpgradable,
             description = self.description,

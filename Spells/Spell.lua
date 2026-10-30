@@ -15,6 +15,7 @@ function Spell.new(config)
     self.description = config.description or ""
     self.cost = config.cost or 1 
     self.rarity = config.rarity or "Common"
+    self.icons = config.icons -- synergy icons on the card (see CardIcons)
     self.radius = config.radius or 50
     self.isGlobalSpell = config.isGlobalSpell or false
     
@@ -61,6 +62,7 @@ function Spell:getCardDraw()
         
         local data = {
             name = self.name,
+            icons = self.icons or {},
             tier = self.tier or 1,
             description = self.description,
             cost = self:getCost(),

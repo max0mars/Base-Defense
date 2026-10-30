@@ -26,6 +26,7 @@ function Instant.new(config)
     self.description = config.description or ""
     self.cost = config.cost or 1 
     self.rarity = config.rarity or "Common"
+    self.icons = config.icons -- synergy icons on the card (see CardIcons)
     
     self.executionType = config.executionType or Instant.ExecutionType.Targeted
     self.statModifiers = config.statModifiers or {}
@@ -79,6 +80,7 @@ function Instant:getCardDraw()
         
         local data = {
             name = self.name,
+            icons = self.icons or {},
             tier = self.tier or 1,
             description = self.description,
             cost = self:getCost(),
