@@ -1,4 +1,5 @@
 -- Game/Cards/InstantCardRegistry.lua
+-- Give new instants an `icons` list if they relate to a type or resource. See "Card Icons" in Notes/Cards.md.
 local InstantCard = require("Instants.Instant")
 local Chill = require("Game.Effects.StatusEffects.Chill")
 local Burn = require("Game.Effects.StatusEffects.Burn")

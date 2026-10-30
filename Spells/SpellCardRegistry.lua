@@ -1,4 +1,5 @@
 -- Spells/SpellCardRegistry.lua
+-- Give new spells an `icons` list if they relate to a type or resource. See "Card Icons" in Notes/Cards.md.
 local Spell = require("Spells.Spell")
 
 local SpellCardRegistry = {}

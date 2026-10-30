@@ -1,3 +1,5 @@
+-- New turrets get synergy icons from bulletId + damageType; one without a bullet
+-- (beam, wave) needs an explicit `icons` list. See "Card Icons" in Notes/Cards.md.
 local BounceEffect = require("Game.Effects.IndependantEffects.bounce")
 local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
 local PoisonEffect = require("Game.Effects.StatusEffects.Poison")
