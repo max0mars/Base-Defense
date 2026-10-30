@@ -68,17 +68,21 @@ local expected = {
     poisonTurret = { "projectile", "poison" },
     cryoBeam = { "beam", "ice" },
     glacialMonolith = { "ice" },
+    flareGun = { "projectile", "fire" },
+    cinderMortar = { "shotgun", "lobber", "fire" },
+    infernoTower = { "beam", "fire" },
 }
 for id, icons in pairs(expected) do
     assert(same(iconsOf(id), icons), id .. " shows " .. show(icons) .. " (got " .. show(iconsOf(id)) .. ")")
 end
 
--- Every turret leads with a firing type, unless it doesn't attack
+-- Every turret leads with a firing type, unless it doesn't shoot (waves, meteors)
+local noFiringType = { glacialMonolith = true, meteor = true }
 local firing = {}
 for _, name in ipairs(CardIcons.FIRING_TYPES) do firing[name] = true end
 for id, t in pairs(turrets) do
     local icons = CardIcons.resolve(t)
-    if id ~= "glacialMonolith" then
+    if not noFiringType[id] then
         assert(#icons >= 2 and firing[icons[1]], id .. " starts with a firing type and has a damage type")
     end
 end
