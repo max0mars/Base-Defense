@@ -1,4 +1,5 @@
 local Neon = require("Game.GUI.Neon")
+local CardIcons = require("Game.Cards.CardIcons")
 
 local CardDraw = {}
 CardDraw.__index = CardDraw
@@ -138,6 +139,7 @@ function CardDraw.new(x, y, data)
     self.upgradable = data.upgradable
     
     self.affectedSlots = data.affectedSlots or {}
+    self.icons = CardIcons.resolve(data, data.id)
     
     return self
 end
@@ -411,8 +413,16 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
         table.insert(deferredText, {t = self.name, x = 45, y = 27, w = CardDraw.WIDTH - 65, a = "left"})
     end
     
-    -- Render Description Text
-    local boxHeight = 150
+    -- 8. Synergy icons (bottom left of the description box)
+    local iconStrip = 0
+    if self.icons and #self.icons > 0 then
+        iconStrip = CardIcons.SIZE + 8
+        CardIcons.drawRow(self.icons, 21, 325 - CardIcons.SIZE - 6)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+
+    -- Render Description Text (centred in the space above the icons)
+    local boxHeight = 150 - iconStrip
     local descLimit = CardDraw.WIDTH - 50
     
     -- Calculate wrapped text height using the scaled limit that printf will use
