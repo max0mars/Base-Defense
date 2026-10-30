@@ -1,0 +1,12 @@
+name = "base-defense-leaderboard"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# A run must take at least this long per completed level, or its result is turned down
+MIN_SECONDS_PER_LEVEL = "20"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "base-defense-leaderboard"
+database_id = "REPLACE_WITH_THE_ID_FROM_wrangler_d1_create"

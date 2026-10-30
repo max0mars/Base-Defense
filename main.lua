@@ -86,10 +86,12 @@ scene_manager.scenes.preparation = require("Scenes.preparation_scene")
 scene_manager.scenes.game = require("Scenes.game_scene")
 scene_manager.scenes.test = require("Scenes.test_scene")
 scene_manager.scenes.gameover = require("Scenes.game_over_scene")
+scene_manager.scenes.leaderboard = require("Scenes.leaderboard_scene")
 
 scene_manager.current = scene_manager.scenes.menu -- Set the initial scene to menu_scene
 
 local AudioManager = require("Audio.AudioManager")
+local Leaderboard = require("Game.Online.Leaderboard")
 
 function love.load()
     love.graphics.setDefaultFilter("linear", "linear")
@@ -133,7 +135,12 @@ end
 
 function love.update(dt)
     if AUDIO then AUDIO:update(dt) end
+    Leaderboard.update(dt) -- sends waiting results whatever scene is showing
     scene_manager:update(dt)
+end
+
+function love.textinput(text)
+    scene_manager:textinput(text)
 end
 
 function love.draw()

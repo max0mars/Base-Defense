@@ -8,6 +8,7 @@ love_files = [
     "-**/binaries/**",
     "-**/.git/**",
     "-**/Notes/**",
+    "-**/Server/**",
     "-**/makelove.toml",
 ]
 

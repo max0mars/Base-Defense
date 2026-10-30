@@ -11,7 +11,7 @@ _G.love = setmetatable({
     math = setmetatable({ random = math.random, colorFromBytes = function(...) return ... end }, { __index = function() return noop end }),
     timer = { getTime = function() return 0 end },
     mouse = setmetatable({ getPosition = function() return 0, 0 end }, { __index = function() return noop end }),
-    keyboard = { isDown = function() return false end },
+    keyboard = { isDown = function() return false end, setTextInput = noop, setKeyRepeat = noop },
     graphics = setmetatable({
         getFont = function() return fontStub end,
         newFont = function() return fontStub end,
@@ -35,6 +35,13 @@ local function assert(condition, message)
         print("[PASS] " .. message)
     end
 end
+
+-- Fake network for the leaderboard: requests wait in `sent` until answered
+local sent = {}
+package.loaded["Game.Online.Http"] = {
+    request = function(method, url, body, callback) table.insert(sent, { url = url, body = body, callback = callback }) end,
+    update = noop,
+}
 
 local game = require("Game.Core.GameManager")
 local menu = require("Scenes.menu_scene")
@@ -139,6 +146,40 @@ assert(not switched and not game_over_scene.deckViewer.isActive, "a click with t
 game_over_scene:mousepressed(layout.viewDeck.x + 5, layout.viewDeck.y + 5, 1)
 game_over_scene:keypressed("escape")
 assert(not game_over_scene.deckViewer.isActive, "Escape closes the deck view")
+
+-- 6. The run goes onto the leaderboard (after the player picks a name)
+local Leaderboard = require("Game.Online.Leaderboard")
+assert(Leaderboard.getRunStatus(game_over_scene.leaderboardRunId) == nil, "with the leaderboard off, nothing is submitted")
+Leaderboard.URL = "https://example.test"
+Leaderboard.startRun(ps)
+Leaderboard.update(0)
+table.remove(sent, 1).callback(200, '{"ok":true}')
+game_over_scene:load()
+local status = Leaderboard.getRunStatus(game_over_scene.leaderboardRunId)
+assert(status and status.state == "needs_name", "a finished run waits for the player's name")
+ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "the screen draws with the name box: " .. tostring(err))
+
+local input = game_over_scene.nameInput
+game_over_scene:mousepressed(input.x + 5, input.y + 5, 1)
+game_over_scene:textinput("Ada")
+game_over_scene:mousepressed(layout.submitName.x + 5, layout.submitName.y + 5, 1)
+assert(Leaderboard.getName() == "Ada", "typing a name and pressing SUBMIT sets it")
+Leaderboard.update(0)
+assert(#sent == 1 and sent[1].url == "https://example.test/scores" and sent[1].body:find('"level":5'),
+    "then the run is sent, with the level it reached")
+table.remove(sent, 1).callback(200, '{"ok":true,"rank":2}')
+assert(Leaderboard.getRunStatus(game_over_scene.leaderboardRunId).rank == 2, "and the rank comes back")
+ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "the screen draws with the rank: " .. tostring(err))
+
+game_over_scene:load() -- back from the leaderboard screen
+assert(Leaderboard.getRunStatus(game_over_scene.leaderboardRunId).state == "sent" and #sent == 0,
+    "coming back to the screen doesn't submit the run again")
+local switchedTo
+game_over_scene.scene_manager.switch = function(name) switchedTo = name end
+game_over_scene:mousepressed(layout.leaderboard.x + 5, layout.leaderboard.y + 5, 1)
+assert(switchedTo == "leaderboard", "the Leaderboard button opens the leaderboard")
 
 print("--- Game Over Tests Completed with " .. failures .. " failures ---")
 os.exit(failures == 0 and 0 or 1)
