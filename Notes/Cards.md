@@ -35,3 +35,21 @@ Represents "Spells" or direct-action upgrades. `Instants` heavily utilize the `T
 
 ### `PlayerDeck` (`Game.Cards.PlayerDeck`)
 Manages the player's collection of cards. It handles the logic for drawing cards into the hand, consuming them upon successful execution, and refunding the cost if a placement is cancelled or fails.
+
+---
+
+## Card Icons
+
+Synergy icons sit in the bottom left of a card's description box (`Game.Cards.CardIcons`), always in this order:
+1. **Firing types:** `projectile`, `hitscan`, `shotgun`, `lobber`, `beam` (a card can have more than one, e.g. a shotgun shows `projectile` + `shotgun`)
+2. **Damage types:** `physical`, `energy`, `explosive`, `fire`, `poison`, `ice`, `trueDamage`
+3. **Resources:** `token`, `mana`, `money`
+
+**Automatic:** a turret with a `bulletId` and `damageType` derives its icons: `hitscan` for a hitscan bullet, `lobber` if its `types` include `lobber`, otherwise `projectile`; plus `shotgun` for the `shotgun` type or `pelletCount > 1`; then its damage type.
+
+**Manual — add these when you make a new card:** any other card needs an explicit `icons = { ... }` field on its definition (order doesn't matter, it's sorted):
+- Turrets without a bullet (beams, waves), e.g. Cryo Beam `{ "beam", "ice" }`
+- Spells (`Spells/SpellCardRegistry.lua`), instants (`Instants/InstantCardRegistry.lua`), passives (`Buildings/PassiveIndex.lua`)
+- Main turret cards and upgrades (`Buildings/MainTurrets/*`); for a deck `Card:new`, put `icons` in `payload.config`
+
+Show the types the card cares about (Unstable Laser buffs energy turrets with burn: `{ "energy", "fire" }`). Cards with nothing type-specific (Ammo Cache, Overclock) get no icons. A new icon name needs a glyph, a colour and hover text (`CardIcons.INFO`) in `CardIcons.lua`. Hovering an icon in the deck view shows that text.

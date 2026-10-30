@@ -16,6 +16,7 @@ for _, spell in pairs(SpellCardRegistry) do
                 id = spell.id,
                 name = spell.name,
                 description = spell.description,
+                icons = spell.icons,
                 type = "spell",
                 types = {"spell"},
                 cost = spell.cost or 1,

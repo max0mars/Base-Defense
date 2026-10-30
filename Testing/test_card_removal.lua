@@ -141,10 +141,10 @@ prepScene:drawDeck()
 
 -- Find Sentry Turret card coordinates (display index 0 -> row 0, col 0)
 local cols = 4
-local cardW = 200
-local cardH = 240
-local spacingX = 40
-local spacingY = 30
+local cardW = 190
+local cardH = 266
+local spacingX = 36
+local spacingY = 16
 local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
 local startY = 96
 local cardX = startX

@@ -184,8 +184,8 @@ local function steadyStacks(stacksPerHit, hitsPerSecond, seconds)
     target:destroy()
     return total / n
 end
-local flare = steadyStacks(3, 0.7, 15)
-assert(flare > 4 and flare < 9, string.format("one Flare Gun holds a target in stage 1 (~%.1f stacks)", flare))
+local flare = steadyStacks(1, 0.7, 15)
+assert(flare > 1 and flare < 3.5, string.format("one Flare Gun holds a target in stage 1 (~%.1f stacks)", flare))
 local thrower = steadyStacks(1, 3.5, 15)
 assert(thrower > 6 and thrower < 10, string.format("one Flamethrower holds a target just under stage 2 (~%.1f stacks)", thrower))
 clearBoard()
@@ -244,13 +244,13 @@ for id, rarity in pairs(expected) do
     assert(entry and got == rarity and entry.damageType == "fire", id .. " is a " .. rarity .. " fire turret")
 end
 
--- Flare Gun bullets apply 3 burn
+-- Flare Gun bullets apply 1 burn
 local flareGun = place("flareGun", 0, 0)
 local fe = newEnemy()
 flareGun.target = fe
 flareGun:fire({ targetX = fe.x, targetY = fe.y })
 game.objects[#game.objects]:onHit(fe)
-assert(near(Burn.getStacks(fe), 3), "a flare applies 3 burn")
+assert(near(Burn.getStacks(fe), 1), "a flare applies 1 burn")
 
 -- Cinder Mortar: cinders burn the first enemy to step on them, once
 local mortar = place("cinderMortar", 2, 0)

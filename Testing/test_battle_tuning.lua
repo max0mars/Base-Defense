@@ -90,8 +90,8 @@ assert(shotgun.damage == 6, "shotgun: 6 damage per pellet")
 
 -- Heavy Shotgun: uncommon, 2 tokens, a long-range tight-spread shotgun
 local heavy = findTurret("heavyShotgun")
-assert(heavy and heavy.cost == 2 and heavy.pelletCount == 7 and heavy.damage == 16 and heavy.pierce == 2,
-    "heavy shotgun: 2 tokens, 7 x 16 dmg pellets that pierce once")
+assert(heavy and heavy.cost == 2 and heavy.pelletCount == 7 and heavy.damage == 8 and heavy.pierce == 2,
+    "heavy shotgun: 2 tokens, 7 x 8 dmg pellets that pierce once")
 local isUncommon = false
 for _, e in ipairs(TurretIndex.uncommon) do isUncommon = isUncommon or e.id == "heavyShotgun" end
 assert(isUncommon, "heavy shotgun is uncommon")

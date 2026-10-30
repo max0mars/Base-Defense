@@ -99,6 +99,24 @@ assert(#game_over_scene.rows >= 1 and game_over_scene.rows[#game_over_scene.rows
 local ok, err = pcall(game_over_scene.draw, game_over_scene)
 assert(ok, "the screen draws: " .. tostring(err))
 
+-- 4b. Each enemy lists how many of it hit the base that level ("x 3")
+for _ = 1, 2 do game.base:takeDamage(20, "physical", 0, 0, { name = "Grunt" }) end
+game.base:takeDamage(5, "physical", 0, 0, { name = "Speeder" })
+local counts = {}
+for _, item in ipairs(game.base:getProcessedDamageHistory()) do
+    if item.level == 5 then counts[item.name] = item end
+end
+assert(counts.Grunt and counts.Grunt.hits == 3 and counts.Grunt.damage == 60, "three Grunts hit the base: x 3, 60 damage")
+assert(counts.Speeder and counts.Speeder.hits == 1, "one Speeder: x 1")
+game_over_scene:load()
+ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "the screen draws with hit counts: " .. tostring(err))
+-- An entry from an older save has no count: it still draws (without one)
+_G.PersistentState.damageTracker[5].Grunt.hits = nil
+game_over_scene:load()
+ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "and with an older save's entry that has no count: " .. tostring(err))
+
 -- 5. The run's artifacts are shown, and View Deck opens the run's deck
 local ArtifactIndex = require("Game.Artifacts.ArtifactIndex")
 ps.artifacts = { ArtifactIndex.list and ArtifactIndex.list[1] and ArtifactIndex.list[1].id or "buckshot_choke" }

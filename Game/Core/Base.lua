@@ -92,13 +92,16 @@ function Base:takeDamage(amount, damageType, hitX, hitY, sourceEntity, damageTag
         if not tracker[level][enemyName] then
             tracker[level][enemyName] = {
                 damage = 0,
+                hits = 0, -- how many of this enemy hit the base
                 color = sourceEntity.color,
                 w = sourceEntity.w or 20,
                 h = sourceEntity.h or 20,
                 shape = sourceEntity.shape or "rectangle"
             }
         end
-        tracker[level][enemyName].damage = tracker[level][enemyName].damage + amount
+        local entry = tracker[level][enemyName]
+        entry.damage = entry.damage + amount
+        entry.hits = (entry.hits or 0) + 1 -- entries from older saves have no count yet
     end
 
     self.game.damageTakenThisBattle = (self.game.damageTakenThisBattle or 0) + amount
@@ -120,6 +123,7 @@ function Base:getProcessedDamageHistory()
                     level = level,
                     name = name,
                     damage = data.damage,
+                    hits = data.hits,
                     color = data.color,
                     w = data.w,
                     h = data.h,

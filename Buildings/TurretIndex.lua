@@ -1,3 +1,5 @@
+-- New turrets get synergy icons from bulletId + damageType; one without a bullet
+-- (beam, wave) needs an explicit `icons` list. See "Card Icons" in Notes/Cards.md.
 local BounceEffect = require("Game.Effects.IndependantEffects.bounce")
 local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
 local PoisonEffect = require("Game.Effects.StatusEffects.Poison")
@@ -83,18 +85,19 @@ local RewardIndex = {
         {
             id = "flareGun",
             name = "Flare Gun",
-            description = "Fires flares that apply 3 burn on hit.",
+            description = "Fires flares that apply 1 burn on hit.",
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            -- 3 burn every 1.4s holds a target at ~6 stacks (stage 1) on its own
+            -- 1 burn every 1.4s holds a target at ~2 stacks (stage 1) on its own;
+            -- each hit on a fresh enemy is worth ~20 burn damage
             rotation = 0, fireRate = 0.7, range = 340,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             bulletSpeed = 380, damageType = "fire", damage = 4,
             pierce = 1, lifespan = 1.0, bulletId = "flare",
-            hitEffects = { Burn.onHit({ amount = 3 }) }
+            hitEffects = { Burn.onHit({ amount = 1 }) }
         },
     },
     uncommon = {
@@ -208,7 +211,7 @@ local RewardIndex = {
             -- 7 degree cone: ~3.4 of 7 pellets land on a 20px enemy at max range.
             spread = math.rad(7), pelletCount = 7,
             -- Pellet speed varies +-10%, so 650 x 0.6s still reaches 340 at the slowest.
-            bulletSpeed = 650, damageType = "physical", damage = 16,
+            bulletSpeed = 650, damageType = "physical", damage = 8,
             pierce = 2, lifespan = 0.6, bulletId = "heavyPellet"
         },
         {
@@ -232,6 +235,7 @@ local RewardIndex = {
             id = "glacialMonolith",
             name = "Glacial Monolith",
             description = "Deals no damage. Sends slow freezing waves through its arc that chill enemies.",
+            icons = { "ice" },
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
@@ -408,6 +412,7 @@ local RewardIndex = {
             id = "cryoBeam",
             name = "Cryo Beam",
             description = "Locks a freezing beam onto one enemy until it freezes, then moves to the next target.",
+            icons = { "beam", "ice" },
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
@@ -454,6 +459,7 @@ local RewardIndex = {
             id = "infernoTower",
             name = "Inferno Tower",
             description = "Locks a fire beam onto one enemy. Its damage ramps up to 5x over 5 seconds on the same target. Doesn't apply burn.",
+            icons = { "beam", "fire" },
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
@@ -487,6 +493,7 @@ local RewardIndex = {
             id = "meteor",
             name = "PROJECT STARFALL",
             description = "Calls meteors down on its target, dealing fire damage in an area. The burning crater left behind applies burn to enemies inside it.",
+            icons = { "fire" },
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",

@@ -1,4 +1,5 @@
 local Neon = require("Game.GUI.Neon")
+local CardIcons = require("Game.Cards.CardIcons")
 
 local CardDraw = {}
 CardDraw.__index = CardDraw
@@ -7,6 +8,10 @@ CardDraw.__index = CardDraw
 CardDraw.WIDTH = 250
 CardDraw.HEIGHT = 350
 CardDraw.RADIUS = 10
+
+-- Synergy icon row, bottom left of the description box (card space)
+local ICON_X = 21
+local ICON_Y = 325 - CardIcons.SIZE - 6
 
 -- Neon Rarity Colors (RGB values from 0 to 1)
 local rarityColors = {
@@ -138,6 +143,7 @@ function CardDraw.new(x, y, data)
     self.upgradable = data.upgradable
     
     self.affectedSlots = data.affectedSlots or {}
+    self.icons = CardIcons.resolve(data, data.id)
     
     return self
 end
@@ -411,8 +417,16 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
         table.insert(deferredText, {t = self.name, x = 45, y = 27, w = CardDraw.WIDTH - 65, a = "left"})
     end
     
-    -- Render Description Text
-    local boxHeight = 150
+    -- 8. Synergy icons (bottom left of the description box)
+    local iconStrip = 0
+    if self.icons and #self.icons > 0 then
+        iconStrip = CardIcons.SIZE + 8
+        CardIcons.drawRow(self.icons, ICON_X, ICON_Y)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+
+    -- Render Description Text (centred in the space above the icons)
+    local boxHeight = 150 - iconStrip
     local descLimit = CardDraw.WIDTH - 50
     
     -- Calculate wrapped text height using the scaled limit that printf will use
@@ -434,6 +448,20 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
     for _, dt in ipairs(deferredText) do
         love.graphics.printf(dt.t, targetX + dt.x * scaleX, targetY + dt.y * scaleY, dt.w * scaleX, dt.a, 0)
     end
+end
+
+--- The synergy icon under the screen point (px, py) on a card drawn at the given rect.
+-- @return string|nil: icon name, plus the icon's top-centre in screen space
+function CardDraw:iconAt(px, py, targetX, targetY, targetW, targetH)
+    if not self.icons or #self.icons == 0 then return nil end
+    targetX = targetX or self.x
+    targetY = targetY or self.y
+    local scaleX = (targetW or CardDraw.WIDTH) / CardDraw.WIDTH
+    local scaleY = (targetH or CardDraw.HEIGHT) / CardDraw.HEIGHT
+    local name, i = CardIcons.iconAt(self.icons, ICON_X, ICON_Y, (px - targetX) / scaleX, (py - targetY) / scaleY)
+    if not name then return nil end
+    local iconCentreX = ICON_X + (i - 1) * (CardIcons.SIZE + CardIcons.SPACING) + CardIcons.SIZE / 2
+    return name, targetX + iconCentreX * scaleX, targetY + ICON_Y * scaleY
 end
 
 -- Shared so other UI (e.g. the building hover window) matches the cards
