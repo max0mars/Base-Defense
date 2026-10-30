@@ -33,6 +33,9 @@ function RewardIndex.injectCards(cards)
     for rarity, rarityCards in pairs(cards) do
         if RewardIndex[rarity] then
             for _, card in ipairs(rarityCards) do
+                -- Cards know their rarity (the tier they're listed under), so decks
+                -- rebuilt from a save keep it
+                card.rarity = card.rarity or rarity
                 -- Skip cards already injected (a second run, or loading a save)
                 local exists = false
                 for _, existing in ipairs(RewardIndex[rarity]) do

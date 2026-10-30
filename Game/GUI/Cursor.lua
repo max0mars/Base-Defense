@@ -3,7 +3,7 @@
 -- main.lua draws the result last, on top of everything:
 --   Cursor.wantHand / Cursor.hover   a clickable: the pointing hand
 --   Cursor.setIcon(name)             a hover with its own action icon (Cursor.ICONS)
---   Cursor.use(name, charge)         the battle's choice (reticle, targeting, aiming),
+--   Cursor.use(name, charge, radius) the battle's choice (reticle, storm, targeting, aiming),
 --                                    cleared again by Cursor.usePointer for menus
 -- With none of these it is the plain pointer.
 
@@ -15,6 +15,7 @@ Cursor.wantHand = false
 Cursor.icon = nil
 Cursor.mode = nil   -- set by Cursor.use
 Cursor.charge = nil -- the reticle's reload, 0-1
+Cursor.radius = nil -- the storm cursor's targeting area, in screen pixels
 
 --- Clears the frame's cursor requests (called before each frame's draw).
 function Cursor.reset()
@@ -22,21 +23,25 @@ function Cursor.reset()
     Cursor.icon = nil
     Cursor.mode = nil
     Cursor.charge = nil
+    Cursor.radius = nil
 end
 
 --- Asks for one of the icons in Cursor.ICONS this frame (over Cursor.wantHand).
 function Cursor.setIcon(name) Cursor.icon = name end
 
---- Shows `name` (an icon, or "reticle" with its reload `charge`) whatever the HUD asked for.
-function Cursor.use(name, charge)
+--- Shows `name` (an icon, or "reticle" / "storm" with its reload `charge`) whatever
+--- the HUD asked for. `radius` is the storm cursor's targeting area.
+function Cursor.use(name, charge, radius)
     Cursor.mode = name
     Cursor.charge = charge
+    Cursor.radius = radius
 end
 
 --- Drops a Cursor.use choice: back to the HUD's hand / icon, or the plain pointer.
 function Cursor.usePointer()
     Cursor.mode = nil
     Cursor.charge = nil
+    Cursor.radius = nil
 end
 
 -- Flags a hand cursor (or `icon`) if the current mouse position is inside the given rect.
@@ -307,6 +312,79 @@ function Cursor.drawAim(x, y, charge)
     love.graphics.pop()
 end
 
+-- PROJECT STORMBREAKER's cursor, centred on (x, y): the strike area as a ring
+-- of `radius`, a lightning bolt at its centre, and three pips (one per strike)
+-- around it. Like the reticle, after a shot it all goes grey and the charge
+-- sweeps back round clockwise from the top; once it's ready, three crackling
+-- arcs of lightning run round the ring.
+local STORM_READY = { 0.3, 0.85, 1 }
+local STORM_PIPS = { -math.pi / 2, math.pi / 6, math.pi * 5 / 6 }
+
+function Cursor.drawStorm(x, y, charge, radius)
+    charge = charge or 1
+    radius = radius or 40
+    local ready = charge >= 1
+    local t = love.timer.getTime()
+    local function colour(isLit, alpha)
+        local c = isLit and STORM_READY or AIM_RELOADING
+        love.graphics.setColor(c[1], c[2], c[3], alpha or 1)
+    end
+    -- Three zigzag arcs riding the ring, re-rolled ~20 times a second
+    local function crackle()
+        local seed = math.floor(t * 20)
+        for k = 0, 2 do
+            local a0 = t * 1.5 + k * math.pi * 2 / 3
+            local pts = {}
+            for i = 0, 6 do
+                local a = a0 + i * 0.09
+                local noise = math.sin(seed * 12.9898 + k * 7.1 + i * 78.233) * 43758.5453 % 1
+                local off = (i == 0 or i == 6) and 0 or (noise - 0.5) * 9
+                table.insert(pts, x + math.cos(a) * (radius + off))
+                table.insert(pts, y + math.sin(a) * (radius + off))
+            end
+            love.graphics.line(pts)
+        end
+    end
+    local bolt = {
+        x + 3, y - 13, x - 6.5, y + 2, x - 1, y + 2,
+        x - 3, y + 13, x + 6.5, y - 2, x + 1, y - 2,
+    }
+
+    love.graphics.push("all")
+    love.graphics.setLineStyle("smooth")
+    love.graphics.setLineJoin("bevel")
+    -- Faint fill so the area reads over the field, then a dark outline
+    colour(ready, ready and 0.08 or 0.05)
+    love.graphics.circle("fill", x, y, radius)
+    love.graphics.setColor(0, 0, 0, 0.5)
+    love.graphics.setLineWidth(3.5)
+    love.graphics.circle("line", x, y, radius)
+    fillPolygon(bolt)
+
+    love.graphics.setLineWidth(1.5)
+    colour(ready, ready and 0.9 or 0.6)
+    love.graphics.circle("line", x, y, radius, 64)
+    if ready then
+        love.graphics.setLineWidth(2)
+        love.graphics.setColor(0.85, 0.97, 1, 0.7 + 0.3 * math.abs(math.sin(t * 13)))
+        crackle()
+        love.graphics.setLineWidth(1.5)
+    elseif charge > 0 then
+        colour(true)
+        local start = -math.pi / 2
+        love.graphics.arc("line", "open", x, y, radius, start, start + charge * 2 * math.pi, 48)
+    end
+    -- A pip lights as the sweep passes it (the top one last, when it's ready)
+    for i, a in ipairs(STORM_PIPS) do
+        local lit = (i == 1) and ready or charge >= (a + math.pi / 2) / (math.pi * 2)
+        colour(lit)
+        love.graphics.circle("fill", x + math.cos(a) * radius, y + math.sin(a) * radius, 2.5)
+    end
+    colour(ready)
+    fillPolygon(bolt)
+    love.graphics.pop()
+end
+
 -- -----------------------------------------------------------------------------
 -- Action icons
 -- -----------------------------------------------------------------------------
@@ -435,6 +513,8 @@ function Cursor.draw(x, y)
     local name = Cursor.current()
     if name == "reticle" then
         Cursor.drawAim(x, y, Cursor.charge)
+    elseif name == "storm" then
+        Cursor.drawStorm(x, y, Cursor.charge, Cursor.radius)
     elseif name == "hand" then
         Cursor.drawHand(x, y)
     elseif name == "pointer" or not Cursor.ICONS[name] then

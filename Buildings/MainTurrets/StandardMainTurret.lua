@@ -59,20 +59,18 @@ function StandardMainTurret:update(dt)
     end
 end
 
+--- True if (tX, tY) is over the base's build area (where clicks build, not shoot).
+function StandardMainTurret:isOverBase(tX, tY)
+    local base = self.game.base
+    if not base then return false end
+    return tX >= base.x - base.w / 2 and tX <= base.x + base.w / 2
+       and tY >= base.y - base.h / 2 and tY <= base.y + base.h / 2
+end
+
 function StandardMainTurret:PlayerClick(tX, tY)
     -- Only fires during a wave, not while placing between waves
     if not self.game:isState("wave") then return false end
-
-    local base = self.game.base
-    if base then
-        local bx1 = base.x - base.w / 2
-        local bx2 = base.x + base.w / 2
-        local by1 = base.y - base.h / 2
-        local by2 = base.y + base.h / 2
-        if tX >= bx1 and tX <= bx2 and tY >= by1 and tY <= by2 then
-            return false
-        end
-    end
+    if self:isOverBase(tX, tY) then return false end
 
     if self.cooldown <= 0 then
         local currentFireRate = self:getStat("fireRate")

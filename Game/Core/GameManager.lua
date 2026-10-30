@@ -689,7 +689,13 @@ function game:draw()
         local cursor = self:pickCursor(mx, my, menuActive, overBase)
         if cursor == "reticle" then
             local mt = self.mainLazer
-            Cursor.use("reticle", mt and not mt.destroyed and mt.getCharge and mt:getCharge() or nil)
+            local charge = mt and not mt.destroyed and mt.getCharge and mt:getCharge() or nil
+            if mt and mt.upgrades and mt.upgrades["electric_field"] and mt.STORM_RADIUS then
+                -- PROJECT STORMBREAKER aims an area, drawn at its size on screen
+                Cursor.use("storm", charge, mt.STORM_RADIUS * Layout.scale)
+            else
+                Cursor.use("reticle", charge)
+            end
         elseif cursor ~= "ui" then
             Cursor.use(cursor)
         end

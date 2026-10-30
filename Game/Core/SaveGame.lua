@@ -161,9 +161,12 @@ local function newCard(id, mainTurretId)
     -- The main turret's unique cards, for callers that haven't injected them
     -- into the reward pool (the leaderboard shows other players' decks)
     if not reward and ok and turret.getUniqueCards then
-        for _, cards in pairs(turret.getUniqueCards() or {}) do
+        for rarity, cards in pairs(turret.getUniqueCards() or {}) do
             for _, card in ipairs(cards) do
-                if card.id == id then reward = card end
+                if card.id == id then
+                    reward = card
+                    reward.rarity = reward.rarity or rarity
+                end
             end
         end
     end

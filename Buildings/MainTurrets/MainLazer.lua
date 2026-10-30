@@ -52,9 +52,7 @@ function MainLazer:new(config)
     local t = StandardMainTurret:new(baseConfig)
     setmetatable(t, { __index = self })
     
-    t.electricFieldCooldown = 0
-    t.zapBurstCount = 0
-    t.zapDelayTimer = 0.3
+    t.pendingZaps = {} -- PROJECT STORMBREAKER strikes still to land
     
     return t
 end
@@ -89,70 +87,80 @@ function MainLazer:update(dt)
         self.recoilTime = self.recoilTime + dt
         if self.recoilTime >= MainLazer.RECOIL_TIME then self.recoilTime = nil end
     end
-    if self.upgrades["electric_field"] then
-        self:updateElectricField(dt)
-    end
+    self:updatePendingZaps(dt)
 end
 
-function MainLazer:updateElectricField(dt)
-    if not self.upgrades["electric_field"] then return end
-    if self.electricFieldCooldown > 0 then
-        self.electricFieldCooldown = self.electricFieldCooldown - dt
-        return
-    end
-    if not self.game:isState("wave") then return end
-
-    local cx, cy = self:getCenterPosition()
-    local zapRange = self:getStat("range")
-    local r2 = zapRange * zapRange
-    
-    local potentialTargets = {}
-    for _, obj in ipairs(self.game.objects) do
-        if obj:isType("enemy") and not obj.destroyed then
-            local dx, dy = obj.x - cx, obj.y - cy
-            if dx*dx + dy*dy <= r2 then
-                table.insert(potentialTargets, obj)
-            end
-        end
-    end
-
-    if #potentialTargets > 0 then
-        if self.zapBurstCount == 0 then
-            self.zapDelayTimer = self.zapDelayTimer - dt
-        else
-            self.zapDelayTimer = 0
-        end
-        
-        if self.zapDelayTimer <= 0 then
-            local target = potentialTargets[love.math.random(1, #potentialTargets)]
-            if AUDIO then AUDIO:playSFX("lightning_01") end
-            self:applyHitEffects(target)
-            local damage = self:getStat("damage") * Chill.getDamageMultiplier(target, self:getDamageVsChill())
-            target:takeDamage(damage, "energy", target.x, target.y, nil, self)
-            if self.game.spawnLightningBolt then self.game:spawnLightningBolt(target.x, target.y) end
-            if self.game.spawnParticleExplosion then
-                local c = MainLazer.CHARGE_COLOR
-                self.game:spawnParticleExplosion({ c[1], c[2], c[3], 1 }, 5, target.x, target.y)
-            end
-            
-            self.zapBurstCount = self.zapBurstCount + 1
-            if self.zapBurstCount < 3 then
-                self.electricFieldCooldown = 0.1 
-            else
-                self.zapBurstCount = 0
-                self.electricFieldCooldown = 1 / self:getStat("fireRate")
-                self.zapDelayTimer = 0.3
-            end
-        end
-    else
-        self.zapBurstCount = 0
-        self.zapDelayTimer = 0.3
-    end
-end
+-- PROJECT STORMBREAKER: instead of the beam, each shot calls lightning down on
+-- up to STORM_TARGETS random enemies within STORM_RADIUS of where the player aims
+MainLazer.STORM_RADIUS = 70
+MainLazer.STORM_TARGETS = 3
+MainLazer.STORM_ZAP_GAP = 0.08 -- seconds between the strikes of one shot
 
 function MainLazer:PlayerClick(tX, tY)
-    if self.upgrades["electric_field"] then return false end
+    if self.upgrades["electric_field"] then return self:fireStorm(tX, tY) end
     return StandardMainTurret.PlayerClick(self, tX, tY)
+end
+
+--- Enemies inside the storm's targeting area centred on (tX, tY).
+function MainLazer:getStormTargets(tX, tY)
+    local targets = {}
+    local r2 = MainLazer.STORM_RADIUS * MainLazer.STORM_RADIUS
+    for _, obj in ipairs(self.game.objects) do
+        if obj:isType("enemy") and not obj.destroyed and not obj.untargetable then
+            local dx, dy = obj.x - tX, obj.y - tY
+            if dx * dx + dy * dy <= r2 then
+                table.insert(targets, obj)
+            end
+        end
+    end
+    return targets
+end
+
+--- Fires a storm shot at (tX, tY). A shot with no enemies in the area isn't spent.
+function MainLazer:fireStorm(tX, tY)
+    if not self.game:isState("wave") or self.cooldown > 0 or self:isOverBase(tX, tY) then return false end
+    local fireRate = self:getStat("fireRate")
+    if fireRate <= 0 then return false end
+
+    local targets = self:getStormTargets(tX, tY)
+    if #targets == 0 then return false end
+
+    -- Up to STORM_TARGETS different enemies, picked at random
+    for i = 1, math.min(MainLazer.STORM_TARGETS, #targets) do
+        local pick = love.math.random(i, #targets)
+        targets[i], targets[pick] = targets[pick], targets[i]
+        table.insert(self.pendingZaps, { target = targets[i], delay = (i - 1) * MainLazer.STORM_ZAP_GAP })
+    end
+    self.cooldown = 1 / fireRate
+    if self.game.spawnExpandingCircle then
+        self.game:spawnExpandingCircle(tX, tY, MainLazer.STORM_RADIUS * 0.6, MainLazer.STORM_RADIUS,
+            MainLazer.CHARGE_COLOR, 0.25)
+    end
+    self:updatePendingZaps(0) -- the first strike lands at once
+    return true
+end
+
+function MainLazer:updatePendingZaps(dt)
+    for i = #self.pendingZaps, 1, -1 do
+        local zap = self.pendingZaps[i]
+        zap.delay = zap.delay - dt
+        if zap.delay <= 0 then
+            table.remove(self.pendingZaps, i)
+            if not zap.target.destroyed then self:zap(zap.target) end
+        end
+    end
+end
+
+function MainLazer:zap(target)
+    if AUDIO then AUDIO:playSFX("lightning_01") end
+    self:applyHitEffects(target)
+    local damage = self:getStat("damage") * Chill.getDamageMultiplier(target, self:getDamageVsChill())
+    target:takeDamage(damage, "energy", target.x, target.y, nil, self)
+    if self.game.spawnLightningBolt then self.game:spawnLightningBolt(target.x, target.y) end
+    if self.game.spawnParticleExplosion then
+        local c = MainLazer.CHARGE_COLOR
+        self.game:spawnParticleExplosion({ c[1], c[2], c[3], 1 }, 5, target.x, target.y)
+    end
 end
 
 function MainLazer:fire(args)
