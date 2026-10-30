@@ -187,7 +187,7 @@ end
 assert(materialsPerChoiceSet(1, 100) == 0, "battle 1 never offers a material")
 for _, level in ipairs({ 2, 4, 11 }) do
     local avg = materialsPerChoiceSet(level, 300)
-    assert(avg >= 1, string.format("battle %d: on average at least 1 of 3 choices offers a material (%.2f)", level, avg))
+    assert(avg >= 0.7 and avg <= 1, string.format("battle %d: on average 0.7-1 of 3 choices offers a material (%.2f)", level, avg))
 end
 
 for _, level in ipairs({ 3, 8, 13 }) do

@@ -10,8 +10,8 @@ BattleManager.__index = BattleManager
 
 -- Chance a material reward is Universal Essence instead of a typed material
 BattleManager.UNIVERSAL_MATERIAL_CHANCE = 0.10
--- Chance a battle (level 2+) offers an upgrade material: about 1.2 of the 3 choices
-BattleManager.MATERIAL_CHANCE = 0.4
+-- Chance a battle (level 2+) offers an upgrade material: about 0.84 of the 3 choices
+BattleManager.MATERIAL_CHANCE = 0.28
 -- Harder battles sometimes give a pair
 BattleManager.MATERIAL_PAIR_MIN_DIFFICULTY = 1.6
 BattleManager.MATERIAL_PAIR_CHANCE = 0.35
