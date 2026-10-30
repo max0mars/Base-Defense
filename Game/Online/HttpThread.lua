@@ -120,6 +120,14 @@ local function perform(req)
     table.insert(args, quote(req.url))
 
     local code = run(table.concat(args, " "))
+    -- 35: the TLS handshake failed. On Windows that's usually the certificate
+    -- revocation check not reaching its server (blocked on some networks), so
+    -- try again letting that check off when it can't be done. Only on failure:
+    -- curl older than 7.70 doesn't know the option.
+    if code == 35 and isWindows then
+        table.insert(args, 2, "--ssl-revoke-best-effort")
+        code = run(table.concat(args, " "))
+    end
     if code == nil then
         return { id = req.id, status = 0, error = "couldn't start curl" }
     end

@@ -9,4 +9,4 @@ MIN_SECONDS_PER_LEVEL = "20"
 [[d1_databases]]
 binding = "DB"
 database_name = "base-defense-leaderboard"
-database_id = "REPLACE_WITH_THE_ID_FROM_wrangler_d1_create"
+database_id = "5d9e23fb-855e-4d2c-896b-a4ba685cce4c"

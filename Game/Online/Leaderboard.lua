@@ -24,7 +24,7 @@ local Leaderboard = {}
 
 -- The deployed Worker, e.g. "https://base-defense-leaderboard.<account>.workers.dev".
 -- Empty turns the leaderboard off.
-Leaderboard.URL = ""
+Leaderboard.URL = "https://base-defense-leaderboard.base-defense.workers.dev"
 
 Leaderboard.NAME_MAX = 16
 Leaderboard.FETCH_LIMIT = 50
