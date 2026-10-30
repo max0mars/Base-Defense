@@ -14,6 +14,7 @@ local ExecutionType = require("Game.Cards.ExecutionType")
 local PlayerDeck = require("Game.Cards.PlayerDeck")
 local SettingsPanel = require("Game.GUI.SettingsPanel")
 local CardDraw = require("Game.Cards.CardDraw")
+local CardIcons = require("Game.Cards.CardIcons")
 local ArtifactManager = require("Game.Artifacts.ArtifactManager")
 local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
 local DevMode = require("Game.Dev.DevMode")
@@ -240,6 +241,22 @@ function preparation_scene:drawButton(btn, mx, my)
 end
 
 
+-- Deck view grid, shared by drawing and click hit-testing. Cards keep their
+-- 250x350 shape; Prev/Next sit in the side margins so two rows fit.
+local DECK_COLS, DECK_PER_PAGE = 4, 8
+local DECK_CARD_W, DECK_CARD_H = 190, 266
+local DECK_SPACING_X, DECK_SPACING_Y = 36, 16
+local DECK_START_Y = 96
+
+--- Screen rect of the card at displayIndex (0-based) on the current deck page.
+local function deckCardRect(displayIndex)
+    local startX = (VIRTUAL_WIDTH - (DECK_COLS * DECK_CARD_W + (DECK_COLS - 1) * DECK_SPACING_X)) / 2
+    local col = displayIndex % DECK_COLS
+    local row = math.floor(displayIndex / DECK_COLS)
+    return startX + col * (DECK_CARD_W + DECK_SPACING_X), DECK_START_Y + row * (DECK_CARD_H + DECK_SPACING_Y),
+        DECK_CARD_W, DECK_CARD_H
+end
+
 function preparation_scene:drawDeck()
     local CardUpgradeConfig = require("Game.Cards.CardUpgradeConfig")
     local removals = CardUpgradeConfig.Economy.getCardRemovals()
@@ -301,33 +318,20 @@ self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1
 
     if _G.PersistentState.deck then
         local cards = _G.PersistentState.deck:getCards()
-        
-        local cols = 4
-        local cardW = 200
-        local cardH = 240
-        local spacingX = 40
-        local spacingY = 30
-        local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
-        local startY = 96
-        
-        local maxPerPage = 8
-        local totalPages = math.max(1, math.ceil(#cards / maxPerPage))
+
+        local totalPages = math.max(1, math.ceil(#cards / DECK_PER_PAGE))
         self.deckPage = self.deckPage or 1
         if self.deckPage > totalPages then self.deckPage = totalPages end
         if self.deckPage < 1 then self.deckPage = 1 end
-        
-        local startIndex = (self.deckPage - 1) * maxPerPage + 1
-        local endIndex = math.min(self.deckPage * maxPerPage, #cards)
-        
+
+        local startIndex = (self.deckPage - 1) * DECK_PER_PAGE + 1
+        local endIndex = math.min(self.deckPage * DECK_PER_PAGE, #cards)
+
+        local hoveredIcon, iconX, iconY
         for i = startIndex, endIndex do
-            local displayIndex = i - startIndex
             local card = cards[i]
-            local col = (displayIndex % cols)
-            local row = math.floor(displayIndex / cols)
-            
-            local cx = startX + col * (cardW + spacingX)
-            local cy = startY + row * (cardH + spacingY)
-            
+            local cx, cy, cardW, cardH = deckCardRect(i - startIndex)
+
             local isTargetedForDestruction = (self.destroyConfirmCard ~= nil and self.destroyConfirmCard == card)
             local isHovered = false
             if not self.destroyConfirmCard then
@@ -340,7 +344,10 @@ self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1
 
             if card.getCardDraw and card:getCardDraw() then
                 card:getCardDraw():draw(cx, cy, cardW, cardH, isHovered and not self.deckTrashMode)
-                
+                if isHovered and not self.deckTrashMode then
+                    hoveredIcon, iconX, iconY = card:getCardDraw():iconAt(mx, my, cx, cy, cardW, cardH)
+                end
+
                 -- Draw quantity badge
                 if card.quantity and card.quantity > 1 then
                     love.graphics.setColor(0.9, 0.2, 0.2, 1)
@@ -370,8 +377,14 @@ self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1
             end
         end
         
-        self.prevPageBtn = { x = 120, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Prev Page" }
-        self.nextPageBtn = { x = VIRTUAL_WIDTH - 240, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Next Page" }
+        -- Hovering a synergy icon explains it (drawn last so it sits over neighbouring cards)
+        if hoveredIcon then
+            CardIcons.drawTooltip(hoveredIcon, iconX, iconY)
+        end
+
+        local pageBtnY = DECK_START_Y + DECK_CARD_H + DECK_SPACING_Y / 2 - 20
+        self.prevPageBtn = { x = 112, y = pageBtnY, w = 84, h = 40, label = "Prev Page" }
+        self.nextPageBtn = { x = VIRTUAL_WIDTH - 196, y = pageBtnY, w = 84, h = 40, label = "Next Page" }
         
         if self.deckPage > 1 then
             local isHovered = not self.destroyConfirmCard and (mx >= self.prevPageBtn.x and mx <= self.prevPageBtn.x + self.prevPageBtn.w and my >= self.prevPageBtn.y and my <= self.prevPageBtn.y + self.prevPageBtn.h)
@@ -392,9 +405,9 @@ self:drawTrashIcon(self.deckTrashBtn.x + 22, self.deckTrashBtn.y + 18, 20, {1, 1
         end
         
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("Page " .. self.deckPage .. " / " .. totalPages, 0, VIRTUAL_HEIGHT - 75, VIRTUAL_WIDTH, "center")
+        love.graphics.printf("Page " .. self.deckPage .. " / " .. totalPages, 0, VIRTUAL_HEIGHT - 68, VIRTUAL_WIDTH, "center")
     end
-    
+
     love.graphics.setColor(0.6, 0.6, 0.6, 1)
     love.graphics.printf("Click anywhere else to close", 100, VIRTUAL_HEIGHT - 45, VIRTUAL_WIDTH - 200, "center")
 end
@@ -1245,24 +1258,12 @@ function preparation_scene:handleMousePressed(x, y, button)
         -- 4. In Trash Mode: check card clicks
         if self.deckTrashMode then
             local cards = _G.PersistentState.deck and _G.PersistentState.deck:getCards() or {}
-            local maxPerPage = 8
-            local startIndex = (self.deckPage - 1) * maxPerPage + 1
-            local endIndex = math.min(self.deckPage * maxPerPage, #cards)
-            local cols = 4
-            local cardW = 200
-            local cardH = 240
-            local spacingX = 40
-            local spacingY = 30
-            local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
-            local startY = 96
+            local startIndex = (self.deckPage - 1) * DECK_PER_PAGE + 1
+            local endIndex = math.min(self.deckPage * DECK_PER_PAGE, #cards)
 
             for i = startIndex, endIndex do
-                local displayIndex = i - startIndex
                 local card = cards[i]
-                local col = (displayIndex % cols)
-                local row = math.floor(displayIndex / cols)
-                local cx = startX + col * (cardW + spacingX)
-                local cy = startY + row * (cardH + spacingY)
+                local cx, cy, cardW, cardH = deckCardRect(i - startIndex)
 
                 if x >= cx and x <= cx + cardW and y >= cy and y <= cy + cardH then
                     self.destroyConfirmCard = card

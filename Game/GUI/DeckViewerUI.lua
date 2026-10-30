@@ -73,7 +73,7 @@ function DeckViewerUI:draw()
     local font = love.graphics.getFont()
     
     love.graphics.setColor(0.9, 0.9, 1.0, 1)
-    love.graphics.printf(title .. " (" .. #self.cards .. " Cards)", 0, 30, VIRTUAL_WIDTH, "center")
+    love.graphics.printf(title .. " (" .. #self.cards .. " Cards)", 0, 28, VIRTUAL_WIDTH, "center")
     
 
     
@@ -82,9 +82,9 @@ function DeckViewerUI:draw()
     local cardW = 200
     local cardH = 280
     local spacingX = 40
-    local spacingY = 20
+    local spacingY = 24
     local startX = (VIRTUAL_WIDTH - (cols * cardW + (cols - 1) * spacingX)) / 2
-    local startY = 80
+    local startY = 66
     
     local maxPerPage = 8
     local totalPages = math.max(1, math.ceil(#self.cards / maxPerPage))
@@ -119,8 +119,10 @@ function DeckViewerUI:draw()
         CardIcons.drawTooltip(hoveredIcon, iconX, iconY)
     end
     
-    self.prevPageBtn = { x = 120, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Prev Page" }
-    self.nextPageBtn = { x = VIRTUAL_WIDTH - 240, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Next Page" }
+    -- Prev/Next sit in the side margins, level with the gap between the rows, so they never cover a card
+    local pageBtnY = startY + cardH + spacingY / 2 - 20
+    self.prevPageBtn = { x = startX - 140, y = pageBtnY, w = 120, h = 40, label = "Prev Page" }
+    self.nextPageBtn = { x = VIRTUAL_WIDTH - startX + 20, y = pageBtnY, w = 120, h = 40, label = "Next Page" }
     
     if self.deckPage > 1 then
         local isHovered = mx >= self.prevPageBtn.x and mx <= self.prevPageBtn.x + self.prevPageBtn.w and my >= self.prevPageBtn.y and my <= self.prevPageBtn.y + self.prevPageBtn.h
@@ -139,10 +141,10 @@ function DeckViewerUI:draw()
     end
     
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Page " .. self.deckPage .. " / " .. totalPages, 0, VIRTUAL_HEIGHT - 75, VIRTUAL_WIDTH, "center")
-    
+    love.graphics.printf("Page " .. self.deckPage .. " / " .. totalPages, 0, VIRTUAL_HEIGHT - 52, VIRTUAL_WIDTH, "center")
+
     love.graphics.setColor(0.6, 0.6, 0.6, 1)
-    love.graphics.printf("Click anywhere else to close", 0, VIRTUAL_HEIGHT - 45, VIRTUAL_WIDTH, "center")
+    love.graphics.printf("Click anywhere else to close", 0, VIRTUAL_HEIGHT - 30, VIRTUAL_WIDTH, "center")
 end
 
 function DeckViewerUI:mousepressed(x, y, button)
