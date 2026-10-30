@@ -21,6 +21,7 @@
 -- =============================================================================
 
 local Chill = require("Game.Effects.StatusEffects.Chill")
+local Burn = require("Game.Effects.StatusEffects.Burn")
 
 local ArtifactIndex = {}
 
@@ -200,6 +201,68 @@ ArtifactIndex.list = {
             return {
                 { statModifiers = { fireRate = { mult = self.PER_ICE_TURRET * count } } },
             }
+        end,
+    },
+
+    -- -------------------------------------------------------------------------
+    -- Fire synergy (burn, see Burn.lua)
+    -- -------------------------------------------------------------------------
+    {
+        id = "fuel_tank",
+        name = "Fuel Tank",
+        icon = "drop",
+        color = {1, 0.6, 0.2, 1},
+        description = "Every time burn is applied, it applies 1 extra stack.",
+        EXTRA_STACKS = 1,
+        modifyBurnApplied = function(self, game, amount, enemy, source)
+            return amount + self.EXTRA_STACKS
+        end,
+    },
+    {
+        id = "persistent_flames",
+        name = "Persistent Flames",
+        icon = "flame",
+        color = {1, 0.45, 0.1, 1},
+        description = "Burn decays 30% slower.",
+        effects = {
+            { target = "enemy", burnDecayMult = 0.7 },
+        },
+    },
+    {
+        id = "combustion",
+        name = "Combustion",
+        icon = "burst",
+        color = {1, 0.35, 0.05, 1},
+        description = "When a burning enemy is killed, its burn spreads to the nearest enemy.",
+        RANGE = 120,
+        onBurningEnemyDied = function(self, game, enemy, burnState)
+            local nearest, bestDist = nil, self.RANGE * self.RANGE
+            for _, obj in ipairs(game.objects or {}) do
+                if obj ~= enemy and obj:isType("enemy") and not obj.destroyed and not obj.isDead then
+                    local d = (obj.x - enemy.x) ^ 2 + (obj.y - enemy.y) ^ 2
+                    if d <= bestDist then nearest, bestDist = obj, d end
+                end
+            end
+            if not nearest then return end
+
+            -- Each turret keeps credit for the stacks it added
+            local stacks = burnState.stacks
+            local shares = {}
+            for turret, share in pairs(burnState.credit.creditShares) do shares[turret] = share end
+            local function spread()
+                local credited = 0
+                for turret, share in pairs(shares) do
+                    Burn.addRaw(nearest, share, turret)
+                    credited = credited + share
+                end
+                Burn.addRaw(nearest, stacks - credited)
+            end
+            if game.spawnDebuffProjectile then
+                local c = Burn.getColor(stacks)
+                game:spawnDebuffProjectile(enemy.x, enemy.y, nearest, spread, { c[1], c[2], c[3], 1 })
+            else
+                spread()
+            end
         end,
     },
 }

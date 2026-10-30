@@ -54,7 +54,8 @@ function Bullet:new(config)
     b.trail = {}
     b.maxTrail = config.maxTrail or 5
     b.drawStyle = config.drawStyle or "standard"
-    
+    b.startLifespan = config.lifespan -- for styles that age over the flight
+
     return b
 end
 
@@ -127,6 +128,48 @@ function Bullet:draw()
         love.graphics.rectangle("fill", self.w/2 - 2, -self.h/2, 2, self.h)
         love.graphics.pop()
         
+    elseif self.drawStyle == "flare" then
+        -- Bright magenta-red flare with a sputtering spark trail
+        for i, p in ipairs(self.trail) do
+            local k = 1 - i / (#self.trail + 1)
+            local jitter = (math.random() - 0.5) * 3
+            love.graphics.setColor(1, 0.35 + 0.4 * k, 0.25, 0.7 * k)
+            love.graphics.circle("fill", p.x + jitter, p.y - jitter, 1 + 1.5 * k)
+        end
+        local flicker = 0.85 + 0.15 * math.sin(love.timer.getTime() * 50)
+        love.graphics.setColor(1, 0.2, 0.3, 0.35 * flicker)
+        love.graphics.circle("fill", self.x, self.y, self.w * 1.4)
+        love.graphics.setColor(1, 0.45, 0.4, 1)
+        love.graphics.circle("fill", self.x, self.y, self.w * 0.6)
+        love.graphics.setColor(1, 0.95, 0.9, 1)
+        love.graphics.circle("fill", self.x, self.y, self.w * 0.3)
+
+    elseif self.drawStyle == "flame" then
+        -- A puff of flame that swells and cools as it travels
+        local age = 1 - math.max(0, self.lifespan) / (self.startLifespan or 1)
+        local size = self.w * (0.6 + 1.2 * age)
+        love.graphics.setColor(1, 0.3 + 0.2 * (1 - age), 0.05, 0.45 * (1 - age * 0.6))
+        love.graphics.circle("fill", self.x, self.y, size)
+        love.graphics.setColor(1, 0.75, 0.3, 0.8 * (1 - age))
+        love.graphics.circle("fill", self.x, self.y, size * 0.5)
+
+    elseif self.drawStyle == "thermite" then
+        love.graphics.setColor(1, 0.55, 0.15, 0.4)
+        love.graphics.circle("fill", self.x, self.y, self.w)
+        love.graphics.setColor(1, 0.97, 0.85, 1)
+        love.graphics.circle("fill", self.x, self.y, self.w * 0.45)
+
+    elseif self.drawStyle == "oil" then
+        for i, p in ipairs(self.trail) do
+            local k = 1 - i / (#self.trail + 1)
+            love.graphics.setColor(0.3, 0.22, 0.1, 0.6 * k)
+            love.graphics.circle("fill", p.x, p.y, self.w * 0.4 * k)
+        end
+        love.graphics.setColor(0.3, 0.22, 0.1, 1)
+        love.graphics.circle("fill", self.x, self.y, self.w / 2)
+        love.graphics.setColor(0.95, 0.8, 0.4, 0.9)
+        love.graphics.circle("fill", self.x - self.w * 0.15, self.y - self.w * 0.15, self.w * 0.15)
+
     elseif self.drawStyle == "slush" then
         love.graphics.setColor(r, g, bColor, 0.5)
         love.graphics.circle("fill", self.x, self.y, self.w / 1.5)

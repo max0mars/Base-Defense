@@ -307,4 +307,70 @@ SpellCardRegistry.Overchill = Spell.new({
     end
 })
 
+-- -----------------------------------------------------------------------------
+-- Fire synergy spells (burn, see Burn.lua)
+-- -----------------------------------------------------------------------------
+
+-- Embers: hot coals that keep applying burn to enemies in the area
+SpellCardRegistry.Embers = Spell.new({
+    id = "spell_embers",
+    name = "Embers",
+    description = "Spreads hot coals over an area for 5 seconds. Enemies in it gain 2 burn every half second.",
+    cost = 25,
+    rarity = "Uncommon",
+    radius = 60,
+    customExecute = function(self, x, y, game)
+        local FireZoneEffect = require("Spells.FireZoneEffect")
+        FireZoneEffect.spawn(game, {
+            name = "embers",
+            x = x, y = y,
+            radius = self:getStat("radius"),
+            duration = 5,
+            tickInterval = 0.5,
+            stacksPerTick = 2,
+        }, "coals")
+        if game.spawnParticleExplosion then
+            game:spawnParticleExplosion({1, 0.5, 0.1, 1}, 12, x, y, 0.4, 16)
+        end
+    end
+})
+
+-- Blazing Flames: burst of burn, then a zone where burn hits harder but burns out faster
+SpellCardRegistry.BlazingFlames = Spell.new({
+    id = "spell_blazingflames",
+    name = "Blazing Flames",
+    description = "Applies 10 burn to enemies in an area. For 5 seconds, burn deals double damage there but also decays twice as fast.",
+    cost = 30,
+    rarity = "Rare",
+    radius = 70,
+    customExecute = function(self, x, y, game)
+        local Burn = require("Game.Effects.StatusEffects.Burn")
+        local FireZoneEffect = require("Spells.FireZoneEffect")
+        local r = self:getStat("radius")
+        local r2 = r * r
+        for _, obj in ipairs(game.objects) do
+            if obj:isType("enemy") and not obj.destroyed then
+                local dx, dy = obj.x - x, obj.y - y
+                if dx * dx + dy * dy <= r2 then
+                    Burn.apply(obj, 10)
+                end
+            end
+        end
+        FireZoneEffect.spawn(game, {
+            name = "blazing_flames",
+            x = x, y = y,
+            radius = r,
+            duration = 5,
+            burnDamageMult = 2,
+            burnDecayMult = 2,
+        }, "blaze")
+        if game.spawnExpandingCircle then
+            game:spawnExpandingCircle(x, y, 4, r, {1, 0.55, 0.1, 0.7}, 0.3)
+        end
+        if AUDIO then
+            AUDIO:playSFX("explosion_02")
+        end
+    end
+})
+
 return SpellCardRegistry

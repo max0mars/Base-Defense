@@ -3,6 +3,9 @@ local ExplosionEffect = require("Game.Effects.IndependantEffects.explosion")
 local PoisonEffect = require("Game.Effects.StatusEffects.Poison")
 local StunEffect = require("Game.Effects.StatusEffects.Stun")
 local Chill = require("Game.Effects.StatusEffects.Chill")
+local Burn = require("Game.Effects.StatusEffects.Burn")
+local Oil = require("Game.Effects.StatusEffects.Oil")
+local Thermite = require("Game.Effects.StatusEffects.Thermite")
 local RewardIndex = {
     common = {
         {
@@ -76,6 +79,22 @@ local RewardIndex = {
             firingArc = {direction = 0, minRange = 0, angle = math.pi/14},
             bulletSpeed = 500, damageType = "physical", damage = 54,
             pierce = 1, lifespan = 1.5, bulletId = "heavyShell"
+        },
+        {
+            id = "flareGun",
+            name = "Flare Gun",
+            description = "Fires flares that apply 3 burn on hit.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 1,
+            building = require("Buildings.Turrets.Turret"),
+            -- 3 burn every 1.4s holds a target at ~6 stacks (stage 1) on its own
+            rotation = 0, fireRate = 0.7, range = 340,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
+            bulletSpeed = 380, damageType = "fire", damage = 4,
+            pierce = 1, lifespan = 1.0, bulletId = "flare",
+            hitEffects = { Burn.onHit({ amount = 3 }) }
         },
     },
     uncommon = {
@@ -192,6 +211,21 @@ local RewardIndex = {
             bulletSpeed = 650, damageType = "physical", damage = 16,
             pierce = 2, lifespan = 0.6, bulletId = "heavyPellet"
         },
+        {
+            id = "oilGun",
+            name = "Oil Gun",
+            description = "Coats enemies in oil, slowing them. Burn ignites the oil for 5 extra burn; oiling a burning enemy ignites it at once.",
+            type = "building",
+            types = {"turret", "building", "slow"},
+            iconCategory = "turret",
+            cost = 1,
+            building = require("Buildings.Turrets.Turret"),
+            rotation = 0, fireRate = 0.5, range = 300,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/5},
+            bulletSpeed = 320, damageType = "fire", damage = 12,
+            pierce = 1, lifespan = 1.0, bulletId = "oilGlob",
+            hitEffects = { Oil.onHit() }
+        },
     },
     rare = {
         {
@@ -301,6 +335,55 @@ local RewardIndex = {
             pierce = 1, lifespan = 2, bulletId = "heavyHook",
             hitEffects = { StunEffect:new({name = "Hook Stun", duration = 1.0}) }
         },
+        {
+            id = "flamethrower",
+            name = "Flamethrower",
+            description = "Rapidly sprays slow bursts of flame. Each hit applies 1 burn.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 2,
+            building = require("Buildings.Turrets.Turret"),
+            -- 3.5 burn per second alone holds a target at ~9 stacks, just under stage 2
+            rotation = 0, fireRate = 3.5, range = 200,
+            firingArc = {direction = 0, minRange = 0, angle = math.rad(50)},
+            spread = math.rad(8),
+            bulletSpeed = 220, damageType = "fire", damage = 5,
+            pierce = 1, lifespan = 1.0, bulletId = "flame",
+            hitEffects = { Burn.onHit({ amount = 1 }) }
+        },
+        {
+            id = "cinderMortar",
+            name = "Cinder Mortar",
+            description = "Lobs a spread of hot cinders that sit on the ground. The first enemy to walk over one takes fire damage and 3 burn.",
+            type = "building",
+            types = {"turret", "building", "lobber", "shotgun"},
+            iconCategory = "turret",
+            cost = 1,
+            building = require("Buildings.Turrets.Turret"),
+            -- Cinders land within CinderBullet.SCATTER of the aim point and last 6s
+            rotation = 0, fireRate = 0.3, range = 380,
+            firingArc = {direction = 0, minRange = 150, angle = math.pi/4},
+            pelletCount = 5, spread = math.rad(10),
+            bulletSpeed = 200, damageType = "fire", damage = 6,
+            pierce = 1, lifespan = 2, bulletId = "cinder"
+        },
+        {
+            id = "thermiteLauncher",
+            name = "Thermite Launcher",
+            description = "Sticks thermite to enemies. Each charge applies 3 burn every second for 5 seconds, and charges stack.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 2,
+            building = require("Buildings.Turrets.Turret"),
+            -- 15 burn per charge; one every 4s keeps ~1.25 charges on a target
+            rotation = 0, fireRate = 0.25, range = 320,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
+            bulletSpeed = 400, damageType = "fire", damage = 15,
+            pierce = 1, lifespan = 1.0, bulletId = "thermiteCharge",
+            hitEffects = { Thermite.onHit() }
+        },
     },
     epic = {
         {
@@ -367,6 +450,21 @@ local RewardIndex = {
             pierce = 1, lifespan = 2, explosionDamage = 90, explosion_from_damage = 1.0, radius = 80, bulletId = "mortarShell",
             hitEffects = { ExplosionEffect:new({ name = "Mortar Explosion" }) }
         },
+        {
+            id = "infernoTower",
+            name = "Inferno Tower",
+            description = "Locks a fire beam onto one enemy. Its damage ramps up to 5x over 5 seconds on the same target. Doesn't apply burn.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 2,
+            building = require("Buildings.Turrets.InfernoTower"),
+            -- 4 ticks per second x 3 damage = 12 DPS, ramping to 60 (see InfernoTower)
+            rotation = 0, fireRate = 4, range = 300,
+            firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
+            bulletSpeed = 0, damageType = "fire", damage = 3,
+            pierce = 1, lifespan = 0
+        },
     },
     legendary = {
         {
@@ -384,6 +482,21 @@ local RewardIndex = {
             bulletSpeed = 600, damageType = "energy", damage = 27,
             pierce = 1, lifespan = 5, bouncesLeft = 5, bulletId = "chainLaserBolt",
             hitEffects = { BounceEffect:new({ name = "Chain Bounce" }) }
+        },
+        {
+            id = "meteor",
+            name = "PROJECT STARFALL",
+            description = "Calls meteors down on its target, dealing fire damage in an area. The burning crater left behind applies burn to enemies inside it.",
+            type = "building",
+            types = {"turret", "building"},
+            iconCategory = "turret",
+            cost = 3,
+            building = require("Buildings.Turrets.MeteorTurret"),
+            -- One meteor every 5s; the crater gives 2 burn every 0.5s for 4s
+            rotation = 0, fireRate = 0.2, range = 480,
+            firingArc = {direction = 0, minRange = 150, angle = math.pi/3},
+            bulletSpeed = 0, damageType = "fire", damage = 50, radius = 70,
+            pierce = 1, lifespan = 0
         }
     }
 }
