@@ -582,7 +582,7 @@ local function runFor(g, seconds)
     end
 end
 
--- Blizzard: 0.5 chill/s with no cap, a 20% slow on top, 5 ice DPS
+-- Blizzard: 0.8 chill/s with no cap, a 20% slow on top, 5 ice DPS
 do
     local g = spellGame()
     local inside, outside = enemyAt(g, 0, 100), enemyAt(g, 300, 100)
@@ -591,16 +591,16 @@ do
     local walkerSpeed = walker:getStat("speed")
     SpellCardRegistry.Blizzard:execute(0, 100, g)
     runFor(g, 0.5)
-    -- Two 0.2s ticks so far: 0.2 chill applied (ticks outpace the decay delay, so no decay)
-    assert(Chill.getStacks(inside) > 0.15 and Chill.getStacks(inside) <= 0.26, "Blizzard chills at ~0.5/s")
+    -- Two 0.2s ticks so far: 0.32 chill applied (ticks outpace the decay delay, so no decay)
+    assert(Chill.getStacks(inside) > 0.25 and Chill.getStacks(inside) <= 0.35, "Blizzard chills at ~0.8/s")
     local stacks = Chill.getStacks(walker)
     assert(near(walker:getStat("speed"), walkerSpeed * 0.9 ^ stacks * 0.8),
         "Blizzard slows by 20% on top of its chill")
     assert(Chill.getStacks(outside) == 0 and outside.effectManager:getEffect("blizzard_slow") == nil,
         "Blizzard only affects enemies inside")
     runFor(g, 4.5)
-    -- ~2.5 stacks over the full 5s: not enough to freeze on its own
-    assert(Chill.getStacks(inside) > 2.3 and not Chill.isImmune(inside), "Blizzard alone doesn't freeze in one cast")
+    -- ~4 stacks over the full 5s: not enough to freeze on its own
+    assert(Chill.getStacks(inside) > 3.8 and not Chill.isImmune(inside), "Blizzard alone doesn't freeze in one cast")
     local lost = inside.maxHp - inside.hp
     assert(lost > 23 and lost < 27, string.format("Blizzard deals ~5 DPS (lost %.1f over 5s)", lost))
     runFor(g, 0.5)
