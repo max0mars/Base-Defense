@@ -6,6 +6,7 @@
 local RewardPool = require("Game.Rewards.RewardPool")
 local RewardIndex = require("Game.Rewards.RewardIndex")
 local CardFactory = require("Game.Cards.CardFactory")
+local CardIcons = require("Game.Cards.CardIcons")
 local Cursor = require("Game.GUI.Cursor")
 
 local Merchant = {}
@@ -114,6 +115,7 @@ function Merchant.draw(scene, visit, area, mx, my)
 
     local rects = cardRects(area, #stock)
     local cash = _G.PersistentState.cash or 0
+    local hoveredIcon, iconX, iconY
     for i, item in ipairs(stock) do
         local r = rects[i]
         if item.purchased then
@@ -128,10 +130,20 @@ function Merchant.draw(scene, visit, area, mx, my)
                 Cursor.setIcon("buyCard")
             end
             local cardDraw = item.card.getCardDraw and item.card:getCardDraw()
-            if cardDraw then cardDraw:draw(r.x, r.y, r.w, r.h, hovered) end
+            if cardDraw then
+                cardDraw:draw(r.x, r.y, r.w, r.h, hovered)
+                if hovered then
+                    hoveredIcon, iconX, iconY = cardDraw:iconAt(mx, my, r.x, r.y, r.w, r.h)
+                end
+            end
             love.graphics.setColor(cash >= item.cost and {0.2, 0.8, 0.2, 1} or {0.8, 0.2, 0.2, 1})
             love.graphics.printf("$" .. item.cost, r.x, r.y + r.h + 8, r.w, "center")
         end
+    end
+
+    -- Hovering a synergy icon explains it (drawn last so it sits over neighbouring cards)
+    if hoveredIcon then
+        CardIcons.drawTooltip(hoveredIcon, iconX, iconY)
     end
 
     -- Invest

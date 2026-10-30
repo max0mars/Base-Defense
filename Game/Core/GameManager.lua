@@ -32,6 +32,7 @@ local DevMode            = require("Game.Dev.DevMode")
 local GUIManager         = require("Game.GUI.GUIManager")
 local Layout             = require("Game.GUI.Layout")
 local Cursor             = require("Game.GUI.Cursor")
+local CardIcons          = require("Game.Cards.CardIcons")
 local ArcOverlay         = require("Game.GUI.ArcOverlay")
 local DamageStats        = require("Game.Core.DamageStats")
 local EnemyRegistry      = require("Game.Spawning.EnemyRegistry")
@@ -577,11 +578,15 @@ function game:draw()
         love.graphics.printf("Reroll starting hand", 0, layout.cards[1].y - 40, Layout.W, "center")
         
         -- 3. Draw starting cards & their circular arrow buttons
+        local hoveredIcon, iconX, iconY
         for i, card in ipairs(self.hand) do
             local c = layout.cards[i]
             local cardDrawObj = card:getCardDraw()
             local isCardHovered = mx >= c.x and mx <= c.x + layout.cardW and my >= c.y and my <= c.y + layout.cardH
             cardDrawObj:draw(c.x, c.y, layout.cardW, layout.cardH, isCardHovered)
+            if isCardHovered then
+                hoveredIcon, iconX, iconY = cardDrawObj:iconAt(mx, my, c.x, c.y, layout.cardW, layout.cardH)
+            end
             
             if not (self.mulliganLockedSlots and self.mulliganLockedSlots[i]) then
                 local dist2 = (mx - c.arrowX)^2 + (my - c.arrowY)^2
@@ -601,6 +606,11 @@ function game:draw()
                 love.graphics.setColor(1, 1, 1, 1)
                 drawCircularArrow(c.arrowX, c.arrowY, 10)
             end
+        end
+
+        -- Hovering a synergy icon explains it (drawn last so it sits over neighbouring cards)
+        if hoveredIcon then
+            CardIcons.drawTooltip(hoveredIcon, iconX, iconY)
         end
         
         -- 4. Draw Skip / Start Battle Button
