@@ -35,4 +35,22 @@ function ShardBullets:new(config)
     return obj
 end
 
+-- Sprite: a round that forks, then forks again
+function ShardBullets:drawShape(cx, cy, s)
+    local forkX, tipX = cx + s * 0.2, cx + s * 0.95
+    love.graphics.line(cx - s, cy, cx - s * 0.45, cy)
+    love.graphics.line(cx - s * 0.45, cy, forkX, cy - s * 0.5, tipX, cy - s * 0.85)
+    love.graphics.line(forkX, cy - s * 0.5, tipX, cy - s * 0.2)
+    love.graphics.line(cx - s * 0.45, cy, forkX, cy + s * 0.5, tipX, cy + s * 0.85)
+    love.graphics.line(forkX, cy + s * 0.5, tipX, cy + s * 0.2)
+end
+
+function ShardBullets:drawDetail(cx, cy, s, pulse)
+    love.graphics.circle("fill", cx - s * 0.45, cy, 2)
+    love.graphics.setColor(1, 1, 1, 0.6 + pulse * 0.4)
+    for _, y in ipairs({ -0.85, -0.2, 0.2, 0.85 }) do
+        love.graphics.circle("fill", cx + s * 0.95, cy + y * s, 1.1)
+    end
+end
+
 return ShardBullets

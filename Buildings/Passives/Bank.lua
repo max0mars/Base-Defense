@@ -103,4 +103,17 @@ function Bank:draw(drawx, drawy)
     self.disableGlow = originalDisableGlow
 end
 
+-- Sprite: a columned bank front
+function Bank:drawShape(cx, cy, s)
+    love.graphics.polygon("line", cx - s, cy - s * 0.45, cx, cy - s, cx + s, cy - s * 0.45)
+    love.graphics.rectangle("line", cx - s, cy + s * 0.75, s * 2, s * 0.25)
+end
+
+function Bank:drawDetail(cx, cy, s)
+    for _, x in ipairs({ -0.65, 0, 0.65 }) do
+        love.graphics.line(cx + x * s, cy - s * 0.3, cx + x * s, cy + s * 0.65)
+    end
+    love.graphics.circle("fill", cx, cy - s * 0.65, 1.3)
+end
+
 return Bank

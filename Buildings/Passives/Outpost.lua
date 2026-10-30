@@ -76,4 +76,23 @@ function Outpost:getTooltipStrings()
     }
 end
 
+-- Sprite: a flag planted on a mound, with corner brackets for the slots it opens
+function Outpost:drawShape(cx, cy, s)
+    local poleX = cx - s * 0.4
+    local wave = math.sin(love.timer.getTime() * 3) * s * 0.12
+    love.graphics.line(poleX, cy + s * 0.74, poleX, cy - s)
+    love.graphics.polygon("line", poleX, cy - s, cx + s * 0.85, cy - s * 0.65 + wave, poleX, cy - s * 0.25)
+    love.graphics.arc("line", "open", cx, cy + s * 1.6, s * 0.95, math.pi * 1.2, math.pi * 1.8)
+end
+
+function Outpost:drawDetail(cx, cy, s)
+    local k = s * 0.3
+    for _, sx in ipairs({ -1, 1 }) do
+        for _, sy in ipairs({ -1, 1 }) do
+            local x, y = cx + sx * s, cy + sy * s
+            love.graphics.line(x - sx * k, y, x, y, x, y - sy * k)
+        end
+    end
+end
+
 return Outpost

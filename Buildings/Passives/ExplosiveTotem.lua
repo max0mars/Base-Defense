@@ -41,4 +41,30 @@ function ExplosiveTotem:new(config)
     return obj
 end
 
+-- Sprite: a bomb with a sparking fuse
+function ExplosiveTotem:drawShape(cx, cy, s)
+    local bx, by, br = cx - s * 0.15, cy + s * 0.25, s * 0.7
+    love.graphics.circle("line", bx, by, br)
+    -- Fuse cap
+    love.graphics.polygon("line",
+        bx + br * 0.45, by - br * 0.95, bx + br * 0.95, by - br * 0.45,
+        bx + br * 1.15, by - br * 0.65, bx + br * 0.65, by - br * 1.15)
+end
+
+function ExplosiveTotem:drawDetail(cx, cy, s)
+    local bx, by, br = cx - s * 0.15, cy + s * 0.25, s * 0.7
+    local fx, fy = bx + br * 0.9, by - br * 0.9
+    local tx, ty = cx + s * 0.85, cy - s * 0.85
+    love.graphics.line(fx, fy, fx + s * 0.05, ty + s * 0.15, tx, ty)
+    -- Highlight
+    love.graphics.arc("line", "open", bx, by, br * 0.6, math.pi * 1.05, math.pi * 1.45)
+    -- Spark
+    local k = s * (0.2 + 0.1 * math.abs(math.sin(love.timer.getTime() * 19)))
+    love.graphics.setColor(1, 0.85, 0.3, 1)
+    love.graphics.line(tx - k, ty, tx + k, ty)
+    love.graphics.line(tx, ty - k, tx, ty + k)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.circle("fill", tx, ty, 1)
+end
+
 return ExplosiveTotem

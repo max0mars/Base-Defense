@@ -36,40 +36,30 @@ function ToxicTotem:new(config)
     return obj
 end
 
-function ToxicTotem:draw()
-    local cx, cy = self:getCenterPosition()
+-- Sprite: a bubbling flask
+function ToxicTotem:drawShape(cx, cy, s)
+    love.graphics.polygon("line",
+        cx - s * 0.25, cy - s * 0.85, cx - s * 0.25, cy - s * 0.3, cx - s * 0.9, cy + s,
+        cx + s * 0.9, cy + s, cx + s * 0.25, cy - s * 0.3, cx + s * 0.25, cy - s * 0.85)
+    love.graphics.line(cx - s * 0.45, cy - s * 0.85, cx + s * 0.45, cy - s * 0.85)
+end
+
+function ToxicTotem:drawDetail(cx, cy, s, pulse)
     local r, g, b = unpack(self.color)
-    
-    -- Layered Geometric Design (Neon Purple Support Structure)
-    local size = self.buildGrid.cellSize * 0.4
-    
-    -- 1. Base Glow
-    love.graphics.setColor(r, g, b, 0.2)
-    love.graphics.rectangle("fill", cx - size, cy - size, size * 2, size * 2, 4, 4)
-    
-    -- 2. Inner Pulsing Core
-    local pulse = (math.sin(love.timer.getTime() * 5) + 1) / 2
-    love.graphics.setColor(r, g, b, 0.4 + 0.4 * pulse)
-    love.graphics.circle("fill", cx, cy, size * 0.6)
-    
-    -- 3. Outer Frame (Diamond)
+    -- Liquid
+    love.graphics.setColor(r, g, b, 0.35 + 0.2 * pulse)
+    love.graphics.polygon("fill",
+        cx - s * 0.62, cy + s * 0.45, cx + s * 0.62, cy + s * 0.45,
+        cx + s * 0.85, cy + s * 0.93, cx - s * 0.85, cy + s * 0.93)
+    -- Bubbles rising up the neck
+    local t = love.timer.getTime()
     love.graphics.setColor(r, g, b, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.polygon("line", 
-        cx, cy - size,
-        cx + size, cy,
-        cx, cy + size,
-        cx - size, cy
-    )
-    
-    -- 4. Connecting "Wires" to corners
-    love.graphics.setColor(r, g, b, 0.6)
-    love.graphics.setLineWidth(1)
-    love.graphics.line(cx - size, cy - size, cx + size, cy + size)
-    love.graphics.line(cx + size, cy - size, cx - size, cy + size)
-    
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(1, 1, 1, 1)
+    for i = 0, 2 do
+        local phase = (t * 0.7 + i / 3) % 1
+        local by = cy + s * 0.6 - phase * s * 1.7
+        local bx = cx + math.sin(phase * 9 + i * 2) * s * 0.12
+        love.graphics.circle("line", bx, by, 0.8 + (1 - phase) * 0.9)
+    end
 end
 
 return ToxicTotem

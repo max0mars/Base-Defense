@@ -91,4 +91,25 @@ function IndustrialBattery:draw(drawx, drawy)
     self.disableGlow = originalDisableGlow
 end
 
+-- Sprite: a battery whose cells charge up while it's active
+function IndustrialBattery:drawShape(cx, cy, s)
+    love.graphics.rectangle("line", cx - s, cy - s * 0.55, s * 1.75, s * 1.1, 1, 1)
+    love.graphics.rectangle("line", cx + s * 0.75, cy - s * 0.25, s * 0.25, s * 0.5)
+end
+
+function IndustrialBattery:drawDetail(cx, cy, s)
+    local cells = 3
+    local lit = 0
+    if not self.disableGlow then
+        lit = math.floor(love.timer.getTime() * 2) % (cells + 1)
+        if lit == 0 then lit = cells end
+    end
+    local gap = s * 0.12
+    local w = (s * 1.75 - gap * (cells + 1)) / cells
+    for i = 1, cells do
+        local x = cx - s + gap + (i - 1) * (w + gap)
+        love.graphics.rectangle(i <= lit and "fill" or "line", x, cy - s * 0.38, w, s * 0.76)
+    end
+end
+
 return IndustrialBattery

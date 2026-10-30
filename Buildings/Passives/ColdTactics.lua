@@ -34,4 +34,22 @@ function ColdTactics:new(config)
     return obj
 end
 
+-- Sprite: a targeting reticle over a turning snowflake
+function ColdTactics:drawShape(cx, cy, s)
+    love.graphics.circle("line", cx, cy, s * 0.72)
+    love.graphics.line(cx, cy - s, cx, cy - s * 0.5)
+    love.graphics.line(cx, cy + s, cx, cy + s * 0.5)
+    love.graphics.line(cx - s, cy, cx - s * 0.5, cy)
+    love.graphics.line(cx + s, cy, cx + s * 0.5, cy)
+end
+
+function ColdTactics:drawDetail(cx, cy, s)
+    local fr = s * 0.38
+    local turn = love.timer.getTime() * 0.6
+    for i = 0, 2 do
+        local a = turn + i * math.pi / 3
+        love.graphics.line(cx + math.cos(a) * fr, cy + math.sin(a) * fr, cx - math.cos(a) * fr, cy - math.sin(a) * fr)
+    end
+end
+
 return ColdTactics

@@ -103,60 +103,62 @@ function Buff:draw(drawx, drawy)
     end
 
     -- 2. Styling Parameters
-    local padding = cellSize * 0.15
-    local w = totalW - padding * 2
-    local h = totalH - padding * 2
-    
+    -- s is the sprite's half-size; sprites are drawn centred on (cx, cy)
+    local padding = cellSize * 0.12
+    local s = (math.min(totalW, totalH) - padding * 2) / 2
+
     local r, g, b = unpack(self.color or {1, 1, 1})
-    local time = love.timer.getTime()
     local pulse = 0
     if not self.disableGlow then
-        pulse = (math.sin(time * 4) + 1) / 2 -- 0 to 1 pulsing
+        pulse = (math.sin(love.timer.getTime() * 4) + 1) / 2 -- 0 to 1 pulsing
     end
-    
-    -- 3. Neon Glow Effect
-    -- Draw multiple layers of the geometric shape with decreasing thickness and increasing opacity
-    for i = 4, 1, -1 do
-        local alpha = (0.05 + (1 - i/5) * 0.3) * (0.6 + pulse * 0.4)
-        local glowWidth = i * 2 + pulse * 3
-        love.graphics.setLineWidth(glowWidth)
-        love.graphics.setColor(r, g, b, alpha)
-        
-        -- Geometric Shape: Diamond wireframe
-        love.graphics.polygon("line", 
-            cx, cy - h/2, -- Top
-            cx + w/2, cy, -- Right
-            cx, cy + h/2, -- Bottom
-            cx - w/2, cy  -- Left
-        )
+
+    love.graphics.push("all")
+    love.graphics.setLineJoin("bevel")
+
+    -- 3. Neon Glow: the sprite outline redrawn in wide, faint strokes
+    for i = 3, 1, -1 do
+        love.graphics.setColor(r, g, b, (0.08 + (3 - i) * 0.08) * (0.6 + pulse * 0.4))
+        love.graphics.setLineWidth(i * 2 + pulse * 1.5)
+        self:drawShape(cx, cy, s, pulse)
     end
-    
+
     -- 4. Bright Core Line
-    love.graphics.setLineWidth(2)
+    love.graphics.setLineWidth(1.5)
     love.graphics.setColor(math.min(r * 1.5, 1), math.min(g * 1.5, 1), math.min(b * 1.5, 1), 1)
-    love.graphics.polygon("line", 
-        cx, cy - h/2,
-        cx + w/2, cy,
-        cx, cy + h/2,
-        cx - w/2, cy
-    )
-    
-    -- 5. Inner Detail: Pulse-synced Core Node
-    love.graphics.setColor(r, g, b, 0.8 + pulse * 0.2)
-    love.graphics.circle("fill", cx, cy, 3 + pulse * 2)
-    
-    -- Inner diamond detail
-    local sw, sh = w * 0.4, h * 0.4
-    love.graphics.polygon("line", 
-        cx, cy - sh/2,
-        cx + sw/2, cy,
-        cx, cy + sh/2,
-        cx - sw/2, cy
-    )
-    
-    -- Reset drawing state
+    self:drawShape(cx, cy, s, pulse)
+
+    -- 5. Unglowed details (fills, small animated parts)
     love.graphics.setLineWidth(1)
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(r, g, b, 1)
+    self:drawDetail(cx, cy, s, pulse)
+
+    love.graphics.pop()
+end
+
+-- Sprites: drawShape draws the outline (lines only; it's redrawn for the glow) and
+-- drawDetail draws everything else once, in the building's colour. Both are
+-- centred on (cx, cy) within a box of half-size s. Override them per passive.
+
+-- Default sprite (Ammo Cache): an ammo crate with three rounds standing in it
+function Buff:drawShape(cx, cy, s)
+    love.graphics.rectangle("line", cx - s, cy - s * 0.05, s * 2, s * 1.05, 1, 1)
+    local hw = s * 0.2
+    for _, x in ipairs({ cx - s * 0.55, cx, cx + s * 0.55 }) do
+        love.graphics.polygon("line",
+            x - hw, cy - s * 0.05,
+            x - hw, cy - s * 0.65,
+            x, cy - s,
+            x + hw, cy - s * 0.65,
+            x + hw, cy - s * 0.05)
+    end
+end
+
+function Buff:drawDetail(cx, cy, s, pulse)
+    -- Crate slats
+    love.graphics.line(cx - s, cy + s * 0.5, cx + s, cy + s * 0.5)
+    love.graphics.setColor(1, 1, 1, 0.5 + pulse * 0.5)
+    love.graphics.circle("fill", cx, cy + s * 0.5, 1.2)
 end
 
 function Buff:applyBuffs()

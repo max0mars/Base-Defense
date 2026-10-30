@@ -51,4 +51,22 @@ function Conduit:onWaveComplete()
     end
 end
 
+-- Sprite: a mana crystal on a pedestal with a mote orbiting it
+function Conduit:drawShape(cx, cy, s)
+    love.graphics.polygon("line", cx, cy - s, cx + s * 0.4, cy - s * 0.3, cx, cy + s * 0.5, cx - s * 0.4, cy - s * 0.3)
+    love.graphics.polygon("line", cx - s * 0.75, cy + s, cx - s * 0.45, cy + s * 0.6, cx + s * 0.45, cy + s * 0.6, cx + s * 0.75, cy + s)
+end
+
+function Conduit:drawDetail(cx, cy, s)
+    local r, g, b = unpack(self.color)
+    local oy = cy - s * 0.2
+    local a = love.timer.getTime() * 2.5
+    -- Crystal facet
+    love.graphics.line(cx, cy - s, cx, cy + s * 0.5)
+    love.graphics.setColor(r, g, b, 0.35)
+    love.graphics.ellipse("line", cx, oy, s * 0.85, s * 0.3)
+    love.graphics.setColor(0.8, 0.95, 1, 1)
+    love.graphics.circle("fill", cx + math.cos(a) * s * 0.85, oy + math.sin(a) * s * 0.3, 1.6)
+end
+
 return Conduit
