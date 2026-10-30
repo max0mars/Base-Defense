@@ -223,6 +223,9 @@ function InputHandler:update(dt)
         self.game.base.hoveredLockedSlot = nil
         self.game.base.hoveredEmptySlot = nil
     end
+    if self.game.battlefieldGrid then
+        self.game.battlefieldGrid.hoveredSlot = nil
+    end
 
     -- Raw (full-canvas) cursor, used for screen-space tooltips and HUD checks.
     self.screenMouseX, self.screenMouseY = love.mouse.getPosition()
@@ -537,21 +540,47 @@ function InputHandler:handleBuildingSlotHover()
     end
 end
 
---- Token cost of unlocking the locked base slots a placement would occupy (battlefield slots are free).
+--- Token cost of unlocking the locked slots a placement would occupy.
 function InputHandler:getUnlockCost(slotsToOccupy, buildGrid, isBattlefield)
-    if isBattlefield then return 0 end
+    local pricer = isBattlefield and self.game.battlefieldGrid or self.game.base
     local totalCost = 0
     for _, s in ipairs(slotsToOccupy) do
         if not buildGrid.unlocked[s] then
-            totalCost = totalCost + self.game.base:getSlotPrice(s)
+            totalCost = totalCost + (pricer:getSlotPrice(s) or 0)
         end
     end
     return totalCost
 end
 
+--- The battlefield border slot at world (wx, wy), the cursor by default (nil when not over one).
+function InputHandler:getHoveredBorderSlot(wx, wy)
+    local grid = self.game.battlefieldGrid
+    if not grid then return nil end
+    wx, wy = wx or self.mouseX, wy or self.mouseY
+    local gridX = math.floor((wx - grid.x) / grid.cellSize) + 1
+    local gridY = math.floor((wy - grid.y) / grid.cellSize) + 1
+    if gridX < 1 or gridX > grid.width or gridY < 1 or gridY > grid.height then return nil end
+    local slot = (gridY - 1) * grid.width + gridX
+    if grid:isBuildSlot(slot) then return slot end
+end
+
 function InputHandler:handleLockedSlotHover()
     local base = self.game.base
     local buildGrid = base.buildGrid
+
+    -- Battlefield border slots
+    local bfGrid = self.game.battlefieldGrid
+    local borderSlot = self:getHoveredBorderSlot()
+    if borderSlot then
+        bfGrid.hoveredSlot = borderSlot
+        if not bfGrid.unlocked[borderSlot] and not bfGrid:isSlotTaken(borderSlot) then
+            local cost = bfGrid:getSlotPrice(borderSlot)
+            local unit = (cost == 1) and " Token)" or " Tokens)"
+            base.hoverTooltip = {x = self.screenMouseX + 15, y = self.screenMouseY + 15, text = "Unlock slot? (" .. cost .. unit, cost = cost}
+            base.hoveredLockedSlot = {slot = borderSlot, price = cost, battlefield = true}
+        end
+        return
+    end
     
     local gridX = math.floor(self.mouseX / buildGrid.cellSize) + 1
     local gridY = math.floor((self.mouseY - buildGrid.y) / buildGrid.cellSize) + 1
@@ -850,6 +879,20 @@ function InputHandler:mousepressed(x, y, button)
     
     -- Handle single slot unlocking
     if (game.inputMode == "idle" or game:isState("preparing")) and button == 1 then
+        -- Battlefield border slots
+        local bfGrid = game.battlefieldGrid
+        local borderSlot = self:getHoveredBorderSlot(x, y)
+        if borderSlot and not bfGrid.unlocked[borderSlot] and not bfGrid:isSlotTaken(borderSlot) then
+            local cost = bfGrid:getSlotPrice(borderSlot)
+            if game.tokens >= cost then
+                game.tokens = game.tokens - cost
+                bfGrid.unlocked[borderSlot] = true
+            else
+                print("Not enough tokens to unlock slot!")
+            end
+            return -- Stop propagation so we don't select a building or shoot
+        end
+
         local buildGrid = base.buildGrid
         local gridX = math.floor(x / buildGrid.cellSize) + 1
         local gridY = math.floor((y - buildGrid.y) / buildGrid.cellSize) + 1

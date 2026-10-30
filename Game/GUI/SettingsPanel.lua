@@ -178,7 +178,9 @@ function SettingsPanel:mousepressed(x, y, button)
             elseif btn.action == "windowed" then
                 if love.window.getFullscreen() then scalify:switchFullscreen() end
             elseif btn.action == "resolution" then
-                scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, btn.data.width, btn.data.height, {resizable = true, highdpi = true})
+                -- Same settings as at startup (main.lua): scalify defaults to a fixed-size
+                -- render canvas, which would clip scenes taller than the current one
+                scalify:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, btn.data.width, btn.data.height, {resizable = true, highdpi = true, canvas = false})
             elseif btn.action == "glow" then
                 Glow.enabled = not Glow.enabled
             else

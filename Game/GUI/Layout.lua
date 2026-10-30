@@ -1,7 +1,9 @@
 -- Layout.lua: single source of truth for the 16:9 screen layout.
 --
--- The virtual canvas is 1280x720. The battlefield keeps its original world
--- coordinate system (grid anchored at world x=0, y=100, sized 800x400) but is
+-- The battle's virtual canvas is 1280x782 (other scenes stay 1280x720; see
+-- game_scene.virtualHeight): 62px taller so the 18-row field fits at full
+-- scale. The battlefield keeps its original world coordinate system (grid
+-- anchored at world x=0, y=100, sized 800x450) but is
 -- drawn into a viewport that is SCALED UP to fill the space, so the play area
 -- reads large without changing any game logic.
 --
@@ -24,15 +26,15 @@
 
 local Layout = {}
 
--- Canvas (virtual) size.
+-- Canvas (virtual) size during a battle.
 Layout.W = 1280
-Layout.H = 720
+Layout.H = 782
 
 -- The battlefield's existing world coordinate bounds (unchanged game logic).
 Layout.WORLD_X = 0
 Layout.WORLD_Y = 100
 Layout.FIELD_W = 800
-Layout.FIELD_H = 400
+Layout.FIELD_H = 450
 
 -- HUD region sizes. A single full-height left command column holds ALL the HUD
 -- (stats + controls + horde + preview); there is no top bar. The battlefield

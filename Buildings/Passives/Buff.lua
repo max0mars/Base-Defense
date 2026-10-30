@@ -163,7 +163,6 @@ function Buff:applyBuffs()
     -- Apply this buff to all turrets in affected slots using the EffectManager
     if not self.slot or self.destroyed then return end
     
-    local base = self.game.base
     local targets = {}
     
     if self.isGlobal then
@@ -173,7 +172,7 @@ function Buff:applyBuffs()
     else
         local affectedSlots = self:getAffectedSlotsFromAnchor(self.slot)
         for _, slot in ipairs(affectedSlots) do
-            local target = base.buildGrid.buildings[slot]
+            local target = self.buildGrid.buildings[slot]
             if target then
                 -- If the effect specifies targetTypes, only include matching targets
                 if self.effect and self.effect.targetTypes then

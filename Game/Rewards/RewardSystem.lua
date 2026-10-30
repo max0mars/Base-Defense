@@ -30,12 +30,14 @@ function RewardSystem:new(game)
     system.cardHeight = 280
     system.cardSpacing = 24
     system.startX = 100
-    system.startY = 220       -- centered nicely for the 720-tall canvas
+    -- Centred on the battle canvas (laid out for 720 tall, shifted down to match)
+    local centreShift = (require("Game.GUI.Layout").H - 720) / 2
+    system.startY = 220 + centreShift
 
     system.skipBtnW = 160
     system.skipBtnH = 40
     system.skipBtnX = VIRTUAL_WIDTH / 2 - system.skipBtnW / 2
-    system.skipBtnY = 535
+    system.skipBtnY = 535 + centreShift
     
     -- Initialize the reward pool
     system:initializeRewardPool()

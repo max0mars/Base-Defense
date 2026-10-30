@@ -276,7 +276,7 @@ local EnemyIndex = {
         size = 28,
         types = { enemy = true, yellow = true, phantom = true },
         baseSpawnDelay = 0.8,
-        description = "A fast, elusive arrow that blinks away when hit, vanishing for a moment and reappearing further up or down the field. It can't be targeted while it's gone, and needs a short rest before it can blink again.",
+        description = "A fast, elusive arrow that blinks away when hit, vanishing for a moment and reappearing in another lane. It's the only enemy that can cross between lanes. It can't be targeted while it's gone, and needs a short rest before it can blink again.",
     },
     {
         id = "Vanguard",

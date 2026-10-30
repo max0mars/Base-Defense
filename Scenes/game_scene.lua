@@ -13,6 +13,9 @@ local DevMode = require("Game.Dev.DevMode")
 local Layout = require("Game.GUI.Layout")
 local ArtifactReveal = require("Graphics.Animations.ArtifactReveal")
 
+-- The battle runs on a taller canvas than the other scenes, to fit the 18-row field
+game_scene.virtualHeight = Layout.H
+
 function game_scene:load()
     local isTesting = game.testingMode
     game:load(nil, isTesting)

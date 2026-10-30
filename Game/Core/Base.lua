@@ -2,14 +2,14 @@ local Base = {
 }
 local living_object = require("Classes.living_object") -- Import the living_object module
 local DevMode = require("Game.Dev.DevMode")
-local LockIcon = require("Graphics.LockIcon")
+local SlotVisuals = require("Game.GUI.SlotVisuals")
 setmetatable(Base, { __index = living_object }) -- Inherit from the object class
 
 local default = {
     x = 50,
-    y = 300,
+    y = 325,
     w = 100,
-    h = 400,
+    h = 450,
     shape = "rectangle",
     color = {love.math.colorFromBytes(69, 69, 69)},
     hitbox = {shape = "rectangle"},
@@ -20,7 +20,7 @@ local default = {
     buildGrid = {
         cellSize = 25,
         width = 4,
-        height = 16,
+        height = 18,
         buildings = {}
     },
     selectedSlot = nil,
@@ -153,60 +153,15 @@ function Base:draw(gridOnly)
             -- Fog of War: Only draw if visible
             if self:isSlotVisible(slot) then
                 if not self.buildGrid.buildings[slot] then
+                    local cs = self.buildGrid.cellSize
+                    local sx = self.buildGrid.x + (i - 1) * cs
+                    local sy = self.buildGrid.y + (j - 1) * cs
                     if not self.buildGrid.unlocked[slot] then
-                        love.graphics.setColor(0.1, 0.1, 0.1)
-                        love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
-                        
-                        -- Color logic: Green if affordable, Red if locked and expensive.
-                        -- While placing a card, it has to cover the unlock and the card.
-                        local price = self:getSlotPrice(slot)
-                        if self:canAffordUnlock(price) then
-                            love.graphics.setColor(0, 0.5, 0) -- faint green
-                        else
-                            if self.game.inputMode == "placing" then
-                                -- Can't place here: tint the whole slot red
-                                love.graphics.setColor(0.9, 0.2, 0.2, 0.28)
-                                love.graphics.rectangle("fill", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
-                                love.graphics.setColor(1, 0.3, 0.3) -- red
-                            else
-                                love.graphics.setColor(0.5, 0, 0) -- faint red
-                            end
-                        end
-                        
-                        -- Padlock in the center of locked but visible slots
-                        LockIcon.draw(self.buildGrid.x + (i - 0.5) * self.buildGrid.cellSize,
-                            self.buildGrid.y + (j - 0.5) * self.buildGrid.cellSize)
-
-                        -- Hover highlight for the locked (token) slot under the cursor.
-                        if self.hoveredLockedSlot and self.hoveredLockedSlot.slot == slot then
-                            local sx = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
-                            local sy = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
-                            local cs = self.buildGrid.cellSize
-                            local affordable = self.game.tokens >= (self.hoveredLockedSlot.price or 0)
-                            if affordable then love.graphics.setColor(0.2, 0.9, 0.4, 0.20)
-                            else love.graphics.setColor(0.9, 0.3, 0.3, 0.20) end
-                            love.graphics.rectangle("fill", sx, sy, cs, cs)
-                            if affordable then love.graphics.setColor(0.3, 1.0, 0.5, 0.95)
-                            else love.graphics.setColor(1.0, 0.4, 0.4, 0.95) end
-                            love.graphics.setLineWidth(2)
-                            love.graphics.rectangle("line", sx + 1, sy + 1, cs - 2, cs - 2)
-                            love.graphics.setLineWidth(1)
-                        end
+                        local hovered = self.hoveredLockedSlot and not self.hoveredLockedSlot.battlefield
+                            and self.hoveredLockedSlot.slot == slot
+                        SlotVisuals.drawLocked(self.game, sx, sy, cs, self:getSlotPrice(slot), hovered)
                     else
-                        love.graphics.setColor(0.5, 0.5, 0.5, 0.5) -- Gray color for empty slots
-
-                        -- Hover highlight for an empty (unlocked) slot under the cursor.
-                        if self.hoveredEmptySlot == slot then
-                            local sx = self.buildGrid.x + (i - 1) * self.buildGrid.cellSize
-                            local sy = self.buildGrid.y + (j - 1) * self.buildGrid.cellSize
-                            local cs = self.buildGrid.cellSize
-                            love.graphics.setColor(0.4, 0.7, 1.0, 0.16)
-                            love.graphics.rectangle("fill", sx, sy, cs, cs)
-                            love.graphics.setColor(0.5, 0.8, 1.0, 0.9)
-                            love.graphics.setLineWidth(2)
-                            love.graphics.rectangle("line", sx + 1, sy + 1, cs - 2, cs - 2)
-                            love.graphics.setLineWidth(1)
-                        end
+                        SlotVisuals.drawEmpty(self.game, sx, sy, cs, self.hoveredEmptySlot == slot)
                     end
 
                     -- Check if this slot should be highlighted
@@ -226,7 +181,7 @@ function Base:draw(gridOnly)
                         self.drawlast = {slot, i, j}
                     end
                     
-                    love.graphics.rectangle("line", self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize, self.buildGrid.cellSize, self.buildGrid.cellSize)
+                    SlotVisuals.drawFrame(self.game, sx, sy, cs, (not self.buildGrid.unlocked[slot]) and self:getSlotPrice(slot) or nil)
                     --love.graphics.print(slot, self.buildGrid.x + (i - 1) * self.buildGrid.cellSize, self.buildGrid.y + (j - 1) * self.buildGrid.cellSize)
                 end
             end
@@ -480,13 +435,9 @@ function Base:getBuildingAtSlot(slot)
     return self.buildGrid.buildings[slot]
 end
 
---- Whether the player can pay `price` to unlock a slot: while placing a card
---- (whose cost is paid too) that's unlock + card, otherwise just the unlock.
+--- Whether the player can pay `price` to unlock a slot (see SlotVisuals.canAffordUnlock).
 function Base:canAffordUnlock(price)
-    if self.game.inputMode == "placing" then
-        return self.game:canAffordPlacement(price)
-    end
-    return self.game.tokens >= price
+    return SlotVisuals.canAffordUnlock(self.game, price)
 end
 
 function Base:getSlotPrice(slot)

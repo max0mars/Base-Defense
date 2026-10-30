@@ -52,7 +52,7 @@ function Bank:getTokenBonus()
 
     local allTurrets = true
     for _, slot in ipairs(neighbourSlots) do
-        local b = self.game.base.buildGrid.buildings[slot]
+        local b = self.buildGrid.buildings[slot]
         if not b or b.destroyed then
             return 0
         end

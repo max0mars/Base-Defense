@@ -104,7 +104,7 @@ local ground = {
     x = 0,
     y = 100,
     w = 800,
-    h = 400,
+    h = 450,
     color = {love.math.colorFromBytes(0, 0, 0)}
 }
 function ground:draw()
@@ -670,6 +670,10 @@ function game:draw()
         -- rather than the battlefield crosshair.
         local overBase = self:isMouseOverBase(mx, my)
         if overBase and self.base and self.base.hoveredLockedSlot then
+            Cursor.wantHand = true
+        end
+        -- Locked battlefield border slots can be clicked to unlock
+        if self.base and self.base.hoveredLockedSlot and self.base.hoveredLockedSlot.battlefield then
             Cursor.wantHand = true
         end
         local cursor = self:pickCursor(mx, my, menuActive, overBase)

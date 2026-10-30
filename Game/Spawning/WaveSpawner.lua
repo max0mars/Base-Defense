@@ -196,30 +196,23 @@ end
 
 --- Spawns one enemy at the right edge of the battlefield, with active mutations
 --- applied and the enemy marked as seen / discovered.
--- @param sector number|nil 0-2: which third of the rows to spawn in (nil = any row)
+-- @param sector number|nil 0-2: which lane to spawn in (nil = any lane)
 function WaveSpawner:spawnEnemy(enemyClass, sector)
     local grid = self.game.battlefieldGrid
-    -- Exclude outermost rows to prevent edge-creeping spawns
-    local minRow = (grid.height > 2) and 2 or 1
-    local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
+    local LANES = require("Game.Core.BattlefieldGrid").LANES
+    local lane = sector and (sector + 1) or math.random(1, #LANES)
+    local rows = LANES[lane]
 
-    local rowMin, rowMax = minRow, maxRow
-    if sector then
-        local sectorSize = (maxRow - minRow + 1) / 3.0
-        rowMin = minRow + math.floor(sector * sectorSize)
-        rowMax = minRow + math.floor((sector + 1) * sectorSize) - 1
-        if rowMin > rowMax then rowMax = rowMin end
-        if rowMax > maxRow then rowMax = maxRow end
-    end
-
-    local randomRow = math.random(rowMin, rowMax)
+    local randomRow = math.random(rows.first, rows.last)
     local startY = grid.y + (randomRow - 1) * grid.cellSize + grid.cellSize / 2
 
     local enemyInstance = enemyClass:new({
         game = self.game,
         x = 800,
-        y = startY
+        y = startY,
+        lane = lane
     })
+    if enemyInstance.confineToLane then enemyInstance:confineToLane() end
 
     -- Apply Mutation Upgrades
     local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
@@ -284,10 +277,6 @@ end
 function WaveSpawner:draw()
     if (self.game:isState("preparing") or self.game:isState("startup")) and self.activeSectors then
         local grid = self.game.battlefieldGrid
-        local minRow = (grid.height > 2) and 2 or 1
-        local maxRow = (grid.height > 2) and (grid.height - 1) or grid.height
-        local totalRows = maxRow - minRow + 1
-        local sectorSize = totalRows / 3.0
         
         local numLanesToDraw = self.pendingWaveList and #self.pendingWaveList or 1
         
@@ -296,14 +285,7 @@ function WaveSpawner:draw()
         love.graphics.setColor(1, 0, 0, 0.5 + 0.5 * pulse)
         
         for i = 1, numLanesToDraw do
-            local sector = self.activeSectors[i]
-            local sectorMinRow = minRow + math.floor(sector * sectorSize)
-            local sectorMaxRow = minRow + math.floor((sector + 1) * sectorSize) - 1
-            if sectorMinRow > sectorMaxRow then sectorMaxRow = sectorMinRow end
-            if sectorMaxRow > maxRow then sectorMaxRow = maxRow end
-            
-            local startY = grid.y + (sectorMinRow - 1) * grid.cellSize
-            local endY = grid.y + sectorMaxRow * grid.cellSize
+            local startY, endY = grid:getLaneBounds(self.activeSectors[i] + 1)
             local midY = (startY + endY) / 2
             
             -- Draw an arrow pointing left from the spawn location

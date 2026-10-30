@@ -133,6 +133,7 @@ function BeastMaster:summonBeasts()
             game = self.game,
             x = rx,
             y = ry,
+            lane = self.lane,
             master = self
         })
         
