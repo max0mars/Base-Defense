@@ -1,3 +1,4 @@
+-- Give new passives an `icons` list if they relate to a type or resource. See "Card Icons" in Notes/Cards.md.
 local PassiveIndex = {
     common = {},
     uncommon = {
