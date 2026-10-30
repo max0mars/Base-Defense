@@ -4,9 +4,11 @@
 -- deck and artifacts. The server is the Cloudflare Worker in Server/leaderboard.
 --
 -- A run is registered with the server when it starts (POST /runs) and its
--- result submitted at game over (POST /scores). The server times the run from
--- its own clock and turns down results reached impossibly fast. Developer-mode
--- and testing-mode runs are never registered or submitted.
+-- result submitted at game over (POST /scores). The result also says how long
+-- the run took by the player's clock (from when it started, saved with the
+-- run), so going offline mid-run never makes it look short: the server times
+-- the run by whichever is longer, and turns down results reached impossibly
+-- fast. Developer-mode and testing-mode runs are never registered or submitted.
 --
 -- Requests that can't reach the server wait in an outbox file and are retried,
 -- in order, until they get an answer; a result is only sent once the player
@@ -140,6 +142,7 @@ end
 function Leaderboard.startRun(ps)
     if not Leaderboard.isEligible(ps) then return end
     ps.leaderboardRunId = newId()
+    ps.leaderboardStartedAt = os.time()
     enqueue({ kind = "start", runId = ps.leaderboardRunId, path = "/runs",
         body = { runId = ps.leaderboardRunId, playerId = getProfile().playerId } })
 end
@@ -164,6 +167,8 @@ function Leaderboard.submitRun(ps)
         playerId = getProfile().playerId,
         level = (ps.battlesCompleted or 0) + 1,
         mainTurret = ps.selectedMainTurret,
+        -- Wall-clock time since the start, so it includes any time the game was closed
+        runSeconds = ps.leaderboardStartedAt and math.max(0, os.time() - ps.leaderboardStartedAt) or nil,
         damageDealt = math.floor(ps.totalDamageDealt or 0),
         kills = ps.totalKills or 0,
         deck = Leaderboard.encodeDeck(ps.deck),
@@ -224,6 +229,9 @@ local function sendNext()
         local data = decodeBody(body)
         if status >= 200 and status < 300 then
             finish(item, "sent", data)
+        elseif status == 409 and data.error == "already_submitted" then
+            -- The server got it last time, but its answer never arrived
+            finish(item, "sent", data)
         elseif status >= 400 and status < 500 then
             print(string.format("[Leaderboard] %s turned down (%d): %s", item.path, status, tostring(data.message or data.error)))
             finish(item, "rejected", data)
@@ -231,7 +239,10 @@ local function sendNext()
             -- No answer, or a server error: try again later
             print(string.format("[Leaderboard] %s failed (%d): %s", item.path, status, tostring(err or data.error)))
             retryTimer = Leaderboard.RETRY_DELAY
-            if item.kind == "score" then runStatus[item.runId] = { state = "offline" } end
+            -- Every result still waiting is stuck behind this, not just this one
+            for _, waiting in ipairs(outbox) do
+                if waiting.kind == "score" then runStatus[waiting.runId] = { state = "offline" } end
+            end
         end
     end)
 end
@@ -267,6 +278,27 @@ function Leaderboard.fetchTop(callback)
             callback(nil, "Couldn't reach the leaderboard.")
         else
             callback(nil, "The leaderboard sent an error (" .. status .. ").")
+        end
+    end)
+end
+
+--- Fetches a submitted run's place: `callback({ rank, total, scores })` on
+--- success, where scores are the 5 runs around it (each with `rank`, and `you`
+--- set on this one), or `callback(nil, message)` on failure.
+function Leaderboard.fetchAround(runId, callback)
+    if not Leaderboard.isConfigured() then
+        callback(nil, "The leaderboard isn't set up.")
+        return
+    end
+    Http.request("GET", Leaderboard.URL .. "/scores/around?runId=" .. tostring(runId), nil, function(status, body, err)
+        local data = decodeBody(body)
+        if status == 200 and type(data.scores) == "table" then
+            callback(data)
+        elseif status == 0 then
+            print("[Leaderboard] Fetch around failed: " .. tostring(err))
+            callback(nil, "Couldn't reach the leaderboard.")
+        else
+            callback(nil, data.message or ("The leaderboard sent an error (" .. status .. ")."))
         end
     end)
 end

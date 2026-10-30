@@ -217,6 +217,34 @@ assert(sent[1].body:find('"artifacts":%[%]'), "an empty artifact list is still s
 answer(200, '{"ok":true,"rank":9}')
 
 -- -----------------------------------------------------------------------------
+-- 5b. Going offline during a run never costs the player their result
+-- -----------------------------------------------------------------------------
+local realTime = os.time
+local clock = realTime()
+os.time = function() return clock end
+local offlineRun = newRun()
+Restarted.startRun(offlineRun)
+assert(offlineRun.leaderboardStartedAt == clock, "a run remembers when it started, by the player's clock")
+Restarted.update(0)
+answer(0, nil) -- offline: the start can't be sent
+clock = clock + 3600 -- an hour of play later the run ends
+offlineRun.battlesCompleted = 9
+local offlineId = Restarted.submitRun(offlineRun)
+Restarted.update(Restarted.RETRY_DELAY)
+Restarted.update(0)
+answer(0, nil) -- still offline
+assert(Restarted.getRunStatus(offlineId).state == "offline", "a result stuck behind an unsent run start shows as offline")
+Restarted.update(Restarted.RETRY_DELAY)
+Restarted.update(0)
+answer(200, '{"ok":true}') -- back online: the start goes through late
+Restarted.update(0)
+local offlineScore = json.decode(sent[1].body)
+assert(offlineScore.runSeconds == 3600, "the result says how long the run took by the player's clock")
+answer(409, '{"error":"already_submitted","message":"This run is already on the leaderboard."}')
+assert(Restarted.getRunStatus(offlineId).state == "sent", "already on the leaderboard (an answer that got lost) counts as sent")
+os.time = realTime
+
+-- -----------------------------------------------------------------------------
 -- 6. A leaderboard deck rebuilt for the viewer
 -- -----------------------------------------------------------------------------
 local entry = json.decode(json.encode({ mainTurret = "MainLazer", deck = score.deck }))

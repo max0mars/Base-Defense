@@ -36,12 +36,15 @@ should print `{"scores":[]}`.
 ## Tuning the timing check
 
 A result is turned down if the run reached its level faster than
-`MIN_SECONDS_PER_LEVEL` (in `wrangler.toml`) per completed level, timed from when
-the run started. Change it and run `npx wrangler deploy` again.
+`MIN_SECONDS_PER_LEVEL` (in `wrangler.toml`) per completed level. Change it and
+run `npx wrangler deploy` again.
 
-The clock starts when the server first hears about the run. If the game was
-offline when the run started, it registers the run once it's back online, and
-a long run timed from then may be turned down.
+A run's length is the longer of two measures: the server's, from when it first
+heard about the run, and the game's own, from when the run started by the
+player's clock (it's saved with the run, so it includes time the game was
+closed). Going offline during a run never shortens it, so it can't get an
+honest run turned down. The game's measure could be faked, which is the
+trade-off for never losing a real score.
 
 ## Removing an entry
 

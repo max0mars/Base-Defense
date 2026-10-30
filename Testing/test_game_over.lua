@@ -173,6 +173,28 @@ assert(Leaderboard.getRunStatus(game_over_scene.leaderboardRunId).rank == 2, "an
 ok, err = pcall(game_over_scene.draw, game_over_scene)
 assert(ok, "the screen draws with the rank: " .. tostring(err))
 
+-- 7. YOUR RANK: the runs around this one, shown once they arrive
+assert(game_over_scene.tab == "hits", "the base hits show until the run's place arrives")
+game_over_scene:update(0)
+assert(#sent == 1 and sent[1].url == "https://example.test/scores/around?runId=" .. game_over_scene.leaderboardRunId,
+    "once the run is on the leaderboard, its place is fetched")
+game_over_scene:update(0)
+assert(#sent == 1, "only once")
+local function around(rank, you)
+    return { id = rank, rank = rank, name = "P" .. rank, level = 10 - rank, mainTurret = "MainLazer",
+        damageDealt = 100, kills = 5, createdAt = 1760000000000, deck = {}, artifacts = {}, you = you }
+end
+table.remove(sent, 1).callback(200, require("Libraries.json").encode({ rank = 2, total = 9,
+    scores = { around(1), around(2, true), around(3), around(4), around(5) } }))
+assert(game_over_scene.tab == "rank" and #game_over_scene.around.scores == 5, "then the screen switches to YOUR RANK")
+ok, err = pcall(game_over_scene.draw, game_over_scene)
+assert(ok, "the screen draws the runs around this one: " .. tostring(err))
+
+game_over_scene:mousepressed(layout.hitsTab.x + 5, layout.hitsTab.y + 5, 1)
+assert(game_over_scene.tab == "hits", "the BASE HITS tab switches back")
+game_over_scene:mousepressed(layout.rankTab.x + 5, layout.rankTab.y + 5, 1)
+assert(game_over_scene.tab == "rank", "and YOUR RANK shows the place again")
+
 game_over_scene:load() -- back from the leaderboard screen
 assert(Leaderboard.getRunStatus(game_over_scene.leaderboardRunId).state == "sent" and #sent == 0,
     "coming back to the screen doesn't submit the run again")
@@ -180,6 +202,11 @@ local switchedTo
 game_over_scene.scene_manager.switch = function(name) switchedTo = name end
 game_over_scene:mousepressed(layout.leaderboard.x + 5, layout.leaderboard.y + 5, 1)
 assert(switchedTo == "leaderboard", "the Leaderboard button opens the leaderboard")
+
+-- 8. Main Menu goes back to the title screen
+switchedTo = nil
+game_over_scene:mousepressed(layout.mainMenu.x + 5, layout.mainMenu.y + 5, 1)
+assert(switchedTo == "menu", "the Main Menu button goes to the title screen")
 
 print("--- Game Over Tests Completed with " .. failures .. " failures ---")
 os.exit(failures == 0 and 0 or 1)

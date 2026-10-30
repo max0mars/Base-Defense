@@ -19,20 +19,11 @@ local DeckViewerUI = require("Game.GUI.DeckViewerUI")
 local ArtifactViewerUI = require("Game.GUI.ArtifactViewerUI")
 local ArtifactIndex = require("Game.Artifacts.ArtifactIndex")
 local DamageStats = require("Game.Core.DamageStats")
+local LeaderboardTable = require("Game.GUI.LeaderboardTable")
 
 local ROWS_PER_PAGE = 10
-local TABLE_X, TABLE_W = 140, 1000
+local TABLE_X = (VIRTUAL_WIDTH - LeaderboardTable.WIDTH) / 2
 local HEADER_Y, ROWS_Y, ROW_H = 118, 140, 40
--- Columns: x offset in the table, width, header, alignment
-local COLUMNS = {
-    { key = "rank", x = 0, w = 50, title = "#", align = "center" },
-    { key = "name", x = 60, w = 200, title = "NAME", align = "left" },
-    { key = "level", x = 270, w = 80, title = "LEVEL", align = "center" },
-    { key = "turret", x = 360, w = 170, title = "MAIN TURRET", align = "left" },
-    { key = "damage", x = 540, w = 130, title = "DAMAGE DEALT", align = "center" },
-    { key = "kills", x = 680, w = 100, title = "KILLS", align = "center" },
-    { key = "date", x = 790, w = 110, title = "DATE", align = "center" },
-}
 local VIEW_X, VIEW_W, VIEW_H = 910, 80, 28
 
 -- Run details panel
@@ -49,11 +40,6 @@ local function formatDuration(seconds)
     local h, m = math.floor(seconds / 3600), math.floor(seconds % 3600 / 60)
     if h > 0 then return string.format("%dh %02dm", h, m) end
     return string.format("%dm %02ds", m, math.floor(seconds % 60))
-end
-
-local function formatDate(ms)
-    ms = tonumber(ms)
-    return ms and os.date("%d %b %Y", math.floor(ms / 1000)) or ""
 end
 
 -- -----------------------------------------------------------------------------
@@ -147,7 +133,7 @@ function leaderboard_scene:drawDetails(mx, my)
         { "DAMAGE DEALT", DamageStats.formatNumber(tonumber(entry.damageDealt) or 0), Neon.AMBER },
         { "KILLS", DamageStats.formatNumber(tonumber(entry.kills) or 0), Neon.GREEN },
         { "RUN TIME", formatDuration(entry.durationSeconds), Neon.CYAN },
-        { "DATE", formatDate(entry.createdAt), Neon.MAGENTA },
+        { "DATE", LeaderboardTable.formatDate(entry.createdAt), Neon.MAGENTA },
     }
     local tileW, tileH, gap = 170, 56, 16
     local tx = PANEL.x + (PANEL.w - (#stats * tileW + (#stats - 1) * gap)) / 2
@@ -239,45 +225,14 @@ end
 
 function leaderboard_scene:drawTable(mx, my, blocked)
     local playerName = Leaderboard.getName()
-    love.graphics.setColor(0, 0.85, 1.0, 0.8)
-    for _, col in ipairs(COLUMNS) do
-        love.graphics.printf(col.title, TABLE_X + col.x, HEADER_Y, col.w, col.align)
-    end
-    Neon.line(TABLE_X, ROWS_Y - 4, TABLE_X + TABLE_W, ROWS_Y - 4, Neon.CYAN, 1, 0.5)
+    LeaderboardTable.drawHeader(TABLE_X, HEADER_Y, ROWS_Y - 4)
 
     self.viewButtons = {}
     local first = (self.page - 1) * ROWS_PER_PAGE + 1
     for i = first, math.min(first + ROWS_PER_PAGE - 1, #self.entries) do
         local entry = self.entries[i]
         local y = ROWS_Y + (i - first) * ROW_H
-        local ty = y + ROW_H / 2 - love.graphics.getFont():getHeight() / 2
-
-        if playerName and entry.name == playerName then
-            love.graphics.setColor(1, 0.25, 0.85, 0.1) -- the player's own runs
-            love.graphics.rectangle("fill", TABLE_X, y + 2, TABLE_W, ROW_H - 4, 4)
-        end
-        love.graphics.setColor(0, 0.85, 1.0, 0.12)
-        love.graphics.rectangle("line", TABLE_X, y + 2, TABLE_W, ROW_H - 4, 4)
-
-        local values = {
-            rank = tostring(entry.rank),
-            name = tostring(entry.name),
-            level = tostring(entry.level),
-            turret = Leaderboard.mainTurretName(entry.mainTurret),
-            damage = DamageStats.formatNumber(tonumber(entry.damageDealt) or 0),
-            kills = DamageStats.formatNumber(tonumber(entry.kills) or 0),
-            date = formatDate(entry.createdAt),
-        }
-        for _, col in ipairs(COLUMNS) do
-            if col.key == "rank" and entry.rank <= 3 then
-                love.graphics.setColor(Neon.hot(Neon.AMBER, 0.3))
-            elseif col.key == "level" then
-                love.graphics.setColor(Neon.hot(Neon.GREEN, 0.3))
-            else
-                love.graphics.setColor(0.88, 0.9, 0.95, 1)
-            end
-            love.graphics.printf(values[col.key], TABLE_X + col.x, ty, col.w, col.align)
-        end
+        LeaderboardTable.drawRow(entry, TABLE_X, y, ROW_H, playerName and entry.name == playerName and "mine" or nil)
 
         local btn = { x = TABLE_X + VIEW_X, y = y + (ROW_H - VIEW_H) / 2, w = VIEW_W, h = VIEW_H,
             label = "VIEW", borderColor = Neon.MAGENTA, entry = entry }
