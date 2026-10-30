@@ -52,4 +52,4 @@ Synergy icons sit in the bottom left of a card's description box (`Game.Cards.Ca
 - Spells (`Spells/SpellCardRegistry.lua`), instants (`Instants/InstantCardRegistry.lua`), passives (`Buildings/PassiveIndex.lua`)
 - Main turret cards and upgrades (`Buildings/MainTurrets/*`); for a deck `Card:new`, put `icons` in `payload.config`
 
-Show the types the card cares about (Unstable Laser buffs energy turrets with burn: `{ "energy", "fire" }`). Cards with nothing type-specific (Ammo Cache, Overclock) get no icons. A new icon name needs a glyph and colour in `CardIcons.lua`.
+Show the types the card cares about (Unstable Laser buffs energy turrets with burn: `{ "energy", "fire" }`). Cards with nothing type-specific (Ammo Cache, Overclock) get no icons. A new icon name needs a glyph, a colour and hover text (`CardIcons.INFO`) in `CardIcons.lua`. Hovering an icon in the deck view shows that text.

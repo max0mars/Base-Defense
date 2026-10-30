@@ -21,6 +21,25 @@ local RESOURCE_COLORS = {
     money = {0.3, 0.9, 0.4, 1},
 }
 
+-- Hover text: a name and what the icon means
+CardIcons.INFO = {
+    projectile = { "Projectile", "Fires bullets that fly to their target." },
+    hitscan = { "Hitscan", "Hits its target instantly." },
+    shotgun = { "Shotgun", "Fires a spread of pellets at once." },
+    lobber = { "Lobber", "Lobs shells in an arc that land on the target." },
+    beam = { "Beam", "Locks a continuous beam onto its target." },
+    physical = { "Physical", "Physical damage." },
+    energy = { "Energy", "Energy damage. Effective against armor." },
+    explosive = { "Explosive", "Explosive damage, usually in an area." },
+    fire = { "Fire", "Fire damage, including burn." },
+    poison = { "Poison", "Poison damage, including poison and toxic over time." },
+    ice = { "Ice", "Ice damage and chill. Chilled enemies slow down and can freeze." },
+    trueDamage = { "True Damage", "Ignores enemy resistances and weaknesses." },
+    token = { "Tokens", "Earns Tokens, used to play cards and unlock slots." },
+    mana = { "Mana", "Earns Mana, used to cast spells." },
+    money = { "Money", "Earns money to spend between battles." },
+}
+
 local isFiringType = {}
 for i, name in ipairs(CardIcons.FIRING_TYPES) do isFiringType[name] = i end
 
@@ -289,6 +308,48 @@ function CardIcons.drawRow(icons, x, y, size)
     for i, name in ipairs(icons) do
         CardIcons.drawIcon(name, x + (i - 1) * (size + CardIcons.SPACING), y, size)
     end
+end
+
+--- The icon in a row drawn from (x, y) that contains (px, py), and its index.
+function CardIcons.iconAt(icons, x, y, px, py, size)
+    size = size or CardIcons.SIZE
+    if py < y or py > y + size then return nil end
+    for i, name in ipairs(icons) do
+        local ix = x + (i - 1) * (size + CardIcons.SPACING)
+        if px >= ix and px <= ix + size then return name, i end
+    end
+    return nil
+end
+
+local TOOLTIP_WIDTH = 220
+local TOOLTIP_PADDING = 7
+
+--- Draws an icon's name and meaning in a panel above (x, y), kept on screen.
+function CardIcons.drawTooltip(name, x, y)
+    local info = CardIcons.INFO[name]
+    if not info then return end
+    local font = love.graphics.getFont()
+    local textW = TOOLTIP_WIDTH - TOOLTIP_PADDING * 2
+    local _, lines = font:getWrap(info[2], textW)
+    local lineH = font:getHeight()
+    local boxW = TOOLTIP_WIDTH
+    local boxH = TOOLTIP_PADDING * 2 + lineH * (1 + #lines) + 2
+
+    local boxX = math.max(5, math.min(x - boxW / 2, VIRTUAL_WIDTH - 5 - boxW))
+    local boxY = y - 8 - boxH
+    if boxY < 5 then boxY = y + CardIcons.SIZE + 8 end
+
+    love.graphics.setColor(0.03, 0.05, 0.09, 0.94)
+    love.graphics.rectangle("fill", boxX, boxY, boxW, boxH, 4)
+    love.graphics.setColor(0.0, 0.7, 1.0, 0.4)
+    love.graphics.setLineWidth(1)
+    love.graphics.rectangle("line", boxX, boxY, boxW, boxH, 4)
+
+    love.graphics.setColor(iconColor(name))
+    love.graphics.print(info[1], boxX + TOOLTIP_PADDING, boxY + TOOLTIP_PADDING)
+    love.graphics.setColor(0.85, 0.88, 0.92, 1)
+    love.graphics.printf(info[2], boxX + TOOLTIP_PADDING, boxY + TOOLTIP_PADDING + lineH + 2, textW, "left")
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 return CardIcons

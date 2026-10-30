@@ -2,6 +2,7 @@ local DeckViewerUI = {}
 DeckViewerUI.__index = DeckViewerUI
 
 local ExecutionType = require("Game.Cards.ExecutionType")
+local CardIcons = require("Game.Cards.CardIcons")
 
 function DeckViewerUI:new(game)
     local obj = setmetatable({
@@ -93,7 +94,8 @@ function DeckViewerUI:draw()
     
     local startIndex = (self.deckPage - 1) * maxPerPage + 1
     local endIndex = math.min(self.deckPage * maxPerPage, #self.cards)
-    
+
+    local hoveredIcon, iconX, iconY
     for i = startIndex, endIndex do
         local displayIndex = i - startIndex
         local card = self.cards[i]
@@ -106,7 +108,15 @@ function DeckViewerUI:draw()
         if card.getCardDraw and card:getCardDraw() then
             local isHovered = mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH
             card:getCardDraw():draw(cx, cy, cardW, cardH, isHovered)
+            if isHovered then
+                hoveredIcon, iconX, iconY = card:getCardDraw():iconAt(mx, my, cx, cy, cardW, cardH)
+            end
         end
+    end
+
+    -- Hovering a synergy icon explains it (drawn last so it sits over neighbouring cards)
+    if hoveredIcon then
+        CardIcons.drawTooltip(hoveredIcon, iconX, iconY)
     end
     
     self.prevPageBtn = { x = 120, y = VIRTUAL_HEIGHT - 90, w = 120, h = 40, label = "Prev Page" }

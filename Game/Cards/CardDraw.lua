@@ -9,6 +9,10 @@ CardDraw.WIDTH = 250
 CardDraw.HEIGHT = 350
 CardDraw.RADIUS = 10
 
+-- Synergy icon row, bottom left of the description box (card space)
+local ICON_X = 21
+local ICON_Y = 325 - CardIcons.SIZE - 6
+
 -- Neon Rarity Colors (RGB values from 0 to 1)
 local rarityColors = {
     common = {0.6, 0.6, 0.6},      -- Grey
@@ -417,7 +421,7 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
     local iconStrip = 0
     if self.icons and #self.icons > 0 then
         iconStrip = CardIcons.SIZE + 8
-        CardIcons.drawRow(self.icons, 21, 325 - CardIcons.SIZE - 6)
+        CardIcons.drawRow(self.icons, ICON_X, ICON_Y)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
@@ -444,6 +448,20 @@ function CardDraw:draw(targetX, targetY, targetW, targetH, isHovered)
     for _, dt in ipairs(deferredText) do
         love.graphics.printf(dt.t, targetX + dt.x * scaleX, targetY + dt.y * scaleY, dt.w * scaleX, dt.a, 0)
     end
+end
+
+--- The synergy icon under the screen point (px, py) on a card drawn at the given rect.
+-- @return string|nil: icon name, plus the icon's top-centre in screen space
+function CardDraw:iconAt(px, py, targetX, targetY, targetW, targetH)
+    if not self.icons or #self.icons == 0 then return nil end
+    targetX = targetX or self.x
+    targetY = targetY or self.y
+    local scaleX = (targetW or CardDraw.WIDTH) / CardDraw.WIDTH
+    local scaleY = (targetH or CardDraw.HEIGHT) / CardDraw.HEIGHT
+    local name, i = CardIcons.iconAt(self.icons, ICON_X, ICON_Y, (px - targetX) / scaleX, (py - targetY) / scaleY)
+    if not name then return nil end
+    local iconCentreX = ICON_X + (i - 1) * (CardIcons.SIZE + CardIcons.SPACING) + CardIcons.SIZE / 2
+    return name, targetX + iconCentreX * scaleX, targetY + ICON_Y * scaleY
 end
 
 -- Shared so other UI (e.g. the building hover window) matches the cards

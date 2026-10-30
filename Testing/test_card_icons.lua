@@ -118,6 +118,28 @@ assert(same(rewardCard("heavyShotgun"):getCardDraw().icons, { "projectile", "sho
 -- Reward choices (the raw index entry) get the same icons
 assert(same(CardDraw.new(0, 0, turrets.mortar).icons, { "lobber", "explosive" }), "reward cards draw the turret's icons")
 
+-- Every icon has hover text explaining it
+for _, name in ipairs({ "projectile", "hitscan", "shotgun", "lobber", "beam", "physical", "energy", "explosive",
+                        "fire", "poison", "ice", "trueDamage", "token", "mana", "money" }) do
+    local info = CardIcons.INFO[name]
+    assert(info and info[1] and info[2], name .. " has a name and meaning to show on hover")
+end
+
+-- Hovering finds the icon under the mouse on a card drawn at any size
+local mortarCard = CardDraw.new(0, 0, turrets.mortar)
+local s = 200 / CardDraw.WIDTH -- deck view draws cards at 200 x 280
+local function at(cardX, cardY) return mortarCard:iconAt(100 + cardX * s, 50 + cardY * s, 100, 50, 200, 280) end
+local iconTop = 325 - CardIcons.SIZE - 6
+local secondX = 21 + CardIcons.SIZE + CardIcons.SPACING
+assert(at(21 + 2, iconTop + 2) == "lobber", "hovering the first icon finds lobber")
+assert(at(secondX + 2, iconTop + 2) == "explosive", "hovering the second icon finds explosive")
+assert(at(secondX + CardIcons.SIZE + 2, iconTop + 2) == nil, "the gap past the last icon finds nothing")
+assert(at(125, 200) == nil, "the description text finds nothing")
+local _, tipX, tipY = at(21 + 2, iconTop + 2)
+assert(math.abs(tipX - (100 + (21 + CardIcons.SIZE / 2) * s)) < 0.01 and math.abs(tipY - (50 + iconTop * s)) < 0.01,
+    "the tooltip anchors to the top-centre of the hovered icon")
+assert(CardDraw.new(0, 0, { name = "Plain", description = "" }):iconAt(0, 0, 0, 0) == nil, "a card without icons finds nothing")
+
 -- Drawing a card with icons doesn't error
 local ok, err = pcall(function() CardDraw.new(0, 0, turrets.cryoBeam):draw(0, 0) end)
 assert(ok, "a card with icons draws (" .. tostring(err) .. ")")
