@@ -22,6 +22,7 @@ local CELL_W, ROW_H = 74, 62
 local ROWS_W = LABEL_W + ENEMIES_PER_ROW * CELL_W
 local ROWS_Y = 305
 local ICON_MAX = 30 -- big enemies (bosses) are drawn shrunk to fit a cell
+local ICON_X = 22   -- the icon's centre in its cell, leaving room for the "x 15" count
 -- The run's artifacts: a centred row of icons (wrapping if there are many)
 local ARTIFACT_ICON, ARTIFACT_GAP, ARTIFACTS_MAX_W = 26, 8, 1000
 local ARTIFACTS_BOTTOM = 262
@@ -235,7 +236,15 @@ function game_over_scene:draw()
 
         for j, item in ipairs(row.enemies) do
             local cellX = ROWS_X + LABEL_W + (j - 1) * CELL_W
-            drawEnemyIcon(item, cellX + CELL_W / 2, y + 24)
+            -- The icon with how many of it hit the base beside it ("x 15"); older
+            -- saves have no count, so their icon stays centred
+            if item.hits then
+                drawEnemyIcon(item, cellX + ICON_X, y + 24)
+                love.graphics.setColor(1, 1, 1, 0.9)
+                love.graphics.print("x " .. item.hits, cellX + ICON_X + ICON_MAX / 2 + 3, y + 24 - love.graphics.getFont():getHeight() / 2)
+            else
+                drawEnemyIcon(item, cellX + CELL_W / 2, y + 24)
+            end
             love.graphics.setColor(1, 0.4, 0.4, 1)
             love.graphics.printf(DamageStats.formatNumber(item.damage), cellX, y + ROW_H - 20, CELL_W, "center")
         end
