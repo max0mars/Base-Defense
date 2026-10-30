@@ -2,6 +2,8 @@ local Buff = require("Buildings.Passives.Buff")
 
 local IndustrialBattery = setmetatable({}, Buff)
 IndustrialBattery.__index = IndustrialBattery
+-- Drawn without the pulsing neon glow; its charging cells show it's active
+IndustrialBattery.noGlow = true
 
 local default = {
     name = "Industrial Battery",

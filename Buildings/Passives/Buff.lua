@@ -109,18 +109,20 @@ function Buff:draw(drawx, drawy)
 
     local r, g, b = unpack(self.color or {1, 1, 1})
     local pulse = 0
-    if not self.disableGlow then
+    if not self.disableGlow and not self.noGlow then
         pulse = (math.sin(love.timer.getTime() * 4) + 1) / 2 -- 0 to 1 pulsing
     end
 
     love.graphics.push("all")
     love.graphics.setLineJoin("bevel")
 
-    -- 3. Neon Glow: the sprite outline redrawn in wide, faint strokes
-    for i = 3, 1, -1 do
-        love.graphics.setColor(r, g, b, (0.08 + (3 - i) * 0.08) * (0.6 + pulse * 0.4))
-        love.graphics.setLineWidth(i * 2 + pulse * 1.5)
-        self:drawShape(cx, cy, s, pulse)
+    -- 3. Neon Glow: the sprite outline redrawn in wide, faint strokes (skipped for noGlow sprites)
+    if not self.noGlow then
+        for i = 3, 1, -1 do
+            love.graphics.setColor(r, g, b, (0.08 + (3 - i) * 0.08) * (0.6 + pulse * 0.4))
+            love.graphics.setLineWidth(i * 2 + pulse * 1.5)
+            self:drawShape(cx, cy, s, pulse)
+        end
     end
 
     -- 4. Bright Core Line
