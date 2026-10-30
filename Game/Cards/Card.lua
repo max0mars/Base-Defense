@@ -152,7 +152,7 @@ function Card:getCardDraw()
         local data = {
             id = self.id,
             name = self.name,
-            icons = require("Game.Cards.CardIcons").resolve(self.payload.config, self.id),
+            icons = require("Game.Cards.CardIcons").resolve(self.payload.config or { icons = self.payload.icons }, self.id),
             tier = isUpgradable and tier or 1,
             upgradable = isUpgradable,
             description = self.description,

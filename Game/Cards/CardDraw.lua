@@ -144,6 +144,11 @@ function CardDraw.new(x, y, data)
     
     self.affectedSlots = data.affectedSlots or {}
     self.icons = CardIcons.resolve(data, data.id)
+    if CardIcons.targetsMainTurretOnly(data) then
+        local icons = { "mainTurret" }
+        for _, name in ipairs(self.icons) do table.insert(icons, name) end
+        self.icons = CardIcons.order(icons)
+    end
     
     return self
 end

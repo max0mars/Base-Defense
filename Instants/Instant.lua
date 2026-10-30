@@ -81,6 +81,7 @@ function Instant:getCardDraw()
         local data = {
             name = self.name,
             icons = self.icons or {},
+            requiredType = self.requiredType,
             tier = self.tier or 1,
             description = self.description,
             cost = self:getCost(),

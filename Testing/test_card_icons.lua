@@ -118,9 +118,25 @@ assert(same(rewardCard("heavyShotgun"):getCardDraw().icons, { "projectile", "sho
 -- Reward choices (the raw index entry) get the same icons
 assert(same(CardDraw.new(0, 0, turrets.mortar).icons, { "lobber", "explosive" }), "reward cards draw the turret's icons")
 
+-- Cards that can only target the Main Turret lead with the mainTurret icon
+local lowPower = require("Buildings.MainTurrets.MainLazer").getUniqueCards().rare[1]
+assert(same(CardDraw.new(0, 0, lowPower).icons, { "mainTurret", "hitscan", "energy" }),
+    "a main turret upgrade reward leads with the mainTurret icon")
+assert(same(CardFactory.fromReward(lowPower):getCardDraw().icons, { "mainTurret", "hitscan", "energy" }),
+    "the drafted main turret upgrade card keeps it")
+local stabilizing
+for _, card in ipairs(require("Buildings.MainTurrets.FastMainTurret").getStartingDeck().cards or {}) do
+    if card.id == "stabilizing_shots" then stabilizing = card end
+end
+assert(stabilizing and same(stabilizing:getCardDraw().icons, { "mainTurret" }),
+    "an instant that requires the Main Turret shows the mainTurret icon")
+assert(same(CardIcons.order({ "energy", "mainTurret", "beam" }), { "mainTurret", "beam", "energy" }),
+    "mainTurret sorts before firing types")
+assert(not CardIcons.targetsMainTurretOnly({ type = "effect" }), "other cards don't get the mainTurret icon")
+
 -- Every icon has hover text explaining it
 for _, name in ipairs({ "projectile", "hitscan", "shotgun", "lobber", "beam", "physical", "energy", "explosive",
-                        "fire", "poison", "ice", "trueDamage", "token", "mana", "money" }) do
+                        "fire", "poison", "ice", "trueDamage", "token", "mana", "money", "mainTurret" }) do
     local info = CardIcons.INFO[name]
     assert(info and info[1] and info[2], name .. " has a name and meaning to show on hover")
 end

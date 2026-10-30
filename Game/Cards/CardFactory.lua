@@ -34,6 +34,7 @@ function CardFactory.fromReward(reward, config)
     local cardPayload = { rarity = reward.rarity or "common" }
     if isGlobal then
         cardPayload.isMainUpgrade = true
+        cardPayload.icons = reward.icons
     else
         cardPayload.buildingClass = reward.building
         cardPayload.config = config or reward

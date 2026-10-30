@@ -41,6 +41,7 @@ Manages the player's collection of cards. It handles the logic for drawing cards
 ## Card Icons
 
 Synergy icons sit in the bottom left of a card's description box (`Game.Cards.CardIcons`), always in this order:
+0. **Target:** `mainTurret`, added automatically to cards that can only target the Main Turret (`type = "main_upgrade"` or `requiredType = "mainturret"`)
 1. **Firing types:** `projectile`, `hitscan`, `shotgun`, `lobber`, `beam` (a card can have more than one, e.g. a shotgun shows `projectile` + `shotgun`)
 2. **Damage types:** `physical`, `energy`, `explosive`, `fire`, `poison`, `ice`, `trueDamage`
 3. **Resources:** `token`, `mana`, `money`

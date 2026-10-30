@@ -1,6 +1,7 @@
 -- CardIcons.lua - the synergy icons in the bottom left of a card's description box.
 -- A card shows its firing types first (projectile, hitscan, shotgun, lobber, beam),
 -- then its damage types, then any resources it earns (token, mana, money).
+-- Cards that can only target the Main Turret lead with a `mainTurret` icon.
 -- Turrets work theirs out from their stats; any card can
 -- set an explicit `icons` list instead (spells, passives and instants do).
 
@@ -13,6 +14,7 @@ CardIcons.SIZE = 22
 CardIcons.SPACING = 4
 
 local FIRING_COLOR = {0.85, 0.85, 0.85, 1}
+local MAIN_TURRET_COLOR = {1, 0.35, 0.35, 1}
 
 -- Resources a card earns, coloured like the HUD's token coin and mana orb
 local RESOURCE_COLORS = {
@@ -38,6 +40,7 @@ CardIcons.INFO = {
     token = { "Tokens", "Earns Tokens, used to play cards and unlock slots." },
     mana = { "Mana", "Earns Mana, used to cast spells." },
     money = { "Money", "Earns money to spend between battles." },
+    mainTurret = { "Main Turret", "Only affects your Main Turret." },
 }
 
 local isFiringType = {}
@@ -54,7 +57,7 @@ local function hasType(config, name)
     return false
 end
 
---- Firing types first (in FIRING_TYPES order), then the rest in the order given.
+--- mainTurret first, then firing types (in FIRING_TYPES order), then the rest in the order given.
 function CardIcons.order(icons)
     local firing, other, seen = {}, {}, {}
     for _, name in ipairs(icons) do
@@ -64,8 +67,20 @@ function CardIcons.order(icons)
         end
     end
     table.sort(firing, function(a, b) return isFiringType[a] < isFiringType[b] end)
+    if seen.mainTurret then
+        for i, name in ipairs(other) do
+            if name == "mainTurret" then table.remove(other, i) break end
+        end
+        table.insert(firing, 1, "mainTurret")
+    end
     for _, name in ipairs(other) do table.insert(firing, name) end
     return firing
+end
+
+--- Whether a card can only be played on the Main Turret (main turret upgrades,
+-- and targeted cards that require the mainturret type).
+function CardIcons.targetsMainTurretOnly(data)
+    return data ~= nil and (data.type == "main_upgrade" or data.requiredType == "mainturret")
 end
 
 local function deriveTurretIcons(config)
@@ -277,7 +292,22 @@ function glyphs.money(cx, cy, r)
     love.graphics.circle("fill", cx + r * 0.6, cy, r * 0.1)
 end
 
+function glyphs.mainTurret(cx, cy, r)
+    -- A crowned turret: domed head with a barrel, on a base
+    love.graphics.arc("fill", "pie", cx - r * 0.1, cy + r * 0.35, r * 0.5, math.pi, math.pi * 2)
+    love.graphics.rectangle("fill", cx - r * 0.85, cy + r * 0.45, r * 1.5, r * 0.35)
+    love.graphics.setLineWidth(2)
+    love.graphics.line(cx + r * 0.1, cy + r * 0.05, cx + r * 0.9, cy - r * 0.35)
+    -- Crown
+    fillPolygon({
+        cx - r * 0.55, cy - r * 0.25, cx - r * 0.6, cy - r * 0.85, cx - r * 0.3, cy - r * 0.5,
+        cx - r * 0.1, cy - r * 0.9, cx + r * 0.1, cy - r * 0.5, cx + r * 0.4, cy - r * 0.85,
+        cx + r * 0.35, cy - r * 0.25,
+    })
+end
+
 local function iconColor(name)
+    if name == "mainTurret" then return MAIN_TURRET_COLOR end
     if isFiringType[name] then return FIRING_COLOR end
     return DamageTypes.colors[name] or RESOURCE_COLORS[name] or FIRING_COLOR
 end
