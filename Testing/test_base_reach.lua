@@ -77,6 +77,57 @@ for _ = 1, 10 do
 end
 assert(e.destroyed and e.reachedBase, "an enemy whose steps land exactly on the line still hits the base")
 
+-- Reaching the base isn't a kill: no XP, no splitting, no frozen-kill payout
+local function enemyCount()
+    local n = 0
+    for _, obj in ipairs(game.objects) do
+        if obj.isType and obj:isType("enemy") and not obj.destroyed then n = n + 1 end
+    end
+    return n
+end
+local frozenKills = 0
+local realFrozen = game.onFrozenEnemyDied
+game.onFrozenEnemyDied = function() frozenKills = frozenKills + 1 end
+
+local splitter = Enemy:new({ game = game, x = 600, y = 300, size = 20, damage = 5 })
+splitter.splitOnDeathChance, splitter.reward = 1, 10
+game:addObject(splitter)
+splitter:getTargetPos()
+splitter.x = splitter.target
+local xp, enemies = game.xp, enemyCount()
+splitter:update(1 / 60)
+assert(splitter.reachedBase, "the splitter reached the base")
+assert(enemyCount() == enemies - 1, "a splitter that reaches the base doesn't split")
+assert(game.xp == xp, "an enemy that reaches the base gives no XP")
+
+-- A frozen enemy only pays out (Ice Market) when it's killed
+local Chill = require("Game.Effects.StatusEffects.Chill")
+local leaked = Enemy:new({ game = game, x = 600, y = 300, size = 20 })
+game:addObject(leaked)
+Chill.freeze(leaked)
+leaked.reachedBase = true
+leaked:died()
+assert(frozenKills == 0, "a frozen enemy that reached the base isn't a frozen kill")
+local iced = Enemy:new({ game = game, x = 600, y = 300, size = 20, maxHp = 10, hp = 10 })
+game:addObject(iced)
+Chill.freeze(iced)
+iced:takeDamage(100, "physical")
+assert(frozenKills == 1, "a frozen enemy that's killed is")
+
+-- Killed, the same enemy still splits and gives its XP
+local killed = Enemy:new({ game = game, x = 600, y = 300, size = 20, maxHp = 10, hp = 10 })
+killed.splitOnDeathChance, killed.reward = 1, 10
+game:addObject(killed)
+xp, enemies = game.xp, enemyCount()
+killed:takeDamage(100, "physical")
+assert(enemyCount() == enemies - 1 + 2, "a killed splitter splits in two")
+assert(game.xp == xp + 10, "a killed enemy gives its XP")
+game.onFrozenEnemyDied = realFrozen
+for _, obj in ipairs(game.objects) do
+    if obj.isType and obj:isType("enemy") and not obj.destroyed then obj:destroy() end
+end
+game:takeOutTheTrash()
+
 -- The navigator doesn't stop at the line either: it walks on into the base
 e = Enemy:new({ game = game, x = 600, y = 300, size = 20, speed = 30 })
 e:getTargetPos()

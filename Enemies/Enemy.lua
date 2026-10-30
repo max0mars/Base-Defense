@@ -645,7 +645,9 @@ function Enemy:died()
     
     if AUDIO then AUDIO:playSFX("explosion_01") end
     
-    if self.splitOnDeathChance and self.splitOnDeathChance > 0 and math.random() <= self.splitOnDeathChance then
+    -- Splits only when killed: offspring spawned at the base would hit it at once
+    if not self.reachedBase and self.splitOnDeathChance and self.splitOnDeathChance > 0
+       and math.random() <= self.splitOnDeathChance then
         local EnemyRegistry = require("Game.Spawning.EnemyRegistry")
         local offsets = {
             {x = -12, y = -12},

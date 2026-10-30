@@ -888,7 +888,6 @@ function game:spawnArmorBreak(x, y)
 end
 
 function game:EnemyDied(enemy)
-    self:addXP(enemy.reward)
     self:spawnParticleExplosion(enemy.color, enemy.size or enemy.w, enemy.x, enemy.y)
     self:recordCorpse(enemy)
     -- Drain this enemy's slot from the in-progress wave panel (with a flash).
@@ -897,6 +896,8 @@ function game:EnemyDied(enemy)
         self.WaveSpawner:notifyEnemyKilled(enemy)
     end
     if not enemy.reachedBase then
+        -- Kills only: an enemy that reached the base gives no XP and isn't counted
+        self:addXP(enemy.reward)
         -- The run's kill count (shown on the game over screen)
         if _G.PersistentState then
             _G.PersistentState.totalKills = (_G.PersistentState.totalKills or 0) + 1

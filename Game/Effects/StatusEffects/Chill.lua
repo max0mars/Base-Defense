@@ -104,8 +104,10 @@ function FreezeState:onUpdate(dt, target)
 end
 
 -- Enemies fire onDeath on their effects as they die; tell the game about
--- frozen kills (Ice Market pays out on them).
+-- frozen kills (Ice Market pays out on them). Kills only: not one that
+-- reached the base.
 function FreezeState:onDeath(target)
+    if target.reachedBase then return end
     local frozenKill = self.phase == "frozen" or self.thawTransition
     if frozenKill and target.game and target.game.onFrozenEnemyDied then
         target.game:onFrozenEnemyDied(target)
