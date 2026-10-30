@@ -269,7 +269,7 @@ for _, t in ipairs(texts) do if t.text == "Kills: 1" or t.text == "STATS & MODIF
 assert(not inPanel, "the bottom-left panel no longer shows stats & modifiers")
 game.inputHandler.hoveredBuilding = nil
 
--- PROJECT CHIMERA: 15 slow bounces at half damage, physical, a bouncy ball
+-- PROJECT ECHO: 15 slow bounces at half damage, physical, a bouncy ball
 local chimera = findTurret("chainLaser")
 assert(chimera.bouncesLeft == 15 and chimera.damage == 13.5 and chimera.bulletSpeed == 300,
     "Chimera: 15 bounces, 13.5 damage, bolt speed 300")

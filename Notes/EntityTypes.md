@@ -34,7 +34,7 @@ All buildings inherit the `building` type from `Building.lua`. Turrets and passi
 * **The Hook**: `turret`, `physical`, `stun`, `control`
 * **Sniper Turret**: `turret`, `physical`
 * **Mortar**: `turret`, `explosive`, `lobber`
-* **PROJECT CHIMERA**: `turret`, `energy`
+* **PROJECT ECHO**: `turret`, `physical`
 
 ### Main Turrets (`Buildings/MainTurrets/`)
 All main turrets inherit from `StandardMainTurret.lua`, which adds the `mainturret` type.

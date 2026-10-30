@@ -478,7 +478,7 @@ local RewardIndex = {
     legendary = {
         {
             id = "chainLaser",
-            name = "PROJECT CHIMERA",
+            name = "PROJECT ECHO",
             description = "No one is safe",
             type = "building",
             types = {"turret", "building"},

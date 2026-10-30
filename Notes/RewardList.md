@@ -50,7 +50,7 @@ Epic
 Legendary
 - PROJECT STARFALL [Buildings.Turrets.MeteorTurret]: Calls meteors onto its target (fire damage, no burn); the crater left behind applies burn.
 - PROJECT STORMBREAKER [main_upgrade]: zzzZap!
-- PROJECT CHIMERA [Buildings.Turrets.ChainLaser]: No one is safe
+- PROJECT ECHO [Buildings.Turrets.ChainLaser]: No one is safe
 
 Fire synergy (burn, see Game/Effects/StatusEffects/Burn.lua)
 - Burn: stacks share one pool per enemy. 1-9 stacks = 10 dps, 10-19 = 20 dps, 20+ = 30 dps.

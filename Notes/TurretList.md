@@ -196,10 +196,10 @@ and buffs. Burst turrets include the burst delay in their cycle time.
 
 ## Legendary
 
-### PROJECT CHIMERA (Chain Laser)
+### PROJECT ECHO (Chain Laser)
 - **Cost**: 3
-- **Damage**: 27 (energy), then bounces to the nearest unhit enemy up to 5 times. Each bounce deals 10% less of the first hit: 90%, 80%, 70%, 60%, 50%.
+- **Damage**: 13.5 (physical), a bouncy ball that bounces to the nearest unhit enemy up to 15 times. Each bounce keeps 90% of the last one's damage (and 94% of its speed, from 300).
 - **Range**: 380
 - **Fire Rate**: 0.5
-- **DPS**: 13.5 single target | ~61 across a group (121.5 per shot)
+- **DPS**: 6.75 single target | ~55 across a group (~110 per shot)
 - **Description**: No one is safe
