@@ -269,5 +269,54 @@ for _, t in ipairs(texts) do if t.text == "Kills: 1" or t.text == "STATS & MODIF
 assert(not inPanel, "the bottom-left panel no longer shows stats & modifiers")
 game.inputHandler.hoveredBuilding = nil
 
+-- PROJECT CHIMERA: 15 slow bounces at half damage, physical, a bouncy ball
+local chimera = findTurret("chainLaser")
+assert(chimera.bouncesLeft == 15 and chimera.damage == 13.5 and chimera.bulletSpeed == 300,
+    "Chimera: 15 bounces, 13.5 damage, bolt speed 300")
+assert(chimera.damageType == "physical", "Chimera deals physical damage")
+
+local chimeraTurret = place("chainLaser", 3, 3)
+local count = #game.objects
+chimeraTurret:fire({ angle = 0 })
+local ball = game.objects[count + 1]
+assert(ball and ball.drawStyle == "bouncyball" and ball.damageType == "physical", "it fires a physical bouncy ball")
+assert(pcall(ball.draw, ball), "the ball draws")
+
+-- Bounces off `hit` from the ball; returns the new ball
+local function bounceFrom(hit, fields)
+    for k, v in pairs(fields or {}) do ball[k] = v end
+    local before = #game.objects
+    for _, effect in ipairs(ball.hitEffects) do
+        if effect.trigger and effect.name == "Chain Bounce" then effect:trigger(hit, ball) end
+    end
+    return game.objects[before + 1]
+end
+
+local hit = enemyAt(600, 300)
+local next1 = enemyAt(700, 300)
+local arc = bounceFrom(hit, { bounceNumber = 14, initialDamage = 10 })
+assert(arc and near(arc.damage, 10 * 0.9 ^ 15), string.format("the 15th bounce still deals damage (%.2f of 10)", arc and arc.damage or -1))
+assert(arc and arc.drawStyle == "bouncyball" and arc.color == ball.color, "a bounce keeps the ball's look")
+assert(arc and near(arc.bulletSpeed, ball.bulletSpeed * 0.94), string.format("each bounce slows the ball (%.1f -> %.1f)", ball.bulletSpeed, arc and arc.bulletSpeed or -1))
+local slowest = 300 * require("Game.Effects.IndependantEffects.bounce").SPEED_KEPT ^ 15
+assert(slowest > 100 and slowest < 150, string.format("after 15 bounces it's still moving (%.0f speed)", slowest))
+assert(arc and pcall(arc.draw, arc), "a bounce (squashing as it leaves) draws")
+if arc then arc:destroy() end
+next1:destroy()
+ball.bounceNumber, ball.initialDamage = nil, nil
+
+-- It leads a moving target: aiming at where it will be, not where it is
+local walker = Enemy:new({ game = game, x = 700, y = 400, name = "Grunt", maxHp = 1e6 })
+game:addObject(walker)
+walker:getTargetPos()
+assert(walker:getStat("speed") > 0, "the walker moves")
+local lead = bounceFrom(hit)
+local straight = math.atan2(walker.y - hit.y, walker.x - hit.x)
+assert(lead and lead.angle > straight + 0.01,
+    string.format("a bounce aims ahead of a walking enemy (%.3f vs %.3f straight at it)", lead and lead.angle or -1, straight))
+if lead then lead:destroy() end
+walker:destroy(); hit:destroy(); ball:destroy()
+game:takeOutTheTrash()
+
 print(string.format("\n%d failure(s)", failures))
 if failures > 0 then os.exit(1) end

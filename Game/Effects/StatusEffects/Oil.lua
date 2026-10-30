@@ -1,8 +1,9 @@
 -- Oil.lua - Fire synergy setup status (Oil Gun).
 --
--- Oil slows the enemy. The next time burn is applied to it, the oil ignites:
--- it adds BONUS_STACKS extra burn and is used up (see Burn.apply). Oiling an
--- enemy that is already burning ignites right away instead.
+-- Oil slows the enemy. The next time burn is applied to it or it takes fire
+-- damage, the oil ignites: it adds BONUS_STACKS burn and is used up (see
+-- Burn.igniteOil). Oiling an enemy that is already burning ignites right away
+-- instead.
 --
 -- Usage from a turret: hitEffects = { Oil.onHit() }
 
@@ -57,6 +58,11 @@ function Oil.spawnIgnite(target)
     end
 end
 
+--- Called by Enemy:takeDamage for fire damage: ignites the target's oil.
+function Oil.onFireDamage(target)
+    Burn.igniteOil(target)
+end
+
 --- Oils a target, or ignites it straight away if it's already burning.
 -- @param opts table|nil: source = the turret (or its bullet) applying it
 function Oil.apply(target, opts)
@@ -85,14 +91,37 @@ end
 local OilOnHit = {}
 OilOnHit.__index = OilOnHit
 
+--- @param config table|nil: radius (oils every enemy that close to the hit,
+---   not just the one hit; default 0), name (default "oil")
 function Oil.onHit(config)
     config = config or {}
-    return setmetatable({ name = config.name or "oil", isIndependent = true }, OilOnHit)
+    return setmetatable({ name = config.name or "oil", isIndependent = true, radius = config.radius or 0 }, OilOnHit)
+end
+
+--- Oils every enemy within `radius` of (x, y), measured to the edge of its body.
+function Oil.splash(game, x, y, radius, source)
+    for _, obj in ipairs(game.objects) do
+        if obj.isType and obj:isType("enemy") and not obj.destroyed then
+            local halfW, halfH = (obj.w or 0) / 2, (obj.h or 0) / 2
+            local dx = x - math.max(obj.x - halfW, math.min(x, obj.x + halfW))
+            local dy = y - math.max(obj.y - halfH, math.min(y, obj.y + halfH))
+            if dx * dx + dy * dy <= radius * radius then
+                Oil.apply(obj, { source = source })
+            end
+        end
+    end
+    if game.spawnExpandingCircle then
+        game:spawnExpandingCircle(x, y, radius * 0.3, radius, { OIL_COLOR[1] + 0.2, OIL_COLOR[2] + 0.15, OIL_COLOR[3] + 0.05, 0.8 }, 0.35)
+    end
 end
 
 function OilOnHit:trigger(target, source)
     if not target or not target.isType or not target:isType("enemy") then return end
-    Oil.apply(target, { source = source })
+    if self.radius > 0 and target.game then
+        Oil.splash(target.game, target.x, target.y, self.radius, source)
+    else
+        Oil.apply(target, { source = source })
+    end
 end
 
 function OilOnHit:onApply(target, source)

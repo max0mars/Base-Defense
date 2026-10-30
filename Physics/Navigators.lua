@@ -23,17 +23,14 @@ function DirectNavigator:new(enemy, game)
     return obj
 end
 
+-- Walks left at full speed, through the hit line and into the base, so an
+-- enemy never stops short of it (Enemy.update ends it when it gets there)
+local function walkIntoBase(enemy, dt)
+    enemy.x = enemy.x - enemy:getStat("speed") * dt
+end
+
 function DirectNavigator:update(dt)
-    local enemy = self.enemy
-    -- Simply straight to the target
-    local dx = enemy.target - enemy.x
-    local dy = 0
-    local dist = math.abs(dx)
-    
-    local currentSpeed = enemy:getStat("speed")
-    if dist > 0 then
-        enemy.x = enemy.x + (dx / dist) * currentSpeed * dt
-    end
+    walkIntoBase(self.enemy, dt)
 end
 
 ---------------------------
@@ -154,12 +151,8 @@ function GridNavigator:update(dt)
             end
         end
     else
-        -- Fallback to direct navigation or if no path found (blocked)
-        local dx = enemy.target - enemy.x
-        local dist = math.abs(dx)
-        if dist > 0 then
-            enemy.x = enemy.x + (dx / dist) * currentSpeed * dt
-        end
+        -- Past the end of the path, or no path found (blocked)
+        walkIntoBase(enemy, dt)
     end
 end
 

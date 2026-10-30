@@ -12,7 +12,7 @@ InfernoTower.__index = InfernoTower
 
 InfernoTower.RAMP_TIME = 5 -- seconds on one target to reach full power
 InfernoTower.RAMP_MAX = 5 -- damage multiplier at full power
-InfernoTower.RETARGET_DELAY = 0.3 -- like CryoBeam: re-locking takes a moment
+InfernoTower.RETARGET_DELAY = 0.5 -- re-locking onto a new target takes a moment
 
 function InfernoTower:new(config)
     local t = Turret:new(config)

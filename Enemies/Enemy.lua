@@ -440,7 +440,9 @@ function Enemy:update(dt)
         self:confineToLane()
     end
     
-    if self.x < self.target then
+    -- Reaching the line counts, not just passing it: the navigator stops moving
+    -- an enemy that lands exactly on it, which used to leave it stuck there
+    if self:checkBaseCollision() then
         self.game.base:takeDamage(self:getStat("damage"), "physical", self.x, self.y, self) -- Damage the base if the enemy reaches it
         self.reachedBase = true -- Not a kill (artifacts' onEnemyKilled skips it)
         self:died() -- Destroy the enemy if it reaches the base
@@ -475,6 +477,11 @@ function Enemy:takeDamage(amount, damageType, hitX, hitY, damageTags, source)
 
     if amount > 1 then
         self.game:spawnDamageNumber(amount, hitX or self.x, hitY or self.y, damageType, effectiveness, damageTags)
+    end
+
+    -- Fire sets off oil (even on a shield: the flames still touch it)
+    if damageType == "fire" and amount > 0 then
+        Oil.onFireDamage(self)
     end
 
     -- 1. Check if shield exists

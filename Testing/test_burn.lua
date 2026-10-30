@@ -212,6 +212,45 @@ local lapsed = newEnemy()
 Oil.apply(lapsed)
 tick(lapsed, Oil.DURATION + 0.1)
 assert(not Oil.isOiled(lapsed), "unlit oil wears off")
+
+-- Fire damage ignites oil too, crediting the bonus to whoever oiled the enemy
+local flareGun = place("flareGun", 1, 1)
+local oilGun = place("oilGun", 2, 1)
+local scorched = newEnemy()
+Oil.apply(scorched, { source = oilGun })
+scorched:takeDamage(4, "fire", nil, nil, nil, flareGun)
+assert(near(Burn.getStacks(scorched), Oil.BONUS_STACKS) and not Oil.isOiled(scorched),
+    "fire damage ignites the oil for 5 stacks")
+assert(near(Burn.getState(scorched).credit.creditShares[Burn.creditKeyFor(oilGun)] or 0, Oil.BONUS_STACKS),
+    "the ignited stacks are credited to the Oil Gun")
+
+local spelled = newEnemy()
+Oil.apply(spelled)
+spelled:takeDamage(10, "fire", nil, nil, { "aoe" })
+assert(near(Burn.getStacks(spelled), Oil.BONUS_STACKS), "fire with no source (a spell) ignites it too")
+
+local cold = newEnemy()
+Oil.apply(cold)
+cold:takeDamage(10, "physical", nil, nil, nil, flareGun)
+cold:takeDamage(10, "ice", nil, nil, nil, flareGun)
+assert(Oil.isOiled(cold) and not Burn.isBurning(cold), "other damage types leave the oil alone")
+
+-- The Oil Gun deals no damage, scatters its globs, and splashes a small area
+local oilEntry = findTurret("oilGun")
+assert(oilEntry.damage == 0 and oilEntry.fireRate > 0.5 and oilEntry.spread > 0,
+    "the Oil Gun deals no damage, fires a little faster, and scatters its globs")
+local globbed = newEnemy(600, 300)
+local neighbour = newEnemy(620, 300) -- its edge is 10 from the hit
+local distant = newEnemy(700, 300)
+local before = globbed.hp
+local count = #game.objects
+oilGun:fire()
+local glob = game.objects[count + 1]
+if glob then glob:onHit(globbed) end
+assert(Oil.isOiled(globbed) and globbed.hp == before and not Burn.isBurning(globbed),
+    "a glob oils the enemy it hits without damaging or igniting it")
+assert(Oil.isOiled(neighbour), "and splashes oil on enemies close by")
+assert(not Oil.isOiled(distant), "but not ones further away")
 clearBoard()
 
 -- -----------------------------------------------------------------------------
@@ -229,6 +268,23 @@ withoutDecay(function()
     assert(near(Burn.getStacks(t), 30), string.format("two charges apply 15 burn each (%.1f)", Burn.getStacks(t)))
     assert(Thermite.count(t) == 0, "spent charges fall off")
     assert(game.damageStats:get(launcher).damage > 0, "thermite burn is credited to the launcher")
+
+    -- Small rapid doses: 0.6 burn every 0.2s, the same 3 burn a second
+    local rapid = newEnemy()
+    Thermite.attach(rapid, { source = launcher })
+    tick(rapid, 0.21)
+    assert(near(Burn.getStacks(rapid), 0.6), string.format("a charge applies 0.6 burn after 0.2s (%.2f)", Burn.getStacks(rapid)))
+    tick(rapid, 0.8)
+    assert(near(Burn.getStacks(rapid), 3), string.format("3 burn after a second (%.2f)", Burn.getStacks(rapid)))
+
+    -- Fuel Tank adds its extra stack once per second of thermite, not once per dose
+    withArtifact("fuel_tank", function()
+        local fueled = newEnemy()
+        Thermite.attach(fueled, { source = launcher })
+        tick(fueled, 6)
+        assert(near(Burn.getStacks(fueled), 15 + 5, 1e-6),
+            string.format("with Fuel Tank a charge applies 15 + 5 burn (%.2f)", Burn.getStacks(fueled)))
+    end)
 end)
 clearBoard()
 
@@ -241,7 +297,9 @@ local expected = {
 }
 for id, rarity in pairs(expected) do
     local entry, got = findTurret(id)
-    assert(entry and got == rarity and entry.damageType == "fire", id .. " is a " .. rarity .. " fire turret")
+    -- The Oil Gun sets fire up rather than dealing it: its damage is physical
+    local damageType = id == "oilGun" and "physical" or "fire"
+    assert(entry and got == rarity and entry.damageType == damageType, id .. " is a " .. rarity .. " " .. damageType .. " turret")
 end
 
 -- Flare Gun bullets apply 1 burn
@@ -284,6 +342,27 @@ ihp = ie.hp
 inferno:tick(ie)
 assert(near((ihp - ie.hp) / first, 5, 1e-6), "Inferno Tower deals 5x damage once fully ramped")
 assert(not Burn.isBurning(ie), "Inferno Tower doesn't apply burn")
+
+-- Switching to a new target takes RETARGET_DELAY before the beam hits it
+local InfernoTower = require("Buildings.Turrets.InfernoTower")
+assert(InfernoTower.RETARGET_DELAY == 0.5, "Inferno Tower takes 0.5s to lock onto a new target")
+inferno.firingArc.direction = 0
+local ix, iy = inferno:getCenterPosition()
+local firstTarget = newEnemy(ix + 100, iy)
+local infernoTicks = 0
+local realTick = inferno.tick
+inferno.tick = function(self, target) infernoTicks = infernoTicks + 1; return realTick(self, target) end
+inferno.hasLocked, inferno.target, inferno.retargetTimer = false, nil, nil
+inferno:update(0.01)
+assert(inferno.target == firstTarget and infernoTicks == 1, "the first lock fires straight away")
+firstTarget.destroyed = true
+local secondTarget = newEnemy(ix + 120, iy)
+infernoTicks = 0
+for _ = 1, 45 do inferno:update(0.01) end -- 0.45s
+assert(inferno.target == secondTarget and infernoTicks == 0, "a new target isn't hit for the first 0.45s")
+for _ = 1, 10 do inferno:update(0.01) end -- past 0.5s
+assert(infernoTicks >= 1, "then the beam locks on")
+inferno.tick = realTick
 clearBoard()
 
 -- Meteor: impact damage (no burn), then a crater that burns

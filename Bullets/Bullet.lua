@@ -170,6 +170,9 @@ function Bullet:draw()
         love.graphics.setColor(0.95, 0.8, 0.4, 0.9)
         love.graphics.circle("fill", self.x - self.w * 0.15, self.y - self.w * 0.15, self.w * 0.15)
 
+    elseif self.drawStyle == "bouncyball" then
+        self:drawBouncyBall(r, g, bColor)
+
     elseif self.drawStyle == "slush" then
         love.graphics.setColor(r, g, bColor, 0.5)
         love.graphics.circle("fill", self.x, self.y, self.w / 1.5)
@@ -182,6 +185,53 @@ function Bullet:draw()
     
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- Bouncy ball: squashes flat for a moment each time it bounces (every bounce
+-- is a fresh bullet), stretches slightly in flight, and its seam spins
+local SQUASH_TIME = 0.12
+function Bullet:drawBouncyBall(r, g, bColor)
+    local radius = self.w / 2
+    local age = (self.startLifespan or 0) - (self.lifespan or 0)
+
+    -- Trail: a fading row of shrinking balls
+    for i, p in ipairs(self.trail) do
+        local k = 1 - i / (#self.trail + 1)
+        love.graphics.setColor(r, g, bColor, 0.35 * k)
+        love.graphics.circle("fill", p.x, p.y, radius * (0.35 + 0.5 * k))
+    end
+
+    local stretch, squash = 1.1, 0.92
+    if self.bounceNumber and age < SQUASH_TIME then
+        local k = 1 - age / SQUASH_TIME
+        stretch, squash = 1.1 - 0.45 * k, 0.92 + 0.35 * k
+    end
+
+    love.graphics.push()
+    love.graphics.translate(self.x, self.y)
+    love.graphics.rotate(self.angle)
+    love.graphics.scale(stretch, squash)
+    -- Halo, dark body, then the neon rim with a hot core line
+    love.graphics.setColor(r, g, bColor, 0.25)
+    love.graphics.circle("fill", 0, 0, radius * 1.6)
+    love.graphics.setColor(r * 0.25, g * 0.25, bColor * 0.25, 1)
+    love.graphics.circle("fill", 0, 0, radius)
+    love.graphics.setLineWidth(2)
+    love.graphics.setColor(r, g, bColor, 1)
+    love.graphics.circle("line", 0, 0, radius)
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(r + (1 - r) * 0.6, g + (1 - g) * 0.6, bColor + (1 - bColor) * 0.6, 1)
+    love.graphics.circle("line", 0, 0, radius - 0.5)
+    -- Seam: a pole-to-pole line that sweeps across the face as the ball spins
+    local spin = age * 14
+    love.graphics.setColor(r, g, bColor, 0.9)
+    love.graphics.setLineWidth(1.5)
+    love.graphics.ellipse("line", 0, 0, math.max(0.3, radius * 0.95 * math.abs(math.cos(spin))), radius * 0.95)
+    love.graphics.pop()
+
+    -- Shine: stays top-left whichever way the ball faces
+    love.graphics.setColor(1, 1, 1, 0.9)
+    love.graphics.circle("fill", self.x - radius * 0.35, self.y - radius * 0.35, radius * 0.22)
 end
 
 function Bullet:drawStandard(r, g, bColor)

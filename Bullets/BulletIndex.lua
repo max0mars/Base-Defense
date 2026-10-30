@@ -195,9 +195,11 @@ local BulletIndex = {
     },
     chainLaserBolt = {
         class = Bullet,
-        name = "Lazer Bolt",
-        w = 6, h = 6,
-        color = {0.4, 0.7, 1, 1}
+        name = "Bouncy Ball",
+        w = 10, h = 10,
+        color = {0.4, 0.7, 1, 1},
+        drawStyle = "bouncyball",
+        maxTrail = 7,
     }
 }
 

@@ -9,7 +9,7 @@ Common
 - Flare Gun [Buildings.Turrets.Turret]: Fires flares that apply 1 burn on hit.
 
 Uncommon
-- Oil Gun [Buildings.Turrets.Turret]: Oils and slows enemies. Burn ignites the oil for 5 extra burn (oiling a burning enemy ignites it at once).
+- Oil Gun [Buildings.Turrets.Turret]: Scattered globs splash oil over a small area (radius 30), slowing enemies. No damage. Burn or fire damage ignites the oil for 5 extra burn (oiling a burning enemy ignites it at once).
 - Ice Market [Buildings.Passives.IceMarket]: Gain $5 every time a frozen enemy dies.
 - Icicle Ballista [Buildings.Turrets.Turret]: Fires heavy icicles that deal more damage the more chilled the target is, and the most to frozen enemies.
 - Airburst Turret [Buildings.Turrets.AirburstTurret]: Fires shells that explode mid-air into shrapnel.
@@ -23,7 +23,7 @@ Uncommon
 Rare
 - Flamethrower [Buildings.Turrets.Turret]: Rapidly sprays slow bursts of flame. Each hit applies 1 burn.
 - Cinder Mortar [Buildings.Turrets.Turret]: Lobs a spread of cinders. The first enemy over each takes fire damage and 3 burn.
-- Thermite Launcher [Buildings.Turrets.Turret]: Sticks thermite charges that apply 3 burn a second for 5 seconds; charges stack.
+- Thermite Launcher [Buildings.Turrets.Turret]: Sticks thermite charges that apply 3 burn a second (0.6 every 0.2s) for 5 seconds; charges stack.
 - Cold Tactics [Buildings.Passives.ColdTactics]: Nearby turrets deal more damage the closer the enemy hit is to freezing, up to +50%. Frozen enemies take +50%.
 - Glacial Monolith [Buildings.Turrets.GlacialMonolith]: Deals no damage. Sends slow freezing waves through its arc that apply 2 stacks of chill.
 - Ice Shard Gunner [Buildings.Turrets.Turret]: Rapidly fires ice shards. Each hit adds half a stack of chill.

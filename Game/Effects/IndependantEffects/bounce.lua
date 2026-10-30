@@ -4,6 +4,9 @@ local Utils = require("Classes.Utils")
 local Bounce = {}
 Bounce.__index = Bounce
 
+Bounce.FALLOFF = 0.9 -- damage kept on each bounce
+Bounce.SPEED_KEPT = 0.94 -- speed kept on each bounce: it slows as it goes (40% after 15)
+
 function Bounce:new(config)
     local instance = setmetatable({}, Bounce)
     for k, v in pairs(config or {}) do
@@ -40,10 +43,17 @@ function Bounce:trigger(target, sourceBullet)
     end
     
     if closestEnemy then
-        -- Calculate angle to the next target
-        local dx = closestEnemy.x - target.x
-        local dy = closestEnemy.y - target.y
-        local angle = math.atan2(dy, dx)
+        -- Aim where the next target will be when the bolt arrives (like a
+        -- turret leads its target), so slow bolts don't fly behind it
+        local speed = sourceBullet:getStat("bulletSpeed") * Bounce.SPEED_KEPT
+        local aimX, aimY = closestEnemy.x, closestEnemy.y
+        if speed > 0 and closestEnemy.getFuturePosition then
+            for _ = 1, 2 do -- the second pass refines the flight time
+                local fx, fy = aimX - target.x, aimY - target.y
+                aimX, aimY = closestEnemy:getFuturePosition(math.sqrt(fx * fx + fy * fy) / speed)
+            end
+        end
+        local angle = math.atan2(aimY - target.y, aimX - target.x)
         
         -- Calculate the initial damage if this is the first bounce in the chain
         local initialDamage = sourceBullet.initialDamage or sourceBullet:getStat("damage")
@@ -56,9 +66,11 @@ function Bounce:trigger(target, sourceBullet)
             x = target.x,
             y = target.y,
             angle = angle,
-            bulletSpeed = sourceBullet:getStat("bulletSpeed"),
+            bulletSpeed = speed,
             initialDamage = initialDamage,
-            damage = initialDamage * math.max(0, 1 - 0.1 * bounceNumber), -- Linear 10% decrease (100% -> 90% -> 80%...)
+            -- Each bounce keeps 90% of the last one's damage (100% -> 90% -> 81%...):
+            -- it never reaches zero, however many bounces there are
+            damage = initialDamage * Bounce.FALLOFF ^ bounceNumber,
             bounceNumber = bounceNumber,
             bouncesLeft = bouncesLeft - 1,
             pierce = 1,
@@ -66,6 +78,10 @@ function Bounce:trigger(target, sourceBullet)
             displayLifespan = sourceBullet:getStat("displayLifespan") or 0.1,
             w = sourceBullet.w, h = sourceBullet.h,
             shape = sourceBullet.shape,
+            -- Keeps the original's look through every bounce
+            color = sourceBullet.color,
+            drawStyle = sourceBullet.drawStyle,
+            maxTrail = sourceBullet.maxTrail,
             hitbox = true,
             types = { bullet = true },
             game = game,

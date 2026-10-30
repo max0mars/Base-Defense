@@ -214,8 +214,8 @@ ArtifactIndex.list = {
         color = {1, 0.6, 0.2, 1},
         description = "Every time burn is applied, it applies 1 extra stack.",
         EXTRA_STACKS = 1,
-        modifyBurnApplied = function(self, game, amount, enemy, source)
-            return amount + self.EXTRA_STACKS
+        modifyBurnApplied = function(self, game, amount, enemy, source, share)
+            return amount + self.EXTRA_STACKS * (share or 1)
         end,
     },
     {

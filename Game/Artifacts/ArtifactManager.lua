@@ -29,7 +29,9 @@
 --   modifyMaxTokens(maxTokens)
 --   modifyEnemyDamage(amount, enemy, damageType, damageTags, source)
 --   modifyBaseDamage(amount, sourceEntity)
---   modifyBurnApplied(stacks, enemy, source)  stacks one burn application adds
+--   modifyBurnApplied(stacks, enemy, source, share)  stacks one burn application
+--                                      adds; share = how much of a full application
+--                                      it is (Thermite's rapid doses are 0.2)
 -- =============================================================================
 
 local ArtifactIndex = require("Game.Artifacts.ArtifactIndex")

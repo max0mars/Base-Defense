@@ -1,16 +1,17 @@
 -- Thermite.lua - Charges stuck to an enemy by the Thermite Launcher.
 --
 -- Each charge applies STACKS_PER_PULSE burn every PULSE_INTERVAL seconds,
--- PULSES times. Charges stack: every hit attaches another one.
+-- PULSES times: 3 burn a second for 5 seconds, in small rapid doses. Charges
+-- stack: every hit attaches another one.
 --
 -- Usage from a turret: hitEffects = { Thermite.onHit() }
 
 local Burn = require("Game.Effects.StatusEffects.Burn")
 
 local Thermite = {
-    STACKS_PER_PULSE = 3,
-    PULSE_INTERVAL   = 1,
-    PULSES           = 5,
+    STACKS_PER_PULSE = 0.6,
+    PULSE_INTERVAL   = 0.2,
+    PULSES           = 25,
     NAME             = "hidden_thermite",
 }
 
@@ -40,7 +41,9 @@ function ThermiteState:onUpdate(dt, target)
     while self.timer >= Thermite.PULSE_INTERVAL and self.pulsesLeft > 0 and not target.destroyed do
         self.timer = self.timer - Thermite.PULSE_INTERVAL
         self.pulsesLeft = self.pulsesLeft - 1
-        Burn.apply(target, Thermite.STACKS_PER_PULSE, { source = self.source })
+        -- Each dose is a fifth of a second's burn: per-application extras
+        -- (Fuel Tank) add a fifth as much, so a second of thermite gets one
+        Burn.apply(target, Thermite.STACKS_PER_PULSE, { source = self.source, share = Thermite.PULSE_INTERVAL })
     end
     if self.pulsesLeft <= 0 then
         self.duration = 0

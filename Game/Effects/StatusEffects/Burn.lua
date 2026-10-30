@@ -233,7 +233,9 @@ end
 
 --- Applies burn: one application of `amount` stacks. Fuel Tank and other
 --- artifacts adjust the amount; oil on the target ignites for bonus stacks.
--- @param opts table|nil: source = the turret (or its bullet) applying it
+-- @param opts table|nil: source = the turret (or its bullet) applying it;
+--   share = how much of a full application this counts as for artifacts'
+--   per-application extras (default 1; Thermite's rapid doses are 0.2 each)
 -- @return number stacks actually added
 function Burn.apply(target, amount, opts)
     local em = target and target.effectManager
@@ -242,21 +244,25 @@ function Burn.apply(target, amount, opts)
     local source = opts and opts.source
     local game = target.game
     if game and game.artifacts then
-        amount = game.artifacts:modify("modifyBurnApplied", amount, target, source)
+        amount = game.artifacts:modify("modifyBurnApplied", amount, target, source, (opts and opts.share) or 1)
     end
 
-    local state = getOrCreateState(target)
-    state:addStacks(amount, creditKeyFor(source))
+    getOrCreateState(target):addStacks(amount, creditKeyFor(source))
+    return amount + Burn.igniteOil(target)
+end
 
-    -- Oil ignites: its bonus stacks are credited to whoever oiled the enemy
-    local oil = em:getEffect(Burn.OIL_NAME)
-    if oil then
-        state:addStacks(oil.bonusStacks, creditKeyFor(oil.oiledBy))
-        amount = amount + oil.bonusStacks
-        em:removeEffect(oil)
-        if oil.onIgnite then oil:onIgnite(target) end
-    end
-    return amount
+--- Ignites the oil on a target, if it's oiled: adds the oil's bonus stacks
+--- (credited to whoever oiled it) and uses the oil up. Burn and fire damage
+--- both ignite it (see Burn.apply and Oil.onFireDamage).
+-- @return number stacks added (0 if there was no oil)
+function Burn.igniteOil(target)
+    local em = target and target.effectManager
+    local oil = em and em:getEffect(Burn.OIL_NAME)
+    if not oil or target.destroyed then return 0 end
+    getOrCreateState(target):addStacks(oil.bonusStacks, creditKeyFor(oil.oiledBy))
+    em:removeEffect(oil)
+    if oil.onIgnite then oil:onIgnite(target) end
+    return oil.bonusStacks
 end
 
 -- -----------------------------------------------------------------------------

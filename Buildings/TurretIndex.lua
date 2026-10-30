@@ -217,17 +217,20 @@ local RewardIndex = {
         {
             id = "oilGun",
             name = "Oil Gun",
-            description = "Coats enemies in oil, slowing them. Burn ignites the oil for 5 extra burn; oiling a burning enemy ignites it at once.",
+            description = "Splashes oil over enemies in a small area, slowing them. Deals no damage. Burn or fire damage ignites the oil for 5 extra burn; oiling a burning enemy ignites it at once.",
             type = "building",
             types = {"turret", "building", "slow"},
             iconCategory = "turret",
             cost = 1,
             building = require("Buildings.Turrets.Turret"),
-            rotation = 0, fireRate = 0.5, range = 300,
+            -- Sets fire up rather than dealing damage: 0 damage, and its globs
+            -- scatter (spread) and splash oil over a small area
+            rotation = 0, fireRate = 0.7, range = 300,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/5},
-            bulletSpeed = 320, damageType = "fire", damage = 12,
+            bulletSpeed = 320, damageType = "physical", damage = 0, spread = math.rad(8),
             pierce = 1, lifespan = 1.0, bulletId = "oilGlob",
-            hitEffects = { Oil.onHit() }
+            upgradeMaterial = "elemental_essence", -- a fire synergy turret, though it deals no fire damage
+            hitEffects = { Oil.onHit({ radius = 30 }) }
         },
     },
     rare = {
@@ -375,7 +378,7 @@ local RewardIndex = {
         {
             id = "thermiteLauncher",
             name = "Thermite Launcher",
-            description = "Sticks thermite to enemies. Each charge applies 3 burn every second for 5 seconds, and charges stack.",
+            description = "Sticks thermite to enemies. Each charge applies 3 burn a second, in rapid small doses, for 5 seconds, and charges stack.",
             type = "building",
             types = {"turret", "building"},
             iconCategory = "turret",
@@ -485,14 +488,15 @@ local RewardIndex = {
             rotation = 0, fireRate = 0.5, range = 380, barrel = 12,
             firingArc = {direction = 0, minRange = 0, angle = math.pi/6},
             color = {0.4, 0.7, 1, 1},
-            bulletSpeed = 600, damageType = "energy", damage = 27,
-            pierce = 1, lifespan = 5, bouncesLeft = 5, bulletId = "chainLaserBolt",
+            -- Slow enough to watch it bounce around
+            bulletSpeed = 300, damageType = "physical", damage = 13.5,
+            pierce = 1, lifespan = 5, bouncesLeft = 15, bulletId = "chainLaserBolt",
             hitEffects = { BounceEffect:new({ name = "Chain Bounce" }) }
         },
         {
             id = "meteor",
             name = "PROJECT STARFALL",
-            description = "Calls meteors down on its target, dealing fire damage in an area. The burning crater left behind applies burn to enemies inside it.",
+            description = "Look up.",
             icons = { "fire" },
             type = "building",
             types = {"turret", "building"},
